@@ -21,7 +21,7 @@ const PlaylistDetailsHeader = ({ playlist, songsToBeDeleted, editData, handleEdi
           playlist.tracks.length > 0 &&
           <img
             crossOrigin="anonymous"
-            src={playlist.tracks[0].image?.[2]?.link || playlist.tracks[0].image?.[1]?.link || playlist.tracks[0].image?.[0]?.link} // Use highest quality available
+            src={playlist.tracks[0].image} // Use normalized image URL
             alt={playlist.name}
             className="h-[100%] max-h-[360px] opacity-50 blur-[50px] object-cover"
           />
@@ -33,7 +33,7 @@ const PlaylistDetailsHeader = ({ playlist, songsToBeDeleted, editData, handleEdi
             crossOrigin="anonymous"
             onLoad={handleLoad}
             ref={imgRef}
-            src={playlist.tracks[0].image?.[2]?.link || playlist.tracks[0].image?.[1]?.link || playlist.tracks[0].image?.[0]?.link} // Use highest quality available
+            src={playlist.tracks[0].image} // Use normalized image URL
             alt={playlist.name}
             className="w-full h-full rounded-md"
           />}

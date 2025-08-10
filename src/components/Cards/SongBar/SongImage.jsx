@@ -2,21 +2,8 @@ import PlayPause from "../PlayPause"
 import { songImage as defaultSongImage } from "../../../assets/images";
 
 const SongImage = ({ song, activeSong, isPlaying, handlePlayClick, handlePauseClick }) => {
-  // This logic now correctly handles both raw API data (arrays) and our normalized data (strings).
-  const getImageUrl = (songData) => {
-    if (!songData || !songData.image) return defaultSongImage;
-    // If image is already a simple string, use it.
-    if (typeof songData.image === 'string') return songData.image;
-    // If image is an array, get the best quality URL.
-    if (Array.isArray(songData.image) && songData.image.length > 0) {
-      const bestImage = songData.image[songData.image.length - 1];
-      // The API sometimes uses 'link' and sometimes 'url'. We check for both.
-      return bestImage?.link || bestImage?.url || defaultSongImage;
-    }
-    return defaultSongImage;
-  };
-
-  const imageUrl = getImageUrl(song);
+  // song.image is already normalized to a string URL by getSingleData
+  const imageUrl = song?.image || defaultSongImage;
 
   return (
     <div className="h-[50px] aspect-square relative rounded-[8px] overflow-hidden flex justify-center ml-2 items-center">
