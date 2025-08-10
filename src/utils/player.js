@@ -71,8 +71,10 @@ export const playSongs = ({ tracks, song, i, album}) => {
         return;
     }
 
-    // Pass raw data; normalization now happens in the Redux slice
-    store.dispatch(setActiveSong({ tracks, song, i }));
+    // Get library state here and pass it to the action payload
+    const library = store.getState().library;
+
+    store.dispatch(setActiveSong({ tracks, song, i, library }));
     if (album) store.dispatch(setAlbum(album));
     play();
 }
