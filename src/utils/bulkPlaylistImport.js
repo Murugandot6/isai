@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { searchSongByTitleAndArtist } from './fetchData';
 import { displayMessage } from './prompt';
 import { store } from '../redux/store'; // Import the Redux store
-import { setEditorsPickPlaylists } from '../redux/features/librarySlice'; // Import the new action
+import { setEditorsPickPlaylists, setLibraryStorage } from '../redux/features/librarySlice'; // Import the new action and setLibraryStorage
 import generateUniqueId from './idGenerator'; // Import the ID generator
 
 // List of CSV file paths to import. You can add more paths here.
