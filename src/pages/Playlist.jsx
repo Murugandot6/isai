@@ -3,12 +3,13 @@ import { useEffect, useMemo, useReducer, useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 
 import CreatePlaylist from '../components/CreatePlaylist';
-import ImportForm from '../components/CreatePlaylist/ImportForm'; // Use the new ImportForm component
+import ImportForm from '../components/CreatePlaylist/ImportForm';
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
 import { useSelector } from 'react-redux';
-import { Playlists } from '../components/List'; // Ensure Playlists is imported
+import { Playlists } from '../components/List';
+import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport'; // Import the new utility
 
 const Playlist = () => {
   const genres = { data: [] }; // Mock empty genres data as Saavn API doesn't provide this directly
@@ -81,7 +82,7 @@ const Playlist = () => {
           errorSavingPlaylist={errorSavingPlaylist}
         />
       ) : isImportPage ? (
-        <ImportForm // Use the new ImportForm component here
+        <ImportForm
           handleSubmit={handleSubmit}
           playlistInfo={newPlaylist.playlistInfo}
           setNewPlaylist={setNewPlaylist}
@@ -91,9 +92,17 @@ const Playlist = () => {
         <div className="min-w-full">
           <div className="w-full flex justify-between items-center mb-4">
             <h3 className="font-bold text-white text-xl">Your Playlists</h3>
-            <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
-              Create New
-            </Link>
+            <div className="flex gap-2">
+              <button
+                onClick={importAllPlaylistsFromCsv}
+                className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
+              >
+                Import All CSVs
+              </button>
+              <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
+                Create New
+              </Link>
+            </div>
           </div>
           {userPlaylists.length > 0 ? (
             <Playlists playlists={userPlaylists} />
