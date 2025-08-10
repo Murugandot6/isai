@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Playlists } from '../components/List';
-import { editorsPickPlaylists } => '../data/editorsPickPlaylists'; // Import the hardcoded data
+import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Corrected import statement
 import { Link } from 'react-router-dom'; // Import Link
 import { useSelector } from 'react-redux'; // Import useSelector
 
