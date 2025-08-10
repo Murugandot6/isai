@@ -2,20 +2,22 @@ import React, { useEffect, useMemo, useReducer, useState } from 'react';
 import { Playlists } from '../components/List';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import editorsPickPlaylists from '../data/editorsPickPlaylists'; // Import the hardcoded playlists
-import ImportForm from '../components/CreatePlaylist/ImportForm'; // Import the new ImportForm component
-import { playlistDispatch, playlistState, createNewPlaylist } from '../utils/library'; // Import playlist utilities
-import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport'; // Import the bulk import utility
-import { Loader, Error } from '../components/LoadersAndError'; // Import Loader and Error components
+// Removed direct import of editorsPickPlaylists from data/editorsPickPlaylists
+import ImportForm from '../components/CreatePlaylist/ImportForm';
+import { playlistDispatch, playlistState, createNewPlaylist } from '../utils/library';
+import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport';
+import { Loader, Error } from '../components/LoadersAndError';
 
 const EditorsPick = () => {
   const navigate = useNavigate();
-  const [params, setParams] = useSearchParams(); // Keep useSearchParams for potential future use or if other params are needed
+  const [params, setParams] = useSearchParams();
   const [newPlaylist, setNewPlaylist] = useReducer(playlistDispatch, playlistState);
-  const [showImportForm, setShowImportForm] = useState(false); // New state to control form visibility
+  const [showImportForm, setShowImportForm] = useState(false);
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
-  // New states for bulk import feedback
+  // Get editorsPick playlists from Redux state
+  const editorsPickPlaylists = useSelector(state => state.library.editorsPick);
+
   const [isBulkImporting, setIsBulkImporting] = useState(false);
   const [bulkImportReport, setBulkImportReport] = useState(null);
 
@@ -25,14 +27,13 @@ const EditorsPick = () => {
       const { playlistInfo } = newPlaylist;
       const newPlaylistId = await createNewPlaylist(playlistInfo);
       setNewPlaylist({ type: 'RESET' });
-      setShowImportForm(false); // Hide form after submission
-      navigate(`/playlists/${newPlaylistId}?edit=true`); // Redirect to the new playlist's edit page
+      setShowImportForm(false);
+      navigate(`/playlists/${newPlaylistId}?edit=true`);
     } catch (error) {
       setErrorSavingPlaylist(true);
     }
   };
 
-  // This handleChange is for the playlist title input within the ImportForm
   const handleChange = (e) => {
     setNewPlaylist({ type: 'HANDLECHANGE', id: e.target.id, payload: e.target.value });
     setErrorSavingPlaylist(false);
@@ -40,14 +41,11 @@ const EditorsPick = () => {
 
   const handleBulkImport = async () => {
     setIsBulkImporting(true);
-    setBulkImportReport(null); // Clear previous report
+    setBulkImportReport(null);
     const report = await importAllPlaylistsFromCsv();
     setBulkImportReport(report);
     setIsBulkImporting(false);
-    // Redirect to playlists page after a short delay to allow user to see the final message
-    setTimeout(() => {
-      navigate('/playlists');
-    }, 2000); 
+    // No redirection needed here, as the playlists will now appear on this page
   };
 
   useEffect(() => {
@@ -57,21 +55,20 @@ const EditorsPick = () => {
   return (
     <div className="px-2 flex md:px-4 relative">
       <div className="min-w-full">
-        {/* Editors' Pick Playlists Section */}
         <div className="w-full flex justify-between items-center mb-4">
           <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
           <div className="flex gap-2">
             <button 
-              onClick={handleBulkImport} // Call the bulk import function
+              onClick={handleBulkImport}
               className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
-              disabled={isBulkImporting} // Disable button during import
+              disabled={isBulkImporting}
             >
               {isBulkImporting ? 'Importing...' : 'Import All CSVs'}
             </button>
             <button 
-              onClick={() => setShowImportForm(!showImportForm)} // Toggle form visibility
+              onClick={() => setShowImportForm(!showImportForm)}
               className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
-              disabled={isBulkImporting} // Disable button during import
+              disabled={isBulkImporting}
             >
               {showImportForm ? 'Hide Import' : 'Import Single CSV'}
             </button>

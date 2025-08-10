@@ -2,8 +2,10 @@
 
 import Papa from 'papaparse';
 import { searchSongByTitleAndArtist } from './fetchData';
-import { createNewPlaylist } from './library';
 import { displayMessage } from './prompt';
+import { store } from '../redux/store'; // Import the Redux store
+import { setEditorsPickPlaylists } from '../redux/features/librarySlice'; // Import the new action
+import generateUniqueId from './idGenerator'; // Import the ID generator
 
 // List of CSV file paths to import. You can add more paths here.
 const CSV_FILE_PATHS = [
@@ -19,6 +21,7 @@ export const importAllPlaylistsFromCsv = async () => {
   let playlistsCreatedCount = 0;
   const failedImports = [];
   const successfulImports = [];
+  const allImportedPlaylists = []; // Collect all successfully imported playlists
 
   for (const filePath of CSV_FILE_PATHS) {
     const playlistName = filePath
@@ -72,16 +75,17 @@ export const importAllPlaylistsFromCsv = async () => {
 
       if (newTracks.length > 0) {
         const playlistInfo = {
+          id: generateUniqueId(), // Generate a unique ID for the playlist
           name: playlistName,
           genres: [], // You might want to add logic to infer genres
           tracks: newTracks,
         };
-        await createNewPlaylist(playlistInfo);
-        displayMessage(`Playlist "${playlistName}" created with ${songsAddedToCurrentPlaylist} songs.`);
+        allImportedPlaylists.push(playlistInfo); // Add to the collection
+        displayMessage(`Playlist "${playlistName}" imported with ${songsAddedToCurrentPlaylist} songs.`);
         playlistsCreatedCount++;
         successfulImports.push({ name: playlistName, songs: songsAddedToCurrentPlaylist });
       } else {
-        displayMessage(`No songs found to create playlist "${playlistName}".`);
+        displayMessage(`No songs found to import for playlist "${playlistName}".`);
         failedImports.push({ name: playlistName, reason: 'No songs found' });
       }
 
@@ -91,6 +95,10 @@ export const importAllPlaylistsFromCsv = async () => {
       failedImports.push({ name: playlistName, reason: error.message });
     }
   }
+
+  // Dispatch the action to update the editorsPick state in Redux
+  store.dispatch(setEditorsPickPlaylists(allImportedPlaylists));
+  store.dispatch(setLibraryStorage()); // Save the updated library to local storage
 
   return {
     totalPlaylistsAttempted: CSV_FILE_PATHS.length,

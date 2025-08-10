@@ -16,6 +16,7 @@ const initialState = {
     radios: []
   },
   playlists: [],
+  editorsPick: [], // New: Dedicated array for editor's pick playlists
 };
 
 const librarySlice = createSlice({
@@ -90,6 +91,10 @@ const librarySlice = createSlice({
       state.playlists = newPlaylists
     },
 
+    setEditorsPickPlaylists: (state, action) => { // New reducer
+      state.editorsPick = action.payload;
+    },
+
     setLibraryStorage: (state) => {
       localStorage.setItem('library', JSON.stringify({...state}))
     },
@@ -102,6 +107,6 @@ const librarySlice = createSlice({
   },
 });
 
-export const { addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist, removeSongsFromPlaylist, deletePlaylist, setLibraryStorage, setLibrary } = librarySlice.actions;
+export const { addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist, removeSongsFromPlaylist, deletePlaylist, setLibraryStorage, setLibrary, setEditorsPickPlaylists } = librarySlice.actions;
 
 export default librarySlice.reducer;
