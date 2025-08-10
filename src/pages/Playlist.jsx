@@ -3,13 +3,12 @@ import { useEffect, useMemo, useReducer, useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 
 import CreatePlaylist from '../components/CreatePlaylist';
-import ImportPlaylist from '../components/CreatePlaylist/ImportPlaylist';
-import { Playlists } from '../components/List';
+import ImportForm from '../components/CreatePlaylist/ImportForm'; // Use the new ImportForm component
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
 import { useSelector } from 'react-redux';
-import editorsPickPlaylists from '../data/editorsPickPlaylists'; // Import the hardcoded playlists
+import { Playlists } from '../components/List'; // Ensure Playlists is imported
 
 const Playlist = () => {
   const genres = { data: [] }; // Mock empty genres data as Saavn API doesn't provide this directly
@@ -23,8 +22,7 @@ const Playlist = () => {
   const isImportPage = useMemo(() => params.get('import') === 'true', [params]);
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
-  // We no longer need to get userPlaylists from Redux if we're hardcoding this section
-  // const { playlists: userPlaylists } = useSelector(state => state.library); 
+  const { playlists: userPlaylists } = useSelector(state => state.library); 
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -83,27 +81,25 @@ const Playlist = () => {
           errorSavingPlaylist={errorSavingPlaylist}
         />
       ) : isImportPage ? (
-        <ImportPlaylist
+        <ImportForm // Use the new ImportForm component here
           handleSubmit={handleSubmit}
           playlistInfo={newPlaylist.playlistInfo}
           setNewPlaylist={setNewPlaylist}
           errorSavingPlaylist={errorSavingPlaylist}
-          isImportPage={isImportPage}
         />
       ) : (
         <div className="min-w-full">
-          {/* This section now displays the hardcoded Editors' Pick playlists */}
           <div className="w-full flex justify-between items-center mb-4">
-            <h3 className="font-bold text-white text-xl">Your Playlists</h3> {/* Renamed heading */}
+            <h3 className="font-bold text-white text-xl">Your Playlists</h3>
             <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
               Create New
             </Link>
           </div>
-          {editorsPickPlaylists.length > 0 ? (
-            <Playlists playlists={editorsPickPlaylists} />
+          {userPlaylists.length > 0 ? (
+            <Playlists playlists={userPlaylists} />
           ) : (
             <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
-              <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
+              <h3 className="text-gray-400 font-bold text-xl">You don't have any saved playlists.</h3>
             </div>
           )}
         </div>

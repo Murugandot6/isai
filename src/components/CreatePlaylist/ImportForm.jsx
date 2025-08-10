@@ -2,13 +2,12 @@
 
 import React, { useState } from 'react';
 import Papa from 'papaparse';
-import { Loader, Error } from '../../components/LoadersAndError';
-import { searchSongByTitleAndArtist } from '../../utils/fetchData';
-import { displayMessage } from '../../utils/prompt';
+import { Loader, Error } from '../../LoadersAndError';
+import { searchSongByTitleAndArtist } from '../../../utils/fetchData';
+import { displayMessage } from '../../../utils/prompt';
 import { MdPlaylistAdd } from 'react-icons/md';
-import Header from './Header';
 
-const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPlaylist, isImportPage }) => {
+const ImportForm = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPlaylist }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [importError, setImportError] = useState(null);
   const [processedSongsCount, setProcessedSongsCount] = useState(0);
@@ -67,9 +66,7 @@ const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavin
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`min-w-full min-h-[90vh] px-3`}>
-      <Header />
-
+    <form onSubmit={handleSubmit} className="min-w-full px-3">
       <div className="flex flex-col md:flex-row items-start md:items-end gap-4 mb-6">
         <div className="aspect-square rounded-[10px] w-[150px] bg-white/5 flex items-center justify-center">
           {
@@ -146,4 +143,4 @@ const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavin
   );
 };
 
-export default ImportPlaylist;
+export default ImportForm;
