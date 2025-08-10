@@ -20,6 +20,10 @@ export const playlistOptions = [
         action: ({playlist}) => `/playlists/${playlist.id}?edit=true`
     },
     {
+        name: "Import songs", // New option for importing songs
+        action: ({playlist}) => `/playlists/${playlist.id}?edit=true&import=true`
+    },
+    {
         name: "Delete playlist",
         action: ({playlist}) => deletePlaylistPrompt(playlist)
     },

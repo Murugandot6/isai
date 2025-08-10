@@ -29,7 +29,13 @@ const PlaylistDetails = () => {
   }
 
   const handleChange = (e) => {
-    setEditData( prev => ({...prev, name: e.target.value}) )
+    // Handle both input changes and direct state updates (e.g., from CSV import)
+    if (e.target && e.target.id) {
+      setEditData( prev => ({...prev, [e.target.id]: e.target.value}) );
+    } else {
+      // This case handles direct updates like `handleChange({ target: { id: 'tracks', value: newTracks } })`
+      setEditData( prev => ({...prev, ...e.target}) );
+    }
   }
 
   const handleTrack = (id) => {
