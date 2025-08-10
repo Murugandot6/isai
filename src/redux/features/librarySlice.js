@@ -91,6 +91,10 @@ const librarySlice = createSlice({
       state.playlists = newPlaylists
     },
 
+    clearPlaylists: (state) => { // New reducer to clear all user playlists
+      state.playlists = [];
+    },
+
     setEditorsPickPlaylists: (state, action) => { // New reducer
       state.editorsPick = action.payload;
     },
@@ -107,6 +111,6 @@ const librarySlice = createSlice({
   },
 });
 
-export const { addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist, removeSongsFromPlaylist, deletePlaylist, setLibraryStorage, setLibrary, setEditorsPickPlaylists } = librarySlice.actions;
+export const { addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist, removeSongsFromPlaylist, deletePlaylist, clearPlaylists, setLibraryStorage, setLibrary, setEditorsPickPlaylists } = librarySlice.actions;
 
 export default librarySlice.reducer;

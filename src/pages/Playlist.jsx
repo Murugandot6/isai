@@ -7,9 +7,9 @@ import ImportForm from '../components/CreatePlaylist/ImportForm';
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux'; // Import useDispatch
 import { Playlists } from '../components/List';
-// import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport'; // Removed import
+import { clearPlaylists, setLibraryStorage } from '../redux/features/librarySlice'; // Import clearPlaylists and setLibraryStorage
 
 const Playlist = () => {
   const genres = { data: [] }; // Mock empty genres data as Saavn API doesn't provide this directly
@@ -24,6 +24,7 @@ const Playlist = () => {
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
   const { playlists: userPlaylists } = useSelector(state => state.library); 
+  const dispatch = useDispatch(); // Initialize useDispatch
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -41,6 +42,13 @@ const Playlist = () => {
     setNewPlaylist({ type: 'HANDLECHANGE', id: e.target.id, payload: e.target.value });
     setErrorSavingPlaylist(false);
   }
+
+  const handleClearAllPlaylists = () => {
+    if (window.confirm('Are you sure you want to delete ALL your playlists? This action cannot be undone.')) {
+      dispatch(clearPlaylists());
+      dispatch(setLibraryStorage()); // Save the cleared state to local storage
+    }
+  };
 
   useEffect(() => { 
     setNewPlaylist({ type: 'SETGENRES', payload: genres.data });
@@ -93,7 +101,12 @@ const Playlist = () => {
           <div className="w-full flex justify-between items-center mb-4">
             <h3 className="font-bold text-white text-xl">Your Playlists</h3>
             <div className="flex gap-2">
-              {/* Removed Import All CSVs button */}
+              <button 
+                onClick={handleClearAllPlaylists}
+                className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-red-600 text-red-400 bg-white/5"
+              >
+                Clear All Playlists
+              </button>
               <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
                 Create New
               </Link>
