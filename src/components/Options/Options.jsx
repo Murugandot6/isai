@@ -10,25 +10,38 @@ import { useDispatch } from "react-redux";
 import { setNowPlaying } from "../../redux/features/playerSlice";
 
 // Helper function to determine modal position based on button's location
-const getModalPosition = (buttonRect) => {
+const getModalStyle = (buttonRect, modalRef) => {
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
 
-    // Default to top-left if not enough space
-    let verticalPos = 'top-0';
-    let horizontalPos = 'left-[calc(100%+5px)]';
+    // Get actual modal dimensions (or estimate if not yet rendered)
+    // This might cause a slight flicker on first open as dimensions are 0 initially,
+    // but it will correct itself on the next render.
+    const modalWidth = modalRef.current ? modalRef.current.offsetWidth : 160; // min-w-[160px] from CSS
+    const modalHeight = modalRef.current ? modalRef.current.offsetHeight : 200; // A reasonable estimate
 
-    // Check if there's more space below or above
-    if (buttonRect.y > viewportHeight / 2) {
-        verticalPos = 'bottom-0';
+    let top = buttonRect.y;
+    let left = buttonRect.x + buttonRect.width + 5; // Default: to the right of the button + 5px padding
+
+    // Check if there's more space to the left or right
+    if (left + modalWidth > viewportWidth) {
+        // Not enough space on the right, try left side
+        left = buttonRect.x - modalWidth - 5;
+        if (left < 0) { // If still off-screen to the left, align to left edge
+            left = 5;
+        }
     }
 
-    // Check if there's more space to the right or left
-    if (buttonRect.x > viewportWidth / 2) {
-        horizontalPos = 'right-[calc(100%+5px)]';
+    // Check if there's more space above or below
+    if (top + modalHeight > viewportHeight) {
+        // Not enough space below, try above
+        top = buttonRect.y - modalHeight;
+        if (top < 0) { // If still off-screen to the top, align to top edge
+            top = 5;
+        }
     }
 
-    return `${verticalPos} ${horizontalPos}`;
+    return { top: `${top}px`, left: `${left}px` };
 };
 
 const Options = ({ type, small, song, artist, genre, album, radio, playlist, tracks, i, favorite, blacklist }) => {
@@ -41,9 +54,13 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
     const [buttonRect, setButtonRect] = useState({ x: 0, y: 0, width: 0, height: 0 }); // Store button's bounding rect
 
     const btnRef = useRef(null);
-    const modalRef = useRef(null);
+    const modalRef = useRef(null); // Ref for the modal content (ul)
 
-    const modalPosition = useMemo(() => getModalPosition(buttonRect), [buttonRect]);
+    // Calculate modal style dynamically
+    const modalStyle = useMemo(() => {
+        if (!showModal || !buttonRect) return {};
+        return getModalStyle(buttonRect, modalRef);
+    }, [showModal, buttonRect]);
 
     const navigate = useNavigate();
 
@@ -91,14 +108,15 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
         <div className="relative">
             <OptionBtn openModal={openModal} btnRef={btnRef} small={small} optionType={type} />
             {showModal && (
-                // Full-screen transparent overlay to catch clicks outside the modal
-                <div className="fixed inset-0 z-[9998] bg-transparent" onClick={closeModal}>
+                <>
+                    {/* Full-screen transparent overlay to catch clicks outside the modal */}
+                    <div className="fixed inset-0 z-[9998] bg-transparent" onClick={closeModal} />
                     <ul
                         ref={modalRef}
                         // Prevent clicks inside the modal from propagating to the overlay
                         onClick={(e) => e.stopPropagation()}
-                        style={{ top: buttonRect.y, left: buttonRect.x }} // Position relative to the button
-                        className={`${modalPosition} absolute animate-slowfade shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]`}
+                        style={{ ...modalStyle, position: 'fixed' }} // Apply calculated style and ensure fixed position
+                        className="animate-slowfade shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
                     >
                         {
                             filteredOptions
@@ -119,7 +137,7 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
                                 )
                         }
                     </ul>
-                </div>
+                </>
             )}
         </div>
     )
