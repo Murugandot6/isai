@@ -1,6 +1,7 @@
 import { playSongs, playNext } from "../player";
 import { addFavorites, removeFavorites, removeBlacklist } from "../library";
 import { removeFromPlaylistPrompt, addToPlaylist, addToBlacklist } from "../prompt";
+import { downloadSong } from "../download"; // Import the new download utility
 
 export const songOptions = [
     {
@@ -38,6 +39,10 @@ export const songOptions = [
     {
         name: "Go to album",
         action: ({album}) => `/albums/${album.id}}` // This link might not work if album details are not available
+    },
+    {
+        name: "Download song", // New option
+        action: ({song}) => downloadSong(song)
     },
     {
         name: "Don't show song",

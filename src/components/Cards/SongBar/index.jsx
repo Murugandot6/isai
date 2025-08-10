@@ -1,7 +1,6 @@
 import { useSelector } from 'react-redux'
 import { Options } from '../../Options'
 import { pause, playSongs } from '../../../utils/player'
-import { DownloadButton } from '../../Buttons'
 
 import SongImage from './SongImage'
 import SongInfo from './SongInfo'
@@ -28,7 +27,7 @@ const SongBar = ({ tracks, song, i, artistId }) => {
       </div>
 
       <div className="flex items-center gap-2">
-        <DownloadButton song={song} small={true} />
+        {/* DownloadButton removed from here */}
         <Options
           type="track"
           favorite={song.favorite}
