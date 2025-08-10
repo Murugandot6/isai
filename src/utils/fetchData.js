@@ -90,7 +90,7 @@ export const fetchSongs = async (album) => {
         const { data: result } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate(album.name));
         if(!result || result.data.results.length === 0) throw 'No songs found for this album';
         
-        const tracks = result.data.results.slice(0, 20);
+        const tracks = result.data.results; // Removed .slice(0, 20)
         const song = tracks[0];
         const i = 0;
         playSongs({ song, tracks, i, album });

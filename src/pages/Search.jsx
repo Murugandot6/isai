@@ -23,7 +23,7 @@ const Search = () => {
             return true;
         });
 
-        return getData({ type: 'tracks', data: preFiltered, library });
+        return getData({ type: 'tracks', data: preFiltered, library }); // Removed .slice(0, 6)
     }, [searchResults, params, library]);
 
     useEffect(() => {

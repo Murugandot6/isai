@@ -16,11 +16,11 @@ const Discover = () => {
     
     // Fetch data for Tamil Latest Songs
     const { data: tamilSongsData, isFetching: isFetchingTamilSongs, error: errorFetchingTamilSongs } = useSearchSongsQuery('tamil latest songs');
-    const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results.slice(0, 6), type: 'tracks', library }) : [], [tamilSongsData, library]);
+    const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results, type: 'tracks', library }) : [], [tamilSongsData, library]); // Removed .slice(0, 6)
     
     // Fetch data for English Most Played Songs
     const { data: englishSongsData, isFetching: isFetchingEnglishSongs, error: errorFetchingEnglishSongs } = useSearchSongsQuery('trending english songs');
-    const englishMostPlayedSongs = useMemo(() => englishSongsData ? getData({ data: englishSongsData.data.results.slice(0, 15), type: 'tracks', library }) : [], [englishSongsData, library]);
+    const englishMostPlayedSongs = useMemo(() => englishSongsData ? getData({ data: englishSongsData.data.results, type: 'tracks', library }) : [], [englishSongsData, library]); // Removed .slice(0, 15)
 
     // Fetch data for popular Tamil radio stations
     const { data: popularTamilStationsData, isFetching: isFetchingTamilStations, error: errorFetchingTamilStations } = useSearchStationsQuery({
