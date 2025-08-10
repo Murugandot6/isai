@@ -102,8 +102,8 @@ export const fetchArtistDetailsAndContent = async (artistName) => {
 
         // Step 2: Get artist details (which includes top songs)
         const { data: artistDetailsResult } = await store.dispatch(saavnApi.endpoints.getArtistDetails.initiate({ id: artistId, songCount: 10, albumCount: 5 }));
-        // Adjusted to access data.data if the main artist object is nested
-        const artist = artistDetailsResult?.data?.data;
+        // Adjusted to access data directly from the response
+        const artist = artistDetailsResult?.data;
 
         if (!artist) {
             console.warn(`Details for artist "${artistName}" (ID: ${artistId}) could not be fetched.`);
@@ -112,8 +112,8 @@ export const fetchArtistDetailsAndContent = async (artistName) => {
 
         // Step 3: Get artist's albums using the dedicated endpoint
         const { data: artistAlbumsResult } = await store.dispatch(saavnApi.endpoints.getArtistAlbums.initiate({ id: artistId, page: 1, sortBy: 'popularity' }));
-        // Adjusted to access data.data.albums if albums are nested
-        const albums = artistAlbumsResult?.data?.data?.albums || [];
+        // Adjusted to access albums directly from the response's 'albums' key
+        const albums = artistAlbumsResult?.albums || [];
 
         // Normalize data
         const normalizedArtist = getSingleData({ type: 'artists', data: artist });
