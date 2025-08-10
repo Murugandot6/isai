@@ -8,7 +8,7 @@ export const radioBrowserApi = createApi({
     endpoints: (builder) => ({
         searchStations: builder.query({
             query: ({ country = '', language = 'english', name = '', hidebroken = true }) => 
-                `/stations/search?countrycode=${country}&language=${language}&name=${name}&limit=100&hidebroken=${hidebroken}&order=clickcount&reverse=true`,
+                `/stations/search?countrycode=${country}&language=${language}&name=${name}&limit=500&hidebroken=${hidebroken}&order=clickcount&reverse=true`,
         }),
         getCountries: builder.query({
             query: () => '/countries?order=name',
