@@ -9,8 +9,8 @@ const ArtistsList = () => {
     document.getElementById('site_title').innerText = 'Isai - Artists';
   }, []);
 
-  // Fetch popular songs to extract artists
-  const { data: popularSongsData, isFetching, error } = useSearchSongsQuery('popular songs');
+  // Fetch popular Tamil songs to extract artists
+  const { data: popularSongsData, isFetching, error } = useSearchSongsQuery('popular tamil songs');
 
   const artists = useMemo(() => {
     if (!popularSongsData?.data?.results) return [];
