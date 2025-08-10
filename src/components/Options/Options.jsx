@@ -14,26 +14,28 @@ const calculateModalPosition = (buttonRect, modalWidth, modalHeight) => {
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
 
-    // Attempt to place to the left of the button, with a much larger offset
-    let left = buttonRect.x - modalWidth - 300; // Further increased offset for 'more left'
+    let top = buttonRect.y + buttonRect.height + 5; // Default: below the button, with a small gap
+    let left = buttonRect.x + 5; // Default: aligned with the left of the button, with a small gap
 
-    // Attempt to place higher than vertically centered, with a much larger offset
-    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2) - 300; // Further increased offset for 'more up'
-
-    // --- Horizontal Adjustment ---
-    if (left < 0) { // If it goes off the left side
-        left = buttonRect.x + buttonRect.width + 5; // Try placing it to the right of the button
-        if (left + modalWidth > viewportWidth) { // If it still goes off the right side
-            left = viewportWidth - modalWidth - 5; // Clamp to the right edge
-            if (left < 5) left = 5; // Ensure it's not too close to the left edge if clamped
+    // Horizontal adjustment
+    if (left + modalWidth > viewportWidth) {
+        // If it goes off the right, try placing it to the left of the button
+        left = buttonRect.x - modalWidth - 5;
+        if (left < 0) {
+            // If it still goes off the left, clamp to the right edge of the viewport
+            left = viewportWidth - modalWidth - 5;
+            if (left < 5) left = 5; // Ensure minimum padding from left edge
         }
     }
 
-    // --- Vertical Adjustment ---
-    if (top < 0) { // If it goes off the top
-        top = 5; // Align to top edge with a small padding
-    } else if (top + modalHeight > viewportHeight) { // If it goes off the bottom
-        top = viewportHeight - modalHeight - 5; // Align to bottom edge with a small padding
+    // Vertical adjustment
+    if (top + modalHeight > viewportHeight) {
+        // If it goes off the bottom, try placing it above the button
+        top = buttonRect.y - modalHeight - 5;
+        if (top < 0) {
+            // If it still goes off the top, clamp to the top edge of the viewport
+            top = 5; // Ensure minimum padding from top edge
+        }
     }
 
     return { top: `${top}px`, left: `${left}px` };
