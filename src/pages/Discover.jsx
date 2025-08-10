@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { useSelector } from "react-redux";
-import { Suggestion, Songs, Playlists, RadioStationList, Artists } from "../components/List"; // Import Playlists & RadioStationList, Artists
+import { Suggestion, Songs, Playlists, RadioStationList, Artists } from "../components/List";
 import { getData, getSingleData } from "../utils/getData";
 import { useSearchSongsQuery } from '../redux/services/saavnApi';
-import { useSearchStationsQuery } from '../redux/services/radioBrowserApi'; // Import radio station query
-import { fetchArtistDetailsAndContent } from '../utils/fetchData'; // Import the new fetch utility
-import { ArtistLoading, Error } from '../components/LoadersAndError'; // Import loaders and error components
+import { useSearchStationsQuery } from '../redux/services/radioBrowserApi';
+import { fetchArtistDetailsAndContent } from '../utils/fetchData';
+import { ArtistLoading, Error } from '../components/LoadersAndError';
 
 
 const Discover = () => {
@@ -28,7 +28,7 @@ const Discover = () => {
     });
     const popularTamilStations = useMemo(() => popularTamilStationsData || [], [popularTamilStationsData]);
 
-    const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: [{ link: 'https://i.pinimg.com/originals/ed/54/d2/ed54d2fa700d36d4f2671e1be84651df.jpg' }] }), []); // Placeholder for radio image
+    const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: [{ link: 'https://i.pinimg.com/originals/ed/54/d2/ed54d2fa700d36d4f2671e1be84651df.jpg' }] }), []);
 
     // NEW: State for featured artists
     const [featuredArtists, setFeaturedArtists] = useState([]);
@@ -37,16 +37,14 @@ const Discover = () => {
 
     // List of personalities to fetch songs for
     const personalities = useMemo(() => [
-        // Music Directors (prioritized)
-        "Ilaiyaraaja", "A. R. Rahman", "Yuvan Shankar Raja", "Anirudh Ravichander", "Harris Jayaraj",
-        // Actors (who are also singers/music-related)
-        "Vijay", "Dhanush", "Sivakarthikeyan",
-        // Directors (who are also music-related)
-        "Lokesh Kanagaraj", "Karthik Subbaraj",
-        // Others (less likely to have direct music profiles, but can try)
-        "Rajinikanth", "Kamal Haasan", "Ajith Kumar", "Suriya", "Vikram", "Karthi", "Jayam Ravi",
-        "Mani Ratnam", "Shankar", "Vetrimaaran", "Pa. Ranjith", "A. R. Murugadoss", "Bala", "Mysskin", "Gautham Vasudev Menon",
+        // Actors
+        "Rajinikanth", "Kamal Haasan", "Vijay", "Ajith Kumar", "Suriya", "Dhanush", "Vikram", "Sivakarthikeyan", "Karthi", "Jayam Ravi",
+        // Directors
+        "Mani Ratnam", "Shankar", "Vetrimaaran", "Lokesh Kanagaraj", "Pa. Ranjith", "A. R. Murugadoss", "Karthik Subbaraj", "Bala", "Mysskin", "Gautham Vasudev Menon",
+        // Writers
         "Jeyamohan", "Sujatha Rangarajan", "Kalki Krishnamurthy", "Balakumaran", "Bharathiraja", "K. Balachander", "R. Parthiban", "Crazy Mohan", "Visu", "Nanjil Nadan",
+        // Music Directors
+        "Ilaiyaraaja", "A. R. Rahman", "Yuvan Shankar Raja", "Harris Jayaraj", "Anirudh Ravichander", "D. Imman", "G. V. Prakash Kumar", "Santhosh Narayanan", "Hiphop Tamizha", "Sean Roldan"
     ], []);
 
     useEffect(() => {
