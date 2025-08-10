@@ -8,7 +8,7 @@ const PlaylistSongs = ({ tracks, setNewPlaylist }) => {
         {
           tracks.map( (song, i) => 
             <li key={i} className="relative flex flex-row gap-2 items-center p-2  transition-transform lg:hover:translate-x-[-5px] hover:translate-x-[-100px] hover:bg-white/5 hover:border-transparent border-b border-white/5 last:border-transparent">
-              <img src={song.image?.[0]?.link} className="min-w-[50px] aspect-square rounded-md bg-white/50" /> {/* Use Saavn image links */}
+              <img src={song.image} className="min-w-[50px] aspect-square rounded-md bg-white/50" /> {/* Use normalized image */}
               <div className="flex flex-col">
                 <p className="text-white text-sm truncate">{song.name}</p> {/* Use song.name */}
                 <p className="text-gray-400 text-xs">{song.primaryArtists}</p> {/* Use song.primaryArtists */}

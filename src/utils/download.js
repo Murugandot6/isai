@@ -9,7 +9,7 @@ export const downloadSong = async (song) => { // Made async
     return;
   }
 
-  // Find the highest quality download link
+  // Find the highest quality download link from the original array
   const highestQualityLink = song.downloadUrl.reduce((prev, current) => {
     const prevQuality = parseInt(prev.quality);
     const currentQuality = parseInt(current.quality);

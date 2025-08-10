@@ -44,37 +44,53 @@ export const getSingleData = ({ type, data }) => {
     newItem.favorite = favorites[dataType]?.map(elem => elem.id).includes(data.id);
     newItem.blacklist = blacklist[dataType]?.map(elem => elem.id).includes(data.id);
 
-    // Saavn specific data mapping
+    // Helper to get the highest quality image link
+    const getHighestQualityImage = (imageArray) => {
+        if (!imageArray || !Array.isArray(imageArray) || imageArray.length === 0) return '';
+        // Prioritize 500x500, then 150x150, then 50x50
+        return imageArray.find(img => img.quality === '500x500')?.link ||
+               imageArray.find(img => img.quality === '150x150')?.link ||
+               imageArray[0]?.link || '';
+    };
+
+    // Helper to get the highest quality download link for streaming
+    const getHighestQualityStreamUrl = (downloadUrlArray) => {
+        if (!downloadUrlArray || !Array.isArray(downloadUrlArray) || downloadUrlArray.length === 0) return '';
+        // Prioritize 320kbps, then 160kbps, then 128kbps, then 64kbps, then 12kbps
+        return downloadUrlArray.find(dl => dl.quality === '320kbps')?.link ||
+               downloadUrlArray.find(dl => dl.quality === '160kbps')?.link ||
+               downloadUrlArray.find(dl => dl.quality === '128kbps')?.link ||
+               downloadUrlArray.find(dl => dl.quality === '64kbps')?.link ||
+               downloadUrlArray[0]?.link || '';
+    };
+
+
+    // Saavn specific data mapping and normalization
     if (type === 'tracks') {
         newItem.title = data.name;
         newItem.artist = { name: data.primaryArtists, id: data.artistMap?.artists?.[0]?.id || data.primaryArtists }; // Assuming primaryArtists is a string
         newItem.album = { title: data.album?.name, id: data.album?.id, cover_small: data.image?.[0]?.link, cover_medium: data.image?.[1]?.link, cover_big: data.image?.[2]?.link, cover_xl: data.image?.[2]?.link };
         newItem.duration = data.duration;
         newItem.explicit_lyrics = data.explicitContent === 1;
-        newItem.preview = data.downloadUrl?.[0]?.link; // Use the first download URL as preview
-        newItem.downloadUrl = data.downloadUrl; // Keep all download URLs
-        newItem.image = data.image; // Keep all image sizes
+        newItem.downloadUrl = data.downloadUrl; // Keep original array for download functionality
+        newItem.streamUrl = getHighestQualityStreamUrl(data.downloadUrl); // New property for player source
+        newItem.image = getHighestQualityImage(data.image); // Normalize image to a single URL
         newItem.language = data.language; // Add language field for tracks
     } else if (type === 'albums') {
         newItem.title = data.name;
         newItem.artist = { name: data.primaryArtists, id: data.artistMap?.artists?.[0]?.id || data.primaryArtists };
-        newItem.cover_medium = data.image?.[1]?.link;
-        newItem.cover_xl = data.image?.[2]?.link;
+        newItem.image = getHighestQualityImage(data.image); // Normalize image to a single URL
         newItem.release_date = data.year; // Saavn provides year, not full date
     } else if (type === 'artists') {
         newItem.name = data.name;
-        newItem.picture_medium = data.image?.[1]?.link;
-        newItem.picture_xl = data.image?.[2]?.link;
-        newItem.image = data.image; // Keep all image sizes for artist
+        newItem.image = getHighestQualityImage(data.image); // Normalize image to a single URL
         newItem.followerCount = data.followerCount; // Add follower count for artists
     } else if (type === 'genres') {
         newItem.name = data.name;
-        newItem.picture_medium = data.image?.[1]?.link;
-        newItem.picture_xl = data.image?.[2]?.link;
+        newItem.image = getHighestQualityImage(data.image); // Normalize image to a single URL
     } else if (type === 'radios') {
         newItem.title = data.name;
-        newItem.picture_medium = data.image?.[1]?.link;
-        newItem.picture_xl = data.image?.[2]?.link;
+        newItem.image = getHighestQualityImage(data.image); // Normalize image to a single URL
     }
 
     // For tracks, if there are nested tracks (e.g., album details), process them
@@ -126,22 +142,6 @@ function handleLanguageFilter(item) { // NEW function
 }
 
 function addFavoriteAndBlacklist(item) {
-    // If it's a track, use getSingleData to ensure proper mapping (name -> title)
-    // getSingleData already handles favorite/blacklist, so we just need to pass the raw item
-    // and it will return the normalized item with favorite/blacklist flags.
-    if (dataType === 'tracks') {
-        return getSingleData({ type: 'tracks', data: item });
-    }
-    if (dataType === 'artists') {
-        return getSingleData({ type: 'artists', data: item });
-    }
-    if (dataType === 'albums') {
-        return getSingleData({ type: 'albums', data: item });
-    }
-
-    // For other types, just add favorite/blacklist flags as before
-    const newItem = { ...item };
-    newItem.favorite = favorites[dataType]?.map(elem => elem.id).includes(item.id);
-    newItem.blacklist = blacklist[dataType]?.map(elem => elem.id).includes(item.id);
-    return newItem;
+    // Use getSingleData to ensure proper mapping and normalization for all item types
+    return getSingleData({ type: dataType, data: item });
 };

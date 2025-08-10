@@ -18,8 +18,9 @@ const RadioStationCard = ({ station }) => {
             primaryArtists: station.country,
             artist: { name: station.country },
             album: { name: station.language },
-            image: [{ link: station.favicon || defaultRadioImage }],
-            downloadUrl: [{ quality: '128kbps', link: station.url_resolved }],
+            image: station.favicon || defaultRadioImage, // Use normalized image directly
+            downloadUrl: [{ quality: '128kbps', link: station.url_resolved }], // Keep array for download utility
+            streamUrl: station.url_resolved, // New property for player
             duration: 0, // Indicates a live stream
             explicitContent: 0,
         };
@@ -31,7 +32,7 @@ const RadioStationCard = ({ station }) => {
         pause();
     };
 
-    const imageUrl = imageError || !station.favicon ? defaultRadioImage : station.favicon;
+    const imageUrl = imageError || !station.image ? defaultRadioImage : station.image; // Use normalized image
 
     return (
         <div className="group relative flex flex-col items-center justify-center p-4 bg-white/5 rounded-lg gap-4 transition-colors hover:bg-white/10">
