@@ -32,9 +32,9 @@ const Playlist = () => {
     e.preventDefault()
     try {
       const { playlistInfo } = newPlaylist;
-      await createNewPlaylist(playlistInfo);
+      const newPlaylistId = await createNewPlaylist(playlistInfo); // Get the ID of the new playlist
       setNewPlaylist({ type: 'RESET' });
-      navigate('/editors-pick'); // Redirect to editors-pick after creation
+      navigate(`/playlists/${newPlaylistId}?edit=true`); // Redirect to the new playlist's edit page
     } catch (error) {
       setErrorSavingPlaylist(true);
     }
@@ -69,7 +69,7 @@ const Playlist = () => {
   }, [params])
 
   return (
-    <div className="px-2 flex md:px-4 relative overflow-hidden">
+    <div className="px-2 flex md:px-4 relative overflow-hidden min-h-[90vh]">
       {isImportPage ? (
         <ImportPlaylist
           handleSubmit={handleSubmit}

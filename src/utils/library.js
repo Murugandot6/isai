@@ -10,7 +10,7 @@ export const createNewPlaylist = (data) => new Promise(
       store.dispatch(createPlaylist({ ...data, id: playlistId }));
       displayMessage('Playlist created!');
       store.dispatch(setLibraryStorage());
-      resolve();
+      resolve(playlistId); // Resolve with the new playlist's ID
     } else {
       displayMessage('Couldn\'t create playlist!');
       reject();
