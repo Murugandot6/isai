@@ -35,9 +35,10 @@ const ArtistDetails = () => {
   }, [artistAlbumsData]);
 
   const topSongs = useMemo(() => {
-    // Adjusted to access artist.topSongs if topSongs is directly under the artist object
-    if (!artist?.topSongs) return [];
-    return getData({ type: 'tracks', data: artist.topSongs, languageFilter: 'tamil' }); // Apply language filter
+    // Check for 'topSongs' first, then fallback to 'songs'
+    const songsData = artist?.topSongs || artist?.songs; // Added || artist?.songs
+    if (!songsData) return [];
+    return getData({ type: 'tracks', data: songsData, languageFilter: 'tamil' }); // Apply language filter
   }, [artist]);
 
   useEffect(() => {
