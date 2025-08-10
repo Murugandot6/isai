@@ -1,8 +1,9 @@
 "use client";
 
 import { displayMessage } from './prompt';
+import axios from 'axios'; // Import axios
 
-export const downloadSong = (song) => {
+export const downloadSong = async (song) => { // Made async
   if (!song || !song.downloadUrl || song.downloadUrl.length === 0) {
     displayMessage("No download link available for this song.");
     return;
@@ -16,13 +17,26 @@ export const downloadSong = (song) => {
   }, song.downloadUrl[0]);
 
   if (highestQualityLink && highestQualityLink.link) {
-    const link = document.createElement('a');
-    link.href = highestQualityLink.link;
-    link.download = `${song.name || song.title}.mp3`; // Use song.name or song.title for filename
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    displayMessage(`Downloading ${song.name || song.title}...`);
+    try {
+      displayMessage(`Preparing to download ${song.name || song.title}...`);
+      const response = await axios.get(highestQualityLink.link, {
+        responseType: 'blob', // Important: request as a blob
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${song.name || song.title}.mp3`); // Suggest .mp3 extension
+      document.body.appendChild(link);
+      link.click();
+      link.remove(); // Clean up the element
+      window.URL.revokeObjectURL(url); // Clean up the object URL
+
+      displayMessage(`Downloading ${song.name || song.title}...`);
+    } catch (error) {
+      console.error("Error during song download:", error);
+      displayMessage(`Failed to download ${song.name || song.title}. Please try again.`);
+    }
   } else {
     displayMessage("No valid download link found.");
   }
