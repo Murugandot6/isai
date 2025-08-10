@@ -16,7 +16,7 @@ export const saavnApi = createApi({
             query: (id) => `/lyrics?id=${id}`,
         }),
         getArtistDetails: builder.query({ // Adjusted endpoint for artist details
-            query: ({ id }) => `/artists/${id}`, // Corrected to use path parameter for artist ID
+            query: ({ id }) => `/artists?id=${id}`, // Corrected to use query parameter for artist ID
         }),
         getArtistAlbums: builder.query({ // NEW: Endpoint to fetch artist's albums
             query: ({ id, page = 1 }) => 
