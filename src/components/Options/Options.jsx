@@ -15,10 +15,10 @@ const calculateModalPosition = (buttonRect, modalWidth, modalHeight) => {
     const viewportWidth = window.innerWidth;
 
     // Attempt to place to the left of the button, with a much larger offset
-    let left = buttonRect.x - modalWidth - 200; // Doubled offset for 'more left'
+    let left = buttonRect.x - modalWidth - 300; // Further increased offset for 'more left'
 
     // Attempt to place higher than vertically centered, with a much larger offset
-    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2) - 200; // Doubled offset for 'more up'
+    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2) - 300; // Further increased offset for 'more up'
 
     // --- Horizontal Adjustment ---
     if (left < 0) { // If it goes off the left side
@@ -112,12 +112,12 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
             {showModal && (
                 <>
                     {/* Full-screen transparent overlay to catch clicks outside the modal */}
-                    <div className="fixed inset-0 z-[9998] bg-transparent" onClick={closeModal} />
+                    <div className="fixed inset-0 z-[999998] bg-transparent" onClick={closeModal} />
                     <ul
                         ref={modalRef}
                         onClick={(e) => e.stopPropagation()}
                         style={{ ...modalPosition, position: 'fixed', transition: 'top 0.2s ease-out, left 0.2s ease-out' }} // Apply calculated style and ensure fixed position
-                        className="shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
+                        className="shadow-xl overflow-hidden shadow-black/20 z-[999999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
                     >
                         {
                             filteredOptions
