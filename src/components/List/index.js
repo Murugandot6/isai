@@ -11,6 +11,7 @@ import RecentAlbums from './RecentAlbums';
 import Suggestion from './Suggestion';
 import RecentArtists from './RecentArtists';
 import RadioStationList from './RadioStationList';
+import { Error, Loader } from '../LoadersAndError'; // Correct import for re-export
 
 export {
     Albums,
@@ -25,5 +26,7 @@ export {
     RecentAlbums,
     RecentArtists,
     Suggestion,
-    RadioStationList
+    RadioStationList,
+    Error, // Re-exporting Error
+    Loader // Re-exporting Loader
 }
