@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useState } from 'react'; // Import useState
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
@@ -6,6 +6,7 @@ import { Error, Loader, Songs, Albums } from '../components/List'; // Import Alb
 import { DetailsContext } from '../components/Details';
 import { useGetArtistDetailsQuery } from '../redux/services/saavnApi';
 import { getSingleData, getData } from '../utils/fetchData'; // Import getData
+import { MoreButton } from '../components/Buttons'; // Import MoreButton
 
 const ArtistDetails = () => {
   const { id: artistId } = useParams();
@@ -18,6 +19,8 @@ const ArtistDetails = () => {
   const artistData = artistDetailsResult?.data;
   const topSongs = artistData?.topSongs || [];
   const topAlbums = artistData?.topAlbums || []; // Get top albums from API response
+
+  const [songsLimit, setSongsLimit] = useState(10); // State to control song display limit
 
   useEffect(() => {
     if (artistData) {
@@ -40,6 +43,11 @@ const ArtistDetails = () => {
     document.getElementById('site_title').innerText = text;
   }, [artistData, isFetching, error]);
 
+  // Reset songsLimit when artistId changes
+  useEffect(() => {
+    setSongsLimit(10);
+  }, [artistId]);
+
   if (isFetching) return <Loader title="Loading artist details..." />;
   if (error) return <Error title="Failed to load artist details." />;
 
@@ -49,14 +57,18 @@ const ArtistDetails = () => {
         <h2 className="text-white text-3xl font-bold">Top Songs:</h2>
         <div className="mt-3 flex flex-col gap-1">
           {topSongs.length > 0 ? (
-            <Songs
-              songs={topSongs} // Pass raw songs to Songs component for internal normalization
-              isFetching={isFetching}
-              error={error}
-              blacklist={library.blacklist}
-              favorites={library.favorites}
-              full={true}
-            />
+            <>
+              <Songs
+                songs={topSongs} // Pass raw songs to Songs component for internal normalization
+                isFetching={isFetching}
+                error={error}
+                blacklist={library.blacklist}
+                favorites={library.favorites}
+                full={true}
+                limit={songsLimit} // Apply the limit here
+              />
+              <MoreButton setLimit={setSongsLimit} limit={songsLimit} length={topSongs.length} />
+            </>
           ) : (
             <p className="text-gray-400 mt-2">No top songs found for this artist.</p>
           )}

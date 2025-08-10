@@ -8,11 +8,14 @@ import { getData } from "../../utils/fetchData";
 import { useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-const Songs = ({ songs, suggestion, children, isFetching, error, showmore, genreid, noFilter, full, bg }) => {
+const Songs = ({ songs, suggestion, children, isFetching, error, showmore, genreid, noFilter, full, bg, limit }) => {
   const library = useSelector(state => state.library);
   const [params, setParams] = useSearchParams();
 
-  const tracks = useMemo(() => getData({ type: 'tracks', data: songs, noFilter, sortType: params.get('sort'), library }), [library, songs, noFilter, params]);
+  const tracks = useMemo(() => {
+    const filteredAndSorted = getData({ type: 'tracks', data: songs, noFilter, sortType: params.get('sort'), library });
+    return limit ? filteredAndSorted.slice(0, limit) : filteredAndSorted; // Apply limit here
+  }, [library, songs, noFilter, params, limit]);
 
   const background = useMemo(() =>  (full && bg) && bg.replace(')', ',0.6)'), [bg, full, songs]);
 
@@ -35,7 +38,7 @@ const Songs = ({ songs, suggestion, children, isFetching, error, showmore, genre
       </div>
       {
         isFetching ?
-          <SongLoading num={4} full={full} /> :
+          <SongLoading num={limit || 4} full={full} /> : // Adjust loader num based on limit
           (
             error ?
               <Error title="Could not Fetch songs" /> :
