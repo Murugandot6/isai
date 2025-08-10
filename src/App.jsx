@@ -2,28 +2,29 @@ import { useLayoutEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Route, Routes, useSearchParams } from 'react-router-dom';
 import {
-  ArtistDetails, // Will be a placeholder
+  ArtistDetails,
   Discover,
   Search,
   SongDetails,
-  TopCharts, // Will be a placeholder
-  AlbumDetails, // Will be a placeholder
-  Genres, // Will be a placeholder
+  TopCharts,
+  AlbumDetails,
+  Genres,
   Playlist,
-  GenreDetails, // Will be a placeholder
+  GenreDetails,
   PlaylistDetails,
   Favorites,
   Blacklist,
-  EditorsPick, // New import
+  EditorsPick,
   Radio,
 } from './pages';
+import ArtistsList from './pages/ArtistsList'; // Import the new ArtistsList component
 import Details from './components/Details';
 import { setPlayer } from './redux/features/playerSlice';
-import { setLibrary } from './redux/features/librarySlice'; // Removed setEditorsPickPlaylists import
+import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
 
 import { recordVisitor } from './utils/db';
-import { importAllPlaylistsFromCsv } from './utils/bulkPlaylistImport'; // Import the bulk import function
+import { importAllPlaylistsFromCsv } from './utils/bulkPlaylistImport';
 
 const App = () => {
   const [searchParams] = useSearchParams();
@@ -32,51 +33,48 @@ const App = () => {
   useLayoutEffect(() => {
     recordVisitor(searchParams);
 
-    // Fetch player state from local storage (still used for player settings)
     const playerStorage = localStorage.getItem('player');
     if (playerStorage) dispatch(setPlayer(JSON.parse(playerStorage)));
 
-    // Fetch library data (playlists, editorsPick, favorites, blacklist) from local storage
     const libraryStorage = localStorage.getItem('library');
     if (libraryStorage) {
       const storedLibrary = JSON.parse(libraryStorage);
       dispatch(setLibrary(storedLibrary));
     } else {
-      // Initialize with empty state if nothing in local storage
       dispatch(setLibrary({
         playlists: [],
-        editorsPick: [], // Will be populated by importAllPlaylistsFromCsv
+        editorsPick: [],
         favorites: { tracks: [], genres: [], artists: [], albums: [], radios: [] },
         blacklist: { tracks: [], genres: [], artists: [], albums: [], radios: [] },
       }));
     }
 
-    // Import editor's pick playlists from CSVs on app load
     importAllPlaylistsFromCsv();
   }, []);
 
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/charts" element={<TopCharts />} /> {/* Placeholder */}
+        <Route path="/charts" element={<TopCharts />} />
         <Route path="/*" element={<Discover />} />
         <Route element={<Details />}>
-          <Route path="/artists/:id" element={<ArtistDetails />} /> {/* Placeholder */}
-          <Route path="/albums/:id" element={<AlbumDetails />} /> {/* Placeholder */}
+          <Route path="/artists/:id" element={<ArtistDetails />} />
+          <Route path="/albums/:id" element={<AlbumDetails />} />
           <Route path="/songs/:songid" element={<SongDetails />} />
         </Route>
         <Route path="/search/:searchTerm" element={<Search />} />
 
-        <Route path="/genres/" element={<Genres />} /> {/* Placeholder */}
-        <Route path="/genres/:id" element={<GenreDetails />} /> {/* Placeholder */}
+        <Route path="/genres/" element={<Genres />} />
+        <Route path="/genres/:id" element={<GenreDetails />} />
                   
         <Route path="/playlists/" element={<Playlist />} />
         <Route path="/playlists/:id" element={<PlaylistDetails />} />
 
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/blacklist" element={<Blacklist />} />
-        <Route path="/editors-pick" element={<EditorsPick />} /> {/* New route */}
+        <Route path="/editors-pick" element={<EditorsPick />} />
         <Route path="/radio" element={<Radio />} />
+        <Route path="/artists" element={<ArtistsList />} /> {/* New Artists List route */}
       </Route>
     </Routes>
   );
