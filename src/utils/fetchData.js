@@ -69,7 +69,7 @@ export const getSingleData = (item, type) => {
 };
 
 // Processes an entire array of data.
-export const getData = ({ type, data, library }) => {
+export const getData = ({ type, data, library, selectedLanguage }) => {
   if (!data || !Array.isArray(data)) return [];
 
   const addFlags = (item) => {
@@ -81,10 +81,18 @@ export const getData = ({ type, data, library }) => {
     return newItem;
   };
 
-  return data
+  let processedData = data
     .map(item => getSingleData(item, type))
-    .map(addFlags)
     .filter(Boolean);
+
+  // Apply language filter if a language is selected and it's a track type
+  if (selectedLanguage && type === 'tracks') {
+    processedData = processedData.filter(item => 
+      item.language?.toLowerCase() === selectedLanguage.toLowerCase()
+    );
+  }
+
+  return processedData.map(addFlags);
 };
 
 export const fetchSongs = async (album) => {
@@ -109,7 +117,8 @@ export const fetchSuggestedSongs = ({ id, suggestedSongsIds }) => new Promise(
             if (!result || result.data.results.length === 0) throw 'error occured';
             
             const library = store.getState().library;
-            const res = getData({ type: 'tracks', data: result.data.results, library });
+            const { selectedLanguage } = store.getState().settings; // Get selected language
+            const res = getData({ type: 'tracks', data: result.data.results, library, selectedLanguage }); // Pass selected language
             const data = res.filter(song => !suggestedSongsIds.includes(song.id));
             resolve(data);
         } catch (error) {
@@ -133,6 +142,7 @@ export const searchSongByTitleAndArtist = async (title, artist) => {
             );
             
             const library = store.getState().library;
+            const { selectedLanguage } = store.getState().settings; // Get selected language
             if (bestMatch) {
                 return getSingleData(bestMatch, 'tracks');
             } else {
@@ -152,7 +162,8 @@ export const fetchTrendingSongsByLanguage = async (language) => {
         const { data: searchResults } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate(query));
         if (searchResults?.data?.results?.length > 0) {
             const library = store.getState().library;
-            return getData({ type: 'tracks', data: searchResults.data.results, library });
+            const { selectedLanguage } = store.getState().settings; // Get selected language
+            return getData({ type: 'tracks', data: searchResults.data.results, library, selectedLanguage }); // Pass selected language
         }
         return [];
     } catch (error) {
@@ -182,11 +193,12 @@ export const fetchArtistDetailsAndContent = async (artistName) => {
         }
 
         const library = store.getState().library;
+        const { selectedLanguage } = store.getState().settings; // Get selected language
 
         // Normalize data
         const normalizedArtist = getSingleData(artist, 'artists');
-        const topSongs = getData({ type: 'tracks', data: artist.topSongs, library });
-        const topAlbums = getData({ type: 'albums', data: artist.topAlbums, library });
+        const topSongs = getData({ type: 'tracks', data: artist.topSongs, library, selectedLanguage }); // Pass selected language
+        const topAlbums = getData({ type: 'albums', data: artist.topAlbums, library, selectedLanguage }); // Pass selected language
 
         return {
             artist: normalizedArtist,

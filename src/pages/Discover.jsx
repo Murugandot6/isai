@@ -13,17 +13,18 @@ import { ArtistCard } from '../components/Cards';
 const Discover = () => {
     const library = useSelector(state => state.library); // Get full library object
     const { playlists: userPlaylists, favorites } = library; // Destructure favorites
+    const { selectedLanguage } = useSelector(state => state.settings); // Get selected language
 
-    // Fetch data for Tamil Latest Songs
-    const { data: tamilSongsData, isFetching: isFetchingTamilSongs, error: errorFetchingTamilSongs } = useSearchSongsQuery('tamil latest songs');
-    const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results, type: 'tracks', library }) : [], [tamilSongsData, library]);
+    // Fetch data for Tamil Latest Songs, now dynamic based on selectedLanguage
+    const { data: tamilSongsData, isFetching: isFetchingTamilSongs, error: errorFetchingTamilSongs } = useSearchSongsQuery(`${selectedLanguage} latest songs`);
+    const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results, type: 'tracks', library, selectedLanguage }) : [], [tamilSongsData, library, selectedLanguage]);
     
     // Get favorite songs from Redux state
-    const favoriteSongs = useMemo(() => favorites.tracks ? getData({ data: favorites.tracks, type: 'tracks', library }).slice(0, 10) : [], [favorites.tracks, library]);
+    const favoriteSongs = useMemo(() => favorites.tracks ? getData({ data: favorites.tracks, type: 'tracks', library, selectedLanguage }).slice(0, 10) : [], [favorites.tracks, library, selectedLanguage]);
 
-    // Fetch data for popular Tamil radio stations
+    // Fetch data for popular Tamil radio stations, now dynamic based on selectedLanguage
     const { data: popularTamilStationsData, isFetching: isFetchingTamilStations, error: errorFetchingTamilStations } = useSearchStationsQuery({
-        language: 'tamil',
+        language: selectedLanguage, // Use selected language here
         limit: 5,
         hidebroken: true
     });
@@ -51,7 +52,7 @@ const Discover = () => {
             )}
 
             <RadioStationList
-                title="Popular Tamil FM Stations"
+                title={`Popular ${selectedLanguage} FM Stations`} {/* Dynamic title */}
                 stations={popularTamilStations}
                 isFetching={isFetchingTamilStations}
                 error={errorFetchingTamilStations}
@@ -62,7 +63,7 @@ const Discover = () => {
                 error={errorFetchingTamilSongs}
                 songs={tamilLatestSongs}
             >
-                Tamil Latest Songs
+                {`${selectedLanguage} Latest Songs`} {/* Dynamic title */}
             </Songs>
 
             {/* Updated section to show favorite songs */}

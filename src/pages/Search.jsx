@@ -11,6 +11,7 @@ const Search = () => {
     const { searchTerm } = useParams()
     const [params, setParams] = useSearchParams()
     const library = useSelector(state => state.library)
+    const { selectedLanguage } = useSelector(state => state.settings); // Get selected language
 
     // Fetch songs
     const { data: searchSongsResults, isFetching: isFetchingSongs, error: errorSongs } = useSearchSongsQuery(searchTerm);
@@ -21,15 +22,17 @@ const Search = () => {
             if (categoryParam === 'Song' && item.type !== 'song') return false;
             return true;
         });
-        return getData({ type: 'tracks', data: preFiltered, library });
-    }, [searchSongsResults, params, library]);
+        return getData({ type: 'tracks', data: preFiltered, library, selectedLanguage }); // Pass selected language
+    }, [searchSongsResults, params, library, selectedLanguage]);
 
     // Fetch artists
     const { data: searchArtistsResults, isFetching: isFetchingArtists, error: errorArtists } = useSearchArtistsQuery(searchTerm);
     const filteredArtists = useMemo(() => {
         const rawResults = searchArtistsResults?.data?.results || [];
-        return getData({ type: 'artists', data: rawResults, library });
-    }, [searchArtistsResults, library]);
+        // Note: Saavn API does not provide direct language filtering for artists.
+        // Artists might sing in multiple languages.
+        return getData({ type: 'artists', data: rawResults, library, selectedLanguage }); // Pass selected language (for consistency, but won't filter by language)
+    }, [searchArtistsResults, library, selectedLanguage]);
 
     // Fetch albums (Saavn API doesn't have a direct /search/albums, so we'll use searchSongs and filter, or searchArtists and get their albums if needed)
     // For simplicity, we'll just filter from song search results for now, or rely on artist details for albums.
@@ -43,8 +46,10 @@ const Search = () => {
     });
     const filteredAlbums = useMemo(() => {
         const rawResults = searchAlbumsResults || [];
-        return getData({ type: 'albums', data: rawResults, library });
-    }, [searchAlbumsResults, library]);
+        // Note: Saavn API does not provide direct language filtering for albums.
+        // Albums can contain songs in different languages.
+        return getData({ type: 'albums', data: rawResults, library, selectedLanguage }); // Pass selected language (for consistency, but won't filter by language)
+    }, [searchAlbumsResults, library, selectedLanguage]);
 
 
     useEffect(() => {

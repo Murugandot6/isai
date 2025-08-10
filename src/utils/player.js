@@ -27,11 +27,10 @@ export function prev (i) {
 
 export async function onShuffle (isSongPlaying) {
     store.dispatch(shuffleOn(isSongPlaying));
-    store.dispatch(incrementShuffleLanguageIndex());
+    // No need to increment shuffleLanguageIndex here, as we'll use the global selectedLanguage
+    // store.dispatch(incrementShuffleLanguageIndex()); 
 
-    const { shuffleLanguageIndex } = store.getState().player;
-    const languages = ['English', 'Tamil', 'Hindi'];
-    const selectedLanguage = languages[shuffleLanguageIndex];
+    const { selectedLanguage } = store.getState().settings; // Get selected language from settings slice
 
     displayMessage(`Shuffling with trending ${selectedLanguage} songs.`);
 
