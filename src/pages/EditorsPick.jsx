@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import editorsPickPlaylists from '../data/editorsPickPlaylists'; // Import the hardcoded playlists
 import ImportForm from '../components/CreatePlaylist/ImportForm'; // Import the new ImportForm component
 import { playlistDispatch, playlistState, createNewPlaylist } from '../utils/library'; // Import playlist utilities
+import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport'; // Import the bulk import utility
 
 const EditorsPick = () => {
   const navigate = useNavigate();
@@ -42,12 +43,20 @@ const EditorsPick = () => {
         {/* Editors' Pick Playlists Section */}
         <div className="w-full flex justify-between items-center mb-4">
           <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
-          <button 
-            onClick={() => setShowImportForm(!showImportForm)} // Toggle form visibility
-            className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
-          >
-            {showImportForm ? 'Hide Import' : 'Import Playlist'}
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={importAllPlaylistsFromCsv} // Call the bulk import function
+              className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
+            >
+              Import All CSVs
+            </button>
+            <button 
+              onClick={() => setShowImportForm(!showImportForm)} // Toggle form visibility
+              className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
+            >
+              {showImportForm ? 'Hide Import' : 'Import Single CSV'}
+            </button>
+          </div>
         </div>
         
         {showImportForm && (

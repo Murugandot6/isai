@@ -9,7 +9,7 @@ import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
 import { useSelector } from 'react-redux';
 import { Playlists } from '../components/List';
-import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport'; // Import the new utility
+// import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport'; // Removed import
 
 const Playlist = () => {
   const genres = { data: [] }; // Mock empty genres data as Saavn API doesn't provide this directly
@@ -93,12 +93,7 @@ const Playlist = () => {
           <div className="w-full flex justify-between items-center mb-4">
             <h3 className="font-bold text-white text-xl">Your Playlists</h3>
             <div className="flex gap-2">
-              <button
-                onClick={importAllPlaylistsFromCsv}
-                className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
-              >
-                Import All CSVs
-              </button>
+              {/* Removed Import All CSVs button */}
               <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
                 Create New
               </Link>
