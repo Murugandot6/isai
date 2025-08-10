@@ -4,5 +4,6 @@ import dyadComponentTagger from '@dyad-sh/react-vite-component-tagger';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [dyadComponentTagger(), react()],
 });
