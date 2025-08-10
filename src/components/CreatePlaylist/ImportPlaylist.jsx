@@ -7,7 +7,7 @@ import { searchSongByTitleAndArtist } from '../../utils/fetchData';
 import { displayMessage } from '../../utils/prompt';
 import { MdPlaylistAdd } from 'react-icons/md';
 
-const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPlaylist }) => {
+const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPlaylist, isImportPage }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [importError, setImportError] = useState(null);
   const [processedSongsCount, setProcessedSongsCount] = useState(0);
@@ -66,7 +66,7 @@ const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavin
   };
 
   return (
-    <form onSubmit={handleSubmit} className="min-w-full min-h-[90vh] px-3">
+    <form onSubmit={handleSubmit} className={`min-w-full min-h-[90vh] transition-[transform,opacity] duration-300 ease-in-out absolute top-0 left-0 ${isImportPage ? 'translate-x-0 opacity-100' : 'translate-x-[100%] opacity-0 pointer-events-none'} px-3`}>
       <h3 className="flex-1 text-white font-bold text-xl mb-6">Import Playlist from Spotify CSV</h3>
 
       <div className="flex flex-col md:flex-row items-start md:items-end gap-4 mb-6">

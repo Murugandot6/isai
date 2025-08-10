@@ -7,7 +7,7 @@ const PlaylistsFront = ({ isInAddPage }) => {
     const { playlists } = useSelector(state => state.library);
     const navigate = useNavigate();
     return (
-        <div className={`min-w-full transition-transform ${isInAddPage && 'translate-x-[-110%]'}`}>
+        <div className={`min-w-full transition-transform duration-300 ease-in-out ${isInAddPage ? 'translate-x-[-100%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'} absolute top-0 left-0`}>
             <div className="w-full flex justify-between items-center mb-4">
                 <h3 className="font-bold text-white text-xl">Playlists</h3>
                 <div className="flex gap-2">

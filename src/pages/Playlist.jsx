@@ -62,32 +62,28 @@ const Playlist = () => {
   }, [params])
 
   return (
-    <div className={`px-2 flex md:px-4 overflow-x-clip ${(!isInAddPage && !isImportPage) ? 'overflow-y-hidden' : ''}`}>
+    <div className="px-2 flex md:px-4 relative overflow-hidden">
       <PlaylistsFront isInAddPage={isInAddPage || isImportPage} />
-      {
-        isImportPage ? (
-          <ImportPlaylist
-            handleSubmit={handleSubmit}
-            playlistInfo={newPlaylist.playlistInfo}
-            setNewPlaylist={setNewPlaylist}
-            errorSavingPlaylist={errorSavingPlaylist}
-          />
-        ) : (
-          <CreatePlaylist
-            handleSubmit={handleSubmit}
-            isInAddPage={isInAddPage}
-            playlistInfo={newPlaylist.playlistInfo}
-            setNewPlaylist={setNewPlaylist}
-            handleChange={handleChange}
-            genres={genres}
-            isFetching={isFetching}
-            error={error}
-            genreNum={newPlaylist.genreNum}
-            suggestedSongs={newPlaylist.suggestedSongs}
-            errorSavingPlaylist={errorSavingPlaylist}
-          />
-        )
-      }
+      <CreatePlaylist
+        handleSubmit={handleSubmit}
+        isInAddPage={isInAddPage}
+        playlistInfo={newPlaylist.playlistInfo}
+        setNewPlaylist={setNewPlaylist}
+        handleChange={handleChange}
+        genres={genres}
+        isFetching={isFetching}
+        error={error}
+        genreNum={newPlaylist.genreNum}
+        suggestedSongs={newPlaylist.suggestedSongs}
+        errorSavingPlaylist={errorSavingPlaylist}
+      />
+      <ImportPlaylist
+        handleSubmit={handleSubmit}
+        playlistInfo={newPlaylist.playlistInfo}
+        setNewPlaylist={setNewPlaylist}
+        errorSavingPlaylist={errorSavingPlaylist}
+        isImportPage={isImportPage}
+      />
     </div>
   )
 }
