@@ -7,7 +7,6 @@ import { HeaderLoading, Error } from '../../LoadersAndError'
 import { useContext, useEffect, useRef, useState } from 'react'
 import ColorThief from 'colorthief'
 import { DetailsContext } from '../../Details'
-import { albumImage as defaultAlbumImage } from '../../../assets/images'; // Import default album image
 
 const DetailsHeader = () => {
   const { data, isFetching, error, updateData, ...others } = useContext(DetailsContext)
@@ -26,8 +25,8 @@ const DetailsHeader = () => {
   }
 
   useEffect(() => {
-    // data.image is already normalized to a string URL by getSingleData
-    setUrl(isFetching ? '' : data?.image || defaultAlbumImage); // Use normalized image URL or default
+    // Saavn API uses 'image' array for different sizes
+    setUrl(isFetching ? '' : data?.image); // Use normalized image URL
     updateData({ ...others, colors: isFetching || error ? [] : [bg, text], data, isFetching, error });
   }, [isFetching, data])
 
@@ -37,7 +36,7 @@ const DetailsHeader = () => {
     >
       {
         url &&
-        <img crossOrigin='anonymous' ref={imageRef} onLoad={onLoad} src={url} alt={data?.name || data?.title} className="absolute top-0 left-0 w-full h-full object-cover" />
+        <img crossOrigin='anonymous' ref={imageRef} onLoad={onLoad} src={url} alt="" className="absolute top-0 left-0 w-full h-full object-cover" />
       }
       {
         bg &&

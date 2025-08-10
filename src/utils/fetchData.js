@@ -3,159 +3,82 @@
 import { playSongs, pause } from './player.js';
 import { store } from '../redux/store';
 import { saavnApi } from '../redux/services/saavnApi.js';
-import { songImage as defaultSongImage, albumImage as defaultAlbumImage, artistImage as defaultArtistImage, radioImage as defaultRadioImage } from '../assets/images';
-
 
 // --- Start of logic moved from getData.js ---
 
-/**
- * Safely gets the highest quality URL from a Saavn API array (image or downloadUrl).
- * @param {Array} arr - The array of quality/url objects.
- * @param {string} defaultImg - A default image URL to use if no valid URL is found.
- * @returns {string} The URL string or the default image if not found.
- */
-const getImageUrl = (imageArray, defaultImg = '') => {
-  if (!Array.isArray(imageArray) || imageArray.length === 0) {
-    return defaultImg;
-  }
-  // The last item in the array is often the highest quality.
-  // The key is sometimes 'url' and sometimes 'link'. We check for both.
-  const bestUrl = imageArray[imageArray.length - 1]?.link || imageArray[imageArray.length - 1]?.url;
-  return bestUrl || defaultImg;
+// Safely gets the highest-quality URL from an image array.
+const getImageUrl = (imageArray) => {
+  if (!Array.isArray(imageArray) || imageArray.length === 0) return '';
+  // Use the last item in the array, which is typically the highest quality.
+  // Check for both 'link' and 'url' properties
+  return imageArray[imageArray.length - 1]?.link || imageArray[imageArray.length - 1]?.url || '';
 };
 
 // Safely gets the highest-quality playable audio URL from a downloadUrl array.
 const getStreamUrl = (urlArray) => {
   if (!Array.isArray(urlArray) || urlArray.length === 0) return '';
   // Find the highest quality link (last in the array) that is a playable format.
-  const supportedLink = urlArray.slice().reverse().find(q => q.link && (q.link.includes('.mp4') || q.link.includes('.m4a') || q.link.includes('.mp3')));
+  const supportedLink = urlArray.slice().reverse().find(q => q.link && (q.link.includes('.mp4') || q.link.includes('.m4a')));
   return supportedLink?.link || '';
 };
 
-/**
- * Normalizes a single item (song, album, etc.) into a consistent flat structure.
- * @param {object} item - The raw item object.
- * @param {string} type - The type of item ('tracks', 'albums', 'artists', 'radios').
- * @returns {object} A clean item object with normalized properties.
- */
+// Normalizes a single item (song, album, etc.) into a consistent format.
 export const getSingleData = (item, type) => {
-  if (!item || !item.id) return null; // Return null if the item is invalid or lacks an ID
-
-  const base = {
-    id: item.id,
-    name: item.name || item.title, // Use 'name' as primary, fallback to 'title'
-    type: item.type,
-    favorite: item.favorite, // These flags will be added by getData
-    blacklist: item.blacklist, // These flags will be added by getData
-  };
+  if (!item) return null;
 
   switch (type) {
     case 'tracks':
       return {
-        ...base,
+        id: item.id,
         title: item.name || item.title,
         subtitle: item.primaryArtists || item.artists?.primary?.[0]?.name,
-        image: getImageUrl(item.image, defaultSongImage),
+        image: getImageUrl(item.image),
         streamUrl: getStreamUrl(item.downloadUrl),
         duration: item.duration,
         language: item.language,
-        album: {
-          id: item.album?.id,
-          name: item.album?.name,
-          image: getImageUrl(item.album?.image, defaultAlbumImage),
-        },
-        artist: {
-          id: item.artistMap?.artists?.[0]?.id || item.primaryArtists, // Use primaryArtists as fallback for artist ID
-          name: item.primaryArtists || item.artistMap?.artists?.[0]?.name,
-          image: getImageUrl(item.artistMap?.artists?.[0]?.image, defaultArtistImage),
-        },
+        album: item.album?.name,
         downloadUrl: item.downloadUrl,
-        explicitContent: item.explicitContent,
+        allImages: item.image, // Keep original for other uses if needed
       };
     case 'albums':
       return {
-        ...base,
+        id: item.id,
         title: item.name || item.title,
-        image: getImageUrl(item.image, defaultAlbumImage),
+        subtitle: item.artists?.[0]?.name || item.primaryArtists || '',
+        image: getImageUrl(item.image),
         year: item.year,
-        songCount: item.songCount,
-        artist: {
-          id: item.artistMap?.artists?.[0]?.id || item.primaryArtists,
-          name: item.primaryArtists || item.artistMap?.artists?.[0]?.name,
-          image: getImageUrl(item.artistMap?.artists?.[0]?.image, defaultArtistImage),
-        },
       };
-    case 'artists':
+    case 'artists': // Add explicit handling for artists
       return {
-        ...base,
+        id: item.id,
         name: item.name,
-        image: getImageUrl(item.image, defaultArtistImage),
+        image: getImageUrl(item.image), // Normalize image here
+        type: item.type,
         followerCount: item.followerCount,
-      };
-    case 'genres':
-      return {
-        ...base,
-        name: item.name,
-        image: getImageUrl(item.image, defaultAlbumImage), // Using album default for genres
-      };
-    case 'radios':
-      return {
-        ...base,
-        name: item.name,
-        image: getImageUrl(item.favicon || item.image, defaultRadioImage), // RadioBrowser uses favicon, Saavn uses image
-        country: item.country,
-        language: item.language,
-        url_resolved: item.url_resolved,
+        allImages: item.image, // Keep original for other uses if needed
       };
     default:
       return item;
   }
 };
 
-/**
- * Processes an entire array of data, normalizing each item and adding favorite/blacklist flags.
- * @param {object} options - Options object.
- * @param {string} options.type - The type of items in the array ('tracks', 'albums', 'artists', 'genres', 'radios').
- * @param {Array} options.data - The raw array of items.
- * @param {object} options.library - The Redux library state (favorites, blacklist).
- * @param {boolean} [options.noFilter=false] - If true, skips blacklist filtering.
- * @param {string} [options.sortType=''] - Type of sorting ('popular', 'recent').
- * @param {string} [options.albumFilter=''] - Filter for album record type (e.g., 'EP', 'Single').
- * @returns {Array} An array of normalized and flagged items.
- */
-export const getData = ({ type, data, library, noFilter = false, sortType = '', albumFilter = '' }) => {
+// Processes an entire array of data.
+export const getData = ({ type, data, library }) => {
   if (!data || !Array.isArray(data)) return [];
 
   const addFlags = (item) => {
     if (!library || !item) return item;
     const newItem = { ...item };
-    const libraryType = type === 'songs' ? 'tracks' : type; // 'songs' maps to 'tracks' in library
+    const libraryType = type === 'songs' ? 'tracks' : type;
     newItem.favorite = library.favorites[libraryType]?.some(fav => fav.id === item.id);
     newItem.blacklist = library.blacklist[libraryType]?.some(bl => bl.id === item.id);
     return newItem;
   };
 
-  const sortData = (a, b) => {
-    if (sortType === 'popular') {
-      return (b.playCount || 0) - (a.playCount || 0); // Assuming playCount for popularity
-    } else if (sortType === 'recent') {
-      return (b.year || 0) - (a.year || 0); // Assuming year for recency
-    }
-    return 0;
-  };
-
-  const filterData = (item) => {
-    const isNotBlacklisted = noFilter || !item.blacklist;
-    const matchesAlbumFilter = albumFilter ? new RegExp(albumFilter, 'i').test(item.record_type || '') : true;
-    return isNotBlacklisted && matchesAlbumFilter;
-  };
-
   return data
     .map(item => getSingleData(item, type))
-    .filter(Boolean) // Remove any nulls from normalization
     .map(addFlags)
-    .filter(filterData)
-    .sort(sortData);
+    .filter(Boolean);
 };
 
 // --- End of logic moved from getData.js ---
@@ -167,8 +90,7 @@ export const fetchSongs = async (album) => {
         const { data: result } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate(album.name));
         if(!result || result.data.results.length === 0) throw 'No songs found for this album';
         
-        const library = store.getState().library;
-        const tracks = getData({ type: 'tracks', data: result.data.results, library });
+        const tracks = result.data.results; // Removed .slice(0, 20)
         const song = tracks[0];
         const i = 0;
         playSongs({ song, tracks, i, album });

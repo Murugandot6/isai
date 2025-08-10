@@ -12,7 +12,7 @@ const RadioStationList = ({ title, stations, isFetching, error }) => {
             {stations.length > 0 ? (
                 <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
                     {stations.map(station => (
-                        <RadioStationCard key={station.id} station={station} />
+                        <RadioStationCard key={station.stationuuid} station={station} />
                     ))}
                 </div>
             ) : (

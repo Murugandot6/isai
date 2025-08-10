@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchStationsQuery, useGetCountriesQuery, useGetLanguagesQuery } from '../redux/services/radioBrowserApi';
 import RadioStationCard from '../components/Cards/RadioStationCard';
 import { Loader, Error } from '../components/LoadersAndError';
-import { getData } from '../utils/fetchData';
-import { useSelector } from 'react-redux';
 
 const Radio = () => {
     const [country, setCountry] = useState('');
@@ -11,13 +9,11 @@ const Radio = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [hideBroken, setHideBroken] = useState(true);
 
-    const library = useSelector(state => state.library);
-
     const { data: stationsData, isFetching: isFetchingStations, error: errorStations } = useSearchStationsQuery({ country, language, name: searchTerm, hidebroken: hideBroken });
     const { data: countriesData, isFetching: isFetchingCountries } = useGetCountriesQuery();
     const { data: languagesData, isFetching: isFetchingLanguages } = useGetLanguagesQuery();
 
-    const stations = useMemo(() => stationsData ? getData({ data: stationsData, type: 'radios', library }) : [], [stationsData, library]);
+    const stations = useMemo(() => stationsData || [], [stationsData]);
 
     useEffect(() => {
         document.getElementById('site_title').innerText = 'Isai - Radio';
@@ -89,7 +85,7 @@ const Radio = () => {
             ) : stations.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
                     {stations.map(station => (
-                        <RadioStationCard key={station.id} station={station} />
+                        <RadioStationCard key={station.stationuuid} station={station} />
                     ))}
                 </div>
             ) : (
