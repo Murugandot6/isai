@@ -13,7 +13,8 @@ import {
   GenreDetails, // Will be a placeholder
   PlaylistDetails,
   Favorites,
-  Blacklist
+  Blacklist,
+  EditorsPick // New import
 } from './pages';
 import Details from './components/Details';
 import { setPlayer } from './redux/features/playerSlice';
@@ -55,6 +56,7 @@ const App = () => {
 
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/blacklist" element={<Blacklist />} />
+        <Route path="/editors-pick" element={<EditorsPick />} /> {/* New route */}
       </Route>
     </Routes>
   );

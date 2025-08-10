@@ -10,6 +10,7 @@ import Playlist from './Playlist';
 import Blacklist from './Blacklist'
 import Favorites from './Favorites';
 import PlaylistDetails from './PlaylistDetails';
+import EditorsPick from './EditorsPick'; // New import
 
 export {
   Discover,
@@ -24,4 +25,5 @@ export {
   Blacklist,
   Favorites,
   PlaylistDetails,
+  EditorsPick, // New export
 };

@@ -1,0 +1,88 @@
+// src/data/editorsPickPlaylists.js
+
+// Helper to generate a unique ID (for mock data)
+const generateId = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+export const editorsPickPlaylists = [
+  {
+    id: generateId(),
+    name: "Chill Vibes",
+    genres: [{ id: generateId(), name: "Chill" }],
+    tracks: [
+      {
+        id: "1",
+        name: "Calm Waters",
+        primaryArtists: "Relaxation Guru",
+        album: { id: "a1", name: "Nature Sounds" },
+        duration: 240,
+        explicitContent: 0,
+        downloadUrl: [{ quality: "160kbps", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }],
+        image: [{ link: "https://picsum.photos/id/1018/200/200" }],
+      },
+      {
+        id: "2",
+        name: "Sunset Melody",
+        primaryArtists: "Dream Weaver",
+        album: { id: "a2", name: "Evening Harmonies" },
+        duration: 180,
+        explicitContent: 0,
+        downloadUrl: [{ quality: "160kbps", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }],
+        image: [{ link: "https://picsum.photos/id/1019/200/200" }],
+      },
+      {
+        id: "3",
+        name: "Forest Whispers",
+        primaryArtists: "Nature's Symphony",
+        album: { id: "a1", name: "Nature Sounds" },
+        duration: 300,
+        explicitContent: 0,
+        downloadUrl: [{ quality: "160kbps", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }],
+        image: [{ link: "https://picsum.photos/id/1020/200/200" }],
+      },
+    ],
+  },
+  {
+    id: generateId(),
+    name: "Workout Jams",
+    genres: [{ id: generateId(), name: "Workout" }],
+    tracks: [
+      {
+        id: "4",
+        name: "Pump It Up",
+        primaryArtists: "Fitness Beats",
+        album: { id: "a3", name: "Gym Anthems" },
+        duration: 210,
+        explicitContent: 0,
+        downloadUrl: [{ quality: "160kbps", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }],
+        image: [{ link: "https://picsum.photos/id/1021/200/200" }],
+      },
+      {
+        id: "5",
+        name: "High Energy",
+        primaryArtists: "Power Play",
+        album: { id: "a3", name: "Gym Anthems" },
+        duration: 200,
+        explicitContent: 0,
+        downloadUrl: [{ quality: "160kbps", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }],
+        image: [{ link: "https://picsum.photos/id/1022/200/200" }],
+      },
+    ],
+  },
+  {
+    id: generateId(),
+    name: "Focus & Study",
+    genres: [{ id: generateId(), name: "Instrumental" }],
+    tracks: [
+      {
+        id: "6",
+        name: "Deep Concentration",
+        primaryArtists: "Study Sounds",
+        album: { id: "a4", name: "Brain Boost" },
+        duration: 360,
+        explicitContent: 0,
+        downloadUrl: [{ quality: "160kbps", link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" }],
+        image: [{ link: "https://picsum.photos/id/1023/200/200" }],
+      },
+    ],
+  },
+];
