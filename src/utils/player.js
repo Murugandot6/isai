@@ -47,9 +47,11 @@ export async function onShuffle (isSongPlaying) {
     }
 }
 
-export function offShuffle () {
+export function offShuffle (silent = false) {
     store.dispatch(shuffleOff())
-    displayMessage('Shuffle off.');
+    if (!silent) {
+        displayMessage('Shuffle off.');
+    }
 }
 
 export function onRepeat () {

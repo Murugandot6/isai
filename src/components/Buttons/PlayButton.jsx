@@ -4,7 +4,7 @@ import { offShuffle, playSongs } from '../../utils/player';
 const PlayButton = ({ song, i, tracks, album, bg, text }) => {
   const handlePlay = () => {
     playSongs({ song, tracks, i: i || 0, album });
-    offShuffle();
+    offShuffle(true); // Call offShuffle silently
   }
 
   return (
