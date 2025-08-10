@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useMemo } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
@@ -11,32 +11,11 @@ const ArtistDetails = () => {
   const { id: artistId } = useParams();
   const { activeSong, isPlaying } = useSelector((state) => state.player);
   const { updateData, colors, ...others } = useContext(DetailsContext);
-  const library = useSelector(state => state.library);
 
   const { data: artistDetailsResult, isFetching, error } = useGetArtistDetailsQuery({ id: artistId });
 
   const artistData = artistDetailsResult?.data;
-
-  const topSongs = useMemo(() => {
-    const rawSongs = artistDetailsResult?.data?.topSongs;
-    if (!Array.isArray(rawSongs)) {
-      return [];
-    }
-
-    const getBestUrl = (arr) => {
-      if (!Array.isArray(arr) || arr.length === 0) return '';
-      return arr[arr.length - 1]?.link || '';
-    };
-
-    return rawSongs.map(song => ({
-      ...song,
-      id: song.id,
-      title: song.name,
-      subtitle: song.primaryArtists,
-      image: getBestUrl(song.image),
-      streamUrl: getBestUrl(song.downloadUrl),
-    }));
-  }, [artistDetailsResult]);
+  const topSongs = artistData?.topSongs || []; // Use raw songs
 
   useEffect(() => {
     if (artistData) {

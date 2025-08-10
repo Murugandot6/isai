@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
-import shuffle from '../../utils/shuffle'
+import shuffle from '../../utils/shuffle';
+import { normalizeSong } from '../../utils/playerUtils';
 
 const initialState = {
   currentSongs: [],
@@ -20,10 +21,26 @@ const playerSlice = createSlice({
   initialState,
   reducers: {
     setActiveSong: (state, action) => {
-      state.activeSong = action.payload.song;
+      const cleanSong = normalizeSong(action.payload.song);
+      if (!cleanSong) return;
+
+      state.activeSong = cleanSong;
+
       const tracks = action.payload.data || action.payload.tracks;
-      state.currentSongs = tracks;
-      state.unshuffledSongs = tracks;
+      if (Array.isArray(tracks)) {
+        const cleanTracks = tracks.map(normalizeSong).filter(Boolean);
+        state.currentSongs = cleanTracks;
+        // Only update unshuffled if shuffle is not active
+        if (!state.shuffle) {
+            state.unshuffledSongs = cleanTracks;
+        }
+      } else {
+        state.currentSongs = [cleanSong];
+        if (!state.shuffle) {
+            state.unshuffledSongs = [cleanSong];
+        }
+      }
+      
       state.currentIndex = action.payload.i;
       state.isActive = true;
     },
@@ -91,7 +108,11 @@ const playerSlice = createSlice({
     shuffleOff: (state) => {
       state.shuffle = false
       state.currentSongs = state.unshuffledSongs
-      state.currentIndex = state.unshuffledSongs.findIndex(song => song.id === state.activeSong.id);
+      if (state.activeSong && state.activeSong.id) {
+        state.currentIndex = state.unshuffledSongs.findIndex(song => song.id === state.activeSong.id);
+      } else {
+        state.currentIndex = 0;
+      }
     },
     setRepeat: (state) => {
       const repeat = state.repeat

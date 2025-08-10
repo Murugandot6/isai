@@ -12,8 +12,8 @@ export const saavnApi = createApi({
         getSongDetailsById: builder.query({
             query: (id) => `/songs?id=${id}`,
         }),
-        getLyricsBySongId: builder.query({
-            query: (id) => `/lyrics/${id}`, // Corrected endpoint
+        getLyrics: builder.query({
+            query: (songId) => `/lyrics/${songId}`,
         }),
         getArtistDetails: builder.query({
             query: ({ id }) => `/artists?id=${id}`,
@@ -27,7 +27,7 @@ export const saavnApi = createApi({
 export const {
     useSearchSongsQuery,
     useGetSongDetailsByIdQuery,
-    useGetLyricsBySongIdQuery,
+    useGetLyricsQuery,
     useGetArtistDetailsQuery,
     useSearchArtistsQuery,
 } = saavnApi

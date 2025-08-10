@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 
 import { Songs, SongLyrics } from "../components/List";
 
-import { useGetSongDetailsByIdQuery, useSearchSongsQuery, useGetLyricsBySongIdQuery } from "../redux/services/saavnApi"; // Use Saavn API
+import { useGetSongDetailsByIdQuery, useSearchSongsQuery, useGetLyricsQuery } from "../redux/services/saavnApi"; // Use Saavn API
 import { getSingleData } from "../utils/fetchData"; // Corrected import
 import { DetailsContext } from "../components/Details";
 
@@ -21,7 +21,7 @@ const SongDetails = () => {
     const { data: songDetails, isFetching, error } = useGetSongDetailsByIdQuery( songid );
     const song = songDetails?.data?.[0] || songDetails?.data;
 
-    const { data: lyricsData, isFetching: isFetchingLyrics, error: errorFetchingLyrics } = useGetLyricsBySongIdQuery(songid, { skip: !songid });
+    const { data: lyricsData, isFetching: isFetchingLyrics, error: errorFetchingLyrics } = useGetLyricsQuery(songid, { skip: !songid });
     
     const { data: relatedSongsData, isFetching: isFetchingRelated, error: errorFetchingRelated } = useSearchSongsQuery( song?.primaryArtists || 'top songs', { skip: !song?.primaryArtists } );
     const relatedSongs = relatedSongsData?.data?.results?.filter(s => s.id !== songid)?.slice(0, 6);

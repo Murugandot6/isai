@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from "react"
 import ColorThief from 'colorthief'
 
-import { useGetLyricsBySongIdQuery } from "../../../redux/services/saavnApi" // Changed from MusixMatchApi
+import { useGetLyricsQuery } from "../../../redux/services/saavnApi" // Changed from MusixMatchApi
 
 import QueueAndLyrics from "./QueueAndLyrics"
 import ChangeQueueLyrics from "./ChangeQueueLyrics"
@@ -18,7 +18,7 @@ const NowPlaying = ({ close, open, nowPlaying, activeSong, currentSongs, current
 
     const isRadio = activeSong?.duration === 0;
 
-    const { data: lyrics, isFetching, error } = useGetLyricsBySongIdQuery(activeSong.id, { skip: isRadio || !activeSong.id });
+    const { data: lyrics, isFetching, error } = useGetLyricsQuery(activeSong.id, { skip: isRadio || !activeSong.id });
 
     const style = useMemo(() => ({
         background: `linear-gradient(${colors[0]}, transparent)`,

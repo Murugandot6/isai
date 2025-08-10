@@ -7,7 +7,7 @@ const SongInfo = ({ song, artistId }) => {
   return (
     <div className="flex-1 flex flex-col justify-center mx-3">
       <Link to={`/songs/${song.id}`}>
-        <p className="text-xs md:text-sm font-semibold text-white truncate max-w-[200px]">{song?.title}</p>
+        <p className="text-xs md:text-sm font-semibold text-white truncate max-w-[200px]">{song?.title || song?.name}</p>
       </Link>
         <div className="flex flex-row flex-wrap gap-1 items-center text-gray-300">
           {
