@@ -21,6 +21,9 @@ const Playlist = () => {
   const isImportPage = useMemo(() => params.get('import') === 'true', [params]); // New state for import page
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
+  // Determine if the default playlists front should be shown
+  const showPlaylistsFront = useMemo(() => !isInAddPage && !isImportPage, [isInAddPage, isImportPage]);
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
@@ -63,7 +66,7 @@ const Playlist = () => {
 
   return (
     <div className="px-2 flex md:px-4 relative overflow-hidden">
-      <PlaylistsFront isInAddPage={isInAddPage || isImportPage} />
+      <PlaylistsFront isInAddPage={!showPlaylistsFront} /> {/* Pass true if it should be hidden */}
       <CreatePlaylist
         handleSubmit={handleSubmit}
         isInAddPage={isInAddPage}
