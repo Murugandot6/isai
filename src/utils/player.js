@@ -1,8 +1,7 @@
 import { playPause, prevSong, nextSong, setActiveSong, setAlbum, stop, shuffleOn, shuffleOff, setRepeat, addToUpNext, incrementShuffleLanguageIndex } from "../redux/features/playerSlice"
 import { store } from '../redux/store';
 import { displayMessage } from "./prompt"
-import { getSingleData, getData } from "./getData"; // Import getSingleData and getData
-import { fetchTrendingSongsByLanguage } from "./fetchData"; // Import new fetch function
+import { fetchTrendingSongsByLanguage } from "./fetchData";
 
 export function play() {
     store.dispatch(playPause(true));
@@ -27,11 +26,11 @@ export function prev (i) {
 }
 
 export async function onShuffle (isSongPlaying) {
-    store.dispatch(shuffleOn(isSongPlaying)); // Keep existing shuffle state
-    store.dispatch(incrementShuffleLanguageIndex()); // Increment language index
+    store.dispatch(shuffleOn(isSongPlaying));
+    store.dispatch(incrementShuffleLanguageIndex());
 
     const { shuffleLanguageIndex } = store.getState().player;
-    const languages = ['English', 'Tamil', 'Hindi']; // Define languages to cycle through
+    const languages = ['English', 'Tamil', 'Hindi'];
     const selectedLanguage = languages[shuffleLanguageIndex];
 
     displayMessage(`Shuffling with trending ${selectedLanguage} songs.`);
@@ -44,7 +43,7 @@ export async function onShuffle (isSongPlaying) {
         playSongs({ tracks: trendingSongs, song, i });
     } else {
         displayMessage(`Could not find trending ${selectedLanguage} songs. Please try again.`);
-        offShuffle(); // Turn off shuffle if no songs found
+        offShuffle();
     }
 }
 
@@ -64,17 +63,13 @@ export function offRepeat () {
 }
 
 export const playSongs = ({ tracks, song, i, album}) => {
-    // Guard clause: Check if tracks is defined and has elements
     if (!tracks || tracks.length < 1) {
         pause();
         displayMessage('No tracks to play.');
         return;
     }
-
-    // Get library state here and pass it to the action payload
-    const library = store.getState().library;
-
-    store.dispatch(setActiveSong({ tracks, song, i, library }));
+    // Data is now pre-normalized, so no need to pass library
+    store.dispatch(setActiveSong({ tracks, song, i }));
     if (album) store.dispatch(setAlbum(album));
     play();
 }

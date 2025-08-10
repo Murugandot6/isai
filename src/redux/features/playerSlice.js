@@ -1,7 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 import shuffle from '../../utils/shuffle'
-import { getSingleData, getData } from '../../utils/getData'; // Import getSingleData and getData
-// Removed: import { store } from '../store';
 
 const initialState = {
   currentSongs: [],
@@ -13,8 +11,8 @@ const initialState = {
   shuffle: false,
   repeat: false,
   nowPlaying: false,
-  bitrate: '3', // Default bitrate from Saavn's index.html (160kbps)
-  shuffleLanguageIndex: 0, // New state for cycling through languages
+  bitrate: '3',
+  shuffleLanguageIndex: 0,
 };
 
 const playerSlice = createSlice({
@@ -22,38 +20,16 @@ const playerSlice = createSlice({
   initialState,
   reducers: {
     setActiveSong: (state, action) => {
-      // Get library state from the action payload
-      const library = action.payload.library; 
-
-      // Normalize the individual song
-      const normalizedSong = getSingleData({ type: 'tracks', data: action.payload.song, library });
-
-      // Normalize the entire tracks array
-      const normalizedTracks = getData({ type: 'tracks', data: action.payload.tracks, library });
-
-      state.currentSongs = state.unshuffledSongs = normalizedTracks;
-      state.activeSong = normalizedSong;
+      state.activeSong = action.payload.song;
+      const tracks = action.payload.data || action.payload.tracks;
+      state.currentSongs = tracks;
+      state.unshuffledSongs = tracks;
       state.currentIndex = action.payload.i;
       state.isActive = true;
     },
-    addToUpNext: (state, action) => {
-      if(state.currentSongs.length < 1) {
-        state.currentSongs = action.payload
-        state.activeSong = action.payload[0]
-        state.currentIndex = 0
-        state.isActive = state.isPlaying = true
-      } else {
-        let songs = state.currentSongs;
-        songs.splice(state.currentIndex + 1, 0, ...action.payload);
-        state.currentSongs = songs
-      }
+    playPause: (state, action) => {
+      state.isPlaying = action.payload;
     },
-
-    stop: (state) => {
-      state.activeSong = {} 
-      state.isActive = state.isPlaying = false
-    },
-
     nextSong: (state, action) => {
       if (state.currentSongs[action.payload]) {
         state.activeSong = state.currentSongs[action.payload];
@@ -70,7 +46,6 @@ const playerSlice = createSlice({
         state.isPlaying = false
       }
     },
-
     prevSong: (state, action) => {
       if (state.currentSongs[action.payload]) {
         state.activeSong = state.currentSongs[action.payload]
@@ -87,7 +62,22 @@ const playerSlice = createSlice({
         state.isPlaying = false
       }
     },
-    
+    addToUpNext: (state, action) => {
+      if(state.currentSongs.length < 1) {
+        state.currentSongs = action.payload
+        state.activeSong = action.payload[0]
+        state.currentIndex = 0
+        state.isActive = state.isPlaying = true
+      } else {
+        let songs = state.currentSongs;
+        songs.splice(state.currentIndex + 1, 0, ...action.payload);
+        state.currentSongs = songs
+      }
+    },
+    stop: (state) => {
+      state.activeSong = {} 
+      state.isActive = state.isPlaying = false
+    },
     shuffleOn: (state, action) => {
       const currentSongs = [...state.currentSongs];
       const showActiveSong = action.payload;
@@ -98,32 +88,23 @@ const playerSlice = createSlice({
       state.currentIndex = i;
       state.activeSong = song
     },
-
     shuffleOff: (state) => {
       state.shuffle = false
       state.currentSongs = state.unshuffledSongs
       state.currentIndex = state.unshuffledSongs.findIndex(song => song.id === state.activeSong.id);
     },
-
     setRepeat: (state) => {
       const repeat = state.repeat
       state.repeat = !repeat
     },
-
-    playPause: (state, action) => {
-      state.isPlaying = action.payload;
-    },
-
     setAlbum: (state, action) => {
       let songs = [...state.currentSongs]
       songs = songs.map( song => song.album ? song : {...song, album: action.payload} )
       state.currentSongs = state.unshuffledSongs = songs
     },
-
     setSongIsrc: (state, action) => {
       state.songIsrc = action.payload
     },
-
     setNowPlaying: (state, action) => {
       state.nowPlaying = action.payload
     },
