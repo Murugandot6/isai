@@ -12,10 +12,14 @@ export const saavnApi = createApi({
         getSongDetailsById: builder.query({
             query: (id) => `/songs?id=${id}`, // Assuming an endpoint to get song by ID
         }),
+        getLyricsBySongId: builder.query({
+            query: (id) => `/lyrics?id=${id}`,
+        }),
     })
 })
 
 export const {
     useSearchSongsQuery,
     useGetSongDetailsByIdQuery,
+    useGetLyricsBySongIdQuery,
 } = saavnApi

@@ -3,14 +3,8 @@ import { SongLyrics } from '../../List'
 import QueueSong from './QueueSong'
 import { playSongs } from '../../../utils/player';
 
-const QueueAndLyrics = ({ currentSongs, activeSong, isFetching, lyrics, error, lyricsQueue, currentIndex, bg, bg2 }) => {
+const QueueAndLyrics = ({ currentSongs, activeSong, isFetching, lyricsData, error, lyricsQueue, currentIndex, bg, bg2 }) => {
     const [queueIndex, setQueueIndex] = useState(null);
-
-    const songLyrics = useMemo(() => {
-        return lyrics?.message?.body?.lyrics?.lyrics_body
-            .replace(/(\*{7}[a-z|\s]+\*{7}|\(\d+\))/ig, '')
-            .split('\n');
-    }, [lyrics]);
     
     const lyricsBackground = useMemo(() => ({
         background: (window.innerWidth < 1024) && `linear-gradient(${bg2}, ${bg})`
@@ -37,7 +31,7 @@ const QueueAndLyrics = ({ currentSongs, activeSong, isFetching, lyrics, error, l
                 {
                     <SongLyrics
                         nowPlaying={true}
-                        lyrics={songLyrics}
+                        lyricsData={lyricsData}
                         isFetching={isFetching}
                         error={error}
                     />

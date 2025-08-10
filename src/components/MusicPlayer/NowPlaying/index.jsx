@@ -1,8 +1,7 @@
 import { useState, useRef, useMemo } from "react"
 import ColorThief from 'colorthief'
 
-import { useGetLyricsQuery } from "../../../redux/services/MusixMatchApi"
-import { useGetSongDetailsByIdQuery } from "../../../redux/services/saavnApi" // Changed from DeezerApi
+import { useGetLyricsBySongIdQuery } from "../../../redux/services/saavnApi" // Changed from MusixMatchApi
 
 import QueueAndLyrics from "./QueueAndLyrics"
 import ChangeQueueLyrics from "./ChangeQueueLyrics"
@@ -19,8 +18,7 @@ const NowPlaying = ({ close, open, nowPlaying, activeSong, currentSongs, current
 
     const isRadio = activeSong?.duration === 0;
 
-    const { data: song } = useGetSongDetailsByIdQuery(activeSong.id, { skip: isRadio || !activeSong.id });
-    const { data: lyrics, isFetching, error } = useGetLyricsQuery(song?.isrc, { skip: isRadio || !song?.isrc });
+    const { data: lyrics, isFetching, error } = useGetLyricsBySongIdQuery(activeSong.id, { skip: isRadio || !activeSong.id });
 
     const style = useMemo(() => ({
         background: `linear-gradient(${colors[0]}, transparent)`,
@@ -81,7 +79,7 @@ const NowPlaying = ({ close, open, nowPlaying, activeSong, currentSongs, current
                     error={error}
                     currentSongs={currentSongs}
                     activeSong={activeSong}
-                    lyrics={lyrics}
+                    lyricsData={lyrics}
                     lyricsQueue={lyricsQueue}
                     currentIndex={currentIndex}
                 />
