@@ -15,6 +15,9 @@ export const saavnApi = createApi({
         getLyricsBySongId: builder.query({
             query: (id) => `/lyrics?id=${id}`,
         }),
+        getArtistDetailsById: builder.query({ // New endpoint for artist details
+            query: (id) => `/artists?id=${id}`,
+        }),
     })
 })
 
@@ -22,4 +25,5 @@ export const {
     useSearchSongsQuery,
     useGetSongDetailsByIdQuery,
     useGetLyricsBySongIdQuery,
+    useGetArtistDetailsByIdQuery, // Export the new hook
 } = saavnApi

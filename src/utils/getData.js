@@ -62,6 +62,8 @@ export const getSingleData = ({ type, data }) => {
         newItem.name = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
         newItem.picture_xl = data.image?.[2]?.link;
+        newItem.image = data.image; // Keep all image sizes for artist
+        newItem.followerCount = data.followerCount; // Add follower count for artists
     } else if (type === 'genres') {
         newItem.name = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
@@ -118,6 +120,12 @@ function addFavoriteAndBlacklist(item) {
     // and it will return the normalized item with favorite/blacklist flags.
     if (dataType === 'tracks') {
         return getSingleData({ type: 'tracks', data: item });
+    }
+    if (dataType === 'artists') {
+        return getSingleData({ type: 'artists', data: item });
+    }
+    if (dataType === 'albums') {
+        return getSingleData({ type: 'albums', data: item });
     }
 
     // For other types, just add favorite/blacklist flags as before
