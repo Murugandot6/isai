@@ -3,7 +3,7 @@ import { hidePrompt } from "../redux/features/promptSlice";
 import { displayMessage } from "./prompt";
 import { store } from '../redux/store';
 
-export const createNewPlaylist = async (data) => {
+export const createNewPlaylist = async (data, playlistType = 'user') => { // Added playlistType parameter
   try {
     if (!data?.name) {
       displayMessage('Couldn\'t create playlist! Playlist name is required.');
@@ -11,7 +11,7 @@ export const createNewPlaylist = async (data) => {
     }
 
     const playlistId = Date.now().toString(); // Use a string ID
-    const newPlaylistData = { ...data, id: playlistId, type: 'user' }; // Mark as user playlist
+    const newPlaylistData = { ...data, id: playlistId, type: playlistType }; // Use the provided type
 
     store.dispatch(createPlaylist(newPlaylistData)); // Update Redux state
     store.dispatch(setLibraryStorage()); // Save to local storage

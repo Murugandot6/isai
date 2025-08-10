@@ -25,7 +25,8 @@ const EditorsPick = () => {
     e.preventDefault();
     try {
       const { playlistInfo } = newPlaylist;
-      const newPlaylistId = await createNewPlaylist(playlistInfo);
+      // Pass 'editors_pick' as the playlist type for single CSV imports on this page
+      const newPlaylistId = await createNewPlaylist(playlistInfo, 'editors_pick'); 
       setNewPlaylist({ type: 'RESET' });
       setShowImportForm(false);
       navigate(`/playlists/${newPlaylistId}?edit=true`);
