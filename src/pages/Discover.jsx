@@ -8,7 +8,7 @@ import { useSearchStationsQuery } from '../redux/services/radioBrowserApi'; // I
 
 
 const Discover = () => {
-    const { playlists: userPlaylists, ...library } = useSelector(state => state.library); // Get user's playlists
+    const { playlists: userPlaylists, ...library } = useSelector(state => state.library); 
     
     // Fetch data for Tamil Latest Songs
     const { data: tamilSongsData, isFetching: isFetchingTamilSongs, error: errorFetchingTamilSongs } = useSearchSongsQuery('tamil latest songs');
