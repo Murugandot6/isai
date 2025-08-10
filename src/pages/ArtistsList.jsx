@@ -1,27 +1,78 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ArtistCard } from '../components/Cards';
-import artistsData from '../data/artists'; // Import the curated artist data
-import { Error } from '../components/LoadersAndError';
+import { Error, ArtistLoading } from '../components/LoadersAndError';
+import { useSearchSongsQuery } from '../redux/services/saavnApi';
+import { getData } from '../utils/getData';
 
 const ArtistsList = () => {
   useEffect(() => {
     document.getElementById('site_title').innerText = 'Isai - Artists';
   }, []);
 
-  if (!artistsData || artistsData.length === 0) {
+  // Fetch popular songs to extract artists
+  const { data: popularSongsData, isFetching, error } = useSearchSongsQuery('popular songs');
+
+  const artists = useMemo(() => {
+    if (!popularSongsData?.data?.results) return [];
+
+    const uniqueArtists = new Map();
+    popularSongsData.data.results.forEach(song => {
+      // Normalize song to get primaryArtists and image data
+      const normalizedSong = getData({ type: 'tracks', data: song });
+      
+      const primaryArtistsString = normalizedSong.primaryArtists;
+      
+      if (primaryArtistsString) {
+        primaryArtistsString.split(',').map(name => name.trim()).forEach(artistName => {
+          // Try to find the corresponding artist object from the song's artists array
+          const artistObj = song.artists?.all?.find(a => a.name === artistName) ||
+                            song.artists?.primary?.find(a => a.name === artistName);
+
+          if (artistObj && !uniqueArtists.has(artistObj.id)) {
+            uniqueArtists.set(artistObj.id, {
+              id: artistObj.id,
+              name: artistObj.name,
+              type: artistObj.type || 'Artist', // Default type if not provided
+              image: artistObj.image || normalizedSong.image, // Use artist's image or fallback to song image
+            });
+          } else if (!artistObj && !uniqueArtists.has(artistName)) {
+             // Fallback for artists without a specific ID in the API response
+             const dummyId = `artist-${artistName.replace(/\s/g, '_')}`;
+             uniqueArtists.set(dummyId, {
+                id: dummyId,
+                name: artistName,
+                type: 'Artist',
+                image: normalizedSong.image, // Use song image as fallback
+             });
+          }
+        });
+      }
+    });
+    return Array.from(uniqueArtists.values());
+  }, [popularSongsData]);
+
+  if (isFetching) {
+    return <ArtistLoading num={10} />;
+  }
+
+  if (error) {
+    return <Error title="Could not load artists." />;
+  }
+
+  if (!artists || artists.length === 0) {
     return <Error title="No artists found." />;
   }
 
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-bold text-white mb-6">Featured Artists</h1>
+      <h1 className="text-3xl font-bold text-white mb-6">Popular Artists</h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {artistsData.map((artist, i) => (
+        {artists.map((artist, i) => (
           <ArtistCard key={artist.id} artist={artist} i={i} />
         ))}
       </div>
       <p className="text-gray-400 text-sm mt-8">
-        Note: Due to API limitations, clicking on an artist will display their top songs and albums, not their full discography.
+        Note: Artists are derived from popular songs. Clicking on an artist will display their top songs and albums if available from the API.
       </p>
     </div>
   );
