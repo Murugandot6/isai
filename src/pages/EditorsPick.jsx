@@ -14,9 +14,21 @@ const EditorsPick = () => {
   return (
     <div className="px-2 flex md:px-4 relative">
       <div className="min-w-full">
-        {/* Your Playlists section - now named "Editors' Pick" */}
+        {/* Editors' Pick Playlists Section (now the first section) */}
         <div className="w-full flex justify-between items-center mb-4">
-          <h3 className="font-bold text-white text-xl">Your Playlists</h3> {/* Changed heading to 'Your Playlists' */}
+          <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
+        </div>
+        {editorsPickPlaylists.length > 0 ? (
+          <Playlists playlists={editorsPickPlaylists} />
+        ) : (
+          <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
+            <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
+          </div>
+        )}
+
+        {/* Your Playlists section (now the second section) */}
+        <div className="w-full flex justify-between items-center mb-4 mt-8">
+          <h3 className="font-bold text-white text-xl">Your Playlists</h3>
           <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
             Create New
           </Link>
@@ -27,19 +39,6 @@ const EditorsPick = () => {
           <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
             <h3 className="text-gray-400 font-bold text-xl">You don't have any saved playlists.</h3>
             <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-6 h-8 md:h-10 rounded-full bg-gray-200 hover:bg-gray-400 text-black">Create New</Link>
-          </div>
-        )}
-
-        {/* Editors' Picks section (now the second section) */}
-        <div className="w-full flex justify-between items-center mb-4 mt-8">
-          <h3 className="font-bold text-white text-xl">Editors' Pick</h3> {/* This is the main heading */}
-          {/* Removed the "Import Playlist" button from here */}
-        </div>
-        {editorsPickPlaylists.length > 0 ? (
-          <Playlists playlists={editorsPickPlaylists} />
-        ) : (
-          <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
-            <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
           </div>
         )}
       </div>
