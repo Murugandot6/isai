@@ -15,12 +15,15 @@ const getModalStyle = (buttonRect, modalRef) => {
     const viewportWidth = window.innerWidth;
 
     // Get actual modal dimensions (or estimate if not yet rendered)
+    // Ensure modalHeight is not 0, use a reasonable estimate if not yet available
     const modalWidth = modalRef.current ? modalRef.current.offsetWidth : 160; // min-w-[160px] from CSS
-    const modalHeight = modalRef.current ? modalRef.current.offsetHeight : 200; // A reasonable estimate
+    const modalHeight = modalRef.current && modalRef.current.offsetHeight > 0 ? modalRef.current.offsetHeight : 200; 
 
-    // Initial placement: Align the bottom of the modal with the bottom of the button
-    let top = buttonRect.y + buttonRect.height - modalHeight;
-    let left = buttonRect.x + buttonRect.width + 5; // Default: to the right of the button + 5px padding
+    // Default horizontal position: to the right of the button
+    let left = buttonRect.x + buttonRect.width + 5; // 5px padding from the button
+
+    // Default vertical position: vertically centered with the button
+    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2);
 
     // Adjust horizontal position if it goes off-screen
     if (left + modalWidth > viewportWidth) {
@@ -72,7 +75,12 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
 
         const rect = btnRef.current.getBoundingClientRect();
         setButtonRect(rect); // Store the button's position
-        setShowModal(true);
+
+        // Use setTimeout to allow the modal to render and calculate its dimensions
+        // before getModalStyle is called with the actual modalRef.current.offsetHeight
+        setTimeout(() => {
+            setShowModal(true);
+        }, 0); 
     }
 
     function closeModal() {
@@ -138,4 +146,4 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
     )
 }
 
-export default Options;
+export default Options
