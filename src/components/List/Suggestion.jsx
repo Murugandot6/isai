@@ -17,7 +17,7 @@ const Suggestion = ({ radioTracks, radio, songs, isFetching, error, blacklist, f
 
     return (
         <div>
-            <h3 className="mt-4 text-white text-xl font-bold">English Most Played Songs</h3>
+            <h3 className="mt-4 text-white text-xl font-bold">{suggestionTitle}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-14 lg:gap-6 mt-4">
                 <div className="grid gap-2 md:gap-4 grid-cols-5 grid-rows-3 aspect-square">
                     {
