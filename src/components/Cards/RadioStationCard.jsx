@@ -39,11 +39,11 @@ const RadioStationCard = ({ station }) => {
                 src={imageUrl} 
                 alt={station.name} 
                 onError={() => setImageError(true)}
-                className="w-32 h-32 rounded-full object-cover shadow-lg"
+                className="w-32 h-32 rounded-full object-cover shadow-lg flex-shrink-0"
             />
-            <div className="text-center">
-                <p className="font-bold text-white truncate w-48">{station.name}</p>
-                <p className="text-sm text-gray-400">{station.country}</p>
+            <div className="text-center w-full overflow-hidden">
+                <p className="font-bold text-white truncate">{station.name}</p>
+                <p className="text-sm text-gray-400 truncate">{station.country}</p>
             </div>
             <button 
                 onClick={isCurrentlyPlaying ? handlePause : handlePlay}
