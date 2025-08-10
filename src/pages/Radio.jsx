@@ -7,8 +7,9 @@ const Radio = () => {
     const [country, setCountry] = useState('');
     const [language, setLanguage] = useState('english');
     const [searchTerm, setSearchTerm] = useState('');
+    const [hideBroken, setHideBroken] = useState(true);
 
-    const { data: stationsData, isFetching: isFetchingStations, error: errorStations } = useSearchStationsQuery({ country, language, name: searchTerm });
+    const { data: stationsData, isFetching: isFetchingStations, error: errorStations } = useSearchStationsQuery({ country, language, name: searchTerm, hidebroken: hideBroken });
     const { data: countriesData, isFetching: isFetchingCountries } = useGetCountriesQuery();
     const { data: languagesData, isFetching: isFetchingLanguages } = useGetLanguagesQuery();
 
@@ -62,6 +63,18 @@ const Radio = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="bg-white/10 text-white rounded-md p-2 h-10 placeholder-gray-400"
                     />
+                </div>
+                <div className="flex items-center gap-2">
+                    <input 
+                        type="checkbox"
+                        id="hide-broken-filter"
+                        checked={hideBroken}
+                        onChange={(e) => setHideBroken(e.target.checked)}
+                        className="h-4 w-4 rounded text-blue-600 bg-gray-700 border-gray-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="hide-broken-filter" className="text-sm font-medium text-gray-300">
+                        Hide offline stations
+                    </label>
                 </div>
             </div>
 
