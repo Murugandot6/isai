@@ -24,7 +24,8 @@ export const fetchSuggestedSongs = ({ id, suggestedSongsIds }) => new Promise(
             const { data: result } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate('top songs'));
             if (!result || result.data.results.length === 0) throw 'error occured';
             
-            const res = getData({ type: 'tracks', data: result.data.results });
+            const library = store.getState().library; // Get library here
+            const res = getData({ type: 'tracks', data: result.data.results, library }); // Pass library
             const data = res.filter(song => !suggestedSongsIds.includes(song.id));
             resolve(data);
         } catch (error) {
@@ -47,12 +48,11 @@ export const searchSongByTitleAndArtist = async (title, artist) => {
                 song.primaryArtists?.toLowerCase().includes(artist?.toLowerCase())
             );
             
+            const library = store.getState().library; // Get library here
             if (bestMatch) {
-                const { library } = store.getState();
-                return getSingleData({ type: 'tracks', data: bestMatch, favorites: library.favorites, blacklist: library.blacklist });
+                return getSingleData({ type: 'tracks', data: bestMatch, library }); // Pass library
             } else {
-                const { library } = store.getState();
-                return getSingleData({ type: 'tracks', data: searchResults.data.results[0], favorites: library.favorites, blacklist: library.blacklist });
+                return getSingleData({ type: 'tracks', data: searchResults.data.results[0], library }); // Pass library
             }
         }
         return null;
@@ -67,7 +67,8 @@ export const fetchTrendingSongsByLanguage = async (language) => {
         const query = `trending ${language} songs`;
         const { data: searchResults } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate(query));
         if (searchResults?.data?.results?.length > 0) {
-            return getData({ type: 'tracks', data: searchResults.data.results });
+            const library = store.getState().library; // Get library here
+            return getData({ type: 'tracks', data: searchResults.data.results, library }); // Pass library
         }
         return [];
     } catch (error) {
@@ -96,10 +97,12 @@ export const fetchArtistDetailsAndContent = async (artistName) => {
             return null;
         }
 
+        const library = store.getState().library; // Get library here
+
         // Normalize data
-        const normalizedArtist = getSingleData({ type: 'artists', data: artist });
-        const topSongs = getData({ type: 'tracks', data: artist.topSongs }); // Get topSongs directly
-        const topAlbums = getData({ type: 'albums', data: artist.topAlbums }); // Get topAlbums directly
+        const normalizedArtist = getSingleData({ type: 'artists', data: artist, library }); // Pass library
+        const topSongs = getData({ type: 'tracks', data: artist.topSongs, library }); // Pass library
+        const topAlbums = getData({ type: 'albums', data: artist.topAlbums, library }); // Pass library
 
         return {
             artist: normalizedArtist,

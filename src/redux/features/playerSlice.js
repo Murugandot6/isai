@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import shuffle from '../../utils/shuffle'
 import { getSingleData, getData } from '../../utils/getData'; // Import getSingleData and getData
+import { store } from '../store'; // Import store to get state
 
 const initialState = {
   currentSongs: [],
@@ -21,11 +22,13 @@ const playerSlice = createSlice({
   initialState,
   reducers: {
     setActiveSong: (state, action) => {
+      const library = store.getState().library; // Get library state here
+
       // Normalize the individual song
-      const normalizedSong = getSingleData({ type: 'tracks', data: action.payload.song });
+      const normalizedSong = getSingleData({ type: 'tracks', data: action.payload.song, library });
 
       // Normalize the entire tracks array
-      const normalizedTracks = getData({ type: 'tracks', data: action.payload.tracks });
+      const normalizedTracks = getData({ type: 'tracks', data: action.payload.tracks, library });
 
       state.currentSongs = state.unshuffledSongs = normalizedTracks;
       state.activeSong = normalizedSong;

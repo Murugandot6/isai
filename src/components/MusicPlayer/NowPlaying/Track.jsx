@@ -8,8 +8,8 @@ import { useSelector } from "react-redux"
 import { getSingleData } from "../../../utils/getData"
 
 const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime, imgRef, handleLoad }) => {
-  const { blacklist, favorites } = useSelector(state => state.library);
-  const song = useMemo(() => getSingleData({type: 'tracks', data: activeSong, favorites, blacklist}), [ activeSong, favorites, blacklist ] )
+  const library = useSelector(state => state.library); // Get full library object
+  const song = useMemo(() => getSingleData({type: 'tracks', data: activeSong, library}), [ activeSong, library ] ) // Pass library
   const isRadio = useMemo(() => activeSong?.duration === 0, [activeSong]);
 
   const imageUrl = useMemo(() => {

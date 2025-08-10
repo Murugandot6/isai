@@ -1,14 +1,9 @@
-import { store } from "../redux/store";
-
 const ACCEPTABLE_DATA_TYPES = ['tracks', 'artists', 'albums', 'genres', 'radios'];
-
-// Helper to get the current library state
-const getStoreLibrary = () => store.getState().library;
 
 // These will be set locally within getData for each call
 let ignoreFilter, dataType, filterRgxp, sortValue, languageFilterValue;
 
-export const getData = ({ type, data, noFilter = false, albumFilter = '', sortType = '', languageFilter = '' }) => {
+export const getData = ({ type, data, noFilter = false, albumFilter = '', sortType = '', languageFilter = '', library }) => {
     if (!ACCEPTABLE_DATA_TYPES.includes(type) || !data) return data;
     
     // Set global-like variables for the current execution context of getData
@@ -23,16 +18,16 @@ export const getData = ({ type, data, noFilter = false, albumFilter = '', sortTy
     const newData = data
         .slice()
         .sort(handleSorting)
-        .map(item => getSingleData({ type: dataType, data: item })) // Always normalize each item
+        .map(item => getSingleData({ type: dataType, data: item, library })) // Pass library down
         .filter(handleFilter)
         .filter(handleLanguageFilter);
     return newData;
 }
 
-export const getSingleData = ({ type, data }) => {
+export const getSingleData = ({ type, data, library }) => {
     if (!ACCEPTABLE_DATA_TYPES.includes(type) || !data) return data;
 
-    const library = getStoreLibrary(); // Get fresh library state
+    // Use the passed library state
     const currentBlacklist = library.blacklist;
     const currentFavorites = library.favorites;
     
@@ -84,7 +79,7 @@ export const getSingleData = ({ type, data }) => {
     }
 
     if (data.tracks) {
-        newItem.tracks = getData({ type: 'tracks', data: data.tracks.data });
+        newItem.tracks = getData({ type: 'tracks', data: data.tracks.data, library }); // Pass library down
     }
 
     return newItem;

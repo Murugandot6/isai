@@ -9,13 +9,13 @@ import { useEffect, useState } from 'react'
 import { getData } from '../../../utils/getData'
 
 const RadioBox = ({ radio, show, handleClick }) => {
-    const { library } = useSelector(state => state);
+    const library = useSelector(state => state.library); // Get full library object
     // Saavn API doesn't have direct radio tracks. Simulate by searching for radio name.
     const { data: radioData, isFetching, error } = useSearchSongsQuery(radio.name); // Search by radio name
     const [radioTracks, setRadioTracks] = useState([])
 
     useEffect(() => {
-        setRadioTracks(getData({ type: 'tracks', data: radioData?.data?.results })); // Saavn results are in data.results
+        setRadioTracks(getData({ type: 'tracks', data: radioData?.data?.results, library })); // Pass library to getData
     }, [library, radioData]);
 
     return (

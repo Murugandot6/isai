@@ -9,7 +9,7 @@ import { DetailsContext } from '../components/Details';
 import { Loader, Error } from '../components/LoadersAndError';
 
 const ArtistDetails = () => {
-  const { blacklist, favorites } = useSelector(state => state.library);
+  const library = useSelector(state => state.library); // Get full library object
   const { data, updateData, colors, ...others } = useContext(DetailsContext);
   const { id: artistId } = useParams();
 
@@ -23,15 +23,15 @@ const ArtistDetails = () => {
   const topSongs = useMemo(() => {
     const songsData = artist?.topSongs; 
     if (!songsData) return [];
-    return getData({ type: 'tracks', data: songsData });
-  }, [artist]);
+    return getData({ type: 'tracks', data: songsData, library }); // Pass library to getData
+  }, [artist, library]);
 
   // Do the same for albums
   const albums = useMemo(() => {
     const albumsData = artist?.topAlbums;
     if (!albumsData) return [];
-    return getData({ type: 'albums', data: albumsData });
-  }, [artist]);
+    return getData({ type: 'albums', data: albumsData, library }); // Pass library to getData
+  }, [artist, library]);
 
   useEffect(() => {
     updateData({ isFetching: true, error: false, data: {}, colors: [] });
@@ -39,7 +39,7 @@ const ArtistDetails = () => {
 
   useEffect(() => {
     if (artist) {
-      const refinedData = getSingleData({ type: 'artists', data: artist, favorites, blacklist });
+      const refinedData = getSingleData({ type: 'artists', data: artist, library }); // Pass library to getSingleData
       updateData({ 
         ...others, 
         colors, 
@@ -48,7 +48,7 @@ const ArtistDetails = () => {
         data: { ...refinedData, artist: refinedData } 
       });
     }
-  }, [artist, favorites, blacklist, isFetching, error]);
+  }, [artist, library, isFetching, error]);
 
   useEffect(() => {
     const text = `Isai Artist - ${isFetching ? 'Loading...' : error ? 'Uh oh! Artist data could not be loaded :(' : artist?.name}`;
@@ -69,8 +69,8 @@ const ArtistDetails = () => {
         <Songs
           full={true}
           bg={colors?.[1]}
-          blacklist={blacklist}
-          favorites={favorites}
+          blacklist={library.blacklist}
+          favorites={library.favorites}
           isFetching={isFetching}
           error={error}
           songs={topSongs}
@@ -82,8 +82,8 @@ const ArtistDetails = () => {
         <Albums
           full={true}
           bg={colors?.[1]}
-          blacklist={blacklist}
-          favorites={favorites}
+          blacklist={library.blacklist}
+          favorites={library.favorites}
           isFetching={isFetching}
           error={error}
           albums={albums}

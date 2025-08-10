@@ -10,13 +10,14 @@ import { Error, TracksLoading } from '../LoadersAndError'
 import { getData } from '../../utils/getData'
 
 const AllTracks = ({ tracks, activeSong, isPlaying, isFetching, error, songsToBeDeleted, handleTrack, editDataTracks, playlist }) => {
-  const { playlists, ...library } = useSelector(state => state.library);
+  const library = useSelector(state => state.library); // Get full library object
+  const { playlists } = library;
   const [params] = useSearchParams();
   const isEditing = useMemo(() => params.get('edit') === 'true', [params]);
 
   const allTracks = useMemo(() => {
     const tracksToUse = isEditing ? editDataTracks : tracks;
-    return getData({ type: 'tracks', data: tracksToUse, sortType: params.get('sort') });
+    return getData({ type: 'tracks', data: tracksToUse, sortType: params.get('sort'), library }); // Pass library to getData
   }, [isEditing, editDataTracks, tracks, library, params]);
 
   return (

@@ -12,7 +12,7 @@ import { DetailsContext } from "../components/Details";
 
 
 const SongDetails = () => {
-    const { blacklist, favorites } = useSelector( state => state.library )
+    const { blacklist, favorites, ...library } = useSelector( state => state.library ) // Get full library object
 
     const { data, updateData, colors, ...others } = useContext(DetailsContext)
 
@@ -35,7 +35,7 @@ const SongDetails = () => {
     
     useEffect(() => {
         if (song) {
-            const refinedData = getSingleData({ type: 'tracks', data: song, favorites, blacklist })
+            const refinedData = getSingleData({ type: 'tracks', data: song, library: { blacklist, favorites, ...library } }) // Pass library
             updateData({ ...others, colors, isFetching, error, data: {...refinedData, song: refinedData, tracks: [refinedData]} })
         }
     }, [song, favorites, blacklist, isFetching, error])

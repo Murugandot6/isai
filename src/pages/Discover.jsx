@@ -11,15 +11,16 @@ import { ArtistCard } from '../components/Cards';
 
 
 const Discover = () => {
-    const { playlists: userPlaylists, ...library } = useSelector(state => state.library); 
+    const library = useSelector(state => state.library); // Get full library object
+    const { playlists: userPlaylists } = library;
     
     // Fetch data for Tamil Latest Songs
     const { data: tamilSongsData, isFetching: isFetchingTamilSongs, error: errorFetchingTamilSongs } = useSearchSongsQuery('tamil latest songs');
-    const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results.slice(0, 6), type: 'tracks' }) : [], [tamilSongsData, library]);
+    const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results.slice(0, 6), type: 'tracks', library }) : [], [tamilSongsData, library]);
     
     // Fetch data for English Most Played Songs
     const { data: englishSongsData, isFetching: isFetchingEnglishSongs, error: errorFetchingEnglishSongs } = useSearchSongsQuery('trending english songs');
-    const englishMostPlayedSongs = useMemo(() => englishSongsData ? getData({ data: englishSongsData.data.results.slice(0, 15), type: 'tracks' }) : [], [englishSongsData, library]);
+    const englishMostPlayedSongs = useMemo(() => englishSongsData ? getData({ data: englishSongsData.data.results.slice(0, 15), type: 'tracks', library }) : [], [englishSongsData, library]);
 
     // Fetch data for popular Tamil radio stations
     const { data: popularTamilStationsData, isFetching: isFetchingTamilStations, error: errorFetchingTamilStations } = useSearchStationsQuery({
