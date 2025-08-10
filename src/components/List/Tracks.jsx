@@ -1,4 +1,4 @@
-import { useEffect , useMemo, useState} from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
@@ -11,15 +11,13 @@ import { getData } from '../../utils/getData'
 
 const AllTracks = ({ tracks, activeSong, isPlaying, isFetching, error, songsToBeDeleted, handleTrack, editDataTracks, playlist }) => {
   const { playlists, ...library } = useSelector(state => state.library);
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const isEditing = useMemo(() => params.get('edit') === 'true', [params]);
-  const [allTracks, setAllTracks] = useState([]);
 
-  useEffect(() => {
+  const allTracks = useMemo(() => {
     const tracksToUse = isEditing ? editDataTracks : tracks;
-    const tracksData = getData({ type: 'tracks', data: tracksToUse });
-    setAllTracks(tracksData);
-  }, [params, playlist, library, editDataTracks, tracks]);
+    return getData({ type: 'tracks', data: tracksToUse, sortType: params.get('sort') });
+  }, [isEditing, editDataTracks, tracks, library, params]);
 
   return (
     isFetching ?
@@ -41,7 +39,7 @@ const AllTracks = ({ tracks, activeSong, isPlaying, isFetching, error, songsToBe
               allTracks?.map((song, i, songs) => (
                 <Track
                   i={i}
-                  key={i}
+                  key={song.id}
                   tracks={songs}
                   song={song}
                   activeSong={activeSong}

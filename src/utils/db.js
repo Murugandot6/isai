@@ -2,19 +2,40 @@ import { Client, Databases, ID } from "appwrite";
 
 const THREE_DAYS_IN_MILLISECONDS = 259200000;
 
+// Check if Appwrite environment variables are set
+const APPWRITE_ENDPOINT = import.meta.env.VITE_ENDPOINT_URL;
+const APPWRITE_PROJECT_ID = import.meta.env.VITE_PROJECT_ID;
+const APPWRITE_DB_ID = import.meta.env.VITE_DB_ID;
+const APPWRITE_COLLECTION_ID = import.meta.env.VITE_COLLECTION_ID;
+const APPWRITE_COLLECTION_ID2 = import.meta.env.VITE_COLLECTION_ID2;
+
+// Helper to check if Appwrite is configured
+const isAppwriteConfigured = () => {
+    if (!APPWRITE_ENDPOINT || !APPWRITE_PROJECT_ID || !APPWRITE_DB_ID || !APPWRITE_COLLECTION_ID || !APPWRITE_COLLECTION_ID2) {
+        console.warn("Appwrite environment variables are not fully configured. Database operations will be skipped.");
+        console.warn("Please ensure VITE_ENDPOINT_URL, VITE_PROJECT_ID, VITE_DB_ID, VITE_COLLECTION_ID, and VITE_COLLECTION_ID2 are set in your .env file.");
+        return false;
+    }
+    return true;
+};
+
 export const saveToDB = (payload, collectionId) => new Promise(async (resolve, reject) => {
+    if (!isAppwriteConfigured()) {
+        reject(new Error("Appwrite not configured. Skipping save to DB."));
+        return;
+    }
     try {
         const client = new Client();
         client
-            .setEndpoint(import.meta.env.VITE_ENDPOINT_URL)
-            .setProject(import.meta.env.VITE_PROJECT_ID);
+            .setEndpoint(APPWRITE_ENDPOINT)
+            .setProject(APPWRITE_PROJECT_ID);
 
         const database = new Databases(client);
 
         await database.createDocument(
-            import.meta.env.VITE_DB_ID, 
-            collectionId, 
-            ID.unique(), 
+            APPWRITE_DB_ID,
+            collectionId,
+            ID.unique(),
             payload
         );
         resolve();
@@ -24,23 +45,31 @@ export const saveToDB = (payload, collectionId) => new Promise(async (resolve, r
 });
 
 export const answerQuestion = (answer) => new Promise(async function (resolve, reject) {
+    if (!isAppwriteConfigured()) {
+        reject(new Error("Appwrite not configured. Skipping answer question."));
+        return;
+    }
     try {
         const payload = {
             answer,
             platform: "Ridm",
             userAgent: navigator.userAgent,
         };
-        
-        saveToDB(payload, import.meta.env.VITE_COLLECTION_ID);
+
+        await saveToDB(payload, APPWRITE_COLLECTION_ID);
+        resolve();
     } catch (error) {
         reject(error)
     }
 });
 
 export const recordVisitor = async (searchParams) => {
+    if (!isAppwriteConfigured()) {
+        console.warn("Appwrite not configured. Skipping visitor recording.");
+        return;
+    }
     try {
-        // Ensure searchParams.get('omit') is treated as a string or empty string
-        const omitParam = searchParams.get('omit') ?? ''; // Use nullish coalescing to default to empty string if null/undefined
+        const omitParam = searchParams.get('omit') ?? '';
         const avoidVisitor = Number(localStorage.getItem('omit')) >= Date.now() || omitParam === 'true';
 
         if(avoidVisitor) {
@@ -52,9 +81,9 @@ export const recordVisitor = async (searchParams) => {
                 url: window.location.href
             };
 
-            await saveToDB(payload, import.meta.env.VITE_COLLECTION_ID2);
+            await saveToDB(payload, APPWRITE_COLLECTION_ID2);
         }
     } catch (error) {
-        console.error(error.message);
+        console.error("Error recording visitor:", error.message);
     }
 }
