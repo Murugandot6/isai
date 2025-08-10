@@ -35,10 +35,10 @@ const Discover = () => {
     return (
         <div className="flex flex-col p-4 gap-10 lg:gap-6">
             {/* Editors' Pick Playlists Section */}
-            {userPlaylists.length > 0 && ( // Display user's playlists here
+            {editorsPickPlaylists.length > 0 && ( // Display hardcoded editors' pick playlists here
                 <div className="mb-8">
                     <h3 className="font-bold text-white text-xl mb-4">Editors' Pick Playlists</h3>
-                    <Playlists playlists={userPlaylists.slice(0, 3)} /> {/* Display first 3 of user's playlists */}
+                    <Playlists playlists={editorsPickPlaylists.slice(0, 3)} /> {/* Display first 3 of hardcoded playlists */}
                 </div>
             )}
 
