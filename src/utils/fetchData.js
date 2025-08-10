@@ -10,7 +10,8 @@ import { saavnApi } from '../redux/services/saavnApi.js';
 const getImageUrl = (imageArray) => {
   if (!Array.isArray(imageArray) || imageArray.length === 0) return '';
   // Use the last item in the array, which is typically the highest quality.
-  return imageArray[imageArray.length - 1]?.link || '';
+  // Check for both 'link' and 'url' properties
+  return imageArray[imageArray.length - 1]?.link || imageArray[imageArray.length - 1]?.url || '';
 };
 
 // Safely gets the highest-quality playable audio URL from a downloadUrl array.
