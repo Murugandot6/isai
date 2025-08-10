@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { Songs, Albums } from '../components/List'; // Import Albums for artist's albums
-import { useGetArtistDetailsByIdQuery } from '../redux/services/saavnApi';
+import { useGetArtistDetailsQuery } from '../redux/services/saavnApi'; // Use the new hook
 import { getSingleData, getData } from '../utils/getData';
 import { DetailsContext } from '../components/Details';
 
@@ -12,7 +12,14 @@ const ArtistDetails = () => {
   const { data, updateData, colors, ...others } = useContext(DetailsContext);
   const { id: artistId } = useParams();
 
-  const { data: artistDetails, isFetching, error } = useGetArtistDetailsByIdQuery(artistId);
+  // Use the new getArtistDetails query, requesting top songs and albums
+  const { data: artistDetails, isFetching, error } = useGetArtistDetailsQuery({
+    id: artistId,
+    songCount: 10, // Fetch 10 top songs
+    albumCount: 10, // Fetch 10 top albums
+    sortBy: 'popularity',
+    sortOrder: 'desc'
+  });
   const artist = artistDetails?.data; // Saavn API returns data directly under 'data' for artist details
 
   const topSongs = useMemo(() => {
@@ -21,8 +28,8 @@ const ArtistDetails = () => {
   }, [artist]);
 
   const albums = useMemo(() => {
-    if (!artist?.albums) return [];
-    return getData({ type: 'albums', data: artist.albums });
+    if (!artist?.topAlbums) return []; // Use topAlbums from the new API response
+    return getData({ type: 'albums', data: artist.topAlbums });
   }, [artist]);
 
   useEffect(() => {
