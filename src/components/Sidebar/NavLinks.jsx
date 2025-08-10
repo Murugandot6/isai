@@ -23,21 +23,16 @@ const NavLinks = () => {
                             />
                         ))
                     }
+                    {
+                        secondLinks.map((secondLink, index) => (
+                            <SecondLinks 
+                                key={index} 
+                                link={secondLink} 
+                                active={(new RegExp(secondLink.to, 'i')).test(pathname)} 
+                            />
+                        ))
+                    }
                 </ul>
-                <div className="flex flex-col gap-4 border rounded-[20px] border-white/10 p-2 bg-black/20">
-                    <h2 className="font-semibold text-lg text-white px-2 border-b border-white/5 p-2">Your Library</h2>
-                    <ul className="flex flex-col gap-2">
-                        {
-                            secondLinks.map((secondLink, index) => (
-                                <SecondLinks 
-                                    key={index} 
-                                    link={secondLink} 
-                                    active={(new RegExp(secondLink.to, 'i')).test(pathname)} 
-                                />
-                            ))
-                        }
-                    </ul>
-                </div>
                 <Footer />
             </nav>
         </div>
