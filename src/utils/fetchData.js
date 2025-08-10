@@ -1,6 +1,6 @@
 import { playSongs, pause } from './player.js'
-import { getData } from './getData.js'
-import { store } from '../redux/store.js';
+import { getData, getSingleData } from './getData.js' // Import getSingleData
+import { store } from '../redux/store';
 import { saavnApi } from '../redux/services/saavnApi.js';
 
 export const fetchSongs = async (album) => {
@@ -39,3 +39,32 @@ export const fetchSuggestedSongs = ({ id, suggestedSongsIds }) => new Promise(
         }
     }
 )
+
+export const searchSongByTitleAndArtist = async (title, artist) => {
+    try {
+        const query = `${title} ${artist}`;
+        const { data: searchResults } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate(query));
+
+        if (searchResults?.data?.results?.length > 0) {
+            // Find the best match by checking if artist name is present in primaryArtists
+            const bestMatch = searchResults.data.results.find(song => 
+                song.name?.toLowerCase() === title?.toLowerCase() && 
+                song.primaryArtists?.toLowerCase().includes(artist?.toLowerCase())
+            );
+            
+            if (bestMatch) {
+                // Normalize the data using getSingleData
+                const { library } = store.getState();
+                return getSingleData({ type: 'tracks', data: bestMatch, favorites: library.favorites, blacklist: library.blacklist });
+            } else {
+                // If no exact match, return the first result and normalize it
+                const { library } = store.getState();
+                return getSingleData({ type: 'tracks', data: searchResults.data.results[0], favorites: library.favorites, blacklist: library.blacklist });
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error("Error searching song by title and artist:", error);
+        throw error;
+    }
+};

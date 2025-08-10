@@ -10,7 +10,12 @@ const PlaylistsFront = ({ isInAddPage }) => {
         <div className={`min-w-full transition-transform ${isInAddPage && 'translate-x-[-110%]'}`}>
             <div className="w-full flex justify-between items-center mb-4">
                 <h3 className="font-bold text-white text-xl">Playlists</h3>
-                <Options type="playlists" navigate={navigate} />
+                <div className="flex gap-2">
+                    <Link to="/playlists?import=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
+                        Import from Spotify
+                    </Link>
+                    <Options type="playlists" navigate={navigate} />
+                </div>
             </div>
             {
                 playlists.length < 1 ?

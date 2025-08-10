@@ -2,17 +2,14 @@ import { useEffect, useMemo, useReducer, useState } from 'react'
 
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-// Removed useGetTopGenresQuery as it's from the removed DeezerApi
-// import { useGetTopGenresQuery } from '../redux/services/DeezerApi';
-
 import CreatePlaylist from '../components/CreatePlaylist';
+import ImportPlaylist from '../components/CreatePlaylist/ImportPlaylist'; // Import the new component
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
 import PlaylistsFront from '../components/PlaylistsFront'
 
 const Playlist = () => {
-  // const { data: genres, isFetching, error } = useGetTopGenresQuery(); // This line is removed
   const genres = { data: [] }; // Mock empty genres data as Saavn API doesn't provide this directly
   const isFetching = false; // Set to false as we're not fetching
   const error = false; // Set to false as we're not fetching
@@ -21,6 +18,7 @@ const Playlist = () => {
   const [params, setParams] = useSearchParams();
   const [newPlaylist, setNewPlaylist] = useReducer(playlistDispatch, playlistState);
   const isInAddPage = useMemo(() => params.get('add') === 'true', [params]);
+  const isImportPage = useMemo(() => params.get('import') === 'true', [params]); // New state for import page
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -41,7 +39,6 @@ const Playlist = () => {
   }
 
   useEffect(() => { 
-    // if (!genres) return; // This check is no longer needed with mock data
     setNewPlaylist({ type: 'SETGENRES', payload: genres.data });
   }, [genres])
 
@@ -60,26 +57,37 @@ const Playlist = () => {
   }, [newPlaylist.genreAction])
 
   useEffect(() => {
-    const text = `Isai - ${isInAddPage ? 'Create New Playlist' : 'Playlists'}`
+    const text = `Isai - ${isInAddPage ? 'Create New Playlist' : isImportPage ? 'Import Playlist' : 'Playlists'}`
     document.getElementById('site_title').innerText = text
   }, [params])
 
   return (
-    <div className={`px-2 flex md:px-4 overflow-x-clip ${!isInAddPage ? 'overflow-y-hidden' : ''}`}>
-      <PlaylistsFront isInAddPage={isInAddPage} />
-      <CreatePlaylist
-        handleSubmit={handleSubmit}
-        isInAddPage={isInAddPage}
-        playlistInfo={newPlaylist.playlistInfo}
-        setNewPlaylist={setNewPlaylist}
-        handleChange={handleChange}
-        genres={genres}
-        isFetching={isFetching}
-        error={error}
-        genreNum={newPlaylist.genreNum}
-        suggestedSongs={newPlaylist.suggestedSongs}
-        errorSavingPlaylist={errorSavingPlaylist}
-      />
+    <div className={`px-2 flex md:px-4 overflow-x-clip ${(!isInAddPage && !isImportPage) ? 'overflow-y-hidden' : ''}`}>
+      <PlaylistsFront isInAddPage={isInAddPage || isImportPage} />
+      {
+        isImportPage ? (
+          <ImportPlaylist
+            handleSubmit={handleSubmit}
+            playlistInfo={newPlaylist.playlistInfo}
+            setNewPlaylist={setNewPlaylist}
+            errorSavingPlaylist={errorSavingPlaylist}
+          />
+        ) : (
+          <CreatePlaylist
+            handleSubmit={handleSubmit}
+            isInAddPage={isInAddPage}
+            playlistInfo={newPlaylist.playlistInfo}
+            setNewPlaylist={setNewPlaylist}
+            handleChange={handleChange}
+            genres={genres}
+            isFetching={isFetching}
+            error={error}
+            genreNum={newPlaylist.genreNum}
+            suggestedSongs={newPlaylist.suggestedSongs}
+            errorSavingPlaylist={errorSavingPlaylist}
+          />
+        )
+      }
     </div>
   )
 }
