@@ -15,10 +15,10 @@ const calculateModalPosition = (buttonRect, modalWidth, modalHeight) => {
     const viewportWidth = window.innerWidth;
 
     // Attempt to place to the left of the button, with a much larger offset
-    let left = buttonRect.x - modalWidth - 100; // Increased offset for 'more left'
+    let left = buttonRect.x - modalWidth - 200; // Doubled offset for 'more left'
 
     // Attempt to place higher than vertically centered, with a much larger offset
-    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2) - 100; // Increased offset for 'more up'
+    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2) - 200; // Doubled offset for 'more up'
 
     // --- Horizontal Adjustment ---
     if (left < 0) { // If it goes off the left side
