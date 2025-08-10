@@ -17,21 +17,23 @@ const CSV_FILE_PATHS = [
 export const importAllPlaylistsFromCsv = async () => {
   displayMessage('Starting bulk import of playlists...');
   let playlistsCreatedCount = 0;
+  const failedImports = [];
+  const successfulImports = [];
 
   for (const filePath of CSV_FILE_PATHS) {
+    const playlistName = filePath
+      .split('/')
+      .pop()
+      .replace('.csv', '')
+      .replace(/_/g, ' ') // Replace underscores with spaces
+      .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
+
     try {
       const response = await fetch(`/${filePath}`); // Assuming files are served from root
       if (!response.ok) {
         throw new Error(`Failed to fetch ${filePath}: ${response.statusText}`);
       }
       const csvText = await response.text();
-
-      const playlistName = filePath
-        .split('/')
-        .pop()
-        .replace('.csv', '')
-        .replace(/_/g, ' ') // Replace underscores with spaces
-        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
 
       let songsFromCsv = [];
       await new Promise((resolve, reject) => {
@@ -77,19 +79,23 @@ export const importAllPlaylistsFromCsv = async () => {
         await createNewPlaylist(playlistInfo);
         displayMessage(`Playlist "${playlistName}" created with ${songsAddedToCurrentPlaylist} songs.`);
         playlistsCreatedCount++;
+        successfulImports.push({ name: playlistName, songs: songsAddedToCurrentPlaylist });
       } else {
         displayMessage(`No songs found to create playlist "${playlistName}".`);
+        failedImports.push({ name: playlistName, reason: 'No songs found' });
       }
 
     } catch (error) {
       console.error(`Error importing playlist from ${filePath}:`, error);
       displayMessage(`Failed to import playlist from ${filePath}.`);
+      failedImports.push({ name: playlistName, reason: error.message });
     }
   }
 
-  if (playlistsCreatedCount > 0) {
-    displayMessage(`Successfully imported ${playlistsCreatedCount} playlists!`);
-  } else {
-    displayMessage('No new playlists were imported.');
-  }
+  return {
+    totalPlaylistsAttempted: CSV_FILE_PATHS.length,
+    playlistsCreated: playlistsCreatedCount,
+    successfulImports,
+    failedImports,
+  };
 };
