@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { FaPlay, FaPause } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
-import { radioImage as defaultRadioImage } from '../../../assets/images';
-import { playSongs, pause } from '../../../utils/player';
+import { radioImage as defaultRadioImage } from '../../assets/images';
+import { playSongs, pause } from '../../utils/player';
 
 const RadioStationCard = ({ station }) => {
     const { activeSong, isPlaying } = useSelector((state) => state.player);
