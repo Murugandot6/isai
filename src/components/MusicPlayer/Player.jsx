@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/media-has-caption */
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { displayMessage } from '../../utils/prompt';
 import { pause } from '../../utils/player';
@@ -8,20 +8,38 @@ const Player = ({ activeSong, isPlaying, volume, seekTime, onEnded, onTimeUpdate
   const ref = useRef(null);
   const { bitrate } = useSelector(state => state.player);
 
-  // Handle play/pause based on isPlaying state
+  // Effect to handle source changes
   useEffect(() => {
-    if (ref.current) {
-      if (isPlaying) {
-        ref.current.play().catch(error => {
-          console.error("Audio play failed:", error);
-          displayMessage("Failed to play song. Please try another.");
-          pause(); // Dispatch pause action if play fails
-        });
-      } else {
-        ref.current.pause();
-      }
+    if (!activeSong?.downloadUrl || activeSong.downloadUrl.length === 0) {
+      ref.current.src = '';
+      return;
     }
-  }, [isPlaying]); // Dependency on isPlaying
+    
+    const audioSource = activeSong.downloadUrl.find(url => url.quality === `${bitrate}kbps`)?.link || activeSong.downloadUrl[0]?.link;
+
+    if (ref.current.src !== audioSource) {
+      ref.current.src = audioSource || '';
+    }
+  }, [activeSong, bitrate]);
+
+  // Effect to handle play/pause state changes
+  useEffect(() => {
+    if (isPlaying && ref.current.src) {
+      const playPromise = ref.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // AbortError is common and expected when the user quickly changes songs. We can ignore it.
+          if (error.name !== 'AbortError') {
+            console.error("Audio play failed:", error);
+            displayMessage("Failed to play song.");
+            pause();
+          }
+        });
+      }
+    } else {
+      ref.current.pause();
+    }
+  }, [isPlaying, activeSong]); // Re-run when isPlaying or the song itself changes
 
   // Update volume
   useEffect(() => {
@@ -32,39 +50,10 @@ const Player = ({ activeSong, isPlaying, volume, seekTime, onEnded, onTimeUpdate
 
   // Update seek time
   useEffect(() => {
-    if (ref.current) {
+    if (ref.current && ref.current.duration) { // Only seek if duration is available (not a live stream)
       ref.current.currentTime = seekTime;
     }
   }, [seekTime]);
-
-  // Determine audio source
-  const audioSource = useMemo(() => {
-    if (!activeSong?.downloadUrl || activeSong.downloadUrl.length === 0) {
-      console.warn("No download URL found for active song:", activeSong);
-      return '';
-    }
-    const selectedBitrate = activeSong.downloadUrl.find(url => url.quality === `${bitrate}kbps`);
-    const source = selectedBitrate ? selectedBitrate.link : activeSong.downloadUrl[0]?.link;
-    if (!source) {
-      console.warn("No valid audio link found for active song:", activeSong);
-    }
-    return source;
-  }, [activeSong, bitrate]); // Dependencies on activeSong and bitrate
-
-  // Set audio source when it changes
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.src = audioSource;
-      // If source changes while playing, try to play it
-      if (isPlaying) {
-        ref.current.play().catch(error => {
-          console.error("Audio play failed after source change:", error);
-          displayMessage("Failed to play song after source update. Please try another.");
-          pause();
-        });
-      }
-    }
-  }, [audioSource]); // Dependency on audioSource
 
   return (
     <audio
@@ -72,6 +61,11 @@ const Player = ({ activeSong, isPlaying, volume, seekTime, onEnded, onTimeUpdate
       onEnded={onEnded}
       onTimeUpdate={onTimeUpdate}
       onLoadedData={onLoadedData}
+      onError={(e) => {
+        console.error("Audio Element Error:", e.target.error);
+        displayMessage("This audio source is not supported or is unavailable.");
+        pause();
+      }}
     />
   );
 };

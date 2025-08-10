@@ -17,8 +17,10 @@ const NowPlaying = ({ close, open, nowPlaying, activeSong, currentSongs, current
     const [colors, setColors] = useState([]);
     const imgRef = useRef(null);
 
-    const { data: song } = useGetSongDetailsByIdQuery(activeSong.id); // Changed to useGetSongDetailsByIdQuery
-    const { data: lyrics, isFetching, error } = useGetLyricsQuery(song?.isrc);
+    const isRadio = activeSong?.duration === 0;
+
+    const { data: song } = useGetSongDetailsByIdQuery(activeSong.id, { skip: isRadio || !activeSong.id });
+    const { data: lyrics, isFetching, error } = useGetLyricsQuery(song?.isrc, { skip: isRadio || !song?.isrc });
 
     const style = useMemo(() => ({
         background: `linear-gradient(${colors[0]}, transparent)`,
