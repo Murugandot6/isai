@@ -27,8 +27,8 @@ const RadioBox = ({ radio, show, handleClick }) => {
                 <MdClose size={25} />
             </button>
             <div className="flex relative items-end justify-start gap-4 flex-wrap">
-                <img src={radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" className="z-[0] absolute top-[-100px] left-[-100px] w-[50%] max-w-[360px] aspect-square blur-[70px] opacity-20" /> {/* Use Saavn image links */}
-                <img className={`shadow-lg shadow-black/50 rounded-[10px] ${show && 'w-[150px] aspect-square'}`} src={radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" /> {/* Use Saavn image links */}
+                <img src={radio.image?.[2]?.link || radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" className="z-[0] absolute top-[-100px] left-[-100px] w-[50%] max-w-[360px] aspect-square blur-[70px] opacity-20" /> {/* Use highest quality available */}
+                <img className={`shadow-lg shadow-black/50 rounded-[10px] ${show && 'w-[150px] aspect-square'}`} src={radio.image?.[2]?.link || radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" /> {/* Use highest quality available */}
                 <p className="relative flex flex-col">
                     <span className="text-gray-400 text-sm font-bold">{radio.type}</span>
                     <span className="text-white uppercase text-xl font-bold truncate">{radio.name}</span> {/* Use radio.name */}
