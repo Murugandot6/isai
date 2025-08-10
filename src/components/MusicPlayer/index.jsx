@@ -25,11 +25,12 @@ const MusicPlayer = ({ scrolled, forMobile = false }) => {
     dispatch(setNowPlaying(false));
   }
 
-  if (!forMobile && !(activeSong?.id && window.innerWidth >= 1024)) return;
-  if (forMobile && !(activeSong?.title && window.innerWidth < 1024)) return;
+  // Only render the player components if there's an active song
+  if (!activeSong?.id) return null;
 
   return (
     <>
+      {/* The actual audio element, always rendered if a song is active */}
       <Player
         activeSong={activeSong}
         volume={volume}
@@ -41,20 +42,24 @@ const MusicPlayer = ({ scrolled, forMobile = false }) => {
         onLoadedData={(event) => setDuration(event.target.duration)}
       />
 
-      <MiniPlayer
-        isPlaying={isPlaying}
-        currentSongs={currentSongs}
-        activeSong={activeSong}
-        isActive={isActive}
-        currentIndex={currentIndex}
-        seekTime={seekTime}
-        nowPlaying={nowPlaying}
-        open={open}
-        scrolled={scrolled}
-        duration={duration}
-        appTime={appTime}
-      />
+      {/* MiniPlayer is conditionally rendered based on screen size and `forMobile` prop */}
+      {((!forMobile && window.innerWidth >= 1024) || (forMobile && window.innerWidth < 1024)) && (
+        <MiniPlayer
+          isPlaying={isPlaying}
+          currentSongs={currentSongs}
+          activeSong={activeSong}
+          isActive={isActive}
+          currentIndex={currentIndex}
+          seekTime={seekTime}
+          nowPlaying={nowPlaying}
+          open={open}
+          scrolled={scrolled}
+          duration={duration}
+          appTime={appTime}
+        />
+      )}
     
+      {/* NowPlaying component handles its own visibility based on the `nowPlaying` state */}
       <NowPlaying
         close={close}
         open={open}
