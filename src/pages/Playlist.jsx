@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
 
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'; // Import Link
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 
 import CreatePlaylist from '../components/CreatePlaylist';
 import ImportPlaylist from '../components/CreatePlaylist/ImportPlaylist';
-import { Playlists } from '../components/List'; // Import Playlists component
-import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import dummy playlists
+import { Playlists } from '../components/List';
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
+import { useSelector } from 'react-redux';
 
 const Playlist = () => {
   const genres = { data: [] }; // Mock empty genres data as Saavn API doesn't provide this directly
@@ -22,7 +22,7 @@ const Playlist = () => {
   const isImportPage = useMemo(() => params.get('import') === 'true', [params]);
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
-  // Removed the useEffect that automatically set 'add=true'
+  const { playlists: userPlaylists } = useSelector(state => state.library); // Get user's playlists
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -89,19 +89,19 @@ const Playlist = () => {
           isImportPage={isImportPage}
         />
       ) : (
-        // Default view when no 'add' or 'import' params are present
         <div className="min-w-full">
           <div className="w-full flex justify-between items-center mb-4">
-            <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3> {/* Label as Editors' Pick */}
+            <h3 className="font-bold text-white text-xl">Your Playlists</h3>
             <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
               Create New
             </Link>
           </div>
-          {editorsPickPlaylists.length > 0 ? (
-            <Playlists playlists={editorsPickPlaylists} />
+          {userPlaylists.length > 0 ? (
+            <Playlists playlists={userPlaylists} />
           ) : (
             <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
-              <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
+              <h3 className="text-gray-400 font-bold text-xl">You don't have any saved playlists.</h3>
+              <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-6 h-8 md:h-10 rounded-full bg-gray-200 hover:bg-gray-400 text-black">Create New</Link>
             </div>
           )}
         </div>
@@ -110,4 +110,4 @@ const Playlist = () => {
   )
 }
 
-export default Playlist
+export default Playlist;
