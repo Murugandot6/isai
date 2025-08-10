@@ -7,7 +7,7 @@ import NavigationAndSearch from './components/NavigationAndSearch';
 import MobileNavLinks from './components/Sidebar/MobileNavLinks';
 import NavLinks from './components/Sidebar/NavLinks';
 
-const Layout = () => {
+const Layout = ({ playerProps }) => {
     const location = useLocation();
     const { nowPlaying } = useSelector((state) => state.player);
 
@@ -32,12 +32,12 @@ const Layout = () => {
             <AddToPlaylist />
             <Prompt />
             <div ref={bodyRef} id="main-body" className="pb-[100px] lg:pb-0 lg:border lg:border-white/5 sm:rounded-[15px] lg:h-[calc(100vh-16px)] h-[100vh] overflow-y-scroll flex flex-col gap-2">
-                <NavigationAndSearch />
+                <NavigationAndSearch playerProps={playerProps} />
                 <div className={`transition-opacity ${nowPlaying && 'opacity-0'} row-span-2`}>
                     <Outlet />
                 </div>
             </div>
-            <MobileNavLinks />
+            <MobileNavLinks playerProps={playerProps} />
         </div>
     )
 };

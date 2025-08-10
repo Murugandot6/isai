@@ -1,5 +1,5 @@
-import { useLayoutEffect, useState } from 'react'; // Import useState
-import { useDispatch, useSelector } from 'react-redux'; // Import useSelector
+import { useLayoutEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes, useSearchParams } from 'react-router-dom';
 import {
   ArtistDetails,
@@ -22,13 +22,29 @@ import Details from './components/Details';
 import { setPlayer } from './redux/features/playerSlice';
 import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
-import { Loader } from './components/LoadersAndError'; // Import Loader component
+import { Loader } from './components/LoadersAndError';
+import Player from './components/MusicPlayer/Player'; // Import Player
+import { next } from './utils/player'; // Import next for onEnded handler
 
 const App = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
-  const library = useSelector(state => state.library); // Get library state
-  const [isLibraryLoaded, setIsLibraryLoaded] = useState(false); // New state for library loading
+  const library = useSelector(state => state.library);
+  const { activeSong, isPlaying, currentIndex } = useSelector((state) => state.player);
+  const [isLibraryLoaded, setIsLibraryLoaded] = useState(false);
+
+  // Player states lifted to App.jsx
+  const [duration, setDuration] = useState(0);
+  const [seekTime, setSeekTime] = useState(0);
+  const [appTime, setAppTime] = useState(0);
+  const [volume, setVolume] = useState(0.3);
+
+  // Player handlers
+  const onEnded = () => {
+    next(currentIndex + 1);
+  };
+  const onTimeUpdate = (event) => setAppTime(event.target.currentTime);
+  const onLoadedData = (event) => setDuration(event.target.duration);
 
   useLayoutEffect(() => {
     const playerStorage = localStorage.getItem('player');
@@ -39,7 +55,6 @@ const App = () => {
       const storedLibrary = JSON.parse(libraryStorage);
       dispatch(setLibrary(storedLibrary));
     } else {
-      // Initialize with a complete structure to prevent undefined errors
       dispatch(setLibrary({
         playlists: [],
         editorsPick: [],
@@ -47,39 +62,69 @@ const App = () => {
         blacklist: { tracks: [], genres: [], artists: [], albums: [], radios: [] },
       }));
     }
-    setIsLibraryLoaded(true); // Mark library as loaded after dispatching initial state
+    setIsLibraryLoaded(true);
   }, []);
 
-  // Render a loader if library is not yet loaded
   if (!isLibraryLoaded) {
     return <Loader title="Loading application..." />;
   }
 
+  // Create a single object to pass player-related props
+  const playerProps = {
+    activeSong,
+    isPlaying,
+    volume,
+    seekTime,
+    onEnded,
+    onTimeUpdate,
+    onLoadedData,
+    duration,
+    appTime,
+    setSeekTime,
+    setVolume,
+    currentIndex,
+  };
+
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/charts" element={<TopCharts />} />
-        <Route path="/*" element={<Discover />} />
-        <Route element={<Details />}>
-          <Route path="/artists/:id" element={<ArtistDetails />} />
-          <Route path="/albums/:id" element={<AlbumDetails />} />
-          <Route path="/songs/:songid" element={<SongDetails />} />
+    <>
+      {/* The single audio element, rendered only if there's an active song */}
+      {activeSong?.id && (
+        <Player
+          activeSong={playerProps.activeSong}
+          volume={playerProps.volume}
+          isPlaying={playerProps.isPlaying}
+          seekTime={playerProps.seekTime}
+          onEnded={playerProps.onEnded}
+          onTimeUpdate={playerProps.onTimeUpdate}
+          onLoadedData={playerProps.onLoadedData}
+        />
+      )}
+
+      <Routes>
+        <Route element={<Layout playerProps={playerProps} />}>
+          <Route path="/charts" element={<TopCharts />} />
+          <Route path="/*" element={<Discover />} />
+          <Route element={<Details />}>
+            <Route path="/artists/:id" element={<ArtistDetails />} />
+            <Route path="/albums/:id" element={<AlbumDetails />} />
+            <Route path="/songs/:songid" element={<SongDetails />} />
+          </Route>
+          <Route path="/search/:searchTerm" element={<Search />} />
+
+          <Route path="/genres/" element={<Genres />} />
+          <Route path="/genres/:id" element={<GenreDetails />} />
+                    
+          <Route path="/playlists/" element={<Playlist />} />
+          <Route path="/playlists/:id" element={<PlaylistDetails />} />
+
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/blacklist" element={<Blacklist />} />
+          <Route path="/editors-pick" element={<EditorsPick />} />
+          <Route path="/radio" element={<Radio />} />
+          <Route path="/artists" element={<ArtistsList />} />
         </Route>
-        <Route path="/search/:searchTerm" element={<Search />} />
-
-        <Route path="/genres/" element={<Genres />} />
-        <Route path="/genres/:id" element={<GenreDetails />} />
-                  
-        <Route path="/playlists/" element={<Playlist />} />
-        <Route path="/playlists/:id" element={<PlaylistDetails />} />
-
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/blacklist" element={<Blacklist />} />
-        <Route path="/editors-pick" element={<EditorsPick />} />
-        <Route path="/radio" element={<Radio />} />
-        <Route path="/artists" element={<ArtistsList />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   );
 };
 

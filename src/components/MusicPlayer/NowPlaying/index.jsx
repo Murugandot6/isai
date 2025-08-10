@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from "react"
 import ColorThief from 'colorthief'
 
-import { useGetLyricsQuery } from "../../../redux/services/saavnApi" // Changed from MusixMatchApi
+import { useGetLyricsQuery } from "../../../redux/services/saavnApi"
 
 import QueueAndLyrics from "./QueueAndLyrics"
 import ChangeQueueLyrics from "./ChangeQueueLyrics"

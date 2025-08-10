@@ -5,7 +5,7 @@ import Navigations from './Navigations'
 import MusicPlayer from '../MusicPlayer'
 import { useSelector } from 'react-redux'
 
-const NavigationAndSearch = () => {
+const NavigationAndSearch = ({ playerProps }) => {
   const { nowPlaying } = useSelector((state) => state.player);
   const [scrolled, setScrolled] = useState(false);
 
@@ -32,7 +32,7 @@ const NavigationAndSearch = () => {
           <Searchbar scrolled={scrolled} />
         </div>
       </div>
-      <MusicPlayer scrolled={scrolled} />
+      <MusicPlayer scrolled={scrolled} playerProps={playerProps} />
     </div>
   )
 };

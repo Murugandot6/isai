@@ -3,19 +3,15 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { setNowPlaying } from '../../redux/features/playerSlice';
 
-import { next } from '../../utils/player';
-
 import NowPlaying from './NowPlaying';
-import Player from './Player'
 import MiniPlayer from './MiniPlayer';
 
-const MusicPlayer = ({ scrolled, forMobile = false }) => {
+const MusicPlayer = ({ scrolled, forMobile = false, playerProps }) => {
   const { activeSong, currentSongs, currentIndex, isActive, isPlaying, shuffle, repeat, nowPlaying } = useSelector((state) => state.player);
-  const [duration, setDuration] = useState(0);
-  const [seekTime, setSeekTime] = useState(0);
-  const [appTime, setAppTime] = useState(0);
-  const [volume, setVolume] = useState(0.3);
   const dispatch = useDispatch();
+
+  // Destructure playerProps
+  const { duration, appTime, setSeekTime, setVolume, volume } = playerProps;
 
   const open = () => {
     dispatch(setNowPlaying(true));
@@ -25,23 +21,11 @@ const MusicPlayer = ({ scrolled, forMobile = false }) => {
     dispatch(setNowPlaying(false));
   }
 
-  // Only render the player components if there's an active song
+  // Only render the visual player components if there's an active song
   if (!activeSong?.id) return null;
 
   return (
     <>
-      {/* The actual audio element, always rendered if a song is active */}
-      <Player
-        activeSong={activeSong}
-        volume={volume}
-        isPlaying={isPlaying}
-        seekTime={seekTime}
-        currentIndex={currentIndex}
-        onEnded={() => next(currentIndex + 1)}
-        onTimeUpdate={(event) => setAppTime(event.target.currentTime)}
-        onLoadedData={(event) => setDuration(event.target.duration)}
-      />
-
       {/* MiniPlayer is conditionally rendered based on screen size and `forMobile` prop */}
       {((!forMobile && window.innerWidth >= 1024) || (forMobile && window.innerWidth < 1024)) && (
         <MiniPlayer
@@ -50,7 +34,7 @@ const MusicPlayer = ({ scrolled, forMobile = false }) => {
           activeSong={activeSong}
           isActive={isActive}
           currentIndex={currentIndex}
-          seekTime={seekTime}
+          seekTime={setSeekTime} // Pass setSeekTime as seekTime prop for MiniPlayer
           nowPlaying={nowPlaying}
           open={open}
           scrolled={scrolled}
