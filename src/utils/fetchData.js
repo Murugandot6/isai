@@ -37,7 +37,7 @@ export const getSingleData = (item, type) => {
         language: item.language,
         album: item.album?.name,
         downloadUrl: item.downloadUrl,
-        allImages: item.image,
+        allImages: item.image, // Keep original for other uses if needed
       };
     case 'albums':
       return {
@@ -46,6 +46,15 @@ export const getSingleData = (item, type) => {
         subtitle: item.artists?.[0]?.name || item.primaryArtists || '',
         image: getImageUrl(item.image),
         year: item.year,
+      };
+    case 'artists': // Add explicit handling for artists
+      return {
+        id: item.id,
+        name: item.name,
+        image: getImageUrl(item.image), // Normalize image here
+        type: item.type,
+        followerCount: item.followerCount,
+        allImages: item.image, // Keep original for other uses if needed
       };
     default:
       return item;
