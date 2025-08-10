@@ -67,8 +67,8 @@ const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavin
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`min-w-full min-h-[90vh] transition-[transform,opacity] duration-300 ease-in-out absolute top-0 left-0 ${isImportPage ? 'translate-x-0 opacity-100' : 'translate-x-[100%] opacity-0 pointer-events-none'} px-3`}>
-      <Header /> {/* Now using the shared Header component */}
+    <form onSubmit={handleSubmit} className={`min-w-full min-h-[90vh] px-3`}>
+      <Header />
 
       <div className="flex flex-col md:flex-row items-start md:items-end gap-4 mb-6">
         <div className="aspect-square rounded-[10px] w-[150px] bg-white/5 flex items-center justify-center">

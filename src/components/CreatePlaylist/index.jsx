@@ -6,7 +6,7 @@ import Header from './Header'
 
 const index = ({ setNewPlaylist, handleSubmit, playlistInfo, handleChange, genres, isLoading, error, genreNum, suggestedSongs, removeSong, errorSavingPlaylist, isInAddPage }) => {
   return (
-    <form onSubmit={handleSubmit} className={`min-w-full min-h-[90vh] transition-[transform,opacity] duration-300 ease-in-out absolute top-0 left-0 ${isInAddPage ? 'translate-x-0 opacity-100' : 'translate-x-[100%] opacity-0 pointer-events-none'} px-3`}>
+    <form onSubmit={handleSubmit} className={`min-w-full min-h-[90vh] px-3`}>
       <Header />
       <Details
         errorSavingPlaylist={errorSavingPlaylist}
