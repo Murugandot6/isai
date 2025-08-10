@@ -34,8 +34,8 @@ const EditorsPick = () => {
             Create New
           </Link>
         </div>
-        {editorsPickPlaylists.length > 0 ? ( {/* Changed from userPlaylists.length */}
-          <Playlists playlists={editorsPickPlaylists} /> {/* Changed from userPlaylists */}
+        {editorsPickPlaylists.length > 0 ? (
+          <Playlists playlists={editorsPickPlaylists} />
         ) : (
           <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
             <h3 className="text-gray-400 font-bold text-xl">You don't have any saved playlists.</h3>
