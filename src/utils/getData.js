@@ -1,21 +1,21 @@
 import { store } from "../redux/store";
 
 const ACCEPTABLE_DATA_TYPES = ['tracks', 'artists', 'albums', 'genres', 'radios'];
+
+// Helper to get the current library state
 const getStoreLibrary = () => store.getState().library;
 
-var blacklist, favorites, ignoreFilter, dataType, filterRgxp, sortValue, languageFilterValue; // Add languageFilterValue
+// These will be set locally within getData for each call
+let ignoreFilter, dataType, filterRgxp, sortValue, languageFilterValue;
 
-export const getData = ({ type, data, noFilter = false, albumFilter = '', sortType = '', languageFilter = '' }) => { // Add languageFilter
+export const getData = ({ type, data, noFilter = false, albumFilter = '', sortType = '', languageFilter = '' }) => {
     if (!ACCEPTABLE_DATA_TYPES.includes(type) || !data) return data;
     
-    const library = getStoreLibrary();
-
-    blacklist = library.blacklist;
-    favorites = library.favorites;
+    // Set global-like variables for the current execution context of getData
     ignoreFilter = noFilter;
     dataType = type;
-    sortValue = sortType
-    languageFilterValue = languageFilter; // Set the new filter value
+    sortValue = sortType;
+    languageFilterValue = languageFilter;
 
     if (albumFilter) filterRgxp = new RegExp(albumFilter, 'i');
     else filterRgxp = new RegExp('', 'i');
@@ -23,67 +23,66 @@ export const getData = ({ type, data, noFilter = false, albumFilter = '', sortTy
     const newData = data
         .slice()
         .sort(handleSorting)
-        .map(addFavoriteAndBlacklist)
+        .map(item => getSingleData({ type: dataType, data: item })) // Always normalize each item
         .filter(handleFilter)
-        .filter(handleLanguageFilter); // Add new filter step
+        .filter(handleLanguageFilter);
     return newData;
 }
 
 export const getSingleData = ({ type, data }) => {
     if (!ACCEPTABLE_DATA_TYPES.includes(type) || !data) return data;
 
-    const library = store.getState().library; // Get fresh library state
+    const library = getStoreLibrary(); // Get fresh library state
+    const currentBlacklist = library.blacklist;
+    const currentFavorites = library.favorites;
     
-    blacklist = library.blacklist;
-    favorites = library.favorites;
-    dataType = type;
+    // Set global-like variable for the current execution context of getSingleData
+    dataType = type; // Ensure dataType is set for internal use in this function
 
     const newItem = { ...data };
 
-    // Add favorite and blacklist flags
-    newItem.favorite = favorites[dataType]?.map(elem => elem.id).includes(data.id);
-    newItem.blacklist = blacklist[dataType]?.map(elem => elem.id).includes(data.id);
+    // Add favorite and blacklist flags based on the current library state
+    newItem.favorite = currentFavorites[dataType]?.map(elem => elem.id).includes(data.id);
+    newItem.blacklist = currentBlacklist[dataType]?.map(elem => elem.id).includes(data.id);
 
     // Saavn specific data mapping
     if (type === 'tracks') {
         newItem.title = data.name;
-        newItem.artist = { name: data.primaryArtists, id: data.artistMap?.artists?.[0]?.id || data.primaryArtists }; // Assuming primaryArtists is a string
+        newItem.artist = { name: data.primaryArtists, id: data.artistMap?.artists?.[0]?.id || data.primaryArtists };
         newItem.album = { title: data.album?.name, id: data.album?.id, cover_small: data.image?.[0]?.link, cover_medium: data.image?.[1]?.link, cover_big: data.image?.[2]?.link, cover_xl: data.image?.[2]?.link };
         newItem.duration = data.duration;
         newItem.explicit_lyrics = data.explicitContent === 1;
-        newItem.language = data.language; // Add language field for tracks
+        newItem.language = data.language;
 
-        // Normalize image and download URLs
-        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
-        newItem.streamUrl = data.downloadUrl?.[data.downloadUrl.length - 1]?.link || ''; // Highest quality audio URL
-        newItem.downloadUrl = data.downloadUrl; // Keep original array for download options
+        newItem.image = data.image?.[data.image.length - 1]?.link || '';
+        newItem.streamUrl = data.downloadUrl?.[data.downloadUrl.length - 1]?.link || '';
+        newItem.downloadUrl = data.downloadUrl;
 
     } else if (type === 'albums') {
         newItem.title = data.name;
         newItem.artist = { name: data.primaryArtists, id: data.artistMap?.artists?.[0]?.id || data.primaryArtists };
         newItem.cover_medium = data.image?.[1]?.link;
         newItem.cover_xl = data.image?.[2]?.link;
-        newItem.release_date = data.year; // Saavn provides year, not full date
-        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
+        newItem.release_date = data.year;
+        newItem.image = data.image?.[data.image.length - 1]?.link || '';
     } else if (type === 'artists') {
         newItem.name = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
         newItem.picture_xl = data.image?.[2]?.link;
-        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
-        newItem.followerCount = data.followerCount; // Add follower count for artists
+        newItem.image = data.image?.[data.image.length - 1]?.link || '';
+        newItem.followerCount = data.followerCount;
     } else if (type === 'genres') {
         newItem.name = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
         newItem.picture_xl = data.image?.[2]?.link;
-        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
+        newItem.image = data.image?.[data.image.length - 1]?.link || '';
     } else if (type === 'radios') {
         newItem.title = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
         newItem.picture_xl = data.image?.[2]?.link;
-        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
+        newItem.image = data.image?.[data.image.length - 1]?.link || '';
     }
 
-    // For tracks, if there are nested tracks (e.g., album details), process them
     if (data.tracks) {
         newItem.tracks = getData({ type: 'tracks', data: data.tracks.data });
     }
@@ -92,23 +91,19 @@ export const getSingleData = ({ type, data }) => {
 }
 
 function handleSorting(a, b) {
-    let sortNumber = 0; // Default to no change
+    let sortNumber = 0;
 
     if (sortValue === 'popular') {
-        // Saavn API doesn't provide 'rank' or 'release_date' consistently for all types for sorting.
-        // For simplicity, we'll sort by duration for songs, and name for others.
         if (dataType === 'tracks') {
-            sortNumber = b.duration - a.duration; // Sort by duration (longer first)
+            sortNumber = b.duration - a.duration;
         } else {
-            sortNumber = a.name?.localeCompare(b.name); // Sort alphabetically by name
+            sortNumber = a.name?.localeCompare(b.name);
         }
     } else if (sortValue === 'recent') {
-        // Saavn API provides 'year' for songs/albums, not full release_date for all.
-        // We'll sort by year if available, otherwise by name.
         if (a.year && b.year) {
-            sortNumber = b.year - a.year; // Sort by year (newer first)
+            sortNumber = b.year - a.year;
         } else {
-            sortNumber = a.name?.localeCompare(b.name); // Fallback to alphabetical
+            sortNumber = a.name?.localeCompare(b.name);
         }
     }
 
@@ -117,37 +112,13 @@ function handleSorting(a, b) {
 
 function handleFilter(item) {
     const itemInBlacklist = !item.blacklist || ignoreFilter;
-    // Saavn API doesn't consistently provide 'record_type' for filtering.
-    // This filter might not be fully functional with Saavn data.
     const itemIsAlbumWithRecType = dataType === 'albums' ? filterRgxp.test(item.record_type || '') : true;
     return itemInBlacklist && itemIsAlbumWithRecType;
 };
 
-function handleLanguageFilter(item) { // NEW function
+function handleLanguageFilter(item) {
     if (languageFilterValue && dataType === 'tracks') {
-        // Assuming 'language' field exists for tracks
         return item.language?.toLowerCase() === languageFilterValue.toLowerCase();
     }
     return true;
 }
-
-function addFavoriteAndBlacklist(item) {
-    // If it's a track, use getSingleData to ensure proper mapping (name -> title)
-    // getSingleData already handles favorite/blacklist, so we just need to pass the raw item
-    // and it will return the normalized item with favorite/blacklist flags.
-    if (dataType === 'tracks') {
-        return getSingleData({ type: 'tracks', data: item });
-    }
-    if (dataType === 'artists') {
-        return getSingleData({ type: 'artists', data: item });
-    }
-    if (dataType === 'albums') {
-        return getSingleData({ type: 'albums', data: item });
-    }
-
-    // For other types, just add favorite/blacklist flags as before
-    const newItem = { ...item };
-    newItem.favorite = favorites[dataType]?.map(elem => elem.id).includes(item.id);
-    newItem.blacklist = blacklist[dataType]?.map(elem => elem.id).includes(item.id);
-    return newItem;
-};
