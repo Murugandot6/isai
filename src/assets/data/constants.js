@@ -1,14 +1,11 @@
 import { AiOutlineHome, AiFillHome, AiFillHeart, AiOutlineHeart } from 'react-icons/ai';
 import { BsBarChartLine, BsFillBarChartLineFill } from 'react-icons/bs'
-import { MdLibraryMusic, MdOutlineLibraryMusic, MdOutlineFeaturedPlayList, MdFeaturedPlayList, MdRadio, MdOutlineRadio, MdPersonOutline } from 'react-icons/md'; // Import MdPersonOutline
+import { MdLibraryMusic, MdOutlineLibraryMusic, MdOutlineFeaturedPlayList, MdFeaturedPlayList, MdRadio, MdOutlineRadio, MdPersonOutline } from 'react-icons/md';
 import { RiPlayListFill, RiPlayListLine } from "react-icons/ri";
-import { FaUserAlt } from 'react-icons/fa'; // Import FaUserAlt for filled icon
+import { FaUserAlt } from 'react-icons/fa';
 
 export const links = [
   { name: 'Home', to: '/', icon: AiOutlineHome, altIcon: AiFillHome },
-  // Charts and Genres are removed as they are not directly supported by Saavn API
-  // { name: 'Charts', to: '/charts', icon: BsBarChartLine, altIcon: BsFillBarChartLineFill },
-  // { name: 'Genres', to: '/genres', icon: MdOutlineLibraryMusic, altIcon: MdLibraryMusic },
 ];
 
 export const secondLinks = [
@@ -16,7 +13,7 @@ export const secondLinks = [
   { name: 'Radio', to: '/radio', icon: MdOutlineRadio, altIcon: MdRadio, color: 'text-blue-400', bgFrom: 'from-blue-200', bgTo: 'to-blue-500' },
   { name: 'Playlist', to: '/playlists', icon: RiPlayListFill, altIcon: RiPlayListLine, color: 'text-purple-400', bgFrom: 'from-purple-200', bgTo: 'to-purple-500' },
   { name: 'Favorites', to: '/favorites', icon: AiFillHeart , altIcon: AiOutlineHeart, color: 'text-red-400', bgFrom: 'from-red-200', bgTo: 'to-red-500' },
-  { name: 'Artists', to: '/artists', icon: MdPersonOutline, altIcon: FaUserAlt, color: 'text-yellow-400', bgFrom: 'from-yellow-200', bgTo: 'to-yellow-500' } // New Artists link
+  { name: 'Artists', to: '/artists', icon: MdPersonOutline, altIcon: FaUserAlt, color: 'text-yellow-400', bgFrom: 'from-yellow-200', bgTo: 'to-yellow-500' }
 ]
 
 export const categories = [

@@ -3,32 +3,23 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export const saavnApi = createApi({
     reducerPath: "saavnApi",
     baseQuery: fetchBaseQuery({
-        baseUrl: "https://saavn.dev/api", // Corrected base URL
+        baseUrl: "https://saavn.dev/api",
     }),
     endpoints: (builder) => ({
         searchSongs: builder.query({
-            query: (query) => `/search/songs?query=${query}&limit=50`, // Generic search for songs
+            query: (query) => `/search/songs?query=${query}&limit=50`,
         }),
         getSongDetailsById: builder.query({
-            query: (id) => `/songs?id=${id}`, // Assuming an endpoint to get song by ID
+            query: (id) => `/songs?id=${id}`,
         }),
         getLyricsBySongId: builder.query({
             query: (id) => `/lyrics?id=${id}`,
         }),
-        getArtistDetails: builder.query({ // Adjusted endpoint for artist details
-            query: ({ id }) => `/artists?id=${id}`, // Corrected to use query parameter for artist ID
+        getArtistDetails: builder.query({
+            query: ({ id }) => `/artists?id=${id}`,
         }),
-        getArtistAlbums: builder.query({ // NEW: Endpoint to fetch artist's albums
-            query: ({ id, page = 1 }) => 
-                `/artists/${id}/albums?page=${page}`,
-        }),
-        searchArtists: builder.query({ // NEW: Endpoint to search artists
+        searchArtists: builder.query({
             query: (query) => `/search/artists?query=${query}&limit=50`,
-        }),
-        // ADD THIS NEW QUERY
-        getArtistSongs: builder.query({
-            query: ({ artistId, page = 1, sortBy = 'popularity', sortOrder = 'desc' }) => 
-              `/artists/${artistId}/songs?page=${page}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
         }),
     })
 })
@@ -38,8 +29,5 @@ export const {
     useGetSongDetailsByIdQuery,
     useGetLyricsBySongIdQuery,
     useGetArtistDetailsQuery,
-    useGetArtistAlbumsQuery,
-    useSearchArtistsQuery, // Export the new hook
-    // ADD THE NEW HOOK EXPORT
-    useGetArtistSongsQuery, 
+    useSearchArtistsQuery,
 } = saavnApi

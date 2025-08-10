@@ -7,7 +7,7 @@ import { useSearchSongsQuery } from '../redux/services/saavnApi';
 import { useSearchStationsQuery } from '../redux/services/radioBrowserApi';
 import { fetchArtistDetailsAndContent } from '../utils/fetchData';
 import { ArtistLoading, Error } from '../components/LoadersAndError';
-import { ArtistCard } from '../components/Cards'; // Import ArtistCard
+import { ArtistCard } from '../components/Cards';
 
 
 const Discover = () => {
@@ -31,16 +31,12 @@ const Discover = () => {
 
     const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: [{ link: 'https://i.pinimg.com/originals/ed/54/d2/ed54d2fa700d36d4f2671e1be84651df.jpg' }] }), []);
 
-    // Removed state and effects for featured artists as they are moved to ArtistsList.jsx
-
     useEffect(() => {   
         document.getElementById('site_title').innerText = 'Isai - Web Player: Rhythm for everyone.'
     }, [])
 
     return (
         <div className="flex flex-col p-4 gap-10 lg:gap-6">
-            {/* Removed Featured Music Personalities Section */}
-
             {/* Existing sections */}
             {userPlaylists.length > 0 && (
                 <div className="mb-8">
