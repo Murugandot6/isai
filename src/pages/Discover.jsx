@@ -1,20 +1,24 @@
 import { useState, useEffect, useMemo } from 'react'
 
 import { useSelector } from "react-redux";
-import { Radios, RecentArtists, RecentAlbums, Suggestion, Songs } from "../components/List"; // Keep Songs for top tracks
+import { Suggestion, Songs } from "../components/List";
 import { getData } from "../utils/getData";
-import { useSearchSongsQuery } from '../redux/services/saavnApi'; // Use Saavn API
+import { useSearchSongsQuery } from '../redux/services/saavnApi';
 
 const Discover = () => {
     const library = useSelector(state => state.library);
 
-    // Use Saavn search for general "top songs" or "trending"
-    const { data: topSongsData, isFetching: isFetchingTopSongs, error: errorFetchingTopSongs } = useSearchSongsQuery('tamil latest songs');
-    const topTracks = useMemo(() => topSongsData ? getData({ data: topSongsData.data.results.slice(0, 6), type: 'tracks' }) : [], [topSongsData, library]);
+    // Fetch data for Tamil Latest Songs
+    const { data: tamilSongsData, isFetching: isFetchingTamilSongs, error: errorFetchingTamilSongs } = useSearchSongsQuery('tamil latest songs');
+    const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results.slice(0, 6), type: 'tracks' }) : [], [tamilSongsData, library]);
     
-    // Fetch data for English most played songs by searching for "trending english songs"
+    // Fetch data for English Most Played Songs
     const { data: englishSongsData, isFetching: isFetchingEnglishSongs, error: errorFetchingEnglishSongs } = useSearchSongsQuery('trending english songs');
     const englishMostPlayedSongs = useMemo(() => englishSongsData ? getData({ data: englishSongsData.data.results.slice(0, 15), type: 'tracks' }) : [], [englishSongsData, library]);
+
+    // Fetch data for Hindi Latest Songs
+    const { data: hindiSongsData, isFetching: isFetchingHindiSongs, error: errorFetchingHindiSongs } = useSearchSongsQuery('hindi latest songs');
+    const hindiLatestSongs = useMemo(() => hindiSongsData ? getData({ data: hindiSongsData.data.results.slice(0, 6), type: 'tracks' }) : [], [hindiSongsData, library]);
 
     const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: [{ link: 'https://i.pinimg.com/originals/ed/54/d2/ed54d2fa700d36d4f2671e1be84651df.jpg' }] }), []); // Placeholder for radio image
 
@@ -24,22 +28,28 @@ const Discover = () => {
 
     return (
         <div className="flex flex-col p-4 gap-10 lg:gap-6">
-            {/* Removed RecentAlbums, RecentArtists, Radios components as direct data sources are unavailable */}
-            
             <Songs
-                isFetching={isFetchingTopSongs}
-                error={errorFetchingTopSongs}
-                songs={topTracks}
+                isFetching={isFetchingTamilSongs}
+                error={errorFetchingTamilSongs}
+                songs={tamilLatestSongs}
             >
                 Tamil Latest Songs
+            </Songs>
+
+            <Songs
+                isFetching={isFetchingHindiSongs}
+                error={errorFetchingHindiSongs}
+                songs={hindiLatestSongs}
+            >
+                Hindi Latest Songs
             </Songs>
 
             <Suggestion
                 isFetching={isFetchingEnglishSongs}
                 error={errorFetchingEnglishSongs}
                 radioTracks={englishMostPlayedSongs}
-                radio={englishMostPlayedPlaceholder} // Use placeholder radio data
-                songs={englishMostPlayedSongs} // Use English songs for suggestions column
+                radio={englishMostPlayedPlaceholder}
+                songs={englishMostPlayedSongs}
                 suggestionTitle="English Most Played"
             />
         </div>
