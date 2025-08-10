@@ -6,13 +6,15 @@ import { Loader, Error } from '../../components/LoadersAndError';
 import { searchSongByTitleAndArtist } from '../../utils/fetchData';
 import { displayMessage } from '../../utils/prompt';
 import { MdPlaylistAdd } from 'react-icons/md';
-import Header from './Header'; // Import the Header component
+import Header from './Header';
+import { supabase } from '../../integrations/supabase/client'; // Import Supabase client
 
 const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPlaylist, isImportPage }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [importError, setImportError] = useState(null);
   const [processedSongsCount, setProcessedSongsCount] = useState(0);
   const [totalSongsToProcess, setTotalSongsToProcess] = useState(0);
+  const [spotifyPlaylistUrl, setSpotifyPlaylistUrl] = useState('');
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -66,6 +68,62 @@ const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavin
     }
   };
 
+  const handleSpotifyImport = async () => {
+    if (!spotifyPlaylistUrl) {
+      setImportError("Please enter a Spotify playlist URL.");
+      return;
+    }
+
+    const playlistIdMatch = spotifyPlaylistUrl.match(/playlist\/([a-zA-Z0-9]+)/);
+    if (!playlistIdMatch || !playlistIdMatch[1]) {
+      setImportError("Invalid Spotify playlist URL. Please ensure it contains a playlist ID.");
+      return;
+    }
+    const playlistId = playlistIdMatch[1];
+
+    setIsLoading(true);
+    setImportError(null);
+    setProcessedSongsCount(0);
+    setTotalSongsToProcess(0);
+
+    try {
+      displayMessage("Fetching Spotify playlist...");
+      const { data, error } = await supabase.functions.invoke('fetch-spotify-playlist', {
+        body: { playlistId },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to fetch playlist from Spotify.');
+      }
+
+      const spotifyTracks = data.tracks;
+      setTotalSongsToProcess(spotifyTracks.length);
+      const newTracks = [];
+      let songsAdded = 0;
+
+      for (const track of spotifyTracks) {
+        // Check if the song is already in the playlist to avoid duplicates
+        if (!playlistInfo.tracks.some(t => t.id === track.id)) {
+          newTracks.push(track);
+          songsAdded++;
+        }
+        setProcessedSongsCount(prev => prev + 1);
+      }
+
+      if (newTracks.length > 0) {
+        setNewPlaylist({ type: 'ADDSONG', payload: newTracks });
+        displayMessage(`${songsAdded} song${songsAdded === 1 ? '' : 's'} added from Spotify!`);
+      } else {
+        displayMessage("No new songs could be added from the Spotify playlist.");
+      }
+    } catch (err) {
+      setImportError(`Error importing Spotify playlist: ${err.message}`);
+      console.error("Spotify import error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className={`min-w-full min-h-[90vh] px-3`}>
       <Header />
@@ -114,13 +172,38 @@ const ImportPlaylist = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavin
             file:bg-gray-200 file:text-black
             hover:file:bg-gray-300"
         />
-        {isLoading && (
-          <div className="mt-4">
-            <Loader title={`Processing songs... (${processedSongsCount}/${totalSongsToProcess})`} />
-          </div>
-        )}
-        {importError && <Error title={importError} />}
       </div>
+
+      <div className="mb-6">
+        <label htmlFor="spotify-url" className="block text-gray-300 text-sm font-bold mb-2">
+          Import from Spotify Playlist URL
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            id="spotify-url"
+            value={spotifyPlaylistUrl}
+            onChange={(e) => setSpotifyPlaylistUrl(e.target.value)}
+            placeholder="e.g., https://open.spotify.com/playlist/..."
+            className="flex-1 bg-white/5 focus:bg-transparent border border-transparent focus:border-white/20 text-white placeholder:text-gray-400 h-[40px] md:h-[50px] rounded-[20px] px-4 outline-none transition-colors"
+          />
+          <button
+            type="button"
+            onClick={handleSpotifyImport}
+            className="flex w-fit truncate items-center justify-center gap-[3px] bg-gray-200 text-black text-xs md:text-sm border border-white/5 h-[30px] md:h-[40px] rounded-[20px] px-2 md:px-3 transition-[background-color] hover:bg-white/5 hover:text-gray-200"
+            disabled={isLoading}
+          >
+            Import
+          </button>
+        </div>
+      </div>
+
+      {isLoading && (
+        <div className="mt-4">
+          <Loader title={`Processing songs... (${processedSongsCount}/${totalSongsToProcess})`} />
+        </div>
+      )}
+      {importError && <Error title={importError} />}
 
       {playlistInfo.tracks.length > 0 && (
         <div className="animate-popin flex-1 flex flex-col gap-6 rounded-[20px] mt-4 max-h-[85vh]">
