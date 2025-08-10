@@ -18,9 +18,9 @@ const getModalStyle = (buttonRect, modalRef) => {
     const modalWidth = modalRef.current ? modalRef.current.offsetWidth : 160; // min-w-[160px] from CSS
     const modalHeight = modalRef.current ? modalRef.current.offsetHeight : 200; // A reasonable estimate
 
-    // Initial placement: top-left corner of the modal at the top-right corner of the button
-    let top = buttonRect.y;
-    let left = buttonRect.x + buttonRect.width + 5; // 5px padding from the button
+    // Initial placement: Align the bottom of the modal with the bottom of the button
+    let top = buttonRect.y + buttonRect.height - modalHeight;
+    let left = buttonRect.x + buttonRect.width + 5; // Default: to the right of the button + 5px padding
 
     // Adjust horizontal position if it goes off-screen
     if (left + modalWidth > viewportWidth) {
@@ -31,11 +31,10 @@ const getModalStyle = (buttonRect, modalRef) => {
     }
 
     // Adjust vertical position if it goes off-screen
-    if (top + modalHeight > viewportHeight) {
-        top = viewportHeight - modalHeight - 5; // Align to bottom edge with a small padding
-    }
-    if (top < 0) { // If it goes off the top (after potential bottom adjustment)
+    if (top < 0) { // If it goes off the top
         top = 5; // Align to top edge with a small padding
+    } else if (top + modalHeight > viewportHeight) { // If it goes off the bottom
+        top = viewportHeight - modalHeight - 5; // Align to bottom edge with a small padding
     }
 
     return { top: `${top}px`, left: `${left}px` };
@@ -139,4 +138,4 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
     )
 }
 
-export default Options
+export default Options;
