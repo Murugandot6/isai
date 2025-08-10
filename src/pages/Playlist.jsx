@@ -9,6 +9,7 @@ import { Playlists } from '../components/List';
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
 import { useSelector } from 'react-redux';
+import editorsPickPlaylists from '../data/editorsPickPlaylists'; // Import the hardcoded playlists
 
 const Playlist = () => {
   const genres = { data: [] }; // Mock empty genres data as Saavn API doesn't provide this directly
@@ -91,6 +92,17 @@ const Playlist = () => {
       ) : (
         <div className="min-w-full">
           <div className="w-full flex justify-between items-center mb-4">
+            <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
+          </div>
+          {editorsPickPlaylists.length > 0 ? (
+            <Playlists playlists={editorsPickPlaylists} />
+          ) : (
+            <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
+              <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
+            </div>
+          )}
+
+          <div className="w-full flex justify-between items-center mb-4 mt-8">
             <h3 className="font-bold text-white text-xl">Your Playlists</h3>
             <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
               Create New
