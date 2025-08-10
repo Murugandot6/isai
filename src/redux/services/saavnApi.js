@@ -25,13 +25,12 @@ export const saavnApi = createApi({
                 } else {
                     throw new Error('Either artist ID or link must be provided.');
                 }
-                // Removed songCount, albumCount, sortBy, sortOrder from this query
                 return `/artists?${queryString}`;
             },
         }),
         getArtistAlbums: builder.query({ // NEW: Endpoint to fetch artist's albums
-            query: ({ id, page = 1, sortBy = 'popularity', sortOrder = 'desc' }) => 
-                `/artists/${id}/albums?page=${page}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
+            query: ({ id, page = 1 }) => // Removed sortBy and sortOrder
+                `/artists/${id}/albums?page=${page}`,
         }),
         searchArtists: builder.query({ // NEW: Endpoint to search artists
             query: (query) => `/search/artists?query=${query}&limit=50`,
