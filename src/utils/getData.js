@@ -79,7 +79,7 @@ export const getSingleData = ({ type, data, library }) => {
     }
 
     if (data.tracks) {
-        newItem.tracks = getData({ type: 'tracks', data: data.tracks.data, library }); // Pass library down
+        newItem.tracks = getData({ type: 'tracks', data: data.tracks.data, library }); // Pass library down here
     }
 
     return newItem;
