@@ -15,8 +15,8 @@ export const saavnApi = createApi({
         getLyricsBySongId: builder.query({
             query: (id) => `/lyrics?id=${id}`,
         }),
-        getArtistDetails: builder.query({ // New endpoint for artist details
-            query: ({ id, link, page = 1, songCount = 10, albumCount = 10, sortBy = 'popularity', sortOrder = 'desc' }) => {
+        getArtistDetails: builder.query({ // Adjusted endpoint for artist details
+            query: ({ id, link }) => {
                 let queryString = '';
                 if (id) {
                     queryString = `id=${id}`;
@@ -25,8 +25,7 @@ export const saavnApi = createApi({
                 } else {
                     throw new Error('Either artist ID or link must be provided.');
                 }
-                
-                queryString += `&page=${page}&songCount=${songCount}&albumCount=${albumCount}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+                // Removed songCount, albumCount, sortBy, sortOrder from this query
                 return `/artists?${queryString}`;
             },
         }),
