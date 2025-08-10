@@ -11,6 +11,9 @@ const Actions = () => {
  
     if (!data?.id) return;
 
+    // Determine the song to play based on the data type
+    const songToPlay = data.type === 'artist' && data.tracks?.length > 0 ? data.tracks[0] : data.song;
+
     return (
         <div className="relative z-[0] flex lg:flex-row justify-between items-start lg:items-center gap-3 p-4">
             <div className="flex-1 flex flex-row items-center justify-start gap-4">
@@ -20,7 +23,7 @@ const Actions = () => {
                         {
                             data.type == 'track' && isPlaying && activeSong.id == data.id ?
                                 <PauseButton bg={text} text={bg} /> : 
-                                <PlayButton bg={text} text={bg} album={data} tracks={data?.tracks} song={data?.song} i={0} /> 
+                                <PlayButton bg={text} text={bg} album={data?.album} tracks={data?.tracks} song={songToPlay} i={0} /> 
                         }
                         {
                             data.type != 'track' ?
@@ -39,7 +42,7 @@ const Actions = () => {
                     blacklist={data?.blacklist}
                     album={ data?.type == 'album' ? data : data?.album } 
                     tracks={ data?.tracks || [] } 
-                    song={ data?.song || {} } 
+                    song={ data?.song || songToPlay || {} } 
                     artist={ data?.artist || {} } 
                     i={0} 
                 />
