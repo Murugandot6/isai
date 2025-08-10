@@ -4,7 +4,7 @@ import RadioStationCard from '../components/Cards/RadioStationCard';
 import { Loader, Error } from '../components/LoadersAndError';
 
 const Radio = () => {
-    const [country, setCountry] = useState('US');
+    const [country, setCountry] = useState('');
     const [language, setLanguage] = useState('english');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -32,6 +32,7 @@ const Radio = () => {
                             onChange={(e) => setCountry(e.target.value)}
                             className="bg-white/10 text-white rounded-md p-2 h-10"
                         >
+                            <option className="bg-black text-white" value="">All Countries</option>
                             {countriesData?.map(c => <option className="bg-black text-white" key={c.iso_3166_1} value={c.iso_3166_1}>{c.name}</option>)}
                         </select>
                     )}
