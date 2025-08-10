@@ -58,22 +58,7 @@ const EditorsPick = () => {
       <div className="min-w-full">
         <div className="w-full flex justify-between items-center mb-4">
           <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
-          <div className="flex gap-2">
-            <button 
-              onClick={handleBulkImport}
-              className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
-              disabled={isBulkImporting}
-            >
-              {isBulkImporting ? 'Importing...' : 'Import All CSVs'}
-            </button>
-            <button 
-              onClick={() => setShowImportForm(!showImportForm)}
-              className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
-              disabled={isBulkImporting}
-            >
-              {showImportForm ? 'Hide Import' : 'Import Single CSV'}
-            </button>
-          </div>
+          {/* Removed import buttons */}
         </div>
         
         {isBulkImporting && (
