@@ -11,7 +11,7 @@ const Contributors = ({ contributors, text }) => {
     <Link key={i} to={`/artists/${contributor.id}`}>
       <div className="flex flex-row items-center ml-[-20px] opacity-80">
         <img 
-          src={ contributor.image } // Use the normalized image URL directly
+          src={ contributor.image?.[0]?.link } // Assuming Saavn artist object has an image array
           alt="artist" 
           className={`relative shadow-md shadow-black/20 bottom-0 left-5 rounded-full h-full max-h-[30px] w-auto block`}
         />

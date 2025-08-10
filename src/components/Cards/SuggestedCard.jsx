@@ -7,7 +7,7 @@ const SuggestedCard = ({ song, i, tracks }) => {
             key={i} 
             onClick={() => playSongs({ tracks, i, song })}
             style={{
-                background: `center / cover url(${song?.image})`, // Use normalized image
+                background: `center / cover url(${i === 1 ? song?.image?.[2]?.link : song?.image?.[1]?.link})`, // Use Saavn image links
                 '--delay': i / 10 + 's'
             }} 
             className={`${(i === 1 || i === 9) && 'col-span-2 row-span-2'} relative rounded-xl overflow-hidden aspect-square`}

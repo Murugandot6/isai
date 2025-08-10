@@ -13,7 +13,9 @@ const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime,
   const isRadio = useMemo(() => activeSong?.duration === 0, [activeSong]);
 
   const imageUrl = useMemo(() => {
-    return song?.image || ''; // Use the normalized image URL directly
+    if (!song?.image || !Array.isArray(song.image) || song.image.length === 0) return '';
+    // Prefer highest quality, fallback to lower
+    return song.image[2]?.link || song.image[1]?.link || song.image[0]?.link;
   }, [song]);
 
   return (

@@ -2,7 +2,7 @@ import PlayPause from "../PlayPause"
 import { songImage as defaultSongImage } from "../../../assets/images"; // Corrected relative import path
 
 const SongImage = ({ song, activeSong, isPlaying, handlePlayClick, handlePauseClick }) => {
-  const imageUrl = song?.image || defaultSongImage; // Use the normalized image URL directly
+  const imageUrl = song?.image?.[1]?.link || song?.image?.[0]?.link || defaultSongImage; // Use medium or small, fallback to default
 
   return (
     <div className="h-[50px] aspect-square relative rounded-[8px] overflow-hidden flex justify-center ml-2 items-center">
