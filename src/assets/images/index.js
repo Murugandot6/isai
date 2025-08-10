@@ -1,5 +1,5 @@
 import loader from './loader.svg';
-import logo from './ridm_icon_plain.svg';
+import logo from './new_logo_favicon.png';
 import songImage from './song.svg';
 import artistImage from './artist.svg';
 import albumImage from './album.svg';
