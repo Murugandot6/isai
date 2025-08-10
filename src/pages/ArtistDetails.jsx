@@ -68,7 +68,7 @@ const ArtistDetails = () => {
         <div className="mt-3">
           {topAlbums.length > 0 ? (
             <Albums
-              albums={topAlbums} // Pass raw albums to Albums component for internal normalization
+              albums={getData({ type: 'albums', data: topAlbums, library })} // Pass the already normalized albums
               isFetching={isFetching}
               error={error}
               full={true}
