@@ -71,13 +71,8 @@ export const playSongs = ({ tracks, song, i, album}) => {
         return;
     }
 
-    // Normalize the individual song
-    const normalizedSong = getSingleData({ type: 'tracks', data: song });
-
-    // Normalize the entire tracks array
-    const normalizedTracks = getData({ type: 'tracks', data: tracks });
-
-    store.dispatch(setActiveSong({ tracks: normalizedTracks, song: normalizedSong, i }));
+    // Pass raw data; normalization now happens in the Redux slice
+    store.dispatch(setActiveSong({ tracks, song, i }));
     if (album) store.dispatch(setAlbum(album));
     play();
 }
