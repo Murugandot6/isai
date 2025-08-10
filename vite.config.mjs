@@ -4,6 +4,6 @@ import dyadComponentTagger from '@dyad-sh/react-vite-component-tagger';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/isai/',
+  base: '/', // Changed from '/isai/' to '/' for custom domain
   plugins: [dyadComponentTagger(), react()],
 });
