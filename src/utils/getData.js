@@ -20,7 +20,7 @@ export const getSingleData = (item, type) => {
   if (!item) return null;
 
   switch (type) {
-    case 'tracks':
+    case 'tracks': // Use a consistent type name
       return {
         id: item.id,
         title: item.name || item.title,

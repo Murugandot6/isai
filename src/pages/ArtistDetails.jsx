@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 import { Songs, Albums } from '../components/List';
 import { useGetArtistDetailsQuery } from '../redux/services/saavnApi';
@@ -8,59 +8,50 @@ import { getSingleData, getData } from '../utils/getData';
 import { DetailsContext } from '../components/Details';
 import { Loader, Error } from '../components/LoadersAndError';
 import { SongBar } from '../components/Cards';
-import { setActiveSong, playPause } from '../redux/features/playerSlice';
 
 const ArtistDetails = () => {
   const { data: contextData, updateData, colors, ...others } = useContext(DetailsContext);
   const { id: artistId } = useParams();
-  const dispatch = useDispatch();
-  const { activeSong, isPlaying } = useSelector((state) => state.player);
   const library = useSelector((state) => state.library);
 
   const { data: artistDetailsResult, isFetching, error } = useGetArtistDetailsQuery({ id: artistId });
   
-  const artist = useMemo(() => artistDetailsResult?.data, [artistDetailsResult]);
+  const artistData = useMemo(() => artistDetailsResult?.data, [artistDetailsResult]);
 
   const topSongs = useMemo(() => {
-    const songsData = artist?.topSongs || []; 
-    return getData({ type: 'tracks', data: songsData, library });
-  }, [artist, library]);
+    const rawSongs = artistData?.topSongs || [];
+    return getData({ type: 'tracks', data: rawSongs, library });
+  }, [artistData, library]);
 
   const albums = useMemo(() => {
-    const albumsData = artist?.topAlbums || [];
+    const albumsData = artistData?.topAlbums || [];
     return getData({ type: 'albums', data: albumsData, library });
-  }, [artist, library]);
+  }, [artistData, library]);
 
-  const handlePauseClick = () => {
-    dispatch(playPause(false));
-  };
-
-  const handlePlayClick = (song, i) => {
-    dispatch(setActiveSong({ song, data: topSongs, i }));
-    dispatch(playPause(true));
-  };
-
+  // This effect updates the shared header
   useEffect(() => {
-    updateData({ isFetching: true, error: false, data: {}, colors: [] });
-  }, [artistId]);
-
-  useEffect(() => {
-    if (artist) {
-      const refinedData = getSingleData(artist, 'artists');
+    if (artistData) {
+      const refinedArtist = getSingleData(artistData, 'artists');
       updateData({ 
         ...others, 
         colors, 
         isFetching, 
         error, 
-        data: { ...refinedData, artist: refinedData, tracks: topSongs } 
+        data: { ...refinedArtist, artist: refinedArtist, tracks: topSongs } 
       });
     }
-  }, [artist, library, isFetching, error, topSongs]);
+  }, [artistData, isFetching, error, topSongs]);
 
+  // This effect resets the header on navigation
   useEffect(() => {
-    const text = `Isai Artist - ${isFetching ? 'Loading...' : error ? 'Uh oh! Artist data could not be loaded :(' : artist?.name}`;
+    updateData({ isFetching: true, error: false, data: {}, colors: [] });
+  }, [artistId]);
+
+  // This effect updates the page title
+  useEffect(() => {
+    const text = `Isai Artist - ${isFetching ? 'Loading...' : error ? 'Uh oh!' : artistData?.name}`;
     document.getElementById('site_title').innerText = text;
-  }, [artist, isFetching, error]);
+  }, [artistData, isFetching, error]);
 
   if (isFetching && !contextData.name) {
     return <Loader title="Loading artist details..." />;
@@ -95,13 +86,9 @@ const ArtistDetails = () => {
         <Albums
           full={true}
           bg={colors?.[1]}
-          blacklist={library.blacklist}
-          favorites={library.favorites}
-          isFetching={isFetching}
-          error={error}
           albums={albums}
         >
-          Albums by {artist?.name}
+          Albums by {artistData?.name}
         </Albums>
       </section>
     </div>
