@@ -35,12 +35,12 @@ const Playlist = () => {
 
   const handleChange = (e) => {
     setNewPlaylist({ type: 'HANDLECHANGE', id: e.target.id, payload: e.target.value });
-    setErrorSavingPlaylist(false); // Corrected line: directly set to false
+    setErrorSavingPlaylist(false);
   }
 
   useEffect(() => { 
     setNewPlaylist({ type: 'SETGENRES', payload: genres.data });
-  }, [genres])
+  }, []) // Changed dependency array to empty to run only once on mount
 
   useEffect(() => {
     if (newPlaylist.genreAction === 'remove') {
