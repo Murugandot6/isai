@@ -21,7 +21,6 @@ const ArtistsList = () => {
       const normalizedSong = getSingleData({ type: 'tracks', data: song });
       
       // Collect all artists from the song object, including primary and featured
-      // Ensure we get a unique ID for each artist
       const allArtistsInSong = [];
 
       // Add primary artists
@@ -58,7 +57,8 @@ const ArtistsList = () => {
         });
       }
 
-      allArtistsInInSong.forEach(artistObj => {
+      // Corrected variable name here: allArtistsInSong instead of allArtistsInInSong
+      allArtistsInSong.forEach(artistObj => {
         if (!uniqueArtists.has(artistObj.id)) {
           uniqueArtists.set(artistObj.id, {
             id: artistObj.id,
