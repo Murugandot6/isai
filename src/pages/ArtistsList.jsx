@@ -20,25 +20,23 @@ const ArtistsList = () => {
       // Normalize song to get primaryArtists and image data
       const normalizedSong = getSingleData({ type: 'tracks', data: song });
       
-      const primaryArtistsString = normalizedSong.primaryArtists;
-      
-      if (primaryArtistsString) {
-        primaryArtistsString.split(',').map(name => name.trim()).forEach(artistName => {
-          // Try to find the corresponding artist object from the song's artists array
-          const artistObj = song.artists?.all?.find(a => a.name === artistName) ||
-                            song.artists?.primary?.find(a => a.name === artistName);
+      // Collect all artists from the song object, including primary and featured
+      const allArtistsInSong = [
+        ...(song.artists?.primary || []),
+        ...(song.artists?.featured || []),
+      ];
 
-          // Only add artists if they have a valid numerical ID
-          if (artistObj && typeof artistObj.id === 'string' && !isNaN(Number(artistObj.id)) && !uniqueArtists.has(artistObj.id)) {
-            uniqueArtists.set(artistObj.id, {
-              id: artistObj.id,
-              name: artistObj.name,
-              type: artistObj.type || 'Artist', // Default type if not provided
-              image: artistObj.image || normalizedSong.image, // Use artist's image or fallback to song image
-            });
-          }
-        });
-      }
+      allArtistsInSong.forEach(artistObj => {
+        // Ensure artistObj and its id exist, and it's a string, and it's not already added
+        if (artistObj && artistObj.id && typeof artistObj.id === 'string' && !uniqueArtists.has(artistObj.id)) {
+          uniqueArtists.set(artistObj.id, {
+            id: artistObj.id,
+            name: artistObj.name,
+            type: artistObj.type || 'Artist', // Default type if not provided
+            image: artistObj.image || normalizedSong.image, // Use artist's image or fallback to song image
+          });
+        }
+      });
     });
     return Array.from(uniqueArtists.values());
   }, [popularSongsData]);
