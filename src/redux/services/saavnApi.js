@@ -16,20 +16,10 @@ export const saavnApi = createApi({
             query: (id) => `/lyrics?id=${id}`,
         }),
         getArtistDetails: builder.query({ // Adjusted endpoint for artist details
-            query: ({ id, link }) => {
-                let queryString = '';
-                if (id) {
-                    queryString = `id=${id}`;
-                } else if (link) {
-                    queryString = `link=${encodeURIComponent(link)}`;
-                } else {
-                    throw new Error('Either artist ID or link must be provided.');
-                }
-                return `/artists?${queryString}`;
-            },
+            query: ({ id }) => `/artists/${id}`, // Corrected to use path parameter for artist ID
         }),
         getArtistAlbums: builder.query({ // NEW: Endpoint to fetch artist's albums
-            query: ({ id, page = 1 }) => // Removed sortBy and sortOrder
+            query: ({ id, page = 1 }) => 
                 `/artists/${id}/albums?page=${page}`,
         }),
         searchArtists: builder.query({ // NEW: Endpoint to search artists
