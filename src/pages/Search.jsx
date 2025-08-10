@@ -1,37 +1,30 @@
 import { useSelector } from "react-redux";
-
 import { useParams, useSearchParams } from "react-router-dom";
-
-import { Songs } from "../components/List"; // Only keep Songs for now
-import { useEffect } from "react";
-import { useSearchSongsQuery } from "../redux/services/saavnApi"; // Use Saavn API
-import { getData } from "../utils/getData"; // Import getData
+import { Songs } from "../components/List";
+import { useEffect, useMemo } from "react"; // Added useMemo here
+import { useSearchSongsQuery } from "../redux/services/saavnApi";
+import { getData } from "../utils/getData";
 
 // Simplified categories as Saavn API primarily returns songs
 const categories = ['All', 'Song']; 
 
 const Search = () => {
     const { searchTerm } = useParams()
-
     const [params, setParams] = useSearchParams()
-
-    const library = useSelector(state => state.library) // Get full library object
-    // Use a single search endpoint for all categories and filter client-side
-    const { data: searchResults, isFetching, error } = useSearchSongsQuery( searchTerm )
+    const library = useSelector(state => state.library)
+    const { data: searchResults, isFetching, error } = useSearchSongsQuery(searchTerm)
 
     const filteredSongs = useMemo(() => {
         const rawResults = searchResults?.data?.results || [];
         const categoryParam = params.get('cat');
         
-        // Filter raw results first based on category, then normalize
         const preFiltered = rawResults.filter(item => {
-            if (categoryParam === 'Song' && item.type !== 'song') return false; // Assuming Saavn results have a 'type' field
+            if (categoryParam === 'Song' && item.type !== 'song') return false;
             return true;
         });
 
-        return getData({ type: 'tracks', data: preFiltered, library }); // Pass library to getData
+        return getData({ type: 'tracks', data: preFiltered, library });
     }, [searchResults, params, library]);
-
 
     useEffect(() => {
         const text = `Isai Search results for - ${searchTerm}`
@@ -52,7 +45,6 @@ const Search = () => {
                     ))
                 }
             </ul>
-            {/* Display all results as songs, as Saavn API is song-centric */}
             <Songs songs={filteredSongs} isFetching={isFetching} error={error} blacklist={library.blacklist} favorites={library.favorites}>
                 <span>
                     <span className="text-gray-400 text-sm md:text-base">Results for </span>
