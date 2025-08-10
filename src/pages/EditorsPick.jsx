@@ -42,14 +42,14 @@ const EditorsPick = () => {
   // Removed handleBulkImport function
 
   useEffect(() => {
-    document.getElementById('site_title').innerText = 'Isai - Editors Pick';
+    document.getElementById('site_title').innerText = 'Isai - Featured Playlists';
   }, []);
 
   return (
     <div className="px-2 flex md:px-4 relative">
       <div className="min-w-full">
         <div className="w-full flex justify-between items-center mb-4">
-          <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
+          <h3 className="font-bold text-white text-xl">Featured Playlists</h3>
           <div className="flex gap-2">
             <button 
               onClick={() => setShowImportForm(prev => !prev)}
@@ -77,7 +77,7 @@ const EditorsPick = () => {
           <Playlists playlists={editorsPickPlaylists} />
         ) : (
           <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
-            <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
+            <h3 className="text-gray-400 font-bold text-xl">No featured playlists available yet.</h3>
           </div>
         )}
       </div>

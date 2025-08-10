@@ -12,7 +12,7 @@ export const links = [
 ];
 
 export const secondLinks = [
-  { name: "Editor's Pick", to: '/editors-pick', icon: MdOutlineFeaturedPlayList, altIcon: MdFeaturedPlayList, color: 'text-green-400', bgFrom: 'from-green-200', bgTo: 'to-green-500' },
+  { name: "Featured", to: '/editors-pick', icon: MdOutlineFeaturedPlayList, altIcon: MdFeaturedPlayList, color: 'text-green-400', bgFrom: 'from-green-200', bgTo: 'to-green-500' },
   { name: 'Radio', to: '/radio', icon: MdOutlineRadio, altIcon: MdRadio, color: 'text-blue-400', bgFrom: 'from-blue-200', bgTo: 'to-blue-500' },
   { name: 'Playlist', to: '/playlists', icon: RiPlayListFill, altIcon: RiPlayListLine, color: 'text-purple-400', bgFrom: 'from-purple-200', bgTo: 'to-purple-500' },
   { name: 'Favorites', to: '/favorites', icon: AiFillHeart , altIcon: AiOutlineHeart, color: 'text-red-400', bgFrom: 'from-red-200', bgTo: 'to-red-500' },
