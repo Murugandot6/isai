@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { ArtistCard } from '../components/Cards';
 import { Error, ArtistLoading } from '../components/LoadersAndError';
 import { useSearchSongsQuery } from '../redux/services/saavnApi';
-import { getSingleData } from '../utils/getData'; // Changed from getData
+import { getSingleData } from '../utils/getData';
 
 const ArtistsList = () => {
   useEffect(() => {
@@ -18,7 +18,7 @@ const ArtistsList = () => {
     const uniqueArtists = new Map();
     popularSongsData.data.results.forEach(song => {
       // Normalize song to get primaryArtists and image data
-      const normalizedSong = getSingleData({ type: 'tracks', data: song }); // Changed to getSingleData
+      const normalizedSong = getSingleData({ type: 'tracks', data: song });
       
       const primaryArtistsString = normalizedSong.primaryArtists;
       
@@ -28,22 +28,14 @@ const ArtistsList = () => {
           const artistObj = song.artists?.all?.find(a => a.name === artistName) ||
                             song.artists?.primary?.find(a => a.name === artistName);
 
-          if (artistObj && !uniqueArtists.has(artistObj.id)) {
+          // Only add artists if they have a valid numerical ID
+          if (artistObj && typeof artistObj.id === 'string' && !isNaN(Number(artistObj.id)) && !uniqueArtists.has(artistObj.id)) {
             uniqueArtists.set(artistObj.id, {
               id: artistObj.id,
               name: artistObj.name,
               type: artistObj.type || 'Artist', // Default type if not provided
               image: artistObj.image || normalizedSong.image, // Use artist's image or fallback to song image
             });
-          } else if (!artistObj && !uniqueArtists.has(artistName)) {
-             // Fallback for artists without a specific ID in the API response
-             const dummyId = `artist-${artistName.replace(/\s/g, '_')}`;
-             uniqueArtists.set(dummyId, {
-                id: dummyId,
-                name: artistName,
-                type: 'Artist',
-                image: normalizedSong.image, // Use song image as fallback
-             });
           }
         });
       }
