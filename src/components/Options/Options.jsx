@@ -10,14 +10,9 @@ import { useDispatch } from "react-redux";
 import { setNowPlaying } from "../../redux/features/playerSlice";
 
 // Helper function to determine modal position based on button's location
-const getModalStyle = (buttonRect, modalRef) => {
+const calculateModalPosition = (buttonRect, modalWidth, modalHeight) => {
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
-
-    // Get actual modal dimensions (or estimate if not yet rendered)
-    // Ensure modalHeight is not 0, use a reasonable estimate if not yet available
-    const modalWidth = modalRef.current ? modalRef.current.offsetWidth : 160; // min-w-[160px] from CSS
-    const modalHeight = modalRef.current && modalRef.current.offsetHeight > 0 ? modalRef.current.offsetHeight : 200; 
 
     // Default horizontal position: to the right of the button
     let left = buttonRect.x + buttonRect.width + 5; // 5px padding from the button
@@ -51,15 +46,10 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
 
     const [showModal, setShowModal] = useState(false);
     const [buttonRect, setButtonRect] = useState({ x: 0, y: 0, width: 0, height: 0 }); // Store button's bounding rect
+    const [modalPosition, setModalPosition] = useState({ top: '0px', left: '0px' }); // New state for modal position
 
     const btnRef = useRef(null);
     const modalRef = useRef(null); // Ref for the modal content (ul)
-
-    // Calculate modal style dynamically
-    const modalStyle = useMemo(() => {
-        if (!showModal || !buttonRect) return {};
-        return getModalStyle(buttonRect, modalRef);
-    }, [showModal, buttonRect]);
 
     const navigate = useNavigate();
 
@@ -75,17 +65,24 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
 
         const rect = btnRef.current.getBoundingClientRect();
         setButtonRect(rect); // Store the button's position
-
-        // Use setTimeout to allow the modal to render and calculate its dimensions
-        // before getModalStyle is called with the actual modalRef.current.offsetHeight
-        setTimeout(() => {
-            setShowModal(true);
-        }, 0); 
+        setShowModal(true); // Show the modal first
     }
 
     function closeModal() {
         setShowModal(false);
     }
+
+    // Effect to calculate position AFTER modal is rendered and its dimensions are available
+    useEffect(() => {
+        if (showModal && modalRef.current && buttonRect.width > 0) { // Ensure buttonRect is also set
+            const calculatedPosition = calculateModalPosition(
+                buttonRect,
+                modalRef.current.offsetWidth,
+                modalRef.current.offsetHeight
+            );
+            setModalPosition(calculatedPosition);
+        }
+    }, [showModal, buttonRect]); // Re-run when modal visibility or button position changes
 
     // Effect to handle clicks outside the modal
     useEffect(() => {
@@ -118,7 +115,7 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
                     <ul
                         ref={modalRef}
                         onClick={(e) => e.stopPropagation()}
-                        style={{ ...modalStyle, position: 'fixed', transition: 'top 0.2s ease-out, left 0.2s ease-out' }} // Apply calculated style and ensure fixed position
+                        style={{ ...modalPosition, position: 'fixed', transition: 'top 0.2s ease-out, left 0.2s ease-out' }} // Apply calculated style and ensure fixed position
                         className="shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
                     >
                         {
@@ -146,4 +143,4 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
     )
 }
 
-export default Options
+export default Options;
