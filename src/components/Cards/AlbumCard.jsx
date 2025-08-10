@@ -26,13 +26,13 @@ const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => 
                 <img
                     className="transition-transform w-full aspect-square rounded-lg"
                     alt=""
-                    src={album?.image} // Use normalized image URL directly
+                    src={album?.image?.[1]?.link || album?.image?.[0]?.link}
                 />
                 <div className={`group-hover:opacity-100 group-hover:pointer-events-auto opacity-0 transition-opacity pointer-events-none hidden lg:flex absolute top-0 left-0 w-full h-full bg-black/50 items-end justify-end p-2`}>
                     <span className="group-hover:translate-y-0 group-hover:opacity-100 translate-y-[-30%] opacity-0 transition-[opacity,transform] duration-300">
                         <PlayPause 
                             handlePlay={playSongs} 
-                            isCurrent={activeSong?.album?.name === album?.name} // Use album.name for comparison
+                            isCurrent={activeSong?.album?.title === album?.title} 
                             handlePause={pause} activeSong={activeSong} 
                             isPlaying={isPlaying} 
                             cover={true} 
@@ -42,21 +42,21 @@ const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => 
             </div>
             {
                 isRelated || isRecent ?
-                <Link to={`/artists/${album?.artist?.id || album?.primaryArtists}`}> {/* Use normalized artist.id */}
-                    <p className="text-gray-400 text-xs mt-3 mb-1 font-semibold truncate">{album?.primaryArtists}</p>
+                <Link to={`/artists/${album?.artist?.id}`}>
+                    <p className="text-gray-400 text-xs mt-3 mb-1 font-semibold truncate">{album?.artist?.name}</p>
                 </Link> :
                 <>
                     {
-                        album?.record_type && // This might not be available in Saavn data
+                        album?.record_type && 
                         <p className="flex flex-row full-w items-center text-gray-400 font-semibold mt-2 mb-1 text-[0.65em]">
                             <span className="uppercase px-[5px] py-[3px] bg-black/50">{album?.record_type}</span>
                             <BsDot size={15} />
-                            <span className="uppercase px-[5px] py-[3px] bg-black/50">{album?.year}</span> {/* Use album.year */}
+                            <span className="uppercase px-[5px] py-[3px] bg-black/50">{album?.release_date}</span>
                         </p>
                     }
                 </>
             } 
-            <p className="text-sm truncate text-white font-semibold">{album?.name}</p> {/* Use album.name */}
+            <p className="text-sm truncate text-white font-semibold">{album?.title}</p>
         </div>
     )
 }
