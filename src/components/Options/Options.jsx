@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from "react"; // Import useEffect
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { options } from "../../utils/options";
@@ -15,30 +15,25 @@ const getModalStyle = (buttonRect, modalRef) => {
     const viewportWidth = window.innerWidth;
 
     // Get actual modal dimensions (or estimate if not yet rendered)
-    // This might cause a slight flicker on first open as dimensions are 0 initially,
-    // but it will correct itself on the next render.
     const modalWidth = modalRef.current ? modalRef.current.offsetWidth : 160; // min-w-[160px] from CSS
     const modalHeight = modalRef.current ? modalRef.current.offsetHeight : 200; // A reasonable estimate
 
-    let top = buttonRect.y;
+    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2); // Vertically center with the button
     let left = buttonRect.x + buttonRect.width + 5; // Default: to the right of the button + 5px padding
 
-    // Check if there's more space to the left or right
+    // Adjust horizontal position if it goes off-screen
     if (left + modalWidth > viewportWidth) {
-        // Not enough space on the right, try left side
-        left = buttonRect.x - modalWidth - 5;
+        left = buttonRect.x - modalWidth - 5; // Try left side
         if (left < 0) { // If still off-screen to the left, align to left edge
             left = 5;
         }
     }
 
-    // Check if there's more space above or below
-    if (top + modalHeight > viewportHeight) {
-        // Not enough space below, try above
-        top = buttonRect.y - modalHeight;
-        if (top < 0) { // If still off-screen to the top, align to top edge
-            top = 5;
-        }
+    // Adjust vertical position if it goes off-screen
+    if (top < 0) { // If it goes off the top
+        top = 5; // Align to top edge with a small padding
+    } else if (top + modalHeight > viewportHeight) { // If it goes off the bottom
+        top = viewportHeight - modalHeight - 5; // Align to bottom edge with a small padding
     }
 
     return { top: `${top}px`, left: `${left}px` };
@@ -113,7 +108,6 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
                     <div className="fixed inset-0 z-[9998] bg-transparent" onClick={closeModal} />
                     <ul
                         ref={modalRef}
-                        // Removed animate-slowfade from here
                         onClick={(e) => e.stopPropagation()}
                         style={{ ...modalStyle, position: 'fixed' }} // Apply calculated style and ensure fixed position
                         className="shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
