@@ -35,7 +35,7 @@ export const downloadSong = async (song) => { // Made async
       displayMessage(`Downloading ${song.name || song.title}...`);
     } catch (error) {
       console.error("Error during song download:", error);
-      displayMessage(`Failed to download ${song.name || song.title}. Please try again.`);
+      displayMessage(`Failed to download ${song.name || song.title}. This might be due to the audio source being unavailable or restricted.`);
     }
   } else {
     displayMessage("No valid download link found.");
