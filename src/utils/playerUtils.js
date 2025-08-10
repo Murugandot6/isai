@@ -26,33 +26,38 @@ export const getAudioStreamUrl = (urlArray) => {
     return '';
   }
 
-  let foundStreamUrl = '';
+  let highestQualityMp3 = null;
+  let highestQualityFallback = null; // To store the best non-mp3 link if no mp3 is found
 
-  // Iterate through the array to find any valid link
   for (const item of urlArray) {
-    if (item && item.link) {
-      console.log(`getAudioStreamUrl: Found link in item: ${item.link}`);
-      // Prioritize MP3 if available, otherwise take the first valid link
-      if (item.link.includes('.mp3')) {
-        // If we find an MP3, we can stop searching for a better one for now, or implement more complex quality logic later.
-        // For now, let's just take the first MP3 we find.
-        foundStreamUrl = item.link;
-        break; // Found an MP3, let's use it.
-      } else if (!foundStreamUrl) { // If no MP3 yet, take the first non-MP3 link as a fallback
-        foundStreamUrl = item.link;
+    const currentLink = item?.link || item?.url; // Check for both 'link' and 'url'
+    if (currentLink) {
+      const currentQuality = parseInt(item.quality); // Assuming quality is always present and parseable
+
+      if (currentLink.includes('.mp3')) {
+        if (!highestQualityMp3 || currentQuality > parseInt(highestQualityMp3.quality)) {
+          highestQualityMp3 = { link: currentLink, quality: item.quality };
+        }
+      } else { // Not an MP3, but a valid link
+        if (!highestQualityFallback || currentQuality > parseInt(highestQualityFallback.quality)) {
+          highestQualityFallback = { link: currentLink, quality: item.quality };
+        }
       }
-    } else {
-      console.log('getAudioStreamUrl: Item in urlArray does not have a "link" property or is null/undefined:', item);
     }
   }
 
-  if (!foundStreamUrl) {
-    console.log('getAudioStreamUrl: No valid audio link found after checking all items. Full urlArray:', urlArray);
-  } else {
-    console.log(`getAudioStreamUrl: Final selected streamUrl: ${foundStreamUrl}`);
+  if (highestQualityMp3) {
+    console.log(`getAudioStreamUrl: Found highest quality MP3: ${highestQualityMp3.link}`);
+    return highestQualityMp3.link;
   }
 
-  return foundStreamUrl;
+  if (highestQualityFallback) {
+    console.log(`getAudioStreamUrl: No MP3 found, falling back to highest quality non-MP3: ${highestQualityFallback.link}`);
+    return highestQualityFallback.link;
+  }
+
+  console.log('getAudioStreamUrl: No valid audio link (MP3 or other) found after checking all items. Full urlArray:', urlArray);
+  return '';
 };
 
 
