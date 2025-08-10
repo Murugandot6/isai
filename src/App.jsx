@@ -1,5 +1,5 @@
-import { useLayoutEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useLayoutEffect, useState } from 'react'; // Import useState
+import { useDispatch, useSelector } from 'react-redux'; // Import useSelector
 import { Route, Routes, useSearchParams } from 'react-router-dom';
 import {
   ArtistDetails,
@@ -17,22 +17,20 @@ import {
   EditorsPick,
   Radio,
 } from './pages';
-import ArtistsList from './pages/ArtistsList'; // Import the new ArtistsList component
+import ArtistsList from './pages/ArtistsList';
 import Details from './components/Details';
 import { setPlayer } from './redux/features/playerSlice';
 import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
-
-// import { recordVisitor } from './utils/db'; // Removed import
-// import { importAllPlaylistsFromCsv } from './utils/bulkPlaylistImport'; // Commented out to prevent 404 errors
+import { Loader } from './components/LoadersAndError'; // Import Loader component
 
 const App = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
+  const library = useSelector(state => state.library); // Get library state
+  const [isLibraryLoaded, setIsLibraryLoaded] = useState(false); // New state for library loading
 
   useLayoutEffect(() => {
-    // recordVisitor(searchParams); // Removed call to record visitor
-
     const playerStorage = localStorage.getItem('player');
     if (playerStorage) dispatch(setPlayer(JSON.parse(playerStorage)));
 
@@ -41,6 +39,7 @@ const App = () => {
       const storedLibrary = JSON.parse(libraryStorage);
       dispatch(setLibrary(storedLibrary));
     } else {
+      // Initialize with a complete structure to prevent undefined errors
       dispatch(setLibrary({
         playlists: [],
         editorsPick: [],
@@ -48,9 +47,13 @@ const App = () => {
         blacklist: { tracks: [], genres: [], artists: [], albums: [], radios: [] },
       }));
     }
-
-    // importAllPlaylistsFromCsv(); // Commented out: Please ensure CSV files are in the public directory if you enable this.
+    setIsLibraryLoaded(true); // Mark library as loaded after dispatching initial state
   }, []);
+
+  // Render a loader if library is not yet loaded
+  if (!isLibraryLoaded) {
+    return <Loader title="Loading application..." />;
+  }
 
   return (
     <Routes>
@@ -74,7 +77,7 @@ const App = () => {
         <Route path="/blacklist" element={<Blacklist />} />
         <Route path="/editors-pick" element={<EditorsPick />} />
         <Route path="/radio" element={<Radio />} />
-        <Route path="/artists" element={<ArtistsList />} /> {/* New Artists List route */}
+        <Route path="/artists" element={<ArtistsList />} />
       </Route>
     </Routes>
   );
