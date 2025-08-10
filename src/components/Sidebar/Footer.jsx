@@ -27,6 +27,7 @@ const Footer = () => {
               onChange={handleLanguageChange}
               className="px-2 border border-white/5 bg-white/5 h-[34px] rounded-[20px] text-gray-300 text-xs font-semibold flex items-center justify-center gap-2 appearance-none w-full max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap"
             >
+              <option className="bg-black text-white" value="">All Languages</option> {/* New 'All Languages' option */}
               {languagesData?.map(lang => (
                 <option key={lang.name} value={lang.name.toLowerCase()} className="bg-black text-white">
                   {lang.name}

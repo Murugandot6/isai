@@ -85,8 +85,8 @@ export const getData = ({ type, data, library, selectedLanguage }) => {
     .map(item => getSingleData(item, type))
     .filter(Boolean);
 
-  // Apply language filter ONLY if the type is 'tracks'
-  if (selectedLanguage && type === 'tracks') {
+  // Apply language filter ONLY if the type is 'tracks' AND a specific language is selected
+  if (selectedLanguage && selectedLanguage !== "" && type === 'tracks') {
     processedData = processedData.filter(item => 
       item.language?.toLowerCase() === selectedLanguage.toLowerCase()
     );
