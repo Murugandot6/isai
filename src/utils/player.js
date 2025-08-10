@@ -6,7 +6,7 @@ import { fetchTrendingSongsByLanguage } from "./fetchData"; // Import new fetch 
 
 export function play() {
     store.dispatch(playPause(true));
-    displayMessage('Playing song...');
+    displayMessage('Playing song.');
 }
 
 export function pause () {
@@ -64,7 +64,8 @@ export function offRepeat () {
 }
 
 export const playSongs = ({ tracks, song, i, album}) => {
-    if (tracks.length < 1) {
+    // Guard clause: Check if tracks is defined and has elements
+    if (!tracks || tracks.length < 1) {
         pause();
         displayMessage('No tracks to play.');
         return;
