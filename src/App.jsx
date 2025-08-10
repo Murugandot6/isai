@@ -19,11 +19,11 @@ import {
 } from './pages';
 import Details from './components/Details';
 import { setPlayer } from './redux/features/playerSlice';
-import { setLibrary } from './redux/features/librarySlice';
+import { setLibrary } from './redux/features/librarySlice'; // Removed setEditorsPickPlaylists import
 import Layout from './Layout';
 
 import { recordVisitor } from './utils/db';
-import hardcodedEditorsPickPlaylists from './data/editorsPickPlaylists'; // Import hardcoded playlists
+import { importAllPlaylistsFromCsv } from './utils/bulkPlaylistImport'; // Import the bulk import function
 
 const App = () => {
   const [searchParams] = useSearchParams();
@@ -40,21 +40,19 @@ const App = () => {
     const libraryStorage = localStorage.getItem('library');
     if (libraryStorage) {
       const storedLibrary = JSON.parse(libraryStorage);
-      // Ensure editorsPick is always overwritten by hardcoded values on app load
-      dispatch(setLibrary({
-        ...storedLibrary,
-        editorsPick: hardcodedEditorsPickPlaylists, // Always use hardcoded for editorsPick
-      }));
+      dispatch(setLibrary(storedLibrary));
     } else {
-      // Initialize with empty state and hardcoded editorsPick if nothing in local storage
+      // Initialize with empty state if nothing in local storage
       dispatch(setLibrary({
         playlists: [],
-        editorsPick: hardcodedEditorsPickPlaylists, // Use hardcoded for editorsPick
+        editorsPick: [], // Will be populated by importAllPlaylistsFromCsv
         favorites: { tracks: [], genres: [], artists: [], albums: [], radios: [] },
         blacklist: { tracks: [], genres: [], artists: [], albums: [], radios: [] },
       }));
     }
-    // Removed importAllPlaylistsFromCsv();
+
+    // Import editor's pick playlists from CSVs on app load
+    importAllPlaylistsFromCsv();
   }, []);
 
   return (
