@@ -35,7 +35,7 @@ const Playlist = () => {
 
   const handleChange = (e) => {
     setNewPlaylist({ type: 'HANDLECHANGE', id: e.target.id, payload: e.target.value });
-    setErrorSavingPlaylist(setErrorSavingPlaylist(false));
+    setErrorSavingPlaylist(false); // Corrected line: directly set to false
   }
 
   useEffect(() => { 
