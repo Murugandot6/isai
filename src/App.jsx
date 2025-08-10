@@ -23,7 +23,7 @@ import { setPlayer } from './redux/features/playerSlice';
 import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
 
-import { recordVisitor } from './utils/db';
+// import { recordVisitor } from './utils/db'; // Removed import
 // import { importAllPlaylistsFromCsv } from './utils/bulkPlaylistImport'; // Commented out to prevent 404 errors
 
 const App = () => {
@@ -31,7 +31,7 @@ const App = () => {
   const dispatch = useDispatch();
 
   useLayoutEffect(() => {
-    recordVisitor(searchParams);
+    // recordVisitor(searchParams); // Removed call to record visitor
 
     const playerStorage = localStorage.getItem('player');
     if (playerStorage) dispatch(setPlayer(JSON.parse(playerStorage)));
