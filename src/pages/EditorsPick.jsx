@@ -9,7 +9,12 @@ const EditorsPick = () => {
 
   useEffect(() => {
     document.getElementById('site_title').innerText = 'Isai - Editors Pick';
-  }, []);
+    // --- DEBUGGING LOGS ---
+    console.log('EditorsPick: editorsPickPlaylists (hardcoded)', editorsPickPlaylists);
+    console.log('EditorsPick: editorsPickPlaylists.length', editorsPickPlaylists.length);
+    console.log('EditorsPick: userPlaylists (from Redux)', userPlaylists);
+    // --- END DEBUGGING LOGS ---
+  }, [userPlaylists]); // Added userPlaylists to dependency array to re-log if user playlists change
 
   return (
     <div className="px-2 flex md:px-4 relative">
@@ -19,7 +24,12 @@ const EditorsPick = () => {
           <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
         </div>
         {editorsPickPlaylists.length > 0 ? ( // Display hardcoded editors' pick playlists here
-          <Playlists playlists={editorsPickPlaylists} />
+          <>
+            {/* --- TEMPORARY DEBUG TEXT --- */}
+            <p style={{color: 'lime', marginBottom: '10px'}}>DEBUG: Editors Pick Playlists are attempting to render! Count: {editorsPickPlaylists.length}</p>
+            {/* --- END TEMPORARY DEBUG TEXT --- */}
+            <Playlists playlists={editorsPickPlaylists} />
+          </>
         ) : (
           <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
             <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
