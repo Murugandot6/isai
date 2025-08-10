@@ -1,6 +1,7 @@
 import { BsDot, BsThreeDots } from 'react-icons/bs';
 import { BiGridHorizontal } from 'react-icons/bi';
 import { playSongs } from '../../../utils/player';
+import { songImage as defaultSongImage } from '../../../assets/images'; // Import default song image
 
 const QueueSong = ({ song, currentSong, handleDragOver, handleDragEnd, color, i, tracks }) => {
   return (
@@ -14,7 +15,7 @@ const QueueSong = ({ song, currentSong, handleDragOver, handleDragEnd, color, i,
       <span className="hidden md:flex items-center justify-center">
         <BiGridHorizontal size={25} />
       </span>
-      <img src={song.image} className="rounded-md h-[50px] w-[50px] bg-white/10" /> {/* Use normalized image URL */}
+      <img src={song.image || defaultSongImage} className="rounded-md h-[50px] w-[50px] bg-white/10" alt={song.name} /> {/* Use normalized image URL or default */}
       <div className="flex flex-1 flex-col w-full">
           <p className="text-gray-200 text-sm max-w-[250px] font-semibold truncate">{song?.name}</p>
           <p className="flex flex-row flex-wrap items-center text-xs text-gray-400">

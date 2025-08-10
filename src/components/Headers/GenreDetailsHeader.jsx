@@ -4,6 +4,7 @@ import { FavoriteButton } from "../Buttons"
 import { Error } from "../LoadersAndError"
 import HeaderLoading from "../LoadersAndError/HeaderLoading"
 import { Options } from "../Options"
+import { albumImage as defaultAlbumImage } from '../../assets/images'; // Import default album image
 
 const GenreDetailsHeader = ({ genre, charts, isFetching, error, setColors, bg, text }) => {
     const imgRef = useRef();
@@ -17,7 +18,7 @@ const GenreDetailsHeader = ({ genre, charts, isFetching, error, setColors, bg, t
 
     return (
         <div className="relative w-full min-h-[40vh] rounded-[15px] border border-white/5 flex shadow-lg shadow-black/30">
-            <img onLoad={handleLoad} crossOrigin="anonymous" ref={imgRef} src={genre?.image} className="absolute top-0 rounded-[15px] left-0 w-full h-full object-cover opacity-60" /> {/* Use normalized image URL */}
+            <img onLoad={handleLoad} crossOrigin="anonymous" ref={imgRef} src={genre?.image || defaultAlbumImage} className="absolute top-0 rounded-[15px] left-0 w-full h-full object-cover opacity-60" /> {/* Use normalized image URL or default */}
             <div style={{ background: `linear-gradient(transparent, ${bg} 80%)` }} className="absolute w-full h-full top-0 left-0 rounded-[15px] opacity-60" />
             {
                 isFetching ?

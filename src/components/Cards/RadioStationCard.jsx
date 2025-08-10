@@ -18,7 +18,7 @@ const RadioStationCard = ({ station }) => {
             primaryArtists: station.country,
             artist: { name: station.country },
             album: { name: station.language },
-            image: [{ link: station.favicon || defaultRadioImage }],
+            image: station.favicon || defaultRadioImage, // Use normalized image directly
             downloadUrl: [{ quality: '128kbps', link: station.url_resolved }],
             duration: 0, // Indicates a live stream
             explicitContent: 0,

@@ -25,7 +25,7 @@ const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => 
             <div className="relative">
                 <img
                     className="transition-transform w-full aspect-square rounded-lg"
-                    alt=""
+                    alt={album?.name || album?.title}
                     src={album?.image} // Use normalized image URL directly
                 />
                 <div className={`group-hover:opacity-100 group-hover:pointer-events-auto opacity-0 transition-opacity pointer-events-none hidden lg:flex absolute top-0 left-0 w-full h-full bg-black/50 items-end justify-end p-2`}>

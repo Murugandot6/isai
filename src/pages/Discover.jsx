@@ -8,6 +8,7 @@ import { useSearchStationsQuery } from "../redux/services/radioBrowserApi";
 import { fetchArtistDetailsAndContent } from '../utils/fetchData';
 import { ArtistLoading, Error } from '../components/LoadersAndError';
 import { ArtistCard } from '../components/Cards';
+import { radioImage as defaultRadioImage } from '../assets/images';
 
 
 const Discover = () => {
@@ -28,9 +29,9 @@ const Discover = () => {
         limit: 5,
         hidebroken: true
     });
-    const popularTamilStations = useMemo(() => popularTamilStationsData || [], [popularTamilStationsData]);
+    const popularTamilStations = useMemo(() => popularTamilStationsData ? getData({ data: popularTamilStationsData, type: 'radios', library }) : [], [popularTamilStationsData, library]);
 
-    const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: [{ link: 'https://i.pinimg.com/originals/ed/54/d2/ed54d2fa700d36d4f2671e1be84651df.jpg' }] }), []);
+    const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: defaultRadioImage }), []);
 
     useEffect(() => {   
         document.getElementById('site_title').innerText = 'Isai - Web Player: Rhythm for everyone.'
