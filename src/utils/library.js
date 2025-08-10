@@ -84,15 +84,22 @@ const dispatchActions = {
       genres: state.playlistInfo.genres.filter(elem => elem.id !== action.payload)
     }
   }),
-  addsong: ({ state, action }) => ({
-    ...state,
-    playlistInfo: { 
-      ...state.playlistInfo, 
-      tracks: Array.isArray(action.payload) 
-        ? [...state.playlistInfo.tracks, ...action.payload] 
-        : [...state.playlistInfo.tracks, action.payload] 
-    }
-  }),
+  addsong: ({ state, action }) => {
+    const currentTracks = state.playlistInfo.tracks;
+    const songsToAdd = Array.isArray(action.payload) ? action.payload : [action.payload];
+    
+    const newUniqueTracks = songsToAdd.filter(
+      (newSong) => !currentTracks.some((existingSong) => existingSong.id === newSong.id)
+    );
+
+    return {
+      ...state,
+      playlistInfo: { 
+        ...state.playlistInfo, 
+        tracks: [...currentTracks, ...newUniqueTracks]
+      }
+    };
+  },
   removesong: ({ state, action }) => ({
     ...state,
     playlistInfo: {
