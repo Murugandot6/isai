@@ -21,14 +21,45 @@ const ArtistsList = () => {
       const normalizedSong = getSingleData({ type: 'tracks', data: song });
       
       // Collect all artists from the song object, including primary and featured
-      const allArtistsInSong = [
-        ...(song.artists?.primary || []),
-        ...(song.artists?.featured || []),
-      ];
+      // Ensure we get a unique ID for each artist
+      const allArtistsInSong = [];
 
-      allArtistsInSong.forEach(artistObj => {
-        // Ensure artistObj and its id exist, and it's a string, and it's not already added
-        if (artistObj && artistObj.id && typeof artistObj.id === 'string' && !uniqueArtists.has(artistObj.id)) {
+      // Add primary artists
+      if (song.artists?.primary) {
+        song.artists.primary.forEach(artistObj => {
+          if (artistObj && artistObj.id && typeof artistObj.id === 'string' && artistObj.id !== '') {
+            allArtistsInSong.push(artistObj);
+          }
+        });
+      }
+
+      // Add featured artists
+      if (song.artists?.featured) {
+        song.artists.featured.forEach(artistObj => {
+          if (artistObj && artistObj.id && typeof artistObj.id === 'string' && artistObj.id !== '') {
+            allArtistsInSong.push(artistObj);
+          }
+        });
+      }
+
+      // Fallback: If no structured artist objects with IDs, use primaryArtists string
+      if (allArtistsInSong.length === 0 && normalizedSong.primaryArtists) {
+        normalizedSong.primaryArtists.split(',').map(name => name.trim()).forEach(artistName => {
+          // Create a simple ID from the artist name if no official ID is available
+          const syntheticId = artistName.replace(/[^a-zA-Z0-9]/g, ''); 
+          if (syntheticId) {
+            allArtistsInSong.push({
+              id: syntheticId,
+              name: artistName,
+              type: 'Artist',
+              image: normalizedSong.image, // Fallback to song image
+            });
+          }
+        });
+      }
+
+      allArtistsInInSong.forEach(artistObj => {
+        if (!uniqueArtists.has(artistObj.id)) {
           uniqueArtists.set(artistObj.id, {
             id: artistObj.id,
             name: artistObj.name,
