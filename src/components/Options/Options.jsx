@@ -113,10 +113,10 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
                     <div className="fixed inset-0 z-[9998] bg-transparent" onClick={closeModal} />
                     <ul
                         ref={modalRef}
-                        // Prevent clicks inside the modal from propagating to the overlay
+                        // Removed animate-slowfade from here
                         onClick={(e) => e.stopPropagation()}
                         style={{ ...modalStyle, position: 'fixed' }} // Apply calculated style and ensure fixed position
-                        className="animate-slowfade shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
+                        className="shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
                     >
                         {
                             filteredOptions
