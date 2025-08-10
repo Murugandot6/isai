@@ -12,18 +12,24 @@ const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime,
   const song = useMemo(() => getSingleData({type: 'tracks', data: activeSong, favorites, blacklist}), [ activeSong, favorites, blacklist ] )
   const isRadio = useMemo(() => activeSong?.duration === 0, [activeSong]);
 
+  const imageUrl = useMemo(() => {
+    if (!song?.image || !Array.isArray(song.image) || song.image.length === 0) return '';
+    // Prefer highest quality, fallback to lower
+    return song.image[2]?.link || song.image[1]?.link || song.image[0]?.link;
+  }, [song]);
+
   return (
     <>
-      <img crossOrigin="anonymous" ref={imgRef} onLoad={handleLoad} src={song?.image[2]?.link || song?.image[1]?.link || song?.image[0]?.link} className="aspect-square rounded-sm shadow-lg shadow-black/20 max-h-[350px] lg:row-span-5" />
+      <img crossOrigin="anonymous" ref={imgRef} onLoad={handleLoad} src={imageUrl} className="aspect-square rounded-sm shadow-lg shadow-black/20 max-h-[350px] lg:row-span-5" />
       <div className="flex items-center justify-between gap-3 lg:col-span-4 lg:row-span-2">
         <div className="flex-1 flex flex-col justify-center items-start gap-2" onClick={open}>
           <Link to={`/songs/${song?.id}`}>
             <p className="text-white text-lg font-bold">
-              {song?.title?.length > 50 && window.innerWidth < 800 ? song?.title?.substring(0, 47) + '...' : song?.title}
+              {song?.name || song?.title || 'No active Song'}
             </p>
           </Link>
           <div className="flex flex-wrap flex-row items-center text-gray-200 text-sm font-semibold">
-            <Link to={`/artists/${song?.artist?.id}`}><p className="truncate">{song?.artist?.name}</p></Link>
+            <Link to={`/artists/${song?.artist?.id}`}><p className="truncate">{song?.primaryArtists || song?.artist?.name}</p></Link>
             <BsDot size={20} />
             <Link to={`/albums/${song?.album?.id}`}><p className="truncate">{song?.album?.name}</p></Link>
           </div>
