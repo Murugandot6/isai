@@ -19,21 +19,24 @@ const ArtistDetails = () => {
     sortBy: 'popularity',
     sortOrder: 'desc'
   });
-  const artist = artistDetails?.data; // Saavn API returns data directly under 'data' for artist details
+  // Adjusted to access data.data if the main artist object is nested
+  const artist = artistDetails?.data?.data; 
 
   // NEW: Fetch albums using the dedicated endpoint
   const { data: artistAlbumsData, isFetching: isFetchingAlbums, error: errorAlbums } = useGetArtistAlbumsQuery({
     id: artistId,
     page: 1,
-    sortBy: 'popularity',
-    sortOrder: 'desc'
+    // sortBy and sortOrder removed in previous step
   });
   const albums = useMemo(() => {
-    if (!artistAlbumsData?.data?.albums) return []; // Adjust path based on actual API response
-    return getData({ type: 'albums', data: artistAlbumsData.data.albums });
+    // Adjusted to access data.data.albums if albums are nested
+    if (!artistAlbumsData?.data?.data?.albums) return []; 
+    return getData({ type: 'albums', data: artistAlbumsData.data.data.albums });
   }, [artistAlbumsData]);
 
   const topSongs = useMemo(() => {
+    // Adjusted to access artist.topSongs if topSongs is directly under the artist object
+    // (which is now artistDetails.data.data.topSongs)
     if (!artist?.topSongs) return [];
     return getData({ type: 'tracks', data: artist.topSongs, languageFilter: 'tamil' }); // Apply language filter
   }, [artist]);
