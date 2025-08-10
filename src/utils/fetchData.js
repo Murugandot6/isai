@@ -98,7 +98,7 @@ export const fetchSongs = async (album) => {
         const i = 0;
         playSongs({ song, tracks, i, album });
     } catch (error) {
-        console.log(error);
+        // console.log(error); // Removed debug log
     }
 }
 

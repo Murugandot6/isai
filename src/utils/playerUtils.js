@@ -25,7 +25,6 @@ export const getImageUrl = (imageInput) => {
  */
 export const getAudioStreamUrl = (urlArray) => {
   if (!Array.isArray(urlArray) || urlArray.length === 0) {
-    console.log('getAudioStreamUrl: Input urlArray is empty or not an array. Returning empty string.', urlArray);
     return '';
   }
 
@@ -50,17 +49,12 @@ export const getAudioStreamUrl = (urlArray) => {
   }
 
   if (highestQualityMp3) {
-    console.log(`getAudioStreamUrl: Found highest quality MP3: ${highestQualityMp3.link}`);
     return highestQualityMp3.link;
   }
 
   if (highestQualityFallback) {
-    console.log(`getAudioStreamUrl: No MP3 found, falling back to highest quality non-MP3: ${highestQualityFallback.link}`);
     return highestQualityFallback.link;
   }
 
-  console.log('getAudioStreamUrl: No valid audio link (MP3 or other) found after checking all items. Full urlArray:', urlArray);
   return '';
 };
-
-// Removed normalizeSong function as it's no longer needed.
