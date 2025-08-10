@@ -4,8 +4,9 @@ import Papa from 'papaparse';
 import { searchSongByTitleAndArtist } from './fetchData';
 import { displayMessage } from './prompt';
 import { store } from '../redux/store'; // Import the Redux store
-import { setEditorsPickPlaylists, setLibraryStorage } from '../redux/features/librarySlice'; // Import the new action and setLibraryStorage
+import { setEditorsPickPlaylists } from '../redux/features/librarySlice'; // Import the new action
 import generateUniqueId from './idGenerator'; // Import the ID generator
+import { supabase } from '../integrations/supabase/client'; // Import Supabase client
 
 // List of CSV file paths to import. You can add more paths here.
 const CSV_FILE_PATHS = [
@@ -79,7 +80,19 @@ export const importAllPlaylistsFromCsv = async () => {
           name: playlistName,
           genres: [], // You might want to add logic to infer genres
           tracks: newTracks,
+          type: 'editors_pick', // Mark as editor's pick
+          user_id: null, // No specific user for editor's pick
         };
+
+        const { data: supabaseData, error } = await supabase
+          .from('playlists')
+          .insert([playlistInfo])
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
         allImportedPlaylists.push(playlistInfo); // Add to the collection
         displayMessage(`Playlist "${playlistName}" imported with ${songsAddedToCurrentPlaylist} songs.`);
         playlistsCreatedCount++;
@@ -96,9 +109,19 @@ export const importAllPlaylistsFromCsv = async () => {
     }
   }
 
-  // Dispatch the action to update the editorsPick state in Redux
-  store.dispatch(setEditorsPickPlaylists(allImportedPlaylists));
-  store.dispatch(setLibraryStorage()); // Save the updated library to local storage
+  // Fetch existing editor's pick playlists from Supabase to merge with new ones
+  const { data: existingEditorsPick, error: fetchError } = await supabase
+    .from('playlists')
+    .select('*')
+    .eq('type', 'editors_pick');
+
+  if (fetchError) {
+    console.error("Error fetching existing editor's pick playlists:", fetchError);
+    displayMessage("Could not load existing editor's pick playlists.");
+  }
+
+  // Dispatch the action to update the editorsPick state in Redux with all current editor's picks from DB
+  store.dispatch(setEditorsPickPlaylists(existingEditorsPick || []));
 
   return {
     totalPlaylistsAttempted: CSV_FILE_PATHS.length,

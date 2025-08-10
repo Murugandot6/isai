@@ -23,6 +23,7 @@ import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
 
 import { recordVisitor } from './utils/db';
+import { supabase } from './integrations/supabase/client'; // Import Supabase client
 
 const App = () => {
   const [searchParams] = useSearchParams();
@@ -31,10 +32,46 @@ const App = () => {
   useLayoutEffect(() => {
     recordVisitor(searchParams);
 
+    // Fetch player state from local storage (still used for player settings)
     const playerStorage = localStorage.getItem('player');
-    const libraryStorage = localStorage.getItem('library');
     if (playerStorage) dispatch(setPlayer(JSON.parse(playerStorage)));
-    if (libraryStorage) dispatch(setLibrary(JSON.parse(libraryStorage)));
+
+    // Fetch library data (playlists and editor's picks) from Supabase
+    const fetchLibraryFromSupabase = async () => {
+      try {
+        const { data: playlistsData, error: playlistsError } = await supabase
+          .from('playlists')
+          .select('*')
+          .eq('type', 'user'); // Fetch user-created playlists
+
+        const { data: editorsPickData, error: editorsPickError } = await supabase
+          .from('playlists')
+          .select('*')
+          .eq('type', 'editors_pick'); // Fetch editor's pick playlists
+
+        if (playlistsError) throw playlistsError;
+        if (editorsPickError) throw editorsPickError;
+
+        dispatch(setLibrary({
+          playlists: playlistsData || [],
+          editorsPick: editorsPickData || [],
+          // Favorites and Blacklist are still managed in local storage for now
+          favorites: JSON.parse(localStorage.getItem('library_favorites') || '{}'),
+          blacklist: JSON.parse(localStorage.getItem('library_blacklist') || '{}'),
+        }));
+      } catch (error) {
+        console.error("Error fetching library from Supabase:", error);
+        // Fallback to local storage for favorites/blacklist if Supabase fails
+        dispatch(setLibrary({
+          playlists: [],
+          editorsPick: [],
+          favorites: JSON.parse(localStorage.getItem('library_favorites') || '{}'),
+          blacklist: JSON.parse(localStorage.getItem('library_blacklist') || '{}'),
+        }));
+      }
+    };
+
+    fetchLibraryFromSupabase();
   }, []);
 
   return (
