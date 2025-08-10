@@ -1,3 +1,5 @@
+"use client";
+
 import { playSongs, pause } from './player.js';
 import { store } from '../redux/store';
 import { saavnApi } from '../redux/services/saavnApi.js';
@@ -20,7 +22,7 @@ const getStreamUrl = (urlArray) => {
 };
 
 // Normalizes a single item (song, album, etc.) into a consistent format.
-const getSingleData = (item, type) => {
+export const getSingleData = (item, type) => {
   if (!item) return null;
 
   switch (type) {
@@ -51,7 +53,7 @@ const getSingleData = (item, type) => {
 };
 
 // Processes an entire array of data.
-const getData = ({ type, data, library }) => {
+export const getData = ({ type, data, library }) => {
   if (!data || !Array.isArray(data)) return [];
 
   const addFlags = (item) => {
