@@ -43,7 +43,8 @@ export const getSingleData = (item, type) => {
     case 'albums':
       return {
         id: item.id,
-        title: item.name || item.title,
+        name: item.name || item.title, // Ensure 'name' property is present
+        title: item.name || item.title, // Keep 'title' for consistency if other components use it
         subtitle: item.artists?.[0]?.name || item.primaryArtists || '',
         image: getImageUrl(item.image),
         year: item.year,
