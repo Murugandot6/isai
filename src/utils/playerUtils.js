@@ -1,18 +1,40 @@
 // This is a "pure" utility file. It has no Redux imports.
 
 /**
- * Safely gets the highest quality URL from a Saavn API array (image or downloadUrl).
+ * Safely gets the highest quality URL from an image array.
  * @param {Array} arr - The array of quality/url objects.
  * @returns {string} The URL string or an empty string if not found.
  */
-export const getBestUrl = (arr) => {
-  if (!Array.isArray(arr) || arr.length === 0) {
+export const getImageUrl = (imageArray) => {
+  if (!Array.isArray(imageArray) || imageArray.length === 0) {
     return '';
   }
-  // The last item in the array is the highest quality.
+  // Use the last item in the array, which is typically the highest quality.
   // The key is sometimes 'url' and sometimes 'link'. We check for both.
-  return arr[arr.length - 1]?.url || arr[arr.length - 1]?.link || '';
+  return imageArray[imageArray.length - 1]?.link || imageArray[imageArray.length - 1]?.url || '';
 };
+
+/**
+ * Safely gets a playable audio stream URL from a downloadUrl array.
+ * Prioritizes MP3, then any available link.
+ * @param {Array} urlArray - The array of download URL objects (e.g., from Saavn API).
+ * @returns {string} The playable audio URL string or an empty string if not found.
+ */
+export const getAudioStreamUrl = (urlArray) => {
+  if (!Array.isArray(urlArray) || urlArray.length === 0) {
+    return '';
+  }
+
+  // Prioritize MP3 links
+  const mp3Link = urlArray.find(q => q.link && q.link.includes('.mp3'));
+  if (mp3Link) {
+    return mp3Link.link;
+  }
+
+  // Fallback to any available link (highest quality is usually last)
+  return urlArray[urlArray.length - 1]?.link || '';
+};
+
 
 /**
  * Normalizes a raw song object from the API into a simple, flat structure.
@@ -25,8 +47,8 @@ export const normalizeSong = (song) => {
     ...song, // Keep all original properties
     title: song.name, // Map `name` to `title` for consistency
     subtitle: song.primaryArtists,
-    image: getBestUrl(song.image),
-    streamUrl: getBestUrl(song.downloadUrl), // This is the crucial fix for playback
-    allImages: song.image,
+    image: getImageUrl(song.image), // Use getImageUrl for consistency
+    streamUrl: getAudioStreamUrl(song.downloadUrl), // Use new audio stream URL getter
+    allImages: song.image, // Keep original for other uses if needed
   };
 };

@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import shuffle from '../../utils/shuffle';
-import { normalizeSong } from '../../utils/playerUtils';
+import { normalizeSong } from '../../utils/playerUtils'; // Ensure this import is correct
 
 const initialState = {
   currentSongs: [],
