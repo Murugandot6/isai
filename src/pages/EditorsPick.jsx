@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Playlists } from '../components/List';
-import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import the hardcoded data
 import { Link } from 'react-router-dom'; // Import Link
 import { useSelector } from 'react-redux'; // Import useSelector
 
@@ -14,18 +13,8 @@ const EditorsPick = () => {
   return (
     <div className="px-2 flex md:px-4 relative">
       <div className="min-w-full">
-        {/* Editors' Pick Playlists Section (now displaying hardcoded editors' pick playlists) */}
-        <div className="w-full flex justify-between items-center mb-4">
-          <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
-        </div>
-        {editorsPickPlaylists.length > 0 ? ( // Display hardcoded editors' pick playlists here
-          <Playlists playlists={editorsPickPlaylists} />
-        ) : (
-          <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
-            <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
-          </div>
-        )}
-
+        {/* Editors' Pick Playlists Section - Removed */}
+        
         {/* Your Playlists section (now displaying user's custom playlists) */}
         <div className="w-full flex justify-between items-center mb-4 mt-8">
           <h3 className="font-bold text-white text-xl">Your Playlists</h3>

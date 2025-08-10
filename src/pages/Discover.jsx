@@ -5,7 +5,7 @@ import { Suggestion, Songs, Playlists, RadioStationList } from "../components/Li
 import { getData } from "../utils/getData";
 import { useSearchSongsQuery } from '../redux/services/saavnApi';
 import { useSearchStationsQuery } from '../redux/services/radioBrowserApi'; // Import radio station query
-import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import editorsPickPlaylists
+
 
 const Discover = () => {
     const { playlists: userPlaylists, ...library } = useSelector(state => state.library); // Get user's playlists
@@ -34,13 +34,7 @@ const Discover = () => {
 
     return (
         <div className="flex flex-col p-4 gap-10 lg:gap-6">
-            {/* Editors' Pick Playlists Section */}
-            {editorsPickPlaylists.length > 0 && ( // Display hardcoded editors' pick playlists here
-                <div className="mb-8">
-                    <h3 className="font-bold text-white text-xl mb-4">Editors' Pick Playlists</h3>
-                    <Playlists playlists={editorsPickPlaylists.slice(0, 3)} /> {/* Display first 3 of hardcoded playlists */}
-                </div>
-            )}
+            {/* Editors' Pick Playlists Section - Removed */}
 
             <RadioStationList
                 title="Popular Tamil FM Stations"
