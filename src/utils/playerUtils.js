@@ -26,16 +26,31 @@ export const getAudioStreamUrl = (urlArray) => {
     return '';
   }
 
-  // Try to find any object with a 'link' property
-  const foundLinkObject = urlArray.find(q => q.link);
-
-  const streamUrl = foundLinkObject?.link || '';
-  if (!streamUrl) {
-    console.log('getAudioStreamUrl: No valid "link" property found in urlArray elements.', urlArray);
-  } else {
-    console.log(`getAudioStreamUrl: Successfully extracted streamUrl: ${streamUrl}`);
+  // Find the highest quality MP3 link if available
+  let highestQualityMp3 = null;
+  for (const item of urlArray) {
+    if (item.link && item.link.includes('.mp3')) {
+      // Assuming quality is in the 'quality' property, e.g., "128kbps"
+      const currentQuality = parseInt(item.quality);
+      if (!highestQualityMp3 || currentQuality > parseInt(highestQualityMp3.quality)) {
+        highestQualityMp3 = item;
+      }
+    }
   }
-  return streamUrl;
+
+  if (highestQualityMp3) {
+    console.log(`getAudioStreamUrl: Found highest quality MP3: ${highestQualityMp3.link}`);
+    return highestQualityMp3.link;
+  }
+
+  // Fallback to any available link if no MP3 is found (highest quality is usually last)
+  const fallbackLink = urlArray[urlArray.length - 1]?.link || '';
+  if (fallbackLink) {
+    console.log(`getAudioStreamUrl: Falling back to: ${fallbackLink}`);
+  } else {
+    console.log('getAudioStreamUrl: No valid audio link found after all attempts.', urlArray);
+  }
+  return fallbackLink;
 };
 
 

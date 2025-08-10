@@ -64,6 +64,7 @@ const Player = ({ activeSong, isPlaying, volume, seekTime, onEnded, onTimeUpdate
       onLoadedData={onLoadedData}
       onError={(e) => {
         console.error("Audio Element Error:", e.target.error);
+        console.error("Problematic streamUrl:", activeSong?.streamUrl); // Log the problematic URL
         displayMessage("This audio source is not supported or is unavailable.");
         pause();
       }}
