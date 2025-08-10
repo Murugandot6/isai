@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const saavnApi = createApi({
     reducerPath: "saavnApi",
-    baseQuery: fetchBaseBaseQuery({
+    baseQuery: fetchBaseQuery({
         baseUrl: "https://saavn.dev/api",
     }),
     endpoints: (builder) => ({
