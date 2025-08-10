@@ -7,8 +7,8 @@ import { useSearchSongsQuery } from '../redux/services/saavnApi';
 import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import editorsPickPlaylists
 
 const Discover = () => {
-    const library = useSelector(state => state.library);
-
+    const { playlists: userPlaylists, ...library } = useSelector(state => state.library); // Get user's playlists
+    
     // Fetch data for Tamil Latest Songs
     const { data: tamilSongsData, isFetching: isFetchingTamilSongs, error: errorFetchingTamilSongs } = useSearchSongsQuery('tamil latest songs');
     const tamilLatestSongs = useMemo(() => tamilSongsData ? getData({ data: tamilSongsData.data.results.slice(0, 6), type: 'tracks' }) : [], [tamilSongsData, library]);
@@ -30,10 +30,10 @@ const Discover = () => {
     return (
         <div className="flex flex-col p-4 gap-10 lg:gap-6">
             {/* Editors' Pick Playlists Section */}
-            {editorsPickPlaylists.length > 0 && (
+            {userPlaylists.length > 0 && ( // Display user's playlists here
                 <div className="mb-8">
                     <h3 className="font-bold text-white text-xl mb-4">Editors' Pick Playlists</h3>
-                    <Playlists playlists={editorsPickPlaylists.slice(0, 3)} /> {/* Display first 3 editor's pick playlists */}
+                    <Playlists playlists={userPlaylists.slice(0, 3)} /> {/* Display first 3 of user's playlists */}
                 </div>
             )}
 
