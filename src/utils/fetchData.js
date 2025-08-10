@@ -13,24 +13,35 @@ export const getSingleData = (item, type) => {
     case 'tracks':
       return {
         id: item.id,
-        title: item.name || item.title,
-        subtitle: item.primaryArtists || item.artists?.primary?.[0]?.name,
-        image: getImageUrl(item.image), // Use getImageUrl
-        streamUrl: getAudioStreamUrl(item.downloadUrl), // Use getAudioStreamUrl
+        title: item.name || item.title || item.song, // Added item.song as fallback for title
+        subtitle: item.primaryArtists || item.artists?.primary?.[0]?.name || item.artist, // Added item.artist as fallback for subtitle
+        image: getImageUrl(item.image || item.album?.image || item.artist?.image), // Added fallbacks for image
+        streamUrl: getAudioStreamUrl(item.downloadUrl),
         duration: item.duration,
         language: item.language,
-        album: item.album?.name,
+        album: { // Ensure album is an object with name and id
+          id: item.album?.id,
+          name: item.album?.name || item.album?.title,
+        },
+        artist: { // Ensure artist is an object with name and id
+          id: item.artist?.id || item.artists?.primary?.[0]?.id,
+          name: item.primaryArtists || item.artist?.name || item.artists?.primary?.[0]?.name,
+        },
         downloadUrl: item.downloadUrl,
         allImages: item.image, // Keep original for other uses if needed
+        explicitContent: item.explicitContent, // Keep explicit content flag
       };
     case 'albums':
       return {
         id: item.id,
         name: item.name || item.title, // Ensure 'name' property is present
         title: item.name || item.title, // Keep 'title' for consistency if other components use it
-        subtitle: item.artists?.[0]?.name || item.primaryArtists || '',
+        primaryArtists: item.primaryArtists || item.artists?.[0]?.name, // Ensure primaryArtists is present
         image: getImageUrl(item.image), // Use getImageUrl
         year: item.year,
+        songCount: item.songCount, // Add songCount if available
+        duration: item.duration, // Add duration if available
+        type: item.type, // Add type if available
       };
     case 'artists': // Add explicit handling for artists
       return {
@@ -40,6 +51,17 @@ export const getSingleData = (item, type) => {
         type: item.type,
         followerCount: item.followerCount,
         allImages: item.image, // Keep original for other uses if needed
+      };
+    case 'radios': // Add explicit handling for radios
+      return {
+        id: item.stationuuid, // Use stationuuid as ID for radios
+        name: item.name,
+        title: item.name,
+        image: getImageUrl([{ link: item.favicon }]), // Favicon is usually the image
+        country: item.country,
+        language: item.language,
+        url_resolved: item.url_resolved,
+        type: 'radio', // Explicitly set type
       };
     default:
       return item;

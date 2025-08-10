@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import shuffle from '../../utils/shuffle';
-import { normalizeSong } from '../../utils/playerUtils'; // Ensure this import is correct
+// Removed normalizeSong import as it's no longer needed here
 
 const initialState = {
   currentSongs: [],
@@ -21,16 +21,16 @@ const playerSlice = createSlice({
   initialState,
   reducers: {
     setActiveSong: (state, action) => {
-      console.log('playerSlice - setActiveSong - Raw song payload:', action.payload.song);
-      const cleanSong = normalizeSong(action.payload.song);
-      console.log('playerSlice - setActiveSong - Normalized song:', cleanSong);
-      if (!cleanSong) return;
+      // Assuming action.payload.song is ALREADY normalized by getSingleData/getData
+      const cleanSong = action.payload.song; 
+      if (!cleanSong || !cleanSong.id) return; // Ensure it's a valid song object
 
       state.activeSong = cleanSong;
 
       const tracks = action.payload.data || action.payload.tracks;
       if (Array.isArray(tracks)) {
-        const cleanTracks = tracks.map(normalizeSong).filter(Boolean);
+        // Assuming tracks are also ALREADY normalized
+        const cleanTracks = tracks.filter(Boolean); // Just filter out null/undefined if any
         state.currentSongs = cleanTracks;
         // Only update unshuffled if shuffle is not active
         if (!state.shuffle) {
