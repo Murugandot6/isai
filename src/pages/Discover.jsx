@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { useSelector } from "react-redux";
-import { Suggestion, Songs, Playlists } from "../components/List"; // Import Playlists
+import { Suggestion, Songs, Playlists, RadioStationList } from "../components/List"; // Import Playlists & RadioStationList
 import { getData } from "../utils/getData";
 import { useSearchSongsQuery } from '../redux/services/saavnApi';
+import { useSearchStationsQuery } from '../redux/services/radioBrowserApi'; // Import radio station query
 import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import editorsPickPlaylists
 
 const Discover = () => {
@@ -21,6 +22,14 @@ const Discover = () => {
     const { data: hindiSongsData, isFetching: isFetchingHindiSongs, error: errorFetchingHindiSongs } = useSearchSongsQuery('hindi latest songs');
     const hindiLatestSongs = useMemo(() => hindiSongsData ? getData({ data: hindiSongsData.data.results.slice(0, 6), type: 'tracks' }) : [], [hindiSongsData, library]);
 
+    // Fetch data for popular Tamil radio stations
+    const { data: popularTamilStationsData, isFetching: isFetchingTamilStations, error: errorFetchingTamilStations } = useSearchStationsQuery({
+        language: 'tamil',
+        limit: 5,
+        hidebroken: true
+    });
+    const popularTamilStations = useMemo(() => popularTamilStationsData || [], [popularTamilStationsData]);
+
     const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: [{ link: 'https://i.pinimg.com/originals/ed/54/d2/ed54d2fa700d36d4f2671e1be84651df.jpg' }] }), []); // Placeholder for radio image
 
     useEffect(() => {   
@@ -36,6 +45,13 @@ const Discover = () => {
                     <Playlists playlists={userPlaylists.slice(0, 3)} /> {/* Display first 3 of user's playlists */}
                 </div>
             )}
+
+            <RadioStationList
+                title="Popular Tamil FM Stations"
+                stations={popularTamilStations}
+                isFetching={isFetchingTamilStations}
+                error={errorFetchingTamilStations}
+            />
 
             <Songs
                 isFetching={isFetchingTamilSongs}

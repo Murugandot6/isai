@@ -7,14 +7,14 @@ export const radioBrowserApi = createApi({
     baseQuery: fetchBaseQuery({ baseUrl }),
     endpoints: (builder) => ({
         searchStations: builder.query({
-            query: ({ country = '', language = 'english', name = '', hidebroken = true }) => {
+            query: ({ country = '', language = 'english', name = '', hidebroken = true, limit = '500', order = 'clickcount', reverse = 'true' }) => {
                 const params = new URLSearchParams({
                     language,
                     name,
-                    limit: '500',
+                    limit,
                     hidebroken,
-                    order: 'clickcount',
-                    reverse: 'true'
+                    order,
+                    reverse
                 });
 
                 if (country) {

@@ -10,6 +10,7 @@ import SongLyrics from './SongLyrics';
 import RecentAlbums from './RecentAlbums';
 import Suggestion from './Suggestion';
 import RecentArtists from './RecentArtists';
+import RadioStationList from './RadioStationList';
 
 export {
     Albums,
@@ -23,5 +24,6 @@ export {
     SongLyrics,
     RecentAlbums,
     RecentArtists,
-    Suggestion
+    Suggestion,
+    RadioStationList
 }
