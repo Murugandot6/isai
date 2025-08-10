@@ -51,30 +51,36 @@ export const getSingleData = ({ type, data }) => {
         newItem.album = { title: data.album?.name, id: data.album?.id, cover_small: data.image?.[0]?.link, cover_medium: data.image?.[1]?.link, cover_big: data.image?.[2]?.link, cover_xl: data.image?.[2]?.link };
         newItem.duration = data.duration;
         newItem.explicit_lyrics = data.explicitContent === 1;
-        newItem.preview = data.downloadUrl?.[0]?.link; // Use the first download URL as preview
-        newItem.downloadUrl = data.downloadUrl; // Keep all download URLs
-        newItem.image = data.image; // Keep all image sizes
         newItem.language = data.language; // Add language field for tracks
+
+        // Normalize image and download URLs
+        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
+        newItem.streamUrl = data.downloadUrl?.[data.downloadUrl.length - 1]?.link || ''; // Highest quality audio URL
+        newItem.downloadUrl = data.downloadUrl; // Keep original array for download options
+
     } else if (type === 'albums') {
         newItem.title = data.name;
         newItem.artist = { name: data.primaryArtists, id: data.artistMap?.artists?.[0]?.id || data.primaryArtists };
         newItem.cover_medium = data.image?.[1]?.link;
         newItem.cover_xl = data.image?.[2]?.link;
         newItem.release_date = data.year; // Saavn provides year, not full date
+        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
     } else if (type === 'artists') {
         newItem.name = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
         newItem.picture_xl = data.image?.[2]?.link;
-        newItem.image = data.image; // Keep all image sizes for artist
+        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
         newItem.followerCount = data.followerCount; // Add follower count for artists
     } else if (type === 'genres') {
         newItem.name = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
         newItem.picture_xl = data.image?.[2]?.link;
+        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
     } else if (type === 'radios') {
         newItem.title = data.name;
         newItem.picture_medium = data.image?.[1]?.link;
         newItem.picture_xl = data.image?.[2]?.link;
+        newItem.image = data.image?.[data.image.length - 1]?.link || ''; // Highest quality image URL
     }
 
     // For tracks, if there are nested tracks (e.g., album details), process them

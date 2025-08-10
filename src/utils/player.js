@@ -1,7 +1,7 @@
 import { playPause, prevSong, nextSong, setActiveSong, setAlbum, stop, shuffleOn, shuffleOff, setRepeat, addToUpNext, incrementShuffleLanguageIndex } from "../redux/features/playerSlice"
 import { store } from '../redux/store';
 import { displayMessage } from "./prompt"
-import { getSingleData } from "./getData"; // Import getSingleData
+import { getSingleData, getData } from "./getData"; // Import getSingleData and getData
 import { fetchTrendingSongsByLanguage } from "./fetchData"; // Import new fetch function
 
 export function play() {
@@ -71,14 +71,13 @@ export const playSongs = ({ tracks, song, i, album}) => {
         return;
     }
 
-    // Get current library state for data normalization
-    const { library } = store.getState();
-    const { favorites, blacklist } = library;
+    // Normalize the individual song
+    const normalizedSong = getSingleData({ type: 'tracks', data: song });
 
-    // Normalize the song data before setting it as activeSong
-    const normalizedSong = getSingleData({ type: 'tracks', data: song, favorites, blacklist });
+    // Normalize the entire tracks array
+    const normalizedTracks = getData({ type: 'tracks', data: tracks });
 
-    store.dispatch(setActiveSong({ tracks, song: normalizedSong, i })); // Pass normalizedSong
+    store.dispatch(setActiveSong({ tracks: normalizedTracks, song: normalizedSong, i }));
     if (album) store.dispatch(setAlbum(album));
     play();
 }

@@ -72,7 +72,7 @@ const ImportForm = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPla
           {
             playlistInfo.tracks.length > 0 ?
               <img
-                src={playlistInfo.tracks[playlistInfo.tracks.length - 1].image?.[1]?.link || playlistInfo.tracks[playlistInfo.tracks.length - 1].image?.[0]?.link}
+                src={playlistInfo.tracks[playlistInfo.tracks.length - 1].image} // Use normalized image URL
                 className="h-full w-full block rounded-[10px]"
                 alt="Playlist cover"
               /> :
@@ -127,7 +127,7 @@ const ImportForm = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPla
             {
               playlistInfo.tracks.map((song, i) =>
                 <li key={i} className="relative flex flex-row gap-2 items-center p-2 border-b border-white/5 last:border-transparent">
-                  <img src={song.image?.[0]?.link} className="min-w-[50px] aspect-square rounded-md bg-white/50" alt={song.name} />
+                  <img src={song.image} className="min-w-[50px] aspect-square rounded-md bg-white/50" alt={song.name} /> {/* Use normalized image URL */}
                   <div className="flex flex-col">
                     <p className="text-white text-sm truncate">{song.name}</p>
                     <p className="text-gray-400 text-xs">{song.primaryArtists}</p>

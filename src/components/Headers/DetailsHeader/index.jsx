@@ -26,7 +26,7 @@ const DetailsHeader = () => {
 
   useEffect(() => {
     // Saavn API uses 'image' array for different sizes
-    setUrl(isFetching ? '' : data?.image?.[2]?.link || data?.image?.[1]?.link || data?.image?.[0]?.link);
+    setUrl(isFetching ? '' : data?.image); // Use normalized image URL
     updateData({ ...others, colors: isFetching || error ? [] : [bg, text], data, isFetching, error });
   }, [isFetching, data])
 

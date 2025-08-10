@@ -10,17 +10,18 @@ const Player = ({ activeSong, isPlaying, volume, seekTime, onEnded, onTimeUpdate
 
   // Effect to handle source changes
   useEffect(() => {
-    if (!activeSong?.downloadUrl || activeSong.downloadUrl.length === 0) {
+    // Use activeSong.streamUrl directly, which is now normalized in getData
+    if (!activeSong?.streamUrl) {
       ref.current.src = '';
       return;
     }
     
-    const audioSource = activeSong.downloadUrl.find(url => url.quality === `${bitrate}kbps`)?.link || activeSong.downloadUrl[0]?.link;
+    const audioSource = activeSong.streamUrl;
 
     if (ref.current.src !== audioSource) {
       ref.current.src = audioSource || '';
     }
-  }, [activeSong, bitrate]);
+  }, [activeSong]); // Removed bitrate from dependency as streamUrl is already highest quality
 
   // Effect to handle play/pause state changes
   useEffect(() => {

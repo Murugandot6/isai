@@ -16,7 +16,7 @@ const RecentAlbumCard = ({ album, i }) => {
   return (
     <Link to={`/albums/${album.id}`}>
       <div className="relative h-[100px] rounded-lg overflow-clip shadow-lg shadow-black">
-        <img crossOrigin='anonymous' ref={imageRef} onLoad={onLoad} className="absolute top-0 right-0 h-full aspect-square" src={album.image?.[1]?.link || album.image?.[0]?.link} alt={album.name} /> {/* Use Saavn image links and album.name */}
+        <img crossOrigin='anonymous' ref={imageRef} onLoad={onLoad} className="absolute top-0 right-0 h-full aspect-square" src={album.image} alt={album.name} /> {/* Use normalized image URL */}
         <div style={{ background: `linear-gradient(90deg, ${background} 50%, transparent)` }} className="w-full h-full relative z-1 flex flex-col items-start justify-center p-4">
           <p style={{color: text}} className="relative truncate $text-white font-bold text-xs">{album.name}</p> {/* Use album.name */}
           <p style={{color: text}} className="relative truncate opacity-75 font-bold text-[0.7em]">{album.primaryArtists}</p> {/* Use album.primaryArtists */}
