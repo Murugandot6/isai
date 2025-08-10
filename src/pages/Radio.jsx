@@ -32,7 +32,7 @@ const Radio = () => {
                             onChange={(e) => setCountry(e.target.value)}
                             className="bg-white/10 text-white rounded-md p-2 h-10"
                         >
-                            {countriesData?.map(c => <option key={c.iso_3166_1} value={c.iso_3166_1}>{c.name}</option>)}
+                            {countriesData?.map(c => <option className="bg-black text-white" key={c.iso_3166_1} value={c.iso_3166_1}>{c.name}</option>)}
                         </select>
                     )}
                 </div>
@@ -46,7 +46,7 @@ const Radio = () => {
                             onChange={(e) => setLanguage(e.target.value)}
                             className="bg-white/10 text-white rounded-md p-2 h-10"
                         >
-                            {languagesData?.map(l => <option key={l.name} value={l.name}>{l.name} ({l.stationcount})</option>)}
+                            {languagesData?.map(l => <option className="bg-black text-white" key={l.name} value={l.name}>{l.name} ({l.stationcount})</option>)}
                         </select>
                     )}
                 </div>
