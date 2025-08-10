@@ -88,3 +88,44 @@ export const fetchTrendingSongsByLanguage = async (language) => {
         return [];
     }
 };
+
+export const fetchArtistDetailsAndContent = async (artistName) => {
+    try {
+        // Step 1: Search for the artist
+        const { data: searchArtistsResult } = await store.dispatch(saavnApi.endpoints.searchArtists.initiate(artistName));
+        const artistId = searchArtistsResult?.data?.results?.[0]?.id;
+
+        if (!artistId) {
+            console.warn(`Artist "${artistName}" not found in search results.`);
+            return null;
+        }
+
+        // Step 2: Get artist details (which includes top songs)
+        const { data: artistDetailsResult } = await store.dispatch(saavnApi.endpoints.getArtistDetails.initiate({ id: artistId, songCount: 10, albumCount: 5 }));
+        const artist = artistDetailsResult?.data;
+
+        if (!artist) {
+            console.warn(`Details for artist "${artistName}" (ID: ${artistId}) could not be fetched.`);
+            return null;
+        }
+
+        // Step 3: Get artist's albums using the dedicated endpoint
+        const { data: artistAlbumsResult } = await store.dispatch(saavnApi.endpoints.getArtistAlbums.initiate({ id: artistId, page: 1, sortBy: 'popularity' }));
+        const albums = artistAlbumsResult?.data?.albums || [];
+
+        // Normalize data
+        const normalizedArtist = getSingleData({ type: 'artists', data: artist });
+        const topSongs = getData({ type: 'tracks', data: artist.topSongs, languageFilter: 'tamil' }); // Filter top songs by Tamil
+        const normalizedAlbums = getData({ type: 'albums', data: albums });
+
+        return {
+            artist: normalizedArtist,
+            topSongs: topSongs,
+            albums: normalizedAlbums,
+        };
+
+    } catch (error) {
+        console.error(`Error fetching data for artist "${artistName}":`, error);
+        return null;
+    }
+};
