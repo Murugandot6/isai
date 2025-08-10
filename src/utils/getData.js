@@ -37,6 +37,8 @@ export const getSingleData = ({ type, data }) => {
     dataType = type;
 
     const newItem = { ...data };
+
+    // Add favorite and blacklist flags
     newItem.favorite = favorites[dataType]?.map(elem => elem.id).includes(data.id);
     newItem.blacklist = blacklist[dataType]?.map(elem => elem.id).includes(data.id);
 
@@ -111,6 +113,14 @@ function handleFilter(item) {
 };
 
 function addFavoriteAndBlacklist(item) {
+    // If it's a track, use getSingleData to ensure proper mapping (name -> title)
+    // getSingleData already handles favorite/blacklist, so we just need to pass the raw item
+    // and it will return the normalized item with favorite/blacklist flags.
+    if (dataType === 'tracks') {
+        return getSingleData({ type: 'tracks', data: item });
+    }
+
+    // For other types, just add favorite/blacklist flags as before
     const newItem = { ...item };
     newItem.favorite = favorites[dataType]?.map(elem => elem.id).includes(item.id);
     newItem.blacklist = blacklist[dataType]?.map(elem => elem.id).includes(item.id);
