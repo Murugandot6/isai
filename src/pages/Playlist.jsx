@@ -3,7 +3,7 @@ import { useEffect, useMemo, useReducer, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import CreatePlaylist from '../components/CreatePlaylist';
-import ImportPlaylist from '../components/CreatePlaylist/ImportPlaylist'; // Import the new component
+import ImportPlaylist from '../components/CreatePlaylist/ImportPlaylist';
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
@@ -66,7 +66,7 @@ const Playlist = () => {
 
   return (
     <div className="px-2 flex md:px-4 relative overflow-hidden">
-      <PlaylistsFront isInAddPage={!showPlaylistsFront} /> {/* Pass true if it should be hidden */}
+      <PlaylistsFront isVisible={showPlaylistsFront} />
       <CreatePlaylist
         handleSubmit={handleSubmit}
         isInAddPage={isInAddPage}
