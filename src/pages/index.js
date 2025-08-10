@@ -11,6 +11,7 @@ import Blacklist from './Blacklist'
 import Favorites from './Favorites';
 import PlaylistDetails from './PlaylistDetails';
 import EditorsPick from './EditorsPick'; // New import
+import Radio from './Radio';
 
 export {
   Discover,
@@ -26,4 +27,5 @@ export {
   Favorites,
   PlaylistDetails,
   EditorsPick, // New export
+  Radio,
 };

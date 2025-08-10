@@ -10,6 +10,7 @@ import { getSingleData } from "../../../utils/getData"
 const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime, imgRef, handleLoad }) => {
   const { blacklist, favorites } = useSelector(state => state.library);
   const song = useMemo(() => getSingleData({type: 'tracks', data: activeSong, favorites, blacklist}), [ activeSong, favorites, blacklist ] )
+  const isRadio = useMemo(() => activeSong?.duration === 0, [activeSong]);
 
   return (
     <>
@@ -41,14 +42,20 @@ const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime,
           tracks={currentSongs}
         />
       </div>
-      <div className="flex flex-col text-gray-200 text-xs font-semi gap-2 col-span-4">
-        <input type="range" step="any" value={appTime} min='0' max={duration} className="seek_slider flex-1 shadow shadow-black/40" onInput={e => setSeekTime(e.target.value)} />
-        <div className="flex items-center justify-between">
-              
-          <p>{duration ? `${Math.floor(appTime/60)}:${`0${Math.floor(appTime % 60)}`.slice(-2)}` : '0:00'}</p>
-          <p>{`${Math.floor(duration/60)}:${`0${Math.floor(duration % 60)}`.slice(-2)}`}</p>
+      {isRadio ? (
+        <div className="flex items-center justify-center col-span-4 text-gray-300 font-semibold">
+            <p>Live Stream</p>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col text-gray-200 text-xs font-semi gap-2 col-span-4">
+          <input type="range" step="any" value={appTime} min='0' max={duration} className="seek_slider flex-1 shadow shadow-black/40" onInput={e => setSeekTime(e.target.value)} />
+          <div className="flex items-center justify-between">
+                
+            <p>{duration ? `${Math.floor(appTime/60)}:${`0${Math.floor(appTime % 60)}`.slice(-2)}` : '0:00'}</p>
+            <p>{`${Math.floor(duration/60)}:${`0${Math.floor(duration % 60)}`.slice(-2)}`}</p>
+          </div>
+        </div>
+      )}
     </>
   )
 }

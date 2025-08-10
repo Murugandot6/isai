@@ -14,7 +14,8 @@ import {
   PlaylistDetails,
   Favorites,
   Blacklist,
-  EditorsPick // New import
+  EditorsPick, // New import
+  Radio,
 } from './pages';
 import Details from './components/Details';
 import { setPlayer } from './redux/features/playerSlice';
@@ -57,6 +58,7 @@ const App = () => {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/blacklist" element={<Blacklist />} />
         <Route path="/editors-pick" element={<EditorsPick />} /> {/* New route */}
+        <Route path="/radio" element={<Radio />} />
       </Route>
     </Routes>
   );

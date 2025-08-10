@@ -8,6 +8,7 @@ const MiniPlayer = ({ duration, open, appTime, scrolled, isPlaying, currentSongs
   const [bg, setColors] = useState('')
   const style = useMemo(() => ({ backgroundColor: !scrolled && (bg || 'black') }), [bg, scrolled])
   const imageRef = useRef();
+  const isRadio = useMemo(() => duration === 0 || duration === Infinity, [duration]);
 
   const onLoad = () => {
     const colorThief = new ColorThief();
@@ -22,8 +23,10 @@ const MiniPlayer = ({ duration, open, appTime, scrolled, isPlaying, currentSongs
         className="absolute z-[1] w-full h-full lg:hidden lg:pointer-events-none"
         onClick={open}
       />
-      <div style={{width: Math.round((appTime/duration) * 100) + '%'}} className="absolute top-0 left-0 lg:hidden bg-white/10 h-full">
-      </div>
+      {!isRadio && (
+        <div style={{width: Math.round((appTime/duration) * 100) + '%'}} className="absolute top-0 left-0 lg:hidden bg-white/10 h-full">
+        </div>
+      )}
       <div className="relative z-1 gap-5 flex h-full items-center justify-end rounded-md p-3">
         <Track
           scrolled={scrolled}
