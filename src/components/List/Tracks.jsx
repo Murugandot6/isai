@@ -25,7 +25,7 @@ const AllTracks = ({ tracks, activeSong, isPlaying, isFetching, error, songsToBe
       <TracksLoading num={6} /> :
       error ?
         <Error title="Could not fetch album details" /> :
-        <div className="m-2 md:m-4 rounded-[20px] bg-black/20 backdrop-blur-md border border-white/5">
+        <div className="m-2 md:m-4 rounded-[20px] bg-black/20 border border-white/5">
           <table className="w-full overflow-x-clip">
             <thead>
               <tr className="px-4 py-4 h-[50px] md:h-[60px]">
