@@ -18,8 +18,9 @@ const getModalStyle = (buttonRect, modalRef) => {
     const modalWidth = modalRef.current ? modalRef.current.offsetWidth : 160; // min-w-[160px] from CSS
     const modalHeight = modalRef.current ? modalRef.current.offsetHeight : 200; // A reasonable estimate
 
-    let top = buttonRect.y + (buttonRect.height / 2) - (modalHeight / 2); // Vertically center with the button
-    let left = buttonRect.x + buttonRect.width + 5; // Default: to the right of the button + 5px padding
+    // Initial placement: top-left corner of the modal at the top-right corner of the button
+    let top = buttonRect.y;
+    let left = buttonRect.x + buttonRect.width + 5; // 5px padding from the button
 
     // Adjust horizontal position if it goes off-screen
     if (left + modalWidth > viewportWidth) {
@@ -30,10 +31,11 @@ const getModalStyle = (buttonRect, modalRef) => {
     }
 
     // Adjust vertical position if it goes off-screen
-    if (top < 0) { // If it goes off the top
-        top = 5; // Align to top edge with a small padding
-    } else if (top + modalHeight > viewportHeight) { // If it goes off the bottom
+    if (top + modalHeight > viewportHeight) {
         top = viewportHeight - modalHeight - 5; // Align to bottom edge with a small padding
+    }
+    if (top < 0) { // If it goes off the top (after potential bottom adjustment)
+        top = 5; // Align to top edge with a small padding
     }
 
     return { top: `${top}px`, left: `${left}px` };
@@ -109,7 +111,7 @@ const Options = ({ type, small, song, artist, genre, album, radio, playlist, tra
                     <ul
                         ref={modalRef}
                         onClick={(e) => e.stopPropagation()}
-                        style={{ ...modalStyle, position: 'fixed' }} // Apply calculated style and ensure fixed position
+                        style={{ ...modalStyle, position: 'fixed', transition: 'top 0.2s ease-out, left 0.2s ease-out' }} // Apply calculated style and ensure fixed position
                         className="shadow-xl overflow-hidden shadow-black/20 z-[9999] w-max flex-col text-gray-200 text-sm font-semibold rounded-[20px] bg-[#202020] min-w-[160px]"
                     >
                         {
