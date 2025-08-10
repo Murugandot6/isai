@@ -27,3 +27,20 @@ export const downloadSong = (song) => {
     displayMessage("No valid download link found.");
   }
 };
+
+export const downloadPlaylistSongs = (playlist) => {
+  if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
+    displayMessage("This playlist has no songs to download.");
+    return;
+  }
+
+  displayMessage(`Initiating download for ${playlist.tracks.length} song${playlist.tracks.length === 1 ? '' : 's'} from "${playlist.name}"...`);
+
+  // Loop through each song and initiate download
+  playlist.tracks.forEach((song, index) => {
+    // Add a small delay to avoid browser blocking multiple downloads immediately
+    setTimeout(() => {
+      downloadSong(song);
+    }, index * 500); // 500ms delay between each download
+  });
+};
