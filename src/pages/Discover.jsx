@@ -31,46 +31,7 @@ const Discover = () => {
 
     const englishMostPlayedPlaceholder = useMemo(() => ({ id: 'english_mix', name: 'English Most Played', image: [{ link: 'https://i.pinimg.com/originals/ed/54/d2/ed54d2fa700d36d4f2671e1be84651df.jpg' }] }), []);
 
-    // NEW: State for featured artists
-    const [featuredArtists, setFeaturedArtists] = useState([]);
-    const [isFetchingFeatured, setIsFetchingFeatured] = useState(true);
-    const [errorFetchingFeatured, setErrorFetchingFeatured] = useState(false);
-
-    // List of personalities to fetch songs for
-    const personalities = useMemo(() => [
-        // Actors
-        "Rajinikanth", "Kamal Haasan", "Vijay", "Ajith Kumar", "Suriya", "Dhanush", "Vikram", "Sivakarthikeyan", "Karthi", "Jayam Ravi",
-        // Directors
-        "Mani Ratnam", "Shankar", "Vetrimaaran", "Lokesh Kanagaraj", "Pa. Ranjith", "A. R. Murugadoss", "Karthik Subbaraj", "Bala", "Mysskin", "Gautham Vasudev Menon",
-        // Writers
-        "Jeyamohan", "Sujatha Rangarajan", "Kalki Krishnamurthy", "Balakumaran", "Bharathiraja", "K. Balachander", "R. Parthiban", "Crazy Mohan", "Visu", "Nanjil Nadan",
-        // Music Directors
-        "Ilaiyaraaja", "A. R. Rahman", "Yuvan Shankar Raja", "Harris Jayaraj", "Anirudh Ravichander", "D. Imman", "G. V. Prakash Kumar", "Santhosh Narayanan", "Hiphop Tamizha", "Sean Roldan"
-    ], []);
-
-    useEffect(() => {
-        const fetchAllFeaturedArtists = async () => {
-            setIsFetchingFeatured(true);
-            setErrorFetchingFeatured(false);
-            const results = [];
-            for (const name of personalities) {
-                const artistData = await fetchArtistDetailsAndContent(name);
-                if (artistData && artistData.artist) {
-                    results.push(artistData.artist);
-                }
-                // Limit to a reasonable number of featured artists for the Discover page
-                if (results.length >= 10) break; 
-            }
-            setFeaturedArtists(results);
-            setIsFetchingFeatured(false);
-            if (results.length === 0 && personalities.length > 0) {
-                setErrorFetchingFeatured(true);
-            }
-        };
-
-        fetchAllFeaturedArtists();
-    }, [personalities]);
-
+    // Removed state and effects for featured artists as they are moved to ArtistsList.jsx
 
     useEffect(() => {   
         document.getElementById('site_title').innerText = 'Isai - Web Player: Rhythm for everyone.'
@@ -78,23 +39,7 @@ const Discover = () => {
 
     return (
         <div className="flex flex-col p-4 gap-10 lg:gap-6">
-            {/* NEW: Featured Music Personalities Section */}
-            <section>
-                <h3 className="font-bold text-xl text-gray-200 mb-4">Featured Music Personalities</h3>
-                {isFetchingFeatured ? (
-                    <ArtistLoading num={5} />
-                ) : errorFetchingFeatured ? (
-                    <Error title="Could not load featured personalities." />
-                ) : featuredArtists.length > 0 ? (
-                    <div className='grid grid-cols-2 lg:grid-cols-5 md:grid-cols-3 lg:gap-6 md:gap-4 gap-2'>
-                        {featuredArtists.map((artist, i) => (
-                            <ArtistCard key={artist.id} artist={artist} i={i} />
-                        ))}
-                    </div>
-                ) : (
-                    <Error title="No featured music personalities found." />
-                )}
-            </section>
+            {/* Removed Featured Music Personalities Section */}
 
             {/* Existing sections */}
             {userPlaylists.length > 0 && (
