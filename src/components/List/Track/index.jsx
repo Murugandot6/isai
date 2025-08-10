@@ -26,7 +26,12 @@ const Track = ({ i, tracks, song, activeSong, handleTrack, songsToBeDeleted, isP
           {
             edit ?
               <span className="flex relative items-center justify-center">
-                <input type="checkbox" className="peer opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer" checked={songsToBeDeleted.includes(song.id)} />
+                <input 
+                  type="checkbox" 
+                  className="peer opacity-0 absolute top-0 left-0 w-full h-full cursor-pointer" 
+                  checked={songsToBeDeleted.includes(song.id)} 
+                  onChange={handleClick} // Added onChange handler
+                />
                 <span className="block w-[15px] h-[15px] border-[5px] border-gray-200/50 aspect-square rounded-full peer-hover:border-gray-200 peer-checked:bg-gray-200 peer-checked:border-transparent"></span>
               </span>:                        
             <Options 

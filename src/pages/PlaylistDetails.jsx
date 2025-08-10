@@ -20,7 +20,7 @@ const PlaylistDetails = () => {
   const [songsToBeDeleted, setSongsToBeDeleted] = useState([]);
   const [editData, setEditData] = useState({ ...playlist, name: '' });
   
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useSearchParams(); // Destructure params here
 
   const navigate = useNavigate();
 
@@ -73,8 +73,8 @@ const PlaylistDetails = () => {
         handleEdit={handleEdit} 
         handleChange={handleChange}
         handleDelete={handleDelete} 
-        setParams={setParams} 
-        params={params} 
+        setParams={setParams} // Pass setParams function
+        params={params} // Pass params object
       />
       
       <Tracks 

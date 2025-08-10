@@ -5,13 +5,13 @@ import { Loader, Error } from '../../LoadersAndError';
 import { searchSongByTitleAndArtist } from '../../../utils/fetchData';
 import { displayMessage } from '../../../utils/prompt';
 
-const EditPlaylistDetails = ({ editData, playlist, handleChange, songsToBeDeleted, handleEdit, setParams, handleDelete }) => {
+const EditPlaylistDetails = ({ editData, playlist, handleChange, songsToBeDeleted, handleEdit, setParams, params, handleDelete }) => { // Receive params here
   const [isLoading, setIsLoading] = useState(false);
   const [importError, setImportError] = useState(null);
   const [processedSongsCount, setProcessedSongsCount] = useState(0);
   const [totalSongsToProcess, setTotalSongsToProcess] = useState(0);
 
-  const isImportMode = setParams.get('import') === 'true';
+  const isImportMode = params.get('import') === 'true'; // Use params.get here
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];

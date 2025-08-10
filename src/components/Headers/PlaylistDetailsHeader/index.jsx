@@ -11,7 +11,7 @@ const PlaylistDetailsHeader = ({ playlist, songsToBeDeleted, editData, handleEdi
     const colorThief = new ColorThief();
     const colors = colorThief.getPalette(imgRef.current).slice(0, 3);
     if (colors.length < 3) return;
-    setColors(colors.map( ([r,g,b], i) => `rgba(${r}, ${g}, ${b}, ${i === 0 ? '0.7' : '1'})`))
+    setColors( colors.map( ([r,g,b], i) => `rgba(${r}, ${g}, ${b}, ${i === 0 ? '0.7' : '1'})`))
   }
 
   return (
@@ -39,14 +39,15 @@ const PlaylistDetailsHeader = ({ playlist, songsToBeDeleted, editData, handleEdi
           />}
       </div>
       {
-        params.get('edit') === 'true' ?
+        params.get('edit') === 'true' ? // Use params.get here
         <EditPlaylistDetails  
           editData={editData} 
           playlist={playlist} 
           handleChange={handleChange} 
           songsToBeDeleted={songsToBeDeleted} 
           handleEdit={handleEdit} 
-          setParams={setParams} 
+          setParams={setParams} // Pass setParams function
+          params={params} // Pass params object
           handleDelete={handleDelete}
         /> :
           <NormalPlaylistDetails primary={text1} secondary={text2} playlist={playlist} />
