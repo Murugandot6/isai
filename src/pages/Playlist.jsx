@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import CreatePlaylist from '../components/CreatePlaylist';
 import ImportPlaylist from '../components/CreatePlaylist/ImportPlaylist';
-import PlaylistsFront from '../components/PlaylistsFront'
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
@@ -21,13 +20,21 @@ const Playlist = () => {
   const isImportPage = useMemo(() => params.get('import') === 'true', [params]);
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
+  // Automatically set 'add=true' if no specific action is requested
+  useEffect(() => {
+    if (!isInAddPage && !isImportPage) {
+      setParams({ add: 'true' });
+    }
+  }, [isInAddPage, isImportPage, setParams]);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       const { playlistInfo } = newPlaylist;
       await createNewPlaylist(playlistInfo);
       setNewPlaylist({ type: 'RESET' });
-      navigate('/playlists');
+      navigate('/editors-pick'); // Redirect to editors-pick after creation
     } catch (error) {
       setErrorSavingPlaylist(true);
     }
@@ -71,7 +78,7 @@ const Playlist = () => {
           errorSavingPlaylist={errorSavingPlaylist}
           isImportPage={isImportPage}
         />
-      ) : isInAddPage ? (
+      ) : ( // This now covers both isInAddPage and the default case
         <CreatePlaylist
           handleSubmit={handleSubmit}
           isInAddPage={isInAddPage}
@@ -85,8 +92,6 @@ const Playlist = () => {
           suggestedSongs={newPlaylist.suggestedSongs}
           errorSavingPlaylist={errorSavingPlaylist}
         />
-      ) : (
-        <PlaylistsFront />
       )}
     </div>
   )
