@@ -4,10 +4,12 @@ import PlayPause from "./PlayPause";
 import { pause } from "../../utils/player";
 import { fetchSongs } from "../../utils/fetchData";
 import { albumImage as defaultAlbumImage } from '../../assets/images'; // Import a default album image
+import { useState } from 'react'; // Import useState
 
 
 const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => {
     const navigate = useNavigate()
+    const [imageError, setImageError] = useState(false); // New state to track image loading errors
 
     const handleClick = (e) => {
         if (e.target.getAttribute('class').includes('play_pause')) return;
@@ -16,6 +18,9 @@ const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => 
     function playSongs() {
         fetchSongs(album)
     }
+
+    // Determine the image source: original if no error, otherwise default
+    const imageUrl = imageError || !album?.image || album.image === '' ? defaultAlbumImage : album.image;
 
     return (
         <div 
@@ -27,7 +32,8 @@ const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => 
                 <img
                     className="transition-transform w-full aspect-square rounded-lg"
                     alt={album?.name || "Album cover"}
-                    src={album?.image && album.image !== '' ? album.image : defaultAlbumImage} // Explicitly check for non-empty string
+                    src={imageUrl} // Use the determined imageUrl
+                    onError={() => setImageError(true)} // Set error state on image load failure
                 />
                 <div className={`group-hover:opacity-100 group-hover:pointer-events-auto opacity-0 transition-opacity pointer-events-none hidden lg:flex absolute top-0 left-0 w-full h-full bg-black/50 items-end justify-end p-2`}>
                     <span className="group-hover:translate-y-0 group-hover:opacity-100 translate-y-[-30%] opacity-0 transition-[opacity,transform] duration-300">
