@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { useSelector } from "react-redux";
 import { Suggestion, Songs, Playlists, RadioStationList, Artists } from "../components/List";
-import { getData, getSingleData } from "../utils/getData";
-import { useSearchSongsQuery } from '../redux/services/saavnApi';
-import { useSearchStationsQuery } from '../redux/services/radioBrowserApi';
+import { getData, getSingleData } from "../utils/fetchData";
+import { useSearchSongsQuery } from "../redux/services/saavnApi";
+import { useSearchStationsQuery } from "../redux/services/radioBrowserApi";
 import { fetchArtistDetailsAndContent } from '../utils/fetchData';
 import { ArtistLoading, Error } from '../components/LoadersAndError';
 import { ArtistCard } from '../components/Cards';
