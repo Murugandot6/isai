@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 // Removed direct import of editorsPickPlaylists from data/editorsPickPlaylists
 import ImportForm from '../components/CreatePlaylist/ImportForm';
 import { playlistDispatch, playlistState, createNewPlaylist } from '../utils/library';
-import { importAllPlaylistsFromCsv } from '../utils/bulkPlaylistImport';
+// Removed importAllPlaylistsFromCsv
 import { Loader, Error } from '../components/LoadersAndError';
 
 const EditorsPick = () => {
@@ -18,8 +18,7 @@ const EditorsPick = () => {
   // Get editorsPick playlists from Redux state
   const editorsPickPlaylists = useSelector(state => state.library.editorsPick);
 
-  const [isBulkImporting, setIsBulkImporting] = useState(false);
-  const [bulkImportReport, setBulkImportReport] = useState(null);
+  // Removed isBulkImporting and bulkImportReport state
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,14 +39,7 @@ const EditorsPick = () => {
     setErrorSavingPlaylist(false);
   };
 
-  const handleBulkImport = async () => {
-    setIsBulkImporting(true);
-    setBulkImportReport(null);
-    const report = await importAllPlaylistsFromCsv();
-    setBulkImportReport(report);
-    setIsBulkImporting(false);
-    // No redirection needed here, as the playlists will now appear on this page
-  };
+  // Removed handleBulkImport function
 
   useEffect(() => {
     document.getElementById('site_title').innerText = 'Isai - Editors Pick';
@@ -58,42 +50,17 @@ const EditorsPick = () => {
       <div className="min-w-full">
         <div className="w-full flex justify-between items-center mb-4">
           <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3>
-          {/* Removed import buttons */}
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setShowImportForm(prev => !prev)}
+              className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200"
+            >
+              {showImportForm ? 'Hide Import Form' : 'Import Single CSV'}
+            </button>
+          </div>
         </div>
         
-        {isBulkImporting && (
-          <div className="mb-8">
-            <Loader title="Importing playlists from CSVs..." />
-          </div>
-        )}
-
-        {bulkImportReport && (
-          <div className="mb-8 p-4 bg-white/10 rounded-lg text-white">
-            <h4 className="font-bold text-lg mb-2">Import Summary:</h4>
-            <p>Attempted to import {bulkImportReport.totalPlaylistsAttempted} playlists.</p>
-            <p>{bulkImportReport.playlistsCreated} playlists created successfully.</p>
-            {bulkImportReport.failedImports.length > 0 && (
-              <div className="mt-2">
-                <p className="font-semibold text-red-300">Failed Imports:</p>
-                <ul className="list-disc list-inside text-sm">
-                  {bulkImportReport.failedImports.map((item, index) => (
-                    <li key={index}>{item.name}: {item.reason}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {bulkImportReport.successfulImports.length > 0 && (
-              <div className="mt-2">
-                <p className="font-semibold text-green-300">Successful Imports:</p>
-                <ul className="list-disc list-inside text-sm">
-                  {bulkImportReport.successfulImports.map((item, index) => (
-                    <li key={index}>{item.name} ({item.songs} songs)</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Removed isBulkImporting and bulkImportReport display */}
 
         {showImportForm && (
           <div className="mb-8">
