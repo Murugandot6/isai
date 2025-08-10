@@ -42,7 +42,12 @@ export const fetchSuggestedSongs = ({ id, suggestedSongsIds }) => new Promise(
 
 export const searchSongByTitleAndArtist = async (title, artist) => {
     try {
-        const query = `${title} ${artist}`;
+        // Simplify the query to just title and primary artist, remove problematic characters
+        const cleanedTitle = title.replace(/[^a-zA-Z0-9\s]/g, '');
+        // Take only the first artist from the comma-separated list and clean it
+        const cleanedArtist = artist.split(',')[0].replace(/[^a-zA-Z0-9\s]/g, ''); 
+        const query = `${cleanedTitle} ${cleanedArtist}`;
+        
         const { data: searchResults } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate(query));
 
         if (searchResults?.data?.results?.length > 0) {
@@ -65,6 +70,7 @@ export const searchSongByTitleAndArtist = async (title, artist) => {
         return null;
     } catch (error) {
         console.error("Error searching song by title and artist:", error);
-        throw error;
+        // Do not re-throw, just return null or handle gracefully
+        return null;
     }
 };

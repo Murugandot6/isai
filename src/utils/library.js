@@ -86,7 +86,12 @@ const dispatchActions = {
   }),
   addsong: ({ state, action }) => ({
     ...state,
-    playlistInfo: { ...state.playlistInfo, tracks: [...state.playlistInfo.tracks, action.payload] }
+    playlistInfo: { 
+      ...state.playlistInfo, 
+      tracks: Array.isArray(action.payload) 
+        ? [...state.playlistInfo.tracks, ...action.payload] 
+        : [...state.playlistInfo.tracks, action.payload] 
+    }
   }),
   removesong: ({ state, action }) => ({
     ...state,
