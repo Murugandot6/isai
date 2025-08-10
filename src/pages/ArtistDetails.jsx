@@ -1,87 +1,105 @@
-import { useEffect, useMemo, useContext } from 'react';
+import React, { useMemo, useContext, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
-import { Songs, Albums } from '../components/List';
-import { useGetArtistDetailsQuery } from '../redux/services/saavnApi';
-import { getSingleData, getData } from '../utils/getData';
 import { DetailsContext } from '../components/Details';
-import { Loader, Error } from '../components/LoadersAndError';
-import { SongBar } from '../components/Cards';
+import { Error, Loader, SongBar, Albums } from '../components/List'; 
+import { setActiveSong, playPause } from '../redux/features/playerSlice';
+import { useGetArtistDetailsQuery } from '../redux/services/saavnApi';
 
 const ArtistDetails = () => {
-  const { data: contextData, updateData, colors, ...others } = useContext(DetailsContext);
   const { id: artistId } = useParams();
-  const library = useSelector((state) => state.library);
+  const dispatch = useDispatch();
+  const { activeSong, isPlaying } = useSelector((state) => state.player);
+  const { updateData, colors, ...others } = useContext(DetailsContext);
 
+  // 1. Make the single, correct API call for all artist details.
   const { data: artistDetailsResult, isFetching, error } = useGetArtistDetailsQuery({ id: artistId });
-  
   const artistData = useMemo(() => artistDetailsResult?.data, [artistDetailsResult]);
 
-  const topSongs = useMemo(() => {
-    const rawSongs = artistData?.topSongs || [];
-    return getData({ type: 'tracks', data: rawSongs, library });
-  }, [artistData, library]);
+  // 2. Safely process the API response to create a clean song list.
+  const topSongs = React.useMemo(() => {
+    const rawSongs = artistData?.topSongs;
+    if (!Array.isArray(rawSongs)) return [];
 
-  const albums = useMemo(() => {
-    const albumsData = artistData?.topAlbums || [];
-    return getData({ type: 'albums', data: albumsData, library });
-  }, [artistData, library]);
+    // Safely get the highest quality URL from an array.
+    const getBestUrl = (arr, format = '.jpg') => {
+      if (!Array.isArray(arr) || arr.length === 0) return '';
+      const link = arr[arr.length - 1]?.link || '';
+      return link;
+    };
+    
+    // Map over the songs from the API to create simple, clean objects.
+    return rawSongs.map(song => ({
+      id: song.id,
+      title: song.name,
+      subtitle: song.primaryArtists,
+      image: getBestUrl(song.image, '.jpg'),
+      streamUrl: getBestUrl(song.downloadUrl, '.mp4'), // This creates the crucial URL for the player
+      downloadUrl: song.downloadUrl, // Keep for other features
+      album: song.album,
+      artist: { name: song.primaryArtists },
+      primaryArtists: song.primaryArtists,
+      name: song.name,
+      duration: song.duration,
+      explicitContent: song.explicitContent,
+    }));
+  }, [artistDetailsResult]);
 
-  // This effect updates the shared header
+  const albums = React.useMemo(() => {
+    const rawAlbums = artistData?.topAlbums;
+    if (!Array.isArray(rawAlbums)) return [];
+    return rawAlbums;
+  }, [artistDetailsResult]);
+
   useEffect(() => {
     if (artistData) {
-      const refinedArtist = getSingleData(artistData, 'artists');
       updateData({ 
         ...others, 
         colors, 
         isFetching, 
         error, 
-        data: { ...refinedArtist, artist: refinedArtist, tracks: topSongs } 
+        data: { ...artistData, artist: artistData, tracks: topSongs } 
       });
     }
   }, [artistData, isFetching, error, topSongs]);
 
-  // This effect resets the header on navigation
-  useEffect(() => {
-    updateData({ isFetching: true, error: false, data: {}, colors: [] });
-  }, [artistId]);
+  const handlePauseClick = () => {
+    dispatch(playPause(false));
+  };
 
-  // This effect updates the page title
-  useEffect(() => {
-    const text = `Isai Artist - ${isFetching ? 'Loading...' : error ? 'Uh oh!' : artistData?.name}`;
-    document.getElementById('site_title').innerText = text;
-  }, [artistData, isFetching, error]);
+  const handlePlayClick = (song, i) => {
+    // Dispatch the clean song object. It is guaranteed to have a `streamUrl`.
+    dispatch(setActiveSong({ song, tracks: topSongs, i }));
+    dispatch(playPause(true));
+  };
 
-  if (isFetching && !contextData.name) {
-    return <Loader title="Loading artist details..." />;
-  }
+  if (isFetching) return <Loader title="Loading artist details..." />;
+  if (error) return <Error title="Could not load artist details." />;
 
-  if (error && !isFetching) {
-    return <Error title="Could not load artist details." />;
-  }
-  
   return (
-    <div className="min-h-[100vh] p-2 md:p-4 flex flex-col gap-8">
-      <section>
-        <div className="mb-10">
-          <h2 className="text-white text-3xl font-bold">Top Songs:</h2>
-          <div className="mt-3 flex flex-col gap-1">
-            {topSongs.length > 0 ? (
-              topSongs.map((song, i) => (
-                <SongBar
-                  key={song.id}
-                  song={song}
-                  i={i}
-                  tracks={topSongs}
-                />
-              ))
-            ) : (
-              <p className="text-gray-400 mt-2">No top songs found for this artist.</p>
-            )}
-          </div>
+    <div className="flex flex-col p-2 md:p-4 gap-8">
+      <div className="mb-10">
+        <h2 className="text-white text-3xl font-bold">Top Songs:</h2>
+        <div className="mt-3 flex flex-col gap-1">
+          {topSongs.length > 0 ? (
+            topSongs.map((song, i) => (
+              <SongBar
+                key={`${song.id}-${i}`}
+                song={song}
+                i={i}
+                tracks={topSongs}
+                isPlaying={isPlaying}
+                activeSong={activeSong}
+                handlePauseClick={handlePauseClick}
+                handlePlayClick={() => handlePlayClick(song, i)}
+              />
+            ))
+          ) : (
+            <p className="text-gray-400 mt-2">No top songs found for this artist.</p>
+          )}
         </div>
-      </section>
+      </div>
       <section>
         <Albums
           full={true}

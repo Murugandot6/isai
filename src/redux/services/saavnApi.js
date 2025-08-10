@@ -13,7 +13,7 @@ export const saavnApi = createApi({
             query: (id) => `/songs?id=${id}`,
         }),
         getLyricsBySongId: builder.query({
-            query: (id) => `/lyrics?id=${id}`,
+            query: (id) => `/lyrics/${id}`, // Corrected endpoint
         }),
         getArtistDetails: builder.query({
             query: ({ id }) => `/artists?id=${id}`,
