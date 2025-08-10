@@ -51,27 +51,16 @@ export const getSingleData = ({ type, data, library = { blacklist: {}, favorites
 
         newItem.image = data.image?.[data.image.length - 1]?.link || '';
         
-        // Refined logic for streamUrl: prioritize highest quality MP3, MP4, or M4A
+        // More robust logic for streamUrl
         let selectedStreamUrl = '';
         if (data.downloadUrl && Array.isArray(data.downloadUrl) && data.downloadUrl.length > 0) {
-            let bestMediaLink = null;
-            let highestQuality = -1;
-
-            for (const dl of data.downloadUrl) {
-                if (dl.link && (dl.link.endsWith('.mp3') || dl.link.endsWith('.mp4') || dl.link.endsWith('.m4a'))) {
-                    const quality = parseInt(dl.quality);
-                    if (quality > highestQuality) {
-                        highestQuality = quality;
-                        bestMediaLink = dl.link;
-                    }
+            // Find the highest quality link by iterating backwards
+            for (let i = data.downloadUrl.length - 1; i >= 0; i--) {
+                const link = data.downloadUrl[i]?.link;
+                if (link && (link.endsWith('.mp4') || link.endsWith('.m4a') || link.endsWith('.mp3'))) {
+                    selectedStreamUrl = link;
+                    break; // Found the best available, so stop
                 }
-            }
-
-            if (bestMediaLink) {
-                selectedStreamUrl = bestMediaLink;
-            } else {
-                // Fallback to the last link if no supported format found
-                selectedStreamUrl = data.downloadUrl[data.downloadUrl.length - 1].link || '';
             }
         }
         newItem.streamUrl = selectedStreamUrl;
