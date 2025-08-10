@@ -83,7 +83,7 @@ const Radio = () => {
             ) : errorStations ? (
                 <Error title="Could not load radio stations. Please try again." />
             ) : stations.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
                     {stations.map(station => (
                         <RadioStationCard key={station.stationuuid} station={station} />
                     ))}
