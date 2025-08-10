@@ -1,11 +1,17 @@
 import { Link } from "react-router-dom"
 import { Options } from "../Options"
+import { albumImage as defaultAlbumImage } from '../../assets/images'; // Using albumImage as a generic placeholder for playlists
 
 const PlaylistCard = ({ i, playlist }) => {
   return (
     <div style={{ animationDelay: i / 20 + 's', animationFillMode: 'forwards' }} className="animate-slideleft opacity-0 p-3 rounded-[15px] bg-white/5 hover:bg-white/10 flex flex-col gap-3">
       <Link to={`/playlists/${playlist.id}`}>
-        <img crossOrigin="anonymous" src={playlist?.tracks[0]?.image} alt="" className="h-[150px] rounded-[10px] w-full bg-white/5 object-cover" /> {/* Use normalized image URL */}
+        <img 
+          crossOrigin="anonymous" 
+          src={playlist?.tracks[0]?.image && playlist.tracks[0].image !== '' ? playlist.tracks[0].image : defaultAlbumImage} // Use normalized image URL or default
+          alt={playlist.name} 
+          className="h-[150px] rounded-[10px] w-full bg-white/5 object-cover" 
+        />
       </Link>
       <div className="flex justify-between items-center gap-4">
         <Link to={`/playlists/${playlist.id}`} className="flex flex-col">

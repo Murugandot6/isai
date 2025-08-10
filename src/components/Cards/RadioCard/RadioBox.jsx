@@ -7,6 +7,7 @@ import { Songs } from '../../List'
 import { useSelector } from 'react-redux'
 import { useEffect, useState } from 'react'
 import { getData } from '../../../utils/fetchData'
+import { radioImage as defaultRadioImage } from '../../../assets/images'; // Import default radio image
 
 const RadioBox = ({ radio, show, handleClick }) => {
     const library = useSelector(state => state.library);
@@ -26,8 +27,16 @@ const RadioBox = ({ radio, show, handleClick }) => {
                 <MdClose size={25} />
             </button>
             <div className="flex relative items-end justify-start gap-4 flex-wrap">
-                <img src={radio.image} alt="" className="z-[0] absolute top-[-100px] left-[-100px] w-[50%] max-w-[360px] aspect-square blur-[70px] opacity-20" />
-                <img className={`shadow-lg shadow-black/50 rounded-[10px] ${show && 'w-[150px] aspect-square'}`} src={radio.image} alt="" />
+                <img 
+                  src={radio.image && radio.image !== '' ? radio.image : defaultRadioImage} // Use normalized image URL or default
+                  alt={radio.name} 
+                  className="z-[0] absolute top-[-100px] left-[-100px] w-[50%] max-w-[360px] aspect-square blur-[70px] opacity-20" 
+                />
+                <img 
+                  className={`shadow-lg shadow-black/50 rounded-[10px] ${show && 'w-[150px] aspect-square'}`} 
+                  src={radio.image && radio.image !== '' ? radio.image : defaultRadioImage} // Use normalized image URL or default
+                  alt={radio.name} 
+                />
                 <p className="relative flex flex-col">
                     <span className="text-gray-400 text-sm font-bold">{radio.type}</span>
                     <span className="text-white uppercase text-xl font-bold truncate">{radio.name}</span>

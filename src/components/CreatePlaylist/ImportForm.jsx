@@ -6,6 +6,7 @@ import { Loader, Error } from '../LoadersAndError';
 import { searchSongByTitleAndArtist } from '../../utils/fetchData'; // Corrected import path
 import { displayMessage } from '../../utils/prompt'; // Corrected import path
 import { MdPlaylistAdd } from 'react-icons/md';
+import { albumImage as defaultAlbumImage } from '../../assets/images'; // Using albumImage as a generic placeholder
 
 const ImportForm = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPlaylist }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +73,7 @@ const ImportForm = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPla
           {
             playlistInfo.tracks.length > 0 ?
               <img
-                src={playlistInfo.tracks[playlistInfo.tracks.length - 1].image} // Use normalized image URL
+                src={playlistInfo.tracks[playlistInfo.tracks.length - 1].image && playlistInfo.tracks[playlistInfo.tracks.length - 1].image !== '' ? playlistInfo.tracks[playlistInfo.tracks.length - 1].image : defaultAlbumImage} // Use normalized image URL or default
                 className="h-full w-full block rounded-[10px]"
                 alt="Playlist cover"
               /> :
@@ -127,7 +128,7 @@ const ImportForm = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPla
             {
               playlistInfo.tracks.map((song, i) =>
                 <li key={i} className="relative flex flex-row gap-2 items-center p-2 border-b border-white/5 last:border-transparent">
-                  <img src={song.image} className="min-w-[50px] aspect-square rounded-md bg-white/50" alt={song.name} /> {/* Use normalized image URL */}
+                  <img src={song.image && song.image !== '' ? song.image : defaultAlbumImage} className="min-w-[50px] aspect-square rounded-md bg-white/50" alt={song.name} /> {/* Use normalized image URL or default */}
                   <div className="flex flex-col">
                     <p className="text-white text-sm truncate">{song.name}</p>
                     <p className="text-gray-400 text-xs">{song.primaryArtists}</p>

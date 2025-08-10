@@ -1,4 +1,5 @@
 import React from 'react'
+import { songImage as defaultSongImage } from '../../assets/images'; // Import default song image
 
 const Recommended = ({ suggestedSongs, setNewPlaylist, tracks }) => {
   return (
@@ -12,7 +13,7 @@ const Recommended = ({ suggestedSongs, setNewPlaylist, tracks }) => {
             onClick={() => setNewPlaylist({payload: track, type: tracks.map(elem => elem.id).includes(track.id) ? 'REMOVESONG' : 'ADDSONG'})} 
             className={`flex flex-row gap-2 items-center p-2 hover:bg-white/5 hover:border-transparent border-b border-white/5 last:border-transparent ${tracks.map(elem => elem.id).includes(track.id) && 'bg-white/10 border-transparent'}`}
           >
-              <img src={track.image} className="min-w-[50px] aspect-square rounded-md" /> {/* Use normalized image URL */}
+              <img src={track.image && track.image !== '' ? track.image : defaultSongImage} className="min-w-[50px] aspect-square rounded-md" alt={track.name} /> {/* Use normalized image URL or default */}
               <div className="flex flex-col">
                 <p className="text-white text-sm truncate max-w-[350px]">{track.name}</p> {/* Use track.name */}
                 <p className="text-gray-400 text-xs">{track.primaryArtists}</p> {/* Use track.primaryArtists */}

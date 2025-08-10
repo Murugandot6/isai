@@ -6,6 +6,7 @@ import { Options } from "../../Options"
 import { useMemo } from "react"
 import { useSelector } from "react-redux"
 import { getSingleData } from "../../../utils/fetchData"
+import { songImage as defaultSongImage } from '../../../assets/images'; // Import default song image
 
 const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime, imgRef, handleLoad }) => {
   const library = useSelector(state => state.library);
@@ -27,7 +28,7 @@ const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime,
 
   const imageUrl = useMemo(() => {
     if (!song?.image) return '';
-    return song.image;
+    return song.image && song.image !== '' ? song.image : defaultSongImage; // Use normalized image URL or default
   }, [song]);
 
   return (

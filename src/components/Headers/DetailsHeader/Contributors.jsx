@@ -17,8 +17,8 @@ const Contributors = ({ contributors, text }) => {
       <Link key={i} to={`/artists/${contributor.id}`}>
         <div className="flex flex-row items-center ml-[-20px] opacity-80">
           <img 
-            src={ contributor.image || defaultArtistImage } // Use normalized image URL or default
-            alt="artist" 
+            src={ contributor.image && contributor.image !== '' ? contributor.image : defaultArtistImage } // Use normalized image URL or default
+            alt={contributor.name} 
             className={`relative shadow-md shadow-black/20 bottom-0 left-5 rounded-full h-full max-h-[30px] w-auto block`}
           />
           <p style={{ color: text }} className="relative text-base font-bold text-gray-200 ml-6">{contributor.name}</p>

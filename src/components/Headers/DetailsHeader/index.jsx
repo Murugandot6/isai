@@ -7,6 +7,7 @@ import { HeaderLoading, Error } from '../../LoadersAndError'
 import { useContext, useEffect, useRef, useState } from 'react'
 import ColorThief from 'colorthief'
 import { DetailsContext } from '../../Details'
+import { albumImage as defaultAlbumImage } from '../../../assets/images'; // Using albumImage as a generic placeholder
 
 const DetailsHeader = () => {
   const { data, isFetching, error, updateData, ...others } = useContext(DetailsContext)
@@ -35,8 +36,9 @@ const DetailsHeader = () => {
       className="transition-[box-shadow] text-gray-400 relative md:h-[60vh] w-full aspect-square md:aspect-auto flex flex-col justify-end mt-[-70px] lg:mt-[-90px] overflow-clip lg:rounded-t-[15px]"
     >
       {
-        url &&
-        <img crossOrigin='anonymous' ref={imageRef} onLoad={onLoad} src={url} alt="" className="absolute top-0 left-0 w-full h-full object-cover" />
+        url && url !== '' ? // Explicitly check for non-empty string
+        <img crossOrigin='anonymous' ref={imageRef} onLoad={onLoad} src={url} alt="" className="absolute top-0 left-0 w-full h-full object-cover" /> :
+        <img crossOrigin='anonymous' ref={imageRef} onLoad={onLoad} src={defaultAlbumImage} alt="Default cover" className="absolute top-0 left-0 w-full h-full object-cover" />
       }
       {
         bg &&

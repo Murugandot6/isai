@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import ColorThief from "colorthief";
 import { useRef, useState } from "react";
+import { albumImage as defaultAlbumImage } from '../../assets/images'; // Using albumImage as a generic placeholder for genres
 
 const GenreCard = ({ genre, i }) => {
   const imageRef = useRef(null);
@@ -25,7 +26,14 @@ const GenreCard = ({ genre, i }) => {
         <p className="text-white font-semibold text-base uppercase text-left lg:text-right drop-shadow drop-shadow-black/50">{genre.name}</p>
       </div>
       <div className="relative flex-1">
-        <img crossOrigin="anonymous" ref={imageRef} onLoad={onLoad}  src={genre.image?.[2]?.link || genre.image?.[1]?.link || genre.image?.[0]?.link} alt={genre.name} className="rounded-xl absolute h-[120%] min-h-[60px] aspect-square bottom-[-10px] right-[-10%] rotate-[20deg] shadow-2xl shadow-black/50 bg-black/50 transition-transform group-hover:rotate-[15deg] group-hover:scale-[1.05]" /> {/* Use highest quality available */}
+        <img 
+          crossOrigin="anonymous" 
+          ref={imageRef} 
+          onLoad={onLoad}  
+          src={genre.image && genre.image !== '' ? genre.image : defaultAlbumImage} // Use normalized image URL or default
+          alt={genre.name} 
+          className="rounded-xl absolute h-[120%] min-h-[60px] aspect-square bottom-[-10px] right-[-10%] rotate-[20deg] shadow-2xl shadow-black/50 bg-black/50 transition-transform group-hover:rotate-[15deg] group-hover:scale-[1.05]" 
+        />
       </div>
     </Link>
   )

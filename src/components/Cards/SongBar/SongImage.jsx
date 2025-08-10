@@ -3,7 +3,7 @@ import { songImage as defaultSongImage } from "../../../assets/images";
 
 const SongImage = ({ song, activeSong, isPlaying, handlePlayClick, handlePauseClick }) => {
   // song.image is already normalized to a string URL by getSingleData
-  const imageUrl = song?.image || defaultSongImage;
+  const imageUrl = song?.image && song.image !== '' ? song.image : defaultSongImage;
 
   return (
     <div className="h-[50px] aspect-square relative rounded-[8px] overflow-hidden flex justify-center ml-2 items-center">

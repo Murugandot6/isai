@@ -1,16 +1,18 @@
 import { MdPlaylistAdd } from "react-icons/md"
+import { albumImage as defaultAlbumImage } from '../../assets/images'; // Using albumImage as a generic placeholder
 
 const Details = ({ playlistInfo, handleChange, errorSavingPlaylist }) => {
   return (
     <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
       <div className="aspect-square rounded-[10px] w-[150px] bg-white/5">
         {
-          playlistInfo.tracks.length > 0 &&
+          playlistInfo.tracks.length > 0 ?
           <img 
-            src={playlistInfo.tracks[playlistInfo.tracks.length - 1].image} // Use normalized image URL
+            src={playlistInfo.tracks[playlistInfo.tracks.length - 1].image && playlistInfo.tracks[playlistInfo.tracks.length - 1].image !== '' ? playlistInfo.tracks[playlistInfo.tracks.length - 1].image : defaultAlbumImage} // Use normalized image URL or default
             className="h-full w-full block rounded-[10px]" 
-            alt="" 
-          />
+            alt="Playlist cover" 
+          /> :
+          <span className="text-gray-400 text-sm">No songs yet</span>
         }
       </div>
       <div className="flex-1 flex flex-row flex-wrap gap-4 justify-between items-end">
