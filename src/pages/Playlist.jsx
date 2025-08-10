@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
 
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'; // Import Link
 
 import CreatePlaylist from '../components/CreatePlaylist';
 import ImportPlaylist from '../components/CreatePlaylist/ImportPlaylist';
+import { Playlists } from '../components/List'; // Import Playlists component
+import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import dummy playlists
 
 import { fetchSuggestedSongs } from '../utils/fetchData'
 import { createNewPlaylist, playlistDispatch, playlistState } from '../utils/library'
@@ -20,13 +22,7 @@ const Playlist = () => {
   const isImportPage = useMemo(() => params.get('import') === 'true', [params]);
   const [errorSavingPlaylist, setErrorSavingPlaylist] = useState(false);
 
-  // Automatically set 'add=true' if no specific action is requested
-  useEffect(() => {
-    if (!isInAddPage && !isImportPage) {
-      setParams({ add: 'true' });
-    }
-  }, [isInAddPage, isImportPage, setParams]);
-
+  // Removed the useEffect that automatically set 'add=true'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -70,15 +66,7 @@ const Playlist = () => {
 
   return (
     <div className="px-2 flex md:px-4 relative overflow-hidden min-h-[90vh]">
-      {isImportPage ? (
-        <ImportPlaylist
-          handleSubmit={handleSubmit}
-          playlistInfo={newPlaylist.playlistInfo}
-          setNewPlaylist={setNewPlaylist}
-          errorSavingPlaylist={errorSavingPlaylist}
-          isImportPage={isImportPage}
-        />
-      ) : ( // This now covers both isInAddPage and the default case
+      {isInAddPage ? (
         <CreatePlaylist
           handleSubmit={handleSubmit}
           isInAddPage={isInAddPage}
@@ -92,6 +80,31 @@ const Playlist = () => {
           suggestedSongs={newPlaylist.suggestedSongs}
           errorSavingPlaylist={errorSavingPlaylist}
         />
+      ) : isImportPage ? (
+        <ImportPlaylist
+          handleSubmit={handleSubmit}
+          playlistInfo={newPlaylist.playlistInfo}
+          setNewPlaylist={setNewPlaylist}
+          errorSavingPlaylist={errorSavingPlaylist}
+          isImportPage={isImportPage}
+        />
+      ) : (
+        // Default view when no 'add' or 'import' params are present
+        <div className="min-w-full">
+          <div className="w-full flex justify-between items-center mb-4">
+            <h3 className="font-bold text-white text-xl">Editors' Pick Playlists</h3> {/* Label as Editors' Pick */}
+            <Link to="/playlists?add=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
+              Create New
+            </Link>
+          </div>
+          {editorsPickPlaylists.length > 0 ? (
+            <Playlists playlists={editorsPickPlaylists} />
+          ) : (
+            <div className="mt-[-40px] flex flex-col items-center justify-center gap-4 h-[30vh]">
+              <h3 className="text-gray-400 font-bold text-xl">No editor's pick playlists available yet.</h3>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
