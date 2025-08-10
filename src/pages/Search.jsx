@@ -1,9 +1,9 @@
 import { useSelector } from "react-redux";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Songs } from "../components/List";
-import { useEffect, useMemo } from "react"; // Added useMemo here
+import { useEffect, useMemo } from "react";
 import { useSearchSongsQuery } from "../redux/services/saavnApi";
-import { getData } from "../utils/getData";
+import { getData } from "../utils/fetchData"; // Corrected import
 
 // Simplified categories as Saavn API primarily returns songs
 const categories = ['All', 'Song']; 

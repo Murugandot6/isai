@@ -2,20 +2,19 @@ import { Options } from '../..//Options'
 import { FavoriteButton, PlayButton, ShuffleButton } from '../../Buttons'
 
 import { MdClose } from 'react-icons/md'
-import { useSearchSongsQuery } from '../../../redux/services/saavnApi' // Use Saavn API
+import { useSearchSongsQuery } from '../../../redux/services/saavnApi'
 import { Songs } from '../../List'
 import { useSelector } from 'react-redux'
 import { useEffect, useState } from 'react'
-import { getData } from '../../../utils/getData'
+import { getData } from '../../../utils/fetchData'
 
 const RadioBox = ({ radio, show, handleClick }) => {
-    const library = useSelector(state => state.library); // Get full library object
-    // Saavn API doesn't have direct radio tracks. Simulate by searching for radio name.
-    const { data: radioData, isFetching, error } = useSearchSongsQuery(radio.name); // Search by radio name
+    const library = useSelector(state => state.library);
+    const { data: radioData, isFetching, error } = useSearchSongsQuery(radio.name);
     const [radioTracks, setRadioTracks] = useState([])
 
     useEffect(() => {
-        setRadioTracks(getData({ type: 'tracks', data: radioData?.data?.results, library })); // Pass library to getData
+        setRadioTracks(getData({ type: 'tracks', data: radioData?.data?.results, library }));
     }, [library, radioData]);
 
     return (
@@ -27,11 +26,11 @@ const RadioBox = ({ radio, show, handleClick }) => {
                 <MdClose size={25} />
             </button>
             <div className="flex relative items-end justify-start gap-4 flex-wrap">
-                <img src={radio.image?.[2]?.link || radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" className="z-[0] absolute top-[-100px] left-[-100px] w-[50%] max-w-[360px] aspect-square blur-[70px] opacity-20" /> {/* Use highest quality available */}
-                <img className={`shadow-lg shadow-black/50 rounded-[10px] ${show && 'w-[150px] aspect-square'}`} src={radio.image?.[2]?.link || radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" /> {/* Use highest quality available */}
+                <img src={radio.image?.[2]?.link || radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" className="z-[0] absolute top-[-100px] left-[-100px] w-[50%] max-w-[360px] aspect-square blur-[70px] opacity-20" />
+                <img className={`shadow-lg shadow-black/50 rounded-[10px] ${show && 'w-[150px] aspect-square'}`} src={radio.image?.[2]?.link || radio.image?.[1]?.link || radio.image?.[0]?.link} alt="" />
                 <p className="relative flex flex-col">
                     <span className="text-gray-400 text-sm font-bold">{radio.type}</span>
-                    <span className="text-white uppercase text-xl font-bold truncate">{radio.name}</span> {/* Use radio.name */}
+                    <span className="text-white uppercase text-xl font-bold truncate">{radio.name}</span>
                     <span className="text-gray-200 text-sm font-semibold">{radioTracks?.length && `${radioTracks?.length} Song${radioTracks?.length === 1 ? '' : 's'}`}</span>
                 </p>
                 {

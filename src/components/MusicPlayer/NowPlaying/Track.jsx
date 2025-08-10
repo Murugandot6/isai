@@ -1,19 +1,32 @@
 import { Link } from "react-router-dom"
 
 import { BsDot } from "react-icons/bs"
-import { FavoriteButton } from "../../Buttons" // Removed DownloadButton import
+import { FavoriteButton } from "../../Buttons"
 import { Options } from "../../Options"
 import { useMemo } from "react"
 import { useSelector } from "react-redux"
-import { getSingleData } from "../../../utils/getData"
+import { getSingleData } from "../../../utils/fetchData"
 
 const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime, imgRef, handleLoad }) => {
-  const library = useSelector(state => state.library); // Get full library object
-  const song = useMemo(() => getSingleData({type: 'tracks', data: activeSong, library}), [ activeSong, library ] ) // Pass library
+  const library = useSelector(state => state.library);
+  
+  const song = useMemo(() => {
+    if (!activeSong) return {};
+    const normalized = getSingleData(activeSong, 'tracks');
+    if (!normalized) return {};
+    
+    // Manually add flags since getSingleData is pure
+    const libraryType = 'tracks';
+    normalized.favorite = library.favorites[libraryType]?.some(fav => fav.id === normalized.id);
+    normalized.blacklist = library.blacklist[libraryType]?.some(bl => bl.id === normalized.id);
+    
+    return normalized;
+  }, [activeSong, library]);
+
   const isRadio = useMemo(() => activeSong?.duration === 0, [activeSong]);
 
   const imageUrl = useMemo(() => {
-    if (!song?.image) return ''; // Use normalized image URL directly
+    if (!song?.image) return '';
     return song.image;
   }, [song]);
 
@@ -34,7 +47,6 @@ const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime,
           </div>
         </div>
         <FavoriteButton data={song} type="tracks" />
-        {/* DownloadButton removed from here */}
         <Options
           type="track"
           small={true}
@@ -43,7 +55,7 @@ const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime,
           album={song?.album}
           favorite={song?.favorite}
           blacklist={song?.blacklist}
-          i={currentSongs?.findIndex( song => song?.id === song?.id )}
+          i={currentSongs?.findIndex( s => s?.id === song?.id )}
           tracks={currentSongs}
         />
       </div>

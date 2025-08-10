@@ -7,17 +7,17 @@ import { BiTime } from 'react-icons/bi'
 import Track from './Track'
 import { Error, TracksLoading } from '../LoadersAndError'
 
-import { getData } from '../../utils/getData'
+import { getData } from '../../utils/fetchData'
 
 const AllTracks = ({ tracks, activeSong, isPlaying, isFetching, error, songsToBeDeleted, handleTrack, editDataTracks, playlist }) => {
-  const library = useSelector(state => state.library); // Get full library object
+  const library = useSelector(state => state.library);
   const { playlists } = library;
   const [params] = useSearchParams();
   const isEditing = useMemo(() => params.get('edit') === 'true', [params]);
 
   const allTracks = useMemo(() => {
     const tracksToUse = isEditing ? editDataTracks : tracks;
-    return getData({ type: 'tracks', data: tracksToUse, sortType: params.get('sort'), library }); // Pass library to getData
+    return getData({ type: 'tracks', data: tracksToUse, sortType: params.get('sort'), library });
   }, [isEditing, editDataTracks, tracks, library, params]);
 
   return (
