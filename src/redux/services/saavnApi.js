@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 export const saavnApi = createApi({
     reducerPath: "saavnApi",
     baseQuery: fetchBaseQuery({
-        baseUrl: "https://jiosaavn-api-privatecvc2.vercel.app", // Base URL from saavn-search.js
+        baseUrl: "https://saavn.dev/api", // Corrected base URL
     }),
     endpoints: (builder) => ({
         searchSongs: builder.query({
