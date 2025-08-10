@@ -50,8 +50,32 @@ export const getSingleData = ({ type, data, library = { blacklist: {}, favorites
         newItem.language = data.language;
 
         newItem.image = data.image?.[data.image.length - 1]?.link || '';
-        newItem.streamUrl = data.downloadUrl?.[data.downloadUrl.length - 1]?.link || '';
-        newItem.downloadUrl = data.downloadUrl;
+        
+        // Refined logic for streamUrl: prioritize highest quality MP3
+        let selectedStreamUrl = '';
+        if (data.downloadUrl && Array.isArray(data.downloadUrl) && data.downloadUrl.length > 0) {
+            let bestMp3Link = null;
+            let highestQuality = -1;
+
+            for (const dl of data.downloadUrl) {
+                if (dl.link && dl.link.endsWith('.mp3')) {
+                    const quality = parseInt(dl.quality);
+                    if (quality > highestQuality) {
+                        highestQuality = quality;
+                        bestMp3Link = dl.link;
+                    }
+                }
+            }
+
+            if (bestMp3Link) {
+                selectedStreamUrl = bestMp3Link;
+            } else {
+                // Fallback to the last link if no MP3 found
+                selectedStreamUrl = data.downloadUrl[data.downloadUrl.length - 1].link || '';
+            }
+        }
+        newItem.streamUrl = selectedStreamUrl;
+        newItem.downloadUrl = data.downloadUrl; // Keep original downloadUrl array
 
     } else if (type === 'albums') {
         newItem.title = data.name;
