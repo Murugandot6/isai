@@ -52,7 +52,7 @@ const Discover = () => {
             )}
 
             <RadioStationList
-                title={`Popular ${selectedLanguage} FM Stations`} {/* Dynamic title */}
+                title={`Popular ${selectedLanguage} FM Stations`}
                 stations={popularTamilStations}
                 isFetching={isFetchingTamilStations}
                 error={errorFetchingTamilStations}
@@ -63,7 +63,7 @@ const Discover = () => {
                 error={errorFetchingTamilSongs}
                 songs={tamilLatestSongs}
             >
-                {`${selectedLanguage} Latest Songs`} {/* Dynamic title */}
+                {`${selectedLanguage} Latest Songs`}
             </Songs>
 
             {/* Updated section to show favorite songs */}
