@@ -1,14 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchStationsQuery, useGetLanguagesQuery } from '../redux/services/radioBrowserApi';
+import { useSearchStationsQuery, useGetCountriesQuery, useGetLanguagesQuery } from '../redux/services/radioBrowserApi';
 import RadioStationCard from '../components/Cards/RadioStationCard';
 import { Loader, Error } from '../components/LoadersAndError';
 
 const Radio = () => {
+    const [country, setCountry] = useState('');
     const [language, setLanguage] = useState('english');
     const [searchTerm, setSearchTerm] = useState('');
     const [hideBroken, setHideBroken] = useState(true);
 
-    const { data: stationsData, isFetching: isFetchingStations, error: errorStations } = useSearchStationsQuery({ country: '', language, name: searchTerm, hidebroken: hideBroken });
+    const { data: stationsData, isFetching: isFetchingStations, error: errorStations } = useSearchStationsQuery({ country, language, name: searchTerm, hidebroken: hideBroken });
+    const { data: countriesData, isFetching: isFetchingCountries } = useGetCountriesQuery();
     const { data: languagesData, isFetching: isFetchingLanguages } = useGetLanguagesQuery();
 
     const stations = useMemo(() => stationsData || [], [stationsData]);
@@ -22,6 +24,21 @@ const Radio = () => {
             <h1 className="text-3xl font-bold text-white mb-6">Radio Stations</h1>
 
             <div className="flex flex-wrap gap-4 mb-8 items-end">
+                <div>
+                    <label htmlFor="country-filter" className="block text-sm font-medium text-gray-300 mb-1">Country</label>
+                    {isFetchingCountries ? <div className="h-10 w-32 bg-white/5 rounded-md loading-animation" /> : (
+                        <select 
+                            id="country-filter"
+                            value={country} 
+                            onChange={(e) => setCountry(e.target.value)}
+                            className="bg-white/10 text-white rounded-md p-2 h-10"
+                        >
+                            <option className="bg-black text-white" value="">All Countries</option>
+                            {countriesData?.map(c => <option className="bg-black text-white" key={c.iso_3166_1} value={c.iso_3166_1}>{c.name}</option>)}
+                        </select>
+                    )}
+                </div>
+
                 <div>
                     <label htmlFor="language-filter" className="block text-sm font-medium text-gray-300 mb-1">Language</label>
                     {isFetchingLanguages ? <div className="h-10 w-48 bg-white/5 rounded-md loading-animation" /> : (
