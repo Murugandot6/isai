@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 
 import { useSelector } from "react-redux";
-import { Suggestion, Songs } from "../components/List";
+import { Suggestion, Songs, Playlists } from "../components/List"; // Import Playlists
 import { getData } from "../utils/getData";
 import { useSearchSongsQuery } from '../redux/services/saavnApi';
+import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import editorsPickPlaylists
 
 const Discover = () => {
     const library = useSelector(state => state.library);
@@ -28,6 +29,14 @@ const Discover = () => {
 
     return (
         <div className="flex flex-col p-4 gap-10 lg:gap-6">
+            {/* Editors' Pick Playlists Section */}
+            {editorsPickPlaylists.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="font-bold text-white text-xl mb-4">Editors' Pick Playlists</h3>
+                    <Playlists playlists={editorsPickPlaylists.slice(0, 3)} /> {/* Display first 3 editor's pick playlists */}
+                </div>
+            )}
+
             <Songs
                 isFetching={isFetchingTamilSongs}
                 error={errorFetchingTamilSongs}

@@ -12,6 +12,7 @@ const initialState = {
   repeat: false,
   nowPlaying: false,
   bitrate: '3', // Default bitrate from Saavn's index.html (160kbps)
+  shuffleLanguageIndex: 0, // New state for cycling through languages
 };
 
 const playerSlice = createSlice({
@@ -126,10 +127,13 @@ const playerSlice = createSlice({
     },
     setBitrate: (state, action) => {
       state.bitrate = action.payload;
+    },
+    incrementShuffleLanguageIndex: (state) => { // New reducer
+      state.shuffleLanguageIndex = (state.shuffleLanguageIndex + 1) % 3; // Cycle through 3 languages
     }
   },
 });
 
-export const { setActiveSong, addToUpNext, nextSong, prevSong, stop, shuffleOn, shuffleOff, setRepeat, playPause, selectGenreListId, setAlbum, setNowPlaying, setPlayer, setBitrate } = playerSlice.actions;
+export const { setActiveSong, addToUpNext, nextSong, prevSong, stop, shuffleOn, shuffleOff, setRepeat, playPause, selectGenreListId, setAlbum, setNowPlaying, setPlayer, setBitrate, incrementShuffleLanguageIndex } = playerSlice.actions;
 
 export default playerSlice.reducer;

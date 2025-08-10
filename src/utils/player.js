@@ -1,7 +1,8 @@
-import { playPause, prevSong, nextSong, setActiveSong, setAlbum, stop, shuffleOn, shuffleOff, setRepeat, addToUpNext } from "../redux/features/playerSlice"
+import { playPause, prevSong, nextSong, setActiveSong, setAlbum, stop, shuffleOn, shuffleOff, setRepeat, addToUpNext, incrementShuffleLanguageIndex } from "../redux/features/playerSlice"
 import { store } from '../redux/store';
 import { displayMessage } from "./prompt"
 import { getSingleData } from "./getData"; // Import getSingleData
+import { fetchTrendingSongsByLanguage } from "./fetchData"; // Import new fetch function
 
 export function play() {
     store.dispatch(playPause(true));
@@ -25,9 +26,26 @@ export function prev (i) {
     displayMessage('Playing previous song.');
 }
 
-export function onShuffle (isSongPlaying) {
-    store.dispatch(shuffleOn(isSongPlaying));
-    displayMessage('Shuffle on.');
+export async function onShuffle (isSongPlaying) {
+    store.dispatch(shuffleOn(isSongPlaying)); // Keep existing shuffle state
+    store.dispatch(incrementShuffleLanguageIndex()); // Increment language index
+
+    const { shuffleLanguageIndex } = store.getState().player;
+    const languages = ['English', 'Tamil', 'Hindi']; // Define languages to cycle through
+    const selectedLanguage = languages[shuffleLanguageIndex];
+
+    displayMessage(`Shuffling with trending ${selectedLanguage} songs.`);
+
+    const trendingSongs = await fetchTrendingSongsByLanguage(selectedLanguage);
+
+    if (trendingSongs.length > 0) {
+        const i = Math.floor(Math.random() * trendingSongs.length);
+        const song = trendingSongs[i];
+        playSongs({ tracks: trendingSongs, song, i });
+    } else {
+        displayMessage(`Could not find trending ${selectedLanguage} songs. Please try again.`);
+        offShuffle(); // Turn off shuffle if no songs found
+    }
 }
 
 export function offShuffle () {

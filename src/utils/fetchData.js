@@ -74,3 +74,17 @@ export const searchSongByTitleAndArtist = async (title, artist) => {
         return null;
     }
 };
+
+export const fetchTrendingSongsByLanguage = async (language) => {
+    try {
+        const query = `trending ${language} songs`;
+        const { data: searchResults } = await store.dispatch(saavnApi.endpoints.searchSongs.initiate(query));
+        if (searchResults?.data?.results?.length > 0) {
+            return getData({ type: 'tracks', data: searchResults.data.results });
+        }
+        return [];
+    } catch (error) {
+        console.error(`Error fetching trending ${language} songs:`, error);
+        return [];
+    }
+};
