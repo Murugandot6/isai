@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 
 import { BsDot } from "react-icons/bs"
-import { FavoriteButton } from "../../Buttons"
+import { FavoriteButton, DownloadButton } from "../../Buttons"
 import { Options } from "../../Options"
 import { useMemo } from "react"
 import { useSelector } from "react-redux"
@@ -28,6 +28,7 @@ const Track = ({ activeSong, currentSongs, open, duration, appTime, setSeekTime,
           </div>
         </div>
         <FavoriteButton data={song} type="tracks" />
+        <DownloadButton song={song} />
         <Options
           type="track"
           small={true}
