@@ -24,12 +24,12 @@ export const getData = ({ type, data, noFilter = false, albumFilter = '', sortTy
     return newData;
 }
 
-export const getSingleData = ({ type, data, library }) => {
+export const getSingleData = ({ type, data, library = { blacklist: {}, favorites: {} } }) => {
     if (!ACCEPTABLE_DATA_TYPES.includes(type) || !data) return data;
 
-    // Use the passed library state
-    const currentBlacklist = library.blacklist;
-    const currentFavorites = library.favorites;
+    // Use the passed library state, defaulting to empty objects if not provided
+    const currentBlacklist = library.blacklist || {};
+    const currentFavorites = library.favorites || {};
     
     // Set global-like variable for the current execution context of getSingleData
     dataType = type; // Ensure dataType is set for internal use in this function

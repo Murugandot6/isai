@@ -12,7 +12,7 @@ const Songs = ({ songs, suggestion, children, isFetching, error, showmore, genre
   const library = useSelector(state => state.library);
   const [params, setParams] = useSearchParams();
 
-  const tracks = useMemo(() => getData({ type: 'tracks', data: songs, noFilter, sortType: params.get('sort') }), [library, songs, noFilter]);
+  const tracks = useMemo(() => getData({ type: 'tracks', data: songs, noFilter, sortType: params.get('sort'), library }), [library, songs, noFilter]);
 
   const background = useMemo(() =>  (full && bg) && bg.replace(')', ',0.6)'), [bg, full, songs]);
 
