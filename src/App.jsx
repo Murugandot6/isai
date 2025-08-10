@@ -24,7 +24,7 @@ import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
 
 import { recordVisitor } from './utils/db';
-import { importAllPlaylistsFromCsv } from './utils/bulkPlaylistImport';
+// import { importAllPlaylistsFromCsv } from './utils/bulkPlaylistImport'; // Commented out to prevent 404 errors
 
 const App = () => {
   const [searchParams] = useSearchParams();
@@ -49,7 +49,7 @@ const App = () => {
       }));
     }
 
-    importAllPlaylistsFromCsv();
+    // importAllPlaylistsFromCsv(); // Commented out: Please ensure CSV files are in the public directory if you enable this.
   }, []);
 
   return (

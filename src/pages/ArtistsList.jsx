@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { ArtistCard } from '../components/Cards';
 import { Error, ArtistLoading } from '../components/LoadersAndError';
 import { useSearchSongsQuery } from '../redux/services/saavnApi';
-import { getData } from '../utils/getData';
+import { getSingleData } from '../utils/getData'; // Changed from getData
 
 const ArtistsList = () => {
   useEffect(() => {
@@ -18,7 +18,7 @@ const ArtistsList = () => {
     const uniqueArtists = new Map();
     popularSongsData.data.results.forEach(song => {
       // Normalize song to get primaryArtists and image data
-      const normalizedSong = getData({ type: 'tracks', data: song });
+      const normalizedSong = getSingleData({ type: 'tracks', data: song }); // Changed to getSingleData
       
       const primaryArtistsString = normalizedSong.primaryArtists;
       
