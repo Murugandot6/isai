@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import Papa from 'papaparse';
-import { Loader, Error } from '../LoadersAndError'; // Corrected import path
-import { searchSongByTitleAndArtist } from '../../../utils/fetchData';
-import { displayMessage } from '../../../utils/prompt';
+import { Loader, Error } from '../LoadersAndError';
+import { searchSongByTitleAndArtist } from '../../utils/fetchData'; // Corrected import path
+import { displayMessage } from '../../utils/prompt'; // Corrected import path
 import { MdPlaylistAdd } from 'react-icons/md';
 
 const ImportForm = ({ setNewPlaylist, playlistInfo, handleSubmit, errorSavingPlaylist }) => {
