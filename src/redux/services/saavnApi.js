@@ -25,6 +25,11 @@ export const saavnApi = createApi({
         searchArtists: builder.query({ // NEW: Endpoint to search artists
             query: (query) => `/search/artists?query=${query}&limit=50`,
         }),
+        // ADD THIS NEW QUERY
+        getArtistSongs: builder.query({
+            query: ({ artistId, page = 1, sortBy = 'popularity', sortOrder = 'desc' }) => 
+              `/artists/${artistId}/songs?page=${page}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
+        }),
     })
 })
 
@@ -35,4 +40,6 @@ export const {
     useGetArtistDetailsQuery,
     useGetArtistAlbumsQuery,
     useSearchArtistsQuery, // Export the new hook
+    // ADD THE NEW HOOK EXPORT
+    useGetArtistSongsQuery, 
 } = saavnApi
