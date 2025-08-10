@@ -35,7 +35,7 @@ const ArtistDetails = () => {
 
   const topSongs = useMemo(() => {
     if (!artist?.topSongs) return [];
-    return getData({ type: 'tracks', data: artist.topSongs });
+    return getData({ type: 'tracks', data: artist.topSongs, languageFilter: 'tamil' }); // Apply language filter
   }, [artist]);
 
   useEffect(() => {

@@ -3,9 +3,9 @@ import { store } from "../redux/store";
 const ACCEPTABLE_DATA_TYPES = ['tracks', 'artists', 'albums', 'genres', 'radios'];
 const getStoreLibrary = () => store.getState().library;
 
-var blacklist, favorites, ignoreFilter, dataType, filterRgxp, sortValue;
+var blacklist, favorites, ignoreFilter, dataType, filterRgxp, sortValue, languageFilterValue; // Add languageFilterValue
 
-export const getData = ({ type, data, noFilter = false, albumFilter = '', sortType = '' }) => {
+export const getData = ({ type, data, noFilter = false, albumFilter = '', sortType = '', languageFilter = '' }) => { // Add languageFilter
     if (!ACCEPTABLE_DATA_TYPES.includes(type) || !data) return data;
     
     const library = getStoreLibrary();
@@ -15,6 +15,7 @@ export const getData = ({ type, data, noFilter = false, albumFilter = '', sortTy
     ignoreFilter = noFilter;
     dataType = type;
     sortValue = sortType
+    languageFilterValue = languageFilter; // Set the new filter value
 
     if (albumFilter) filterRgxp = new RegExp(albumFilter, 'i');
     else filterRgxp = new RegExp('', 'i');
@@ -23,7 +24,8 @@ export const getData = ({ type, data, noFilter = false, albumFilter = '', sortTy
         .slice()
         .sort(handleSorting)
         .map(addFavoriteAndBlacklist)
-        .filter(handleFilter);
+        .filter(handleFilter)
+        .filter(handleLanguageFilter); // Add new filter step
     return newData;
 }
 
@@ -52,6 +54,7 @@ export const getSingleData = ({ type, data }) => {
         newItem.preview = data.downloadUrl?.[0]?.link; // Use the first download URL as preview
         newItem.downloadUrl = data.downloadUrl; // Keep all download URLs
         newItem.image = data.image; // Keep all image sizes
+        newItem.language = data.language; // Add language field for tracks
     } else if (type === 'albums') {
         newItem.title = data.name;
         newItem.artist = { name: data.primaryArtists, id: data.artistMap?.artists?.[0]?.id || data.primaryArtists };
@@ -113,6 +116,14 @@ function handleFilter(item) {
     const itemIsAlbumWithRecType = dataType === 'albums' ? filterRgxp.test(item.record_type || '') : true;
     return itemInBlacklist && itemIsAlbumWithRecType;
 };
+
+function handleLanguageFilter(item) { // NEW function
+    if (languageFilterValue && dataType === 'tracks') {
+        // Assuming 'language' field exists for tracks
+        return item.language?.toLowerCase() === languageFilterValue.toLowerCase();
+    }
+    return true;
+}
 
 function addFavoriteAndBlacklist(item) {
     // If it's a track, use getSingleData to ensure proper mapping (name -> title)
