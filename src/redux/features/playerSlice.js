@@ -21,7 +21,9 @@ const playerSlice = createSlice({
   initialState,
   reducers: {
     setActiveSong: (state, action) => {
+      console.log('playerSlice - setActiveSong - Raw song payload:', action.payload.song);
       const cleanSong = normalizeSong(action.payload.song);
+      console.log('playerSlice - setActiveSong - Normalized song:', cleanSong);
       if (!cleanSong) return;
 
       state.activeSong = cleanSong;

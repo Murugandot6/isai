@@ -22,17 +22,20 @@ export const getImageUrl = (imageArray) => {
  */
 export const getAudioStreamUrl = (urlArray) => {
   if (!Array.isArray(urlArray) || urlArray.length === 0) {
+    console.log('getAudioStreamUrl: Input urlArray is empty or not an array.');
     return '';
   }
 
-  // Prioritize MP3 links
-  const mp3Link = urlArray.find(q => q.link && q.link.includes('.mp3'));
-  if (mp3Link) {
-    return mp3Link.link;
-  }
+  // Try to find any object with a 'link' property
+  const foundLinkObject = urlArray.find(q => q.link);
 
-  // Fallback to any available link (highest quality is usually last)
-  return urlArray[urlArray.length - 1]?.link || '';
+  const streamUrl = foundLinkObject?.link || '';
+  if (!streamUrl) {
+    console.log('getAudioStreamUrl: No valid "link" property found in urlArray elements.', urlArray);
+  } else {
+    console.log(`getAudioStreamUrl: Successfully extracted streamUrl: ${streamUrl}`);
+  }
+  return streamUrl;
 };
 
 
