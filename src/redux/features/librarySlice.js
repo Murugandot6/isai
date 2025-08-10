@@ -95,22 +95,18 @@ const librarySlice = createSlice({
       state.editorsPick = action.payload;
     },
 
-    // setLibraryStorage is removed as data will now be persisted in Supabase
-    // setLibraryStorage: (state) => {
-    //   localStorage.setItem('library', JSON.stringify({...state}))
-    // },
+    setLibraryStorage: (state) => {
+      localStorage.setItem('library', JSON.stringify({...state}))
+    },
 
     setLibrary: (state, action) => {
-      // This action will now be used to populate the state from Supabase
-      // It expects an object with 'playlists' and 'editorsPick' arrays
-      state.playlists = action.payload.playlists || [];
-      state.editorsPick = action.payload.editorsPick || [];
-      // Favorites and Blacklist will still be managed in local storage for now
-      // or could be moved to Supabase profiles table if user auth is implemented
+      for(let [entry, value] of Object.entries(action.payload)) {
+        state[entry] = value
+      }
     }
   },
 });
 
-export const { addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist, removeSongsFromPlaylist, deletePlaylist, setLibrary, setEditorsPickPlaylists } = librarySlice.actions;
+export const { addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist, removeSongsFromPlaylist, deletePlaylist, setLibraryStorage, setLibrary, setEditorsPickPlaylists } = librarySlice.actions;
 
 export default librarySlice.reducer;

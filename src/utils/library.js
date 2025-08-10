@@ -1,8 +1,7 @@
-import { deletePlaylist, removeSongsFromPlaylist, addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist } from "../redux/features/librarySlice";
+import { deletePlaylist, removeSongsFromPlaylist, addToFavorites, deleteFromFavorites, addToBlacklist, deleteFromBlacklist, createPlaylist, editPlaylist, setLibraryStorage } from "../redux/features/librarySlice";
 import { hidePrompt } from "../redux/features/promptSlice";
 import { displayMessage } from "./prompt";
 import { store } from '../redux/store';
-import { supabase } from '../integrations/supabase/client'; // Import Supabase client
 
 export const createNewPlaylist = async (data) => {
   try {
@@ -11,23 +10,15 @@ export const createNewPlaylist = async (data) => {
       throw new Error('Playlist name is required.');
     }
 
-    const playlistId = Date.now().toString(); // Use a string ID for Supabase
+    const playlistId = Date.now().toString(); // Use a string ID
     const newPlaylistData = { ...data, id: playlistId, type: 'user' }; // Mark as user playlist
 
-    const { data: supabaseData, error } = await supabase
-      .from('playlists')
-      .insert([newPlaylistData])
-      .select();
-
-    if (error) {
-      throw error;
-    }
-
     store.dispatch(createPlaylist(newPlaylistData)); // Update Redux state
+    store.dispatch(setLibraryStorage()); // Save to local storage
     displayMessage('Playlist created!');
     return playlistId; // Resolve with the new playlist's ID
   } catch (error) {
-    console.error("Error creating playlist in Supabase:", error);
+    console.error("Error creating playlist:", error);
     displayMessage('Couldn\'t create playlist!');
     throw error; // Re-throw to be caught by the calling component
   }
@@ -35,79 +26,52 @@ export const createNewPlaylist = async (data) => {
 
 export const editCurrentPlaylist = async (values) => {
   try {
-    const { id, ...updateData } = values;
-    const { error } = await supabase
-      .from('playlists')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) {
-      throw error;
-    }
-
     store.dispatch(editPlaylist(values));
+    store.dispatch(setLibraryStorage()); // Save to local storage
     store.dispatch(hidePrompt());
     displayMessage('Playlist edited!');
   } catch (error) {
-    console.error("Error editing playlist in Supabase:", error);
+    console.error("Error editing playlist:", error);
     displayMessage('Couldn\'t edit playlist!');
   }
 };
 
 export const removeFromPlaylist = async (data) => {
   try {
-    // Fetch the current playlist from Supabase to get its tracks
-    const { data: currentPlaylist, error: fetchError } = await supabase
-      .from('playlists')
-      .select('tracks')
-      .eq('id', data.playlistid)
-      .single();
+    // Get current state to find the playlist and its tracks
+    const { playlists } = store.getState().library;
+    const playlistIndex = playlists.findIndex(p => p.id === data.playlistid);
 
-    if (fetchError) {
-      throw fetchError;
+    if (playlistIndex === -1) {
+      throw new Error('Playlist not found.');
     }
 
+    const currentPlaylist = playlists[playlistIndex];
     const updatedTracks = currentPlaylist.tracks.filter(
       (track) => !data.tracks.map((elem) => elem.id).includes(track.id)
     );
 
-    const { error: updateError } = await supabase
-      .from('playlists')
-      .update({ tracks: updatedTracks })
-      .eq('id', data.playlistid);
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    store.dispatch(removeSongsFromPlaylist(data));
+    // Dispatch an edit action with the updated tracks
+    store.dispatch(editPlaylist({ ...currentPlaylist, tracks: updatedTracks }));
+    store.dispatch(setLibraryStorage()); // Save to local storage
     store.dispatch(hidePrompt());
     displayMessage('Songs Removed');
   } catch (error) {
-    console.error("Error removing songs from playlist in Supabase:", error);
+    console.error("Error removing songs from playlist:", error);
     displayMessage('Couldn\'t remove songs from playlist!');
   }
 };
 
 export const deletePlaylists = async (playlists) => {
   try {
-    const idsToDelete = playlists.map(p => p.id);
-    const { error } = await supabase
-      .from('playlists')
-      .delete()
-      .in('id', idsToDelete);
-
-    if (error) {
-      throw error;
-    }
-
     for(let playlist of playlists) {
       store.dispatch(deletePlaylist(playlist.id));
     }
+    store.dispatch(setLibraryStorage()); // Save to local storage
     store.dispatch(hidePrompt());
     displayMessage('Playlist deleted.');
   } catch (error) {
-    console.error("Error deleting playlist from Supabase:", error);
+    console.error("Error deleting playlist:", error);
     displayMessage('Couldn\'t delete playlist!');
   }
 };
@@ -115,22 +79,26 @@ export const deletePlaylists = async (playlists) => {
 export const addFavorites = (type, value) => {
   store.dispatch(addToFavorites({ type, value }));
   // Favorites are still managed in local storage for now
+  store.dispatch(setLibraryStorage());
 };
 
 export const removeFavorites = (type, id) => {
   store.dispatch(deleteFromFavorites({ type, id }));
   // Favorites are still managed in local storage for now
+  store.dispatch(setLibraryStorage());
 };
 
 export const addBlacklist = (type, value) => {
   store.dispatch(addToBlacklist({ type, value }));
   store.dispatch(hidePrompt());
   // Blacklist is still managed in local storage for now
+  store.dispatch(setLibraryStorage());
 };
 
 export const removeBlacklist = (type, id) => {
   store.dispatch(deleteFromBlacklist({ type, id }));
   // Blacklist is still managed in local storage for now
+  store.dispatch(setLibraryStorage());
 };
 
 export const playlistState = {
