@@ -61,7 +61,7 @@ const ArtistsList = () => {
   return (
     <div className="p-4">
       <h1 className="text-3xl font-bold text-white mb-6">Featured Music Personalities</h1>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 gap-4"> {/* Changed to grid-cols-3 for all sizes */}
         {featuredArtists.map((artist, i) => (
           <ArtistCard key={artist.id} artist={artist} i={i} />
         ))}
