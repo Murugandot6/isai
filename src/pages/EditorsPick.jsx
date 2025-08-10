@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Playlists } from '../components/List';
 import { editorsPickPlaylists } from '../data/editorsPickPlaylists'; // Import the hardcoded data
+import { Link } from 'react-router-dom'; // Import Link
 
 const EditorsPick = () => {
   useEffect(() => {
@@ -12,6 +13,10 @@ const EditorsPick = () => {
       <div className="min-w-full">
         <div className="w-full flex justify-between items-center mb-4">
           <h3 className="font-bold text-white text-xl">Editors' Picks</h3>
+          {/* Temporary Import Button */}
+          <Link to="/playlists?import=true" className="flex items-center justify-center font-bold text-xs md:text-sm border border-white/5 px-4 h-8 md:h-10 rounded-full hover:bg-gray-400 text-black bg-gray-200">
+            Import Playlist
+          </Link>
         </div>
         {editorsPickPlaylists.length > 0 ? (
           <Playlists playlists={editorsPickPlaylists} />
