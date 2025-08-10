@@ -3,6 +3,7 @@ import { BsDot } from 'react-icons/bs';
 import PlayPause from "./PlayPause";
 import { pause } from "../../utils/player";
 import { fetchSongs } from "../../utils/fetchData";
+import { albumImage as defaultAlbumImage } from '../../assets/images'; // Import a default album image
 
 
 const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => {
@@ -25,8 +26,8 @@ const AlbumCard = ({ album, i, isRelated, isRecent, activeSong, isPlaying }) => 
             <div className="relative">
                 <img
                     className="transition-transform w-full aspect-square rounded-lg"
-                    alt=""
-                    src={album?.image} // Use normalized image URL directly
+                    alt={album?.name || "Album cover"}
+                    src={album?.image || defaultAlbumImage} // Use normalized image URL directly, with fallback
                 />
                 <div className={`group-hover:opacity-100 group-hover:pointer-events-auto opacity-0 transition-opacity pointer-events-none hidden lg:flex absolute top-0 left-0 w-full h-full bg-black/50 items-end justify-end p-2`}>
                     <span className="group-hover:translate-y-0 group-hover:opacity-100 translate-y-[-30%] opacity-0 transition-[opacity,transform] duration-300">
