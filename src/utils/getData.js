@@ -51,26 +51,26 @@ export const getSingleData = ({ type, data, library = { blacklist: {}, favorites
 
         newItem.image = data.image?.[data.image.length - 1]?.link || '';
         
-        // Refined logic for streamUrl: prioritize highest quality MP3
+        // Refined logic for streamUrl: prioritize highest quality MP3 or MP4
         let selectedStreamUrl = '';
         if (data.downloadUrl && Array.isArray(data.downloadUrl) && data.downloadUrl.length > 0) {
-            let bestMp3Link = null;
+            let bestMediaLink = null;
             let highestQuality = -1;
 
             for (const dl of data.downloadUrl) {
-                if (dl.link && dl.link.endsWith('.mp3')) {
+                if (dl.link && (dl.link.endsWith('.mp3') || dl.link.endsWith('.mp4'))) {
                     const quality = parseInt(dl.quality);
                     if (quality > highestQuality) {
                         highestQuality = quality;
-                        bestMp3Link = dl.link;
+                        bestMediaLink = dl.link;
                     }
                 }
             }
 
-            if (bestMp3Link) {
-                selectedStreamUrl = bestMp3Link;
+            if (bestMediaLink) {
+                selectedStreamUrl = bestMediaLink;
             } else {
-                // Fallback to the last link if no MP3 found
+                // Fallback to the last link if no MP3/MP4 found
                 selectedStreamUrl = data.downloadUrl[data.downloadUrl.length - 1].link || '';
             }
         }
