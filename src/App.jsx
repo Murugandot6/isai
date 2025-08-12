@@ -23,8 +23,8 @@ import { setPlayer } from './redux/features/playerSlice';
 import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
 import { Loader } from './components/LoadersAndError';
-import Player from './components/MusicPlayer/Player'; // Import Player
-import { next } from './utils/player'; // Import next for onEnded handler
+import Player from './components/MusicPlayer/Player';
+import { next } from './utils/player';
 
 const App = () => {
   const [searchParams] = useSearchParams();
@@ -87,18 +87,16 @@ const App = () => {
 
   return (
     <>
-      {/* The single audio element, rendered only if there's an active song */}
-      {activeSong?.id && (
-        <Player
-          activeSong={playerProps.activeSong}
-          volume={playerProps.volume}
-          isPlaying={playerProps.isPlaying}
-          seekTime={playerProps.seekTime}
-          onEnded={playerProps.onEnded}
-          onTimeUpdate={playerProps.onTimeUpdate}
-          onLoadedData={playerProps.onLoadedData}
-        />
-      )}
+      {/* The single audio element, now always rendered */}
+      <Player
+        activeSong={playerProps.activeSong}
+        volume={playerProps.volume}
+        isPlaying={playerProps.isPlaying}
+        seekTime={playerProps.seekTime}
+        onEnded={playerProps.onEnded}
+        onTimeUpdate={playerProps.onTimeUpdate}
+        onLoadedData={playerProps.onLoadedData}
+      />
 
       <Routes>
         <Route element={<Layout playerProps={playerProps} />}>
