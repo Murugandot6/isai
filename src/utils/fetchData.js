@@ -60,7 +60,7 @@ export const getSingleData = (item, type) => {
         image: getImageUrl([{ link: item.favicon }]), // Favicon is usually the image
         country: item.country,
         language: item.language,
-        url_resolved: item.url_resolved,
+        streamUrl: item.url_resolved, // *** ADDED THIS LINE ***
         type: 'radio', // Explicitly set type
       };
     default:
