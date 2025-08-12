@@ -4,7 +4,7 @@ import ColorThief from 'colorthief'
 import { useRef, useMemo, useState } from 'react'
 import { BiExpandAlt } from 'react-icons/bi'
 
-const MiniPlayer = ({ duration, open, appTime, scrolled, isPlaying, currentSongs, activeSong, isActive, currentIndex, seekTime }) => {
+const MiniPlayer = ({ duration, open, appTime, scrolled, isPlaying, currentSongs, activeSong, isActive, currentIndex, seekTime, nowPlaying }) => {
   const [bg, setColors] = useState('')
   const style = useMemo(() => ({ backgroundColor: !scrolled && (bg || 'black') }), [bg, scrolled])
   const imageRef = useRef();
