@@ -1,8 +1,11 @@
+"use client";
+
 import { useState } from 'react';
 import { FaPlay, FaPause } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { radioImage as defaultRadioImage } from '../../assets/images';
 import { playSongs, pause } from '../../utils/player';
+import { getSingleData } from '../../utils/fetchData'; // Import getSingleData
 
 const RadioStationCard = ({ station }) => {
     const { activeSong, isPlaying } = useSelector((state) => state.player);
@@ -11,20 +14,16 @@ const RadioStationCard = ({ station }) => {
     const isCurrentlyPlaying = isPlaying && activeSong?.id === station.stationuuid;
 
     const handlePlay = () => {
-        const songData = {
-            id: station.stationuuid,
-            name: station.name,
-            title: station.name,
-            primaryArtists: station.country,
-            artist: { name: station.country },
-            album: { name: station.language },
-            image: [{ link: station.favicon || defaultRadioImage }],
-            downloadUrl: [{ quality: '128kbps', link: station.url_resolved }],
-            duration: 0, // Indicates a live stream
-            explicitContent: 0,
-        };
+        // Normalize the station data into a 'track' type object suitable for the player
+        const normalizedStation = getSingleData(station, 'radios');
         
-        playSongs({ tracks: [songData], song: songData, i: 0 });
+        if (normalizedStation) {
+            // The 'radios' type in getSingleData already sets streamUrl from url_resolved
+            playSongs({ tracks: [normalizedStation], song: normalizedStation, i: 0 });
+        } else {
+            console.error("Failed to normalize radio station data:", station);
+            // Optionally, show a toast message to the user
+        }
     };
 
     const handlePause = () => {
