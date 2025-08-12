@@ -25,6 +25,13 @@ const playerSlice = createSlice({
       const cleanSong = action.payload.song; 
       if (!cleanSong || !cleanSong.id) return; // Ensure it's a valid song object
 
+      // Only update activeSong if it's a different song or if it's not active yet
+      if (state.activeSong.id === cleanSong.id && state.isActive) {
+        // If it's the same song and already active, just ensure playing state is correct
+        state.isPlaying = true; // Assume play is intended if setActiveSong is called
+        return; 
+      }
+
       state.activeSong = cleanSong;
 
       const tracks = action.payload.data || action.payload.tracks;
@@ -45,6 +52,7 @@ const playerSlice = createSlice({
       
       state.currentIndex = action.payload.i;
       state.isActive = true;
+      state.isPlaying = true; // Always set to playing when a new song is set active
     },
     playPause: (state, action) => {
       state.isPlaying = action.payload;
