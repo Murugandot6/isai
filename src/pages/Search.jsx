@@ -49,10 +49,10 @@ const Search = () => {
     // Effect to fetch albums from top artists
     useEffect(() => {
         const fetchAlbums = async () => {
-            if (searchArtistsResults?.data?.results?.length > 0) {
+            if (filteredArtists?.length > 0) { // Use filteredArtists here
                 setIsFetchingAlbumsFromArtists(true);
                 setErrorAlbumsFromArtists(false);
-                const topArtists = searchArtistsResults.data.results.slice(0, 5); // Limit to top 5 artists
+                const topArtists = filteredArtists.slice(0, 5); // Limit to top 5 artists
                 const albumPromises = topArtists.map(artist =>
                     store.dispatch(saavnApi.endpoints.getArtistDetails.initiate({ id: artist.id }))
                 );
@@ -81,16 +81,20 @@ const Search = () => {
         };
 
         const categoryParam = params.get('cat');
-        if ((categoryParam === 'All' || categoryParam === 'Album') && searchArtistsResults) {
+        if ((categoryParam === 'All' || categoryParam === 'Album') && filteredArtists) { // Use filteredArtists here
             fetchAlbums();
         } else {
             setAlbumsFromArtists([]);
         }
-    }, [searchTerm, searchArtistsResults, params, library, selectedLanguage]);
+    }, [searchTerm, filteredArtists, params, library, selectedLanguage]); // Add filteredArtists to dependencies
 
     // Combine albums from direct album search, then song search, then artists
     const combinedAlbums = useMemo(() => {
-        const albumsFromSongs = searchSongsResults?.data?.results?.filter(item => item.type === 'album') || [];
+        // Extract album objects from song results
+        const albumsFromSongs = searchSongsResults?.data?.results
+            ?.filter(item => item.type === 'song' && item.album) // Only consider songs that have an album
+            .map(item => item.album) || []; // Extract the album object from each song
+
         const normalizedAlbumsFromSongs = getData({ type: 'albums', data: albumsFromSongs, library, selectedLanguage });
 
         // Prioritize direct album search results
