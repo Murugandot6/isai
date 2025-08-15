@@ -1,3 +1,5 @@
+"use client";
+
 import { useLayoutEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes, useSearchParams } from 'react-router-dom';
@@ -16,8 +18,9 @@ import {
   Blacklist,
   EditorsPick,
   Radio,
+  ArtistsList,
+  LanguageSettings,
 } from './pages';
-import ArtistsList from './pages/ArtistsList';
 import Details from './components/Details';
 import { setPlayer } from './redux/features/playerSlice';
 import { setLibrary } from './redux/features/librarySlice';
@@ -120,6 +123,7 @@ const App = () => {
           <Route path="/editors-pick" element={<EditorsPick />} />
           <Route path="/radio" element={<Radio />} />
           <Route path="/artists" element={<ArtistsList />} />
+          <Route path="/language-settings" element={<LanguageSettings />} />
         </Route>
       </Routes>
     </>
