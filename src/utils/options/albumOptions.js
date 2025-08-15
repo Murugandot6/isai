@@ -1,6 +1,7 @@
 import { playSongs, playNext } from "../player"
 import { addFavorites, removeFavorites, removeBlacklist } from "../library"
 import { addToBlacklist, addToPlaylist } from "../prompt"
+import { downloadAlbumAsZip } from "../download" // Import the new download utility
 
 export const albumOptions = [
     {
@@ -26,6 +27,10 @@ export const albumOptions = [
     {
         name: "Go to artist",
         action: ({artist}) => `/artists/${artist.id}` // This link might not work if artist details are not available
+    },
+    {
+        name: "Download album", // New option
+        action: ({album}) => downloadAlbumAsZip(album) // Call the new album zip function
     },
     {
         name: "Don't show album",
