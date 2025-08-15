@@ -16,10 +16,10 @@ export const downloadSong = async (song) => { // Made async
     return (currentQuality > prevQuality) ? current : prev;
   }, song.downloadUrl[0]);
 
-  if (highestQualityLink && highestQualityLink.link) {
+  if (highestQualityLink && highestQualityLink.url) { // Changed from .link to .url
     try {
       displayMessage(`Preparing to download ${song.name || song.title}...`);
-      const response = await axios.get(highestQualityLink.link, {
+      const response = await axios.get(highestQualityLink.url, { // Changed from .link to .url
         responseType: 'blob', // Important: request as a blob
       });
 
