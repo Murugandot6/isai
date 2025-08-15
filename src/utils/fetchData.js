@@ -37,7 +37,7 @@ export const getSingleData = (item, type) => {
         name: item.name || item.title, // Ensure 'name' property is present
         title: item.name || item.title, // Keep 'title' for consistency if other components use it
         primaryArtists: item.primaryArtists || item.artists?.[0]?.name || item.artist, // Ensure primaryArtists is present, added item.artist fallback
-        image: getImageUrl(item.image), // Use getImageUrl
+        image: getImageUrl(item.image || item.cover || item.album?.image), // ADDED: More robust image fallback for albums
         year: item.year,
         songCount: item.songCount, // Add songCount if available
         duration: item.duration, // Add duration if available
