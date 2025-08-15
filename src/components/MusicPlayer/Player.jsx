@@ -1,4 +1,5 @@
-/* eslint-disable jsx-a11y/media-has-caption */
+"use client";
+
 import React, { useRef, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { displayMessage } from '../../utils/prompt';
@@ -13,10 +14,13 @@ const Player = ({ activeSong, isPlaying, volume, seekTime, onEnded, onTimeUpdate
     // Use activeSong.streamUrl directly, which is now normalized in getData
     if (!activeSong?.streamUrl) {
       ref.current.src = '';
+      // Add a log here to confirm the value
+      console.log("Player: activeSong.streamUrl is missing or empty. Setting src to empty string.");
       return;
     }
     
     const audioSource = activeSong.streamUrl;
+    console.log("Player: Attempting to set audio source:", audioSource); // Add this log
 
     if (ref.current.src !== audioSource) {
       ref.current.src = audioSource || '';
