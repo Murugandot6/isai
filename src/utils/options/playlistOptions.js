@@ -1,6 +1,6 @@
 import { playSongs, playNext } from "../player"
 import { deletePlaylistPrompt } from "../prompt"
-import { downloadPlaylistSongs } from "../download" // Import the new download function
+import { downloadPlaylistAsZip } from "../download" // Import the new zip function
 
 export const playlistOptions = [
     {
@@ -13,7 +13,7 @@ export const playlistOptions = [
     },
     {
         name: "Download all songs", // New option
-        action: ({playlist}) => downloadPlaylistSongs(playlist)
+        action: ({playlist}) => downloadPlaylistAsZip(playlist) // Call the new zip function
     },
     {
         name: "Edit playlist",

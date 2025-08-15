@@ -1,7 +1,9 @@
 "use client";
 
 import { displayMessage } from './prompt';
-import axios from 'axios'; // Import axios
+import axios from 'axios';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver'; // For saving the generated zip file
 
 export const downloadSong = async (song) => { // Made async
   if (!song || !song.downloadUrl || song.downloadUrl.length === 0) {
@@ -42,19 +44,97 @@ export const downloadSong = async (song) => { // Made async
   }
 };
 
-export const downloadPlaylistSongs = (playlist) => {
+// New function to download playlist as a single ZIP
+export const downloadPlaylistAsZip = async (playlist) => {
   if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
     displayMessage("This playlist has no songs to download.");
     return;
   }
 
-  displayMessage(`Initiating download for ${playlist.tracks.length} song${playlist.tracks.length === 1 ? '' : 's'} from "${playlist.name}"...`);
+  displayMessage(`Preparing "${playlist.name}" for ZIP download... This may take a while.`);
 
-  // Loop through each song and initiate download
+  const zip = new JSZip();
+  let downloadedCount = 0;
+  const totalSongs = playlist.tracks.length;
+  const failedSongs = [];
+
+  for (const song of playlist.tracks) {
+    try {
+      if (!song.downloadUrl || song.downloadUrl.length === 0) {
+        failedSongs.push(`${song.name || song.title} (no download URL)`);
+        continue;
+      }
+
+      const highestQualityLink = song.downloadUrl.reduce((prev, current) => {
+        const prevQuality = parseInt(prev.quality);
+        const currentQuality = parseInt(current.quality);
+        return (currentQuality > prevQuality) ? current : prev;
+      }, song.downloadUrl[0]);
+
+      if (highestQualityLink && highestQualityLink.url) {
+        const response = await axios.get(highestQualityLink.url, {
+          responseType: 'arraybuffer', // Get as arraybuffer for JSZip
+        });
+
+        // Sanitize filename to remove invalid characters
+        const fileName = `${song.name || song.title}.mp3`.replace(/[\\/:*?"<>|]/g, '_');
+        zip.file(fileName, response.data);
+        downloadedCount++;
+        displayMessage(`Adding ${downloadedCount}/${totalSongs} songs to ZIP...`);
+      } else {
+        failedSongs.push(`${song.name || song.title} (invalid download URL)`);
+      }
+    } catch (error) {
+      console.error(`Failed to add ${song.name || song.title} to zip:`, error);
+      failedSongs.push(`${song.name || song.title} (download failed)`);
+    }
+  }
+
+  if (downloadedCount === 0 && totalSongs > 0) {
+    displayMessage(`Failed to download any songs for "${playlist.name}".`);
+    return;
+  }
+
+  displayMessage(`Generating ZIP file for "${playlist.name}"...`);
+
+  try {
+    const zipBlob = await zip.generateAsync({
+      type: "blob",
+      compression: "DEFLATE",
+      compressionOptions: {
+        level: 9 // Max compression
+      }
+    }, (metadata) => {
+      // Optional: update progress during zip generation
+      if (metadata.percent % 10 === 0) {
+        displayMessage(`Compressing: ${Math.floor(metadata.percent)}%`);
+      }
+    });
+
+    saveAs(zipBlob, `${playlist.name}.zip`);
+    displayMessage(`"${playlist.name}.zip" downloaded successfully!`);
+
+    if (failedSongs.length > 0) {
+      displayMessage(`Note: ${failedSongs.length} song(s) failed to download: ${failedSongs.join(', ')}`);
+    }
+  } catch (error) {
+    console.error("Error generating or saving zip:", error);
+    displayMessage(`Failed to create ZIP for "${playlist.name}".`);
+  }
+};
+
+// Keeping the old function for individual downloads, but it won't be called by the "Download all songs" option.
+export const downloadPlaylistSongsIndividually = (playlist) => {
+  if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
+    displayMessage("This playlist has no songs to download.");
+    return;
+  }
+
+  displayMessage(`Initiating individual download for ${playlist.tracks.length} song${playlist.tracks.length === 1 ? '' : 's'} from "${playlist.name}"...`);
+
   playlist.tracks.forEach((song, index) => {
-    // Add a small delay to avoid browser blocking multiple downloads immediately
     setTimeout(() => {
       downloadSong(song);
-    }, index * 500); // 500ms delay between each download
+    }, index * 500);
   });
 };
