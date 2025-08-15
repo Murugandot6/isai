@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { useSelector } from "react-redux";
-import { Suggestion, Songs, Playlists, RadioStationList, Artists } from "../components/List";
+import { Suggestion, Songs, Playlists, RadioStationList, Artists, Albums } from "../components/List"; // Import Albums
 import { getData, getSingleData } from "../utils/fetchData";
-import { useSearchSongsQuery } from "../redux/services/saavnApi";
+import { useSearchSongsQuery, useSearchAlbumsQuery, useSearchArtistsQuery } from "../redux/services/saavnApi"; // Import useSearchAlbumsQuery, useSearchArtistsQuery
 import { useSearchStationsQuery } from "../redux/services/radioBrowserApi";
 import { fetchArtistDetailsAndContent } from '../utils/fetchData';
 import { ArtistLoading, Error } from '../components/LoadersAndError';
@@ -29,6 +29,15 @@ const Discover = () => {
         hidebroken: true
     });
     const popularTamilStations = useMemo(() => popularTamilStationsData || [], [popularTamilStationsData]);
+
+    // NEW: Fetch popular albums based on selected language
+    const { data: popularAlbumsData, isFetching: isFetchingPopularAlbums, error: errorPopularAlbums } = useSearchAlbumsQuery(`${selectedLanguage} popular albums`);
+    const popularAlbums = useMemo(() => popularAlbumsData ? getData({ data: popularAlbumsData.data.results, type: 'albums', library, selectedLanguage }) : [], [popularAlbumsData, library, selectedLanguage]);
+
+    // NEW: Fetch popular artists based on selected language
+    const { data: popularArtistsData, isFetching: isFetchingPopularArtists, error: errorPopularArtists } = useSearchArtistsQuery(`${selectedLanguage} popular artists`);
+    const popularArtists = useMemo(() => popularArtistsData ? getData({ data: popularArtistsData.data.results, type: 'artists', library, selectedLanguage }) : [], [popularArtistsData, library, selectedLanguage]);
+
 
     // Placeholder for the "Your Favorite Songs" section's image/title
     const favoriteSongsPlaceholder = useMemo(() => ({ 
@@ -65,6 +74,24 @@ const Discover = () => {
             >
                 {`${selectedLanguage} Latest Songs`}
             </Songs>
+
+            {/* NEW: Popular Albums section */}
+            <Albums
+                albums={popularAlbums}
+                isFetching={isFetchingPopularAlbums}
+                error={errorPopularAlbums}
+            >
+                {`Popular ${selectedLanguage} Albums`}
+            </Albums>
+
+            {/* NEW: Popular Artists section */}
+            <Artists
+                artists={popularArtists}
+                isFetching={isFetchingPopularArtists}
+                error={errorPopularArtists}
+            >
+                {`Popular ${selectedLanguage} Artists`}
+            </Artists>
 
             {/* Updated section to show favorite songs */}
             <Suggestion
