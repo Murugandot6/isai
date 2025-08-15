@@ -6,15 +6,27 @@
  * @returns {string} The URL string or an empty string if not found.
  */
 export const getImageUrl = (imageInput) => {
+  if (!imageInput) {
+    return '';
+  }
   if (typeof imageInput === 'string') { // If it's already a string URL
     return imageInput;
   }
-  if (!Array.isArray(imageInput) || imageInput.length === 0) {
-    return '';
+  if (Array.isArray(imageInput)) {
+    if (imageInput.length === 0) {
+      return '';
+    }
+    // Check if the last item is an object with 'link' or 'url'
+    const lastItem = imageInput[imageInput.length - 1];
+    if (typeof lastItem === 'object' && lastItem !== null) {
+      return lastItem.link || lastItem.url || '';
+    }
+    // If it's an array of strings, return the last string
+    if (typeof lastItem === 'string') {
+      return lastItem;
+    }
   }
-  // Use the last item in the array, which is typically the highest quality.
-  // The key is sometimes 'url' and sometimes 'link'. We check for both.
-  return imageInput[imageInput.length - 1]?.link || imageInput[imageInput.length - 1]?.url || '';
+  return ''; // Fallback for unexpected formats
 };
 
 /**
