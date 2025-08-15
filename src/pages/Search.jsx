@@ -88,14 +88,22 @@ const Search = () => {
         }
     }, [searchTerm, searchArtistsResults, params, library, selectedLanguage]);
 
-    // Combine albums from song search (if any), albums from artists, and direct album search
+    // Combine albums from direct album search, then song search, then artists
     const combinedAlbums = useMemo(() => {
         const albumsFromSongs = searchSongsResults?.data?.results?.filter(item => item.type === 'album') || [];
         const normalizedAlbumsFromSongs = getData({ type: 'albums', data: albumsFromSongs, library, selectedLanguage });
 
-        // Combine all sources and remove duplicates
-        const allAlbums = [...normalizedAlbumsFromSongs, ...albumsFromArtists, ...directAlbums];
-        return Array.from(new Map(allAlbums.map(album => [album.id, album])).values());
+        // Prioritize direct album search results
+        const allAlbums = [...directAlbums, ...normalizedAlbumsFromSongs, ...albumsFromArtists];
+        
+        // Use a Map to remove duplicates by ID, preserving the order of the first occurrence
+        const uniqueAlbumsMap = new Map();
+        for (const album of allAlbums) {
+            if (album && album.id) { // Ensure album and its ID exist
+                uniqueAlbumsMap.set(album.id, album);
+            }
+        }
+        return Array.from(uniqueAlbumsMap.values());
     }, [searchSongsResults, albumsFromArtists, directAlbums, library, selectedLanguage]);
 
     // Determine overall fetching/error state for albums
