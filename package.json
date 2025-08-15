@@ -43,6 +43,8 @@
   },
   "homepage": "https://isai.anbae.eu.org/",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   }
