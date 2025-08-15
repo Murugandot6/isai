@@ -10,7 +10,7 @@ const Links = ({active, link, isMobileSidebar}) => {
             >
                     {
                         active ?
-                            <span className="bg-white/10 w-full lg:w-fit lg:bg-transparent p-1 lg:p-0 flex items-center justify-center rounded-3xl">
+                            <span className={`bg-white/10 w-full lg:w-auto ${active ? `animate-fadein text-black bg-gradient-to-br ${link.bgFrom} ${link.bgTo}` : `lg:bg-white/5 ${link.color}`} p-1 lg:p-0 flex items-center justify-center rounded-3xl`}>
                                 <link.altIcon className='text-xl lg:text-xl' />
                             </span> : 
                             <span>
