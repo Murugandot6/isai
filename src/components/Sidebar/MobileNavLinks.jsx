@@ -15,7 +15,7 @@ const MobileNavLinks = ({ playerProps }) => {
         <div className="lg:hidden flex flex-col fixed bottom-0 left-0 z-[9999] w-full p-0">
             <MusicPlayer forMobile={true} playerProps={playerProps} />
             <nav className="relative z-[10] border h-[70px] border-t border-white/5 bg-black/5 backdrop-blur-lg m-2 rounded-[15px]">
-                <ul className="w-full h-full flex flex-row items-center justify-evenly md:justify-center gap-3 text-xs px-2 overflow-x-auto">
+                <ul className="w-full h-full flex flex-row items-center justify-start gap-3 text-xs px-2 overflow-x-auto flex-nowrap">
                     {
                         links.map((item, index) => (
                             <Links
