@@ -20,6 +20,7 @@ const NavLinks = ({ isMobileSidebar = false }) => { // New prop
                                 key={index}
                                 active={((new RegExp(item.to, 'i')).test(pathname || '') && item.to !== '/') || ((!(/(genres|charts|playlist|favorites)/i).test(pathname)) && item.to === '/')}
                                 link={item}
+                                isMobileSidebar={isMobileSidebar}
                             />
                         ))
                     }
@@ -29,6 +30,7 @@ const NavLinks = ({ isMobileSidebar = false }) => { // New prop
                                 key={index} 
                                 link={secondLink} 
                                 active={(new RegExp(secondLink.to, 'i')).test(pathname)} 
+                                isMobileSidebar={isMobileSidebar}
                             />
                         ))
                     }
