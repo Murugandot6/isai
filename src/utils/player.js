@@ -80,3 +80,5 @@ export const playNext = ({ tracks, album }) => {
     if (album) store.dispatch(setAlbum(album));
     displayMessage('Added to Queue!');
 }
+
+export { stop }; // Export the stop function
