@@ -27,21 +27,21 @@ export function prev (i) {
 
 export async function onShuffle (isSongPlaying) {
     store.dispatch(shuffleOn(isSongPlaying));
-    // No need to increment shuffleLanguageIndex here, as we'll use the global selectedLanguage
-    // store.dispatch(incrementShuffleLanguageIndex()); 
 
-    const { selectedLanguage } = store.getState().settings; // Get selected language from settings slice
+    const { selectedLanguage } = store.getState().settings;
+    // Ensure a valid language is always used for the query
+    const languageToUse = selectedLanguage || 'tamil'; // Default to 'tamil' if selectedLanguage is empty
 
-    displayMessage(`Shuffling with trending ${selectedLanguage} songs.`);
+    displayMessage(`Shuffling with trending ${languageToUse} songs.`);
 
-    const trendingSongs = await fetchTrendingSongsByLanguage(selectedLanguage);
+    const trendingSongs = await fetchTrendingSongsByLanguage(languageToUse);
 
     if (trendingSongs.length > 0) {
         const i = Math.floor(Math.random() * trendingSongs.length);
         const song = trendingSongs[i];
         playSongs({ tracks: trendingSongs, song, i });
     } else {
-        displayMessage(`Could not find trending ${selectedLanguage} songs. Please try again.`);
+        displayMessage(`Could not find trending ${languageToUse} songs. Please try again.`);
         offShuffle();
     }
 }

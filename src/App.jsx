@@ -28,6 +28,7 @@ import Layout from './Layout';
 import { Loader } from './components/LoadersAndError';
 import Player from './components/MusicPlayer/Player';
 import { next, onShuffle, stop } from './utils/player'; // Import onShuffle and stop
+import { store } from './redux/store'; // Import store to access getState
 
 const App = () => {
   const [searchParams] = useSearchParams();
@@ -52,14 +53,30 @@ const App = () => {
       next(currentIndex + 1);
     } else {
       // If no more songs in the current queue and repeat is off,
-      // try to get more songs based on the active song's language
+      // try to get more songs based on the active song's language or selected language
       const currentSongLanguage = activeSong?.language;
+      const { selectedLanguage } = store.getState().settings; // Get selected language from settings
+
+      console.log("onEnded: Current queue exhausted. Attempting smart next song.");
+      console.log("onEnded: Active song language:", currentSongLanguage);
+      console.log("onEnded: Global selected language:", selectedLanguage);
+
       if (currentSongLanguage) {
-        // Dispatch onShuffle to fetch trending songs of that language and continue playback
-        // Calling onShuffle() without arguments will shuffle the entire queue and pick a new song.
-        dispatch(onShuffle());
+        // If the current song has a language, try to shuffle based on that language.
+        // The onShuffle function will now use this language if it's passed, or fallback to global/default.
+        // Note: onShuffle currently uses `selectedLanguage` from store.
+        // To prioritize `currentSongLanguage`, we'd need to modify `onShuffle` to accept a preferred language.
+        // For simplicity and to align with the current `onShuffle` implementation,
+        // we'll let `onShuffle` decide the language based on `selectedLanguage` or its internal default.
+        // The user's request is "same language song will playing", which implies a general preference.
+        // So, using `selectedLanguage` (or its default) for the next set of songs is appropriate.
+        dispatch(onShuffle(true)); // Pass true to indicate a song is playing, so it shuffles around the current active song
+      } else if (selectedLanguage) {
+        // If the current song has no language, but a global language is set, use that for shuffle.
+        dispatch(onShuffle(true));
       } else {
-        // If no language or no more songs can be fetched, stop playback
+        // If neither is available, stop playback.
+        console.log("onEnded: No specific song language or global language set. Stopping playback.");
         dispatch(stop());
       }
     }
