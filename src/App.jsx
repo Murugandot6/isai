@@ -27,13 +27,13 @@ import { setLibrary } from './redux/features/librarySlice';
 import Layout from './Layout';
 import { Loader } from './components/LoadersAndError';
 import Player from './components/MusicPlayer/Player';
-import { next } from './utils/player';
+import { next, onShuffle, stop } from './utils/player'; // Import onShuffle and stop
 
 const App = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const library = useSelector(state => state.library);
-  const { activeSong, isPlaying, currentIndex } = useSelector((state) => state.player);
+  const { activeSong, isPlaying, currentIndex, currentSongs, repeat } = useSelector((state) => state.player); // Get currentSongs and repeat state
   const [isLibraryLoaded, setIsLibraryLoaded] = useState(false);
 
   // Player states lifted to App.jsx
@@ -44,7 +44,25 @@ const App = () => {
 
   // Player handlers
   const onEnded = () => {
-    next(currentIndex + 1);
+    if (repeat) {
+      // If repeat is on, the nextSong reducer will handle looping to the start
+      next(currentIndex + 1);
+    } else if (currentIndex + 1 < currentSongs.length) {
+      // If there's a next song in the current queue and repeat is off, play it
+      next(currentIndex + 1);
+    } else {
+      // If no more songs in the current queue and repeat is off,
+      // try to get more songs based on the active song's language
+      const currentSongLanguage = activeSong?.language;
+      if (currentSongLanguage) {
+        // Dispatch onShuffle to fetch trending songs of that language and continue playback
+        // Calling onShuffle() without arguments will shuffle the entire queue and pick a new song.
+        dispatch(onShuffle());
+      } else {
+        // If no language or no more songs can be fetched, stop playback
+        dispatch(stop());
+      }
+    }
   };
   const onTimeUpdate = (event) => setAppTime(event.target.currentTime);
   const onLoadedData = (event) => setDuration(event.target.duration);
