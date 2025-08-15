@@ -1,17 +1,19 @@
 import { useSelector } from "react-redux";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Songs, Artists, Albums } from "../components/List"; // Import Artists and Albums
-import { useEffect, useMemo } from "react";
-import { useSearchSongsQuery, useSearchArtistsQuery, useGetAlbumDetailsQuery } from "../redux/services/saavnApi"; // Import new hooks
+import { Songs, Artists, Albums } from "../components/List";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchSongsQuery, useSearchArtistsQuery, useGetAlbumDetailsQuery } from "../redux/services/saavnApi";
 import { getData } from "../utils/fetchData";
+import { store } from '../redux/store';
+import { saavnApi } from '../redux/services/saavnApi';
 
-const categories = ['All', 'Song', 'Artist', 'Album']; // Added Artist and Album categories
+const categories = ['All', 'Song', 'Artist', 'Album'];
 
 const Search = () => {
     const { searchTerm } = useParams()
     const [params, setParams] = useSearchParams()
     const library = useSelector(state => state.library)
-    const { selectedLanguage } = useSelector(state => state.settings); // Get selected language
+    const { selectedLanguage } = useSelector(state => state.settings);
 
     // Fetch songs
     const { data: searchSongsResults, isFetching: isFetchingSongs, error: errorSongs } = useSearchSongsQuery(searchTerm);
@@ -22,35 +24,76 @@ const Search = () => {
             if (categoryParam === 'Song' && item.type !== 'song') return false;
             return true;
         });
-        return getData({ type: 'tracks', data: preFiltered, library, selectedLanguage }); // Pass selected language
+        return getData({ type: 'tracks', data: preFiltered, library, selectedLanguage });
     }, [searchSongsResults, params, library, selectedLanguage]);
 
     // Fetch artists
     const { data: searchArtistsResults, isFetching: isFetchingArtists, error: errorArtists } = useSearchArtistsQuery(searchTerm);
     const filteredArtists = useMemo(() => {
         const rawResults = searchArtistsResults?.data?.results || [];
-        // Note: Saavn API does not provide direct language filtering for artists.
-        // Artists might sing in multiple languages.
-        return getData({ type: 'artists', data: rawResults, library, selectedLanguage }); // Pass selected language (for consistency, but won't filter by language)
+        return getData({ type: 'artists', data: rawResults, library, selectedLanguage });
     }, [searchArtistsResults, library, selectedLanguage]);
 
-    // Fetch albums (Saavn API doesn't have a direct /search/albums, so we'll use searchSongs and filter, or searchArtists and get their albums if needed)
-    // For simplicity, we'll just filter from song search results for now, or rely on artist details for albums.
-    // A more robust solution might involve a dedicated album search if the API supported it.
-    const { data: searchAlbumsResults, isFetching: isFetchingAlbums, error: errorAlbums } = useSearchSongsQuery(searchTerm, {
-        selectFromResult: ({ data, isFetching, error }) => ({
-            data: data?.data?.results?.filter(item => item.type === 'album') || [],
-            isFetching,
-            error,
-        }),
-    });
-    const filteredAlbums = useMemo(() => {
-        const rawResults = searchAlbumsResults || [];
-        // Note: Saavn API does not provide direct language filtering for albums.
-        // Albums can contain songs in different languages.
-        return getData({ type: 'albums', data: rawResults, library, selectedLanguage }); // Pass selected language (for consistency, but won't filter by language)
-    }, [searchAlbumsResults, library, selectedLanguage]);
+    // State for albums fetched from artists
+    const [albumsFromArtists, setAlbumsFromArtists] = useState([]);
+    const [isFetchingAlbumsFromArtists, setIsFetchingAlbumsFromArtists] = useState(false);
+    const [errorAlbumsFromArtists, setErrorAlbumsFromArtists] = useState(false);
 
+    // Effect to fetch albums from top artists
+    useEffect(() => {
+        const fetchAlbums = async () => {
+            if (searchArtistsResults?.data?.results?.length > 0) {
+                setIsFetchingAlbumsFromArtists(true);
+                setErrorAlbumsFromArtists(false);
+                const topArtists = searchArtistsResults.data.results.slice(0, 5); // Limit to top 5 artists
+                const albumPromises = topArtists.map(artist =>
+                    store.dispatch(saavnApi.endpoints.getArtistDetails.initiate({ id: artist.id }))
+                );
+
+                try {
+                    const artistDetailsResults = await Promise.all(albumPromises);
+                    let collectedAlbums = [];
+                    artistDetailsResults.forEach(result => {
+                        if (result.data?.data?.topAlbums) {
+                            collectedAlbums = collectedAlbums.concat(result.data.data.topAlbums);
+                        }
+                    });
+                    // Filter out duplicates and normalize
+                    const uniqueAlbums = Array.from(new Map(collectedAlbums.map(album => [album.id, album])).values());
+                    setAlbumsFromArtists(getData({ type: 'albums', data: uniqueAlbums, library, selectedLanguage }));
+                } catch (err) {
+                    console.error("Error fetching albums from artists:", err);
+                    setErrorAlbumsFromArtists(true);
+                } finally {
+                    setIsFetchingAlbumsFromArtists(false);
+                }
+            } else {
+                setAlbumsFromArtists([]); // Clear if no artists found
+                setIsFetchingAlbumsFromArtists(false);
+            }
+        };
+
+        const categoryParam = params.get('cat');
+        if ((categoryParam === 'All' || categoryParam === 'Album') && searchArtistsResults) {
+            fetchAlbums();
+        } else {
+            setAlbumsFromArtists([]);
+        }
+    }, [searchTerm, searchArtistsResults, params, library, selectedLanguage]);
+
+    // Combine albums from song search (if any) and albums from artists
+    const combinedAlbums = useMemo(() => {
+        const albumsFromSongs = searchSongsResults?.data?.results?.filter(item => item.type === 'album') || [];
+        const normalizedAlbumsFromSongs = getData({ type: 'albums', data: albumsFromSongs, library, selectedLanguage });
+
+        // Combine and remove duplicates
+        const allAlbums = [...normalizedAlbumsFromSongs, ...albumsFromArtists];
+        return Array.from(new Map(allAlbums.map(album => [album.id, album])).values());
+    }, [searchSongsResults, albumsFromArtists, library, selectedLanguage]);
+
+    // Determine overall fetching/error state for albums
+    const isFetchingAlbums = isFetchingAlbumsFromArtists || isFetchingSongs;
+    const errorAlbums = errorAlbumsFromArtists || errorSongs;
 
     useEffect(() => {
         const text = `Isai Search results for - ${searchTerm}`
@@ -93,7 +136,7 @@ const Search = () => {
             )}
 
             {(selectedCategory === 'All' || selectedCategory === 'Album') && (
-                <Albums albums={filteredAlbums} isFetching={isFetchingAlbums} error={errorAlbums}>
+                <Albums albums={combinedAlbums} isFetching={isFetchingAlbums} error={errorAlbums}>
                     <span>
                         <span className="text-gray-400 text-sm md:text-base">Albums for </span>
                         <span className="text-gray-100 text-sm md:text-base">{searchTerm}</span>
