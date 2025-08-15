@@ -2,7 +2,7 @@ import { useSelector } from "react-redux";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Songs, Artists, Albums } from "../components/List";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchSongsQuery, useSearchArtistsQuery, useGetAlbumDetailsQuery } from "../redux/services/saavnApi";
+import { useSearchSongsQuery, useSearchArtistsQuery, useGetAlbumDetailsQuery, useSearchAlbumsQuery } from "../redux/services/saavnApi";
 import { getData } from "../utils/fetchData";
 import { store } from '../redux/store';
 import { saavnApi } from '../redux/services/saavnApi';
@@ -33,6 +33,13 @@ const Search = () => {
         const rawResults = searchArtistsResults?.data?.results || [];
         return getData({ type: 'artists', data: rawResults, library, selectedLanguage });
     }, [searchArtistsResults, library, selectedLanguage]);
+
+    // NEW: Fetch albums directly
+    const { data: searchAlbumsResults, isFetching: isFetchingDirectAlbums, error: errorDirectAlbums } = useSearchAlbumsQuery(searchTerm);
+    const directAlbums = useMemo(() => {
+        const rawResults = searchAlbumsResults?.data?.results || [];
+        return getData({ type: 'albums', data: rawResults, library, selectedLanguage });
+    }, [searchAlbumsResults, library, selectedLanguage]);
 
     // State for albums fetched from artists
     const [albumsFromArtists, setAlbumsFromArtists] = useState([]);
@@ -81,19 +88,19 @@ const Search = () => {
         }
     }, [searchTerm, searchArtistsResults, params, library, selectedLanguage]);
 
-    // Combine albums from song search (if any) and albums from artists
+    // Combine albums from song search (if any), albums from artists, and direct album search
     const combinedAlbums = useMemo(() => {
         const albumsFromSongs = searchSongsResults?.data?.results?.filter(item => item.type === 'album') || [];
         const normalizedAlbumsFromSongs = getData({ type: 'albums', data: albumsFromSongs, library, selectedLanguage });
 
-        // Combine and remove duplicates
-        const allAlbums = [...normalizedAlbumsFromSongs, ...albumsFromArtists];
+        // Combine all sources and remove duplicates
+        const allAlbums = [...normalizedAlbumsFromSongs, ...albumsFromArtists, ...directAlbums];
         return Array.from(new Map(allAlbums.map(album => [album.id, album])).values());
-    }, [searchSongsResults, albumsFromArtists, library, selectedLanguage]);
+    }, [searchSongsResults, albumsFromArtists, directAlbums, library, selectedLanguage]);
 
     // Determine overall fetching/error state for albums
-    const isFetchingAlbums = isFetchingAlbumsFromArtists || isFetchingSongs;
-    const errorAlbums = errorAlbumsFromArtists || errorSongs;
+    const isFetchingAlbums = isFetchingDirectAlbums || isFetchingAlbumsFromArtists || isFetchingSongs;
+    const errorAlbums = errorDirectAlbums || errorAlbumsFromArtists || errorSongs;
 
     useEffect(() => {
         const text = `Isai Search results for - ${searchTerm}`

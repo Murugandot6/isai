@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const saavnApi = createApi({
     reducerPath: "saavnApi",
-    baseQuery: fetchBaseQuery({
+    baseQuery: fetchBaseBaseQuery({
         baseUrl: "https://saavn.dev/api",
     }),
     endpoints: (builder) => ({
@@ -24,6 +24,9 @@ export const saavnApi = createApi({
         getAlbumDetails: builder.query({ // New endpoint for album details
             query: ({ id }) => `/albums?id=${id}`,
         }),
+        searchAlbums: builder.query({ // NEW: Endpoint to search for albums directly
+            query: (query) => `/search/albums?query=${query}&limit=50`,
+        }),
     })
 })
 
@@ -33,5 +36,6 @@ export const {
     useGetLyricsQuery,
     useGetArtistDetailsQuery,
     useSearchArtistsQuery,
-    useGetAlbumDetailsQuery, // Export the new hook
+    useGetAlbumDetailsQuery,
+    useSearchAlbumsQuery, // Export the new hook
 } = saavnApi
