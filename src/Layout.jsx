@@ -1,10 +1,11 @@
+"use client";
+
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { MessageBox, AddToPlaylist, Prompt } from './components/Prompts';
 import NavigationAndSearch from './components/NavigationAndSearch';
-import MobileNavLinks from './components/Sidebar/MobileNavLinks';
 import NavLinks from './components/Sidebar/NavLinks';
 
 const Layout = ({ playerProps }) => {
@@ -37,7 +38,7 @@ const Layout = ({ playerProps }) => {
                     <Outlet />
                 </div>
             </div>
-            <MobileNavLinks playerProps={playerProps} />
+            {/* Mobile navigation is now handled by MobileSidebar component, triggered from NavigationAndSearch */}
         </div>
     )
 };
