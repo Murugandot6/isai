@@ -2,7 +2,8 @@
 
 /**
  * Safely gets the highest quality URL from an image array or a single URL string.
- * Prioritizes larger dimensions from 'quality' or 'width'/'height' properties.
+ * Prioritizes larger dimensions from 'quality' or 'width'/'height' properties,
+ * and also handles objects where keys are dimensions (e.g., "50x50").
  * @param {Array|string} imageInput - The array of quality/url objects or a single URL string.
  * @returns {string} The URL string of the highest quality image, or an empty string if not found.
  */
@@ -21,38 +22,61 @@ export const getImageUrl = (imageInput) => {
     let bestImageUrl = '';
     let maxDimension = 0;
 
-    for (const item of imageInput) {
+    // Iterate from the end, assuming higher quality images are often at the end of the array
+    for (let i = imageInput.length - 1; i >= 0; i--) {
+      const item = imageInput[i];
       let currentLink = '';
       let currentDimension = 0;
 
-      if (typeof item === 'string') {
-        currentLink = item;
-        // If we encounter a simple string URL, and haven't found a better structured one yet,
-        // we can use it as a fallback. However, we prioritize structured objects with quality.
-        // For now, let's just take the first valid string if no structured image is found later.
-        // This will be handled after the loop.
-      } else if (typeof item === 'object' && item !== null) {
-        currentLink = item.link || item.url; // Check both 'link' and 'url'
+      if (typeof item === 'object' && item !== null) {
+        // Prioritize 'link' or 'url' properties
+        currentLink = item.link || item.url;
         if (item.quality) {
           const dimensions = item.quality.split('x').map(Number);
           currentDimension = Math.max(...dimensions);
         } else if (item.width && item.height) {
           currentDimension = Math.max(item.width, item.height);
+        } else {
+          // If no 'link'/'url' or explicit dimensions, check if object keys are dimensions
+          // This handles cases like { "50x50": "url1", "150x150": "url2" }
+          for (const key in item) {
+            if (Object.prototype.hasOwnProperty.call(item, key) && typeof item[key] === 'string') {
+              // Try to parse dimension from key (e.g., "50x50")
+              const dimsMatch = key.match(/(\d+)x(\d+)/);
+              if (dimsMatch) {
+                const dim = Math.max(parseInt(dimsMatch[1]), parseInt(dimsMatch[2]));
+                if (dim > currentDimension) {
+                  currentDimension = dim;
+                  currentLink = item[key];
+                }
+              } else if (!isNaN(parseInt(key)) && parseInt(key) > currentDimension) { // Handle cases where key is just a number (e.g., "500")
+                currentDimension = parseInt(key);
+                currentLink = item[key];
+              }
+            }
+          }
         }
+      } else if (typeof item === 'string') {
+        currentLink = item;
+        // For string items, we can't determine dimension easily, so treat as fallback
+        // and only use if no better option is found.
       }
 
-      if (currentLink && currentDimension > maxDimension) {
+      // Update best image if current one is better or equal (preferring later items in array)
+      if (currentLink && currentDimension >= maxDimension) {
         maxDimension = currentDimension;
         bestImageUrl = currentLink;
       }
     }
 
-    // Fallback: If no structured image with quality was found, try to return the first valid string URL from the array.
+    // Final fallback: if no best image was found by dimension, just return the last valid string URL
+    // or the link/value from the last object in the array.
     if (!bestImageUrl && imageInput.length > 0) {
-        for (const item of imageInput) {
-            if (typeof item === 'string' && item !== '') {
-                return item;
-            }
+        const lastItem = imageInput[imageInput.length - 1];
+        if (typeof lastItem === 'string' && lastItem !== '') {
+            return lastItem;
+        } else if (typeof lastItem === 'object' && lastItem !== null) {
+            return lastItem.link || lastItem.url || Object.values(lastItem).find(val => typeof val === 'string') || '';
         }
     }
 
