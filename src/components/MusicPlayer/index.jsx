@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -6,7 +8,7 @@ import { setNowPlaying } from '../../redux/features/playerSlice';
 import NowPlaying from './NowPlaying';
 import MiniPlayer from './MiniPlayer';
 
-const MusicPlayer = ({ scrolled, forMobile = false, playerProps }) => {
+const MusicPlayer = ({ scrolled, playerProps }) => {
   const { activeSong, currentSongs, currentIndex, isActive, isPlaying, shuffle, repeat, nowPlaying } = useSelector((state) => state.player);
   const dispatch = useDispatch();
 
@@ -26,22 +28,20 @@ const MusicPlayer = ({ scrolled, forMobile = false, playerProps }) => {
 
   return (
     <>
-      {/* MiniPlayer is conditionally rendered based on screen size and `forMobile` prop */}
-      {((!forMobile && window.innerWidth >= 1024) || (forMobile && window.innerWidth < 1024)) && (
-        <MiniPlayer
-          isPlaying={isPlaying}
-          currentSongs={currentSongs}
-          activeSong={activeSong}
-          isActive={isActive}
-          currentIndex={currentIndex}
-          seekTime={setSeekTime} // Pass setSeekTime as seekTime prop for MiniPlayer
-          nowPlaying={nowPlaying}
-          open={open}
-          scrolled={scrolled}
-          duration={duration}
-          appTime={appTime}
-        />
-      )}
+      {/* MiniPlayer is now always rendered if activeSong exists. Its visibility will be controlled by CSS. */}
+      <MiniPlayer
+        isPlaying={isPlaying}
+        currentSongs={currentSongs}
+        activeSong={activeSong}
+        isActive={isActive}
+        currentIndex={currentIndex}
+        seekTime={setSeekTime} // Pass setSeekTime as seekTime prop for MiniPlayer
+        nowPlaying={nowPlaying}
+        open={open}
+        scrolled={scrolled}
+        duration={duration}
+        appTime={appTime}
+      />
     
       {/* NowPlaying component handles its own visibility based on the `nowPlaying` state */}
       <NowPlaying
