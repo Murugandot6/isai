@@ -176,7 +176,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          // Small delay to ensure channel is ready
           setTimeout(() => {
             broadcast('request_state', {});
           }, 1000);
@@ -208,14 +207,17 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       for (const linkObj of links) {
         try {
-          const streamUrl = linkObj.link.replace('http://', 'https://');
+          // Handle both 'link' and 'url' properties safely
+          const rawUrl = linkObj.link || linkObj.url;
+          if (!rawUrl) continue;
+
+          const streamUrl = rawUrl.replace('http://', 'https://');
           const audio = audioRef.current;
           
           audio.pause();
           audio.src = streamUrl;
           audio.load();
           
-          // We need to wait for a bit of data to ensure the link isn't broken
           await new Promise((resolve, reject) => {
             const onCanPlay = () => {
               audio.removeEventListener('canplay', onCanPlay);
@@ -229,9 +231,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             };
             audio.addEventListener('canplay', onCanPlay);
             audio.addEventListener('error', onError);
-            
-            // Timeout for the check
-            setTimeout(() => reject(new Error("Timeout")), 5000);
+            setTimeout(() => reject(new Error("Timeout")), 8000);
           });
 
           await audio.play();

@@ -6,11 +6,13 @@ const BASE_URL = 'https://saavn.sumit.co/api';
 export interface Image {
   quality: string;
   link: string;
+  url?: string; // Adding optional url property
 }
 
 export interface DownloadUrl {
   quality: string;
   link: string;
+  url?: string; // Adding optional url property
 }
 
 export interface Song {
@@ -33,16 +35,12 @@ export interface Song {
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
-      // The trending endpoint on this API
       const res = await fetch(`${BASE_URL}/trending?language=${encodeURIComponent(languages)}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      
-      // Structure: data -> results
       return (data.data || []) as Song[];
     } catch (error) {
       console.error("Trending fetch error:", error);
-      // Fallback search
       return await musicApi.searchSongs('latest hits');
     }
   },
@@ -59,7 +57,8 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      const res = await fetch(`${BASE_URL}/songs?id=${id}`);
+      // Changed 'id' to 'ids' as many Saavn API wrappers expect a comma-separated list of IDs
+      const res = await fetch(`${BASE_URL}/songs?ids=${id}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       return (data.data && data.data.length > 0) ? data.data[0] as Song : null;
