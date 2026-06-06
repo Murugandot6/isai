@@ -6,9 +6,9 @@ import { MusicPlayer } from './MusicPlayer';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
-import { Music, User, LogIn } from 'lucide-react';
+import { Music, User, LogIn, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -21,6 +21,7 @@ import {
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -60,7 +61,11 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                     <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator className="bg-border/50" />
-                  <DropdownMenuItem className="rounded-lg m-1 cursor-pointer focus:bg-primary/10 focus:text-primary font-medium">
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/profile')}
+                    className="rounded-lg m-1 cursor-pointer focus:bg-primary/10 focus:text-primary font-medium gap-2"
+                  >
+                    <Settings size={16} />
                     Profile Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem 

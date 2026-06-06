@@ -5,6 +5,7 @@ import { Song, musicApi, normalizeSong } from '@/services/musicApi';
 import { RadioStation } from '@/services/radioApi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './AuthContext';
 
 export interface Playlist {
   id: string;
@@ -57,6 +58,7 @@ interface MusicContextType {
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
 export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -77,6 +79,78 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const isChannelReady = useRef(false);
   const messageQueue = useRef<any[]>([]);
 
+  const [likedSongs, setLikedSongs] = useState<Song[]>([]);
+  const [likedStations, setLikedStations] = useState<RadioStation[]>([]);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+
+  // Load initial data from localStorage
+  useEffect(() => {
+    const savedLiked = localStorage.getItem('isai_liked_songs');
+    const savedStations = localStorage.getItem('isai_liked_stations');
+    const savedRecent = localStorage.getItem('isai_recent_songs');
+    const savedPlaylists = localStorage.getItem('isai_playlists');
+
+    if (savedLiked) setLikedSongs(JSON.parse(savedLiked));
+    if (savedStations) setLikedStations(JSON.parse(savedStations));
+    if (savedRecent) setRecentlyPlayed(JSON.parse(savedRecent));
+    if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
+  }, []);
+
+  // Sync with Supabase when user logs in
+  useEffect(() => {
+    const fetchUserFavorites = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('song_data')
+        .eq('user_id', user.id);
+      
+      if (!error && data) {
+        const songs = data.map(item => item.song_data as Song);
+        setLikedSongs(songs);
+        localStorage.setItem('isai_liked_songs', JSON.stringify(songs));
+      }
+    };
+
+    fetchUserFavorites();
+  }, [user]);
+
+  // Save to localStorage on changes
+  useEffect(() => {
+    localStorage.setItem('isai_liked_stations', JSON.stringify(likedStations));
+    localStorage.setItem('isai_recent_songs', JSON.stringify(recentlyPlayed));
+    localStorage.setItem('isai_playlists', JSON.stringify(playlists));
+  }, [likedStations, recentlyPlayed, playlists]);
+
+  const toggleLike = async (song: Song) => {
+    const isCurrentlyLiked = likedSongs.some(s => s.id === song.id);
+    let newLikedSongs;
+
+    if (isCurrentlyLiked) {
+      newLikedSongs = likedSongs.filter(s => s.id !== song.id);
+      if (user) {
+        await supabase.from('favorites').delete().eq('user_id', user.id).eq('song_id', song.id);
+      }
+    } else {
+      newLikedSongs = [song, ...likedSongs];
+      if (user) {
+        await supabase.from('favorites').insert({
+          user_id: user.id,
+          song_id: song.id,
+          song_data: song
+        });
+      }
+    }
+
+    setLikedSongs(newLikedSongs);
+    localStorage.setItem('isai_liked_songs', JSON.stringify(newLikedSongs));
+  };
+
+  const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
+
+  // Audio logic...
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
@@ -97,33 +171,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     stateRef.current = { currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode };
   }, [currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode]);
-
-  const [likedSongs, setLikedSongs] = useState<Song[]>(() => {
-    const saved = localStorage.getItem('isai_liked_songs');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [likedStations, setLikedStations] = useState<RadioStation[]>(() => {
-    const saved = localStorage.getItem('isai_liked_stations');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>(() => {
-    const saved = localStorage.getItem('isai_recent_songs');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
-    const saved = localStorage.getItem('isai_playlists');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('isai_liked_songs', JSON.stringify(likedSongs));
-    localStorage.setItem('isai_liked_stations', JSON.stringify(likedStations));
-    localStorage.setItem('isai_recent_songs', JSON.stringify(recentlyPlayed));
-    localStorage.setItem('isai_playlists', JSON.stringify(playlists));
-  }, [likedSongs, likedStations, recentlyPlayed, playlists]);
 
   const broadcast = useCallback((type: string, data: any) => {
     const payload = { type, data, timestamp: Date.now() };
@@ -198,7 +245,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const idx = stateRef.current.queue.findIndex(s => s.id === song.id);
         setCurrentIndex(idx);
       } else {
-        // If no queue exists, start a new one with just this song
         setQueue([fullSong]);
         setCurrentIndex(0);
       }
@@ -373,13 +419,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
   const toggleLanguage = (lang: string) => setSelectedLanguages(prev => prev.includes(lang) ? prev.length > 1 ? prev.filter(l => l !== lang) : prev : [...prev, lang]);
   
-  const toggleLike = (song: Song) => setLikedSongs(prev => {
-    const exists = prev.find(s => s.id === song.id);
-    if (exists) return prev.filter(s => s.id !== song.id);
-    return [song, ...prev];
-  });
-  const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
-
   const toggleLikeStation = (station: RadioStation) => setLikedStations(prev => {
     const exists = prev.find(s => s.stationuuid === station.stationuuid);
     if (exists) return prev.filter(s => s.stationuuid !== station.stationuuid);

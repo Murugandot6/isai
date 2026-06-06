@@ -14,6 +14,7 @@ import Artists from "./pages/Artists";
 import Favourites from "./pages/Favourites";
 import AlbumDetails from "./pages/AlbumDetails";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/search" element={<Search />} />
               <Route path="/radio" element={<Radio />} />
               <Route path="/library" element={<Library />} />
