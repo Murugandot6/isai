@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Radio from "./pages/Radio";
 import Library from "./pages/Library";
+import Songs from "./pages/Songs";
+import Artists from "./pages/Artists";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/radio" element={<Radio />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/songs" element={<Songs />} />
+            <Route path="/artists" element={<Artists />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -5,6 +5,13 @@ import { Song, musicApi } from '@/services/musicApi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface Playlist {
+  id: string;
+  name: string;
+  songs: Song[];
+  createdAt: number;
+}
+
 interface MusicContextType {
   currentSong: Song | null;
   isPlaying: boolean;
@@ -23,10 +30,15 @@ interface MusicContextType {
   setIsHost: (isHost: boolean) => void;
   selectedLanguages: string[];
   toggleLanguage: (lang: string) => void;
-  // Library & Liked Songs
   likedSongs: Song[];
   toggleLike: (song: Song) => void;
   isLiked: (songId: string) => boolean;
+  // New features
+  recentlyPlayed: Song[];
+  playlists: Playlist[];
+  createPlaylist: (name: string) => void;
+  addToPlaylist: (playlistId: string, song: Song) => void;
+  removeFromPlaylist: (playlistId: string, songId: string) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -39,21 +51,32 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [volume, setVolume] = useState(0.7);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi']);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi', 'tamil']);
   
-  // Initialize liked songs from localStorage
   const [likedSongs, setLikedSongs] = useState<Song[]>(() => {
     const saved = localStorage.getItem('sonic_liked_songs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>(() => {
+    const saved = localStorage.getItem('sonic_recent_songs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    const saved = localStorage.getItem('sonic_playlists');
     return saved ? JSON.parse(saved) : [];
   });
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
 
-  // Persist liked songs
+  // Persistence
   useEffect(() => {
     localStorage.setItem('sonic_liked_songs', JSON.stringify(likedSongs));
-  }, [likedSongs]);
+    localStorage.setItem('sonic_recent_songs', JSON.stringify(recentlyPlayed));
+    localStorage.setItem('sonic_playlists', JSON.stringify(playlists));
+  }, [likedSongs, recentlyPlayed, playlists]);
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -69,48 +92,21 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(false);
       setCurrentTime(0);
     };
-    const handleError = () => {
-      setIsPlaying(false);
-    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('error', handleError);
       audio.pause();
       audio.src = "";
     };
   }, []);
 
-  const toggleLanguage = (lang: string) => {
-    setSelectedLanguages(prev => 
-      prev.includes(lang) 
-        ? prev.length > 1 ? prev.filter(l => l !== lang) : prev 
-        : [...prev, lang]
-    );
-  };
-
-  const toggleLike = (song: Song) => {
-    setLikedSongs(prev => {
-      const exists = prev.find(s => s.id === song.id);
-      if (exists) {
-        toast.info(`Removed ${song.name} from your library`);
-        return prev.filter(s => s.id !== song.id);
-      }
-      toast.success(`Added ${song.name} to your library`);
-      return [song, ...prev];
-    });
-  };
-
-  const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
-
-  // Real-time Sync logic
+  // Bidirectional Sync logic
   useEffect(() => {
     if (!roomCode) {
       if (channelRef.current) {
@@ -126,17 +122,98 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     channel
       .on('broadcast', { event: 'sync' }, ({ payload }) => {
-        if (isHost) return; 
-        const { song, playing, time } = payload;
-        if (song && (!currentSong || currentSong.id !== song.id)) playSong(song, true);
-        if (playing !== undefined && playing !== isPlaying) playing ? resumeSong(true) : pauseSong(true);
-        if (time !== undefined && Math.abs(time - audioRef.current!.currentTime) > 3) seek(time, true);
+        const { type, data } = payload;
+        
+        switch (type) {
+          case 'play':
+            if (data.song && (!currentSong || currentSong.id !== data.song.id)) {
+              playSong(data.song, true);
+            }
+            break;
+          case 'pause':
+            pauseSong(true);
+            break;
+          case 'resume':
+            resumeSong(true);
+            break;
+          case 'seek':
+            if (Math.abs(data.time - audioRef.current!.currentTime) > 2) {
+              seek(data.time, true);
+            }
+            break;
+        }
       })
       .subscribe();
 
     channelRef.current = channel;
     return () => { channel.unsubscribe(); };
-  }, [roomCode, isHost, currentSong, isPlaying]);
+  }, [roomCode, currentSong]);
+
+  const broadcast = (type: string, data: any) => {
+    if (roomCode && channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'sync',
+        payload: { type, data }
+      });
+    }
+  };
+
+  const createPlaylist = (name: string) => {
+    const newPlaylist: Playlist = {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+      songs: [],
+      createdAt: Date.now()
+    };
+    setPlaylists(prev => [newPlaylist, ...prev]);
+    toast.success(`Playlist "${name}" created!`);
+  };
+
+  const addToPlaylist = (playlistId: string, song: Song) => {
+    setPlaylists(prev => prev.map(p => {
+      if (p.id === playlistId) {
+        if (p.songs.some(s => s.id === song.id)) {
+          toast.info("Song already in playlist");
+          return p;
+        }
+        toast.success(`Added to ${p.name}`);
+        return { ...p, songs: [song, ...p.songs] };
+      }
+      return p;
+    }));
+  };
+
+  const removeFromPlaylist = (playlistId: string, songId: string) => {
+    setPlaylists(prev => prev.map(p => {
+      if (p.id === playlistId) {
+        return { ...p, songs: p.songs.filter(s => s.id !== songId) };
+      }
+      return p;
+    }));
+  };
+
+  const toggleLanguage = (lang: string) => {
+    setSelectedLanguages(prev => 
+      prev.includes(lang) 
+        ? prev.length > 1 ? prev.filter(l => l !== lang) : prev 
+        : [...prev, lang]
+    );
+  };
+
+  const toggleLike = (song: Song) => {
+    setLikedSongs(prev => {
+      const exists = prev.find(s => s.id === song.id);
+      if (exists) {
+        toast.info(`Removed from liked songs`);
+        return prev.filter(s => s.id !== song.id);
+      }
+      toast.success(`Added to liked songs`);
+      return [song, ...prev];
+    });
+  };
+
+  const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
 
   const playSong = async (song: Song, fromSync: boolean = false) => {
     if (!audioRef.current) return;
@@ -145,40 +222,25 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const details = await musicApi.getSongDetails(song.id);
       const fullSong = details || song;
       
-      const downloadUrls = fullSong.downloadUrl;
-      if (!downloadUrls || downloadUrls.length === 0) {
-        toast.error("No playable sources found.");
-        return;
-      }
-      
-      const bestUrlObj = downloadUrls.find((d: any) => d.quality === '160kbps') || downloadUrls[downloadUrls.length - 1];
-      let streamUrl = (bestUrlObj as any).link || (bestUrlObj as any).url;
+      const streamUrl = fullSong.downloadUrl?.[fullSong.downloadUrl.length - 1]?.link?.replace('http://', 'https://');
       
       if (!streamUrl) {
         toast.error("Stream link is broken.");
         return;
       }
 
-      streamUrl = String(streamUrl).replace('http://', 'https://');
-      
       const audio = audioRef.current;
-      audio.pause();
       audio.src = streamUrl;
-      audio.load();
-      
       await audio.play();
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
 
-      if (isHost && roomCode && !fromSync && channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'sync',
-          payload: { song: fullSong, playing: true, time: 0 }
-        });
+      if (!fromSync) {
+        setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
+        broadcast('play', { song: fullSong });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Playback Error:', error);
       setIsPlaying(false);
     }
@@ -187,19 +249,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const pauseSong = (fromSync: boolean = false) => {
     audioRef.current?.pause();
     setIsPlaying(false);
-    if (isHost && roomCode && !fromSync && channelRef.current) {
-      channelRef.current.send({ type: 'broadcast', event: 'sync', payload: { playing: false, time: audioRef.current?.currentTime } });
-    }
+    if (!fromSync) broadcast('pause', {});
   };
 
   const resumeSong = (fromSync: boolean = false) => {
-    if (audioRef.current?.src) {
-      audioRef.current.play().catch(err => console.error("Resume failed:", err));
-      setIsPlaying(true);
-      if (isHost && roomCode && !fromSync && channelRef.current) {
-        channelRef.current.send({ type: 'broadcast', event: 'sync', payload: { playing: true, time: audioRef.current?.currentTime } });
-      }
-    }
+    audioRef.current?.play().catch(() => {});
+    setIsPlaying(true);
+    if (!fromSync) broadcast('resume', {});
   };
 
   const togglePlay = () => isPlaying ? pauseSong() : resumeSong();
@@ -208,9 +264,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (audioRef.current && isFinite(time)) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
-      if (isHost && roomCode && !fromSync && channelRef.current) {
-        channelRef.current.send({ type: 'broadcast', event: 'sync', payload: { time } });
-      }
+      if (!fromSync) broadcast('seek', { time });
     }
   };
 
@@ -220,7 +274,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       togglePlay, currentTime, duration, volume, setVolume, seek,
       roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage,
-      likedSongs, toggleLike, isLiked
+      likedSongs, toggleLike, isLiked,
+      recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist
     }}>
       {children}
     </MusicContext.Provider>
