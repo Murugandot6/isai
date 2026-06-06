@@ -33,7 +33,6 @@ interface MusicContextType {
   likedSongs: Song[];
   toggleLike: (song: Song) => void;
   isLiked: (songId: string) => boolean;
-  // New features
   recentlyPlayed: Song[];
   playlists: Playlist[];
   createPlaylist: (name: string) => void;
@@ -71,7 +70,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
 
-  // Persistence
   useEffect(() => {
     localStorage.setItem('sonic_liked_songs', JSON.stringify(likedSongs));
     localStorage.setItem('sonic_recent_songs', JSON.stringify(recentlyPlayed));
@@ -101,12 +99,20 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
-      audio.pause();
-      audio.src = "";
     };
   }, []);
 
-  // Bidirectional Sync logic
+  const broadcast = (type: string, data: any) => {
+    if (roomCode && channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'sync',
+        payload: { type, data }
+      });
+    }
+  };
+
+  // Sync effect with initialization request
   useEffect(() => {
     if (!roomCode) {
       if (channelRef.current) {
@@ -125,9 +131,27 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const { type, data } = payload;
         
         switch (type) {
+          case 'request_state':
+            // If someone joins and asks for state, and we are playing, share it
+            if (currentSong) {
+              broadcast('play', { 
+                song: currentSong, 
+                playing: isPlaying, 
+                time: audioRef.current?.currentTime 
+              });
+            }
+            break;
           case 'play':
-            if (data.song && (!currentSong || currentSong.id !== data.song.id)) {
-              playSong(data.song, true);
+            if (data.song) {
+              // Only trigger play if it's a different song or we are starting from scratch
+              if (!currentSong || currentSong.id !== data.song.id) {
+                playSong(data.song, true).then(() => {
+                  if (data.time) audioRef.current!.currentTime = data.time;
+                  if (data.playing === false) audioRef.current?.pause();
+                });
+              } else if (data.time && Math.abs(data.time - audioRef.current!.currentTime) > 3) {
+                audioRef.current!.currentTime = data.time;
+              }
             }
             break;
           case 'pause':
@@ -143,22 +167,82 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             break;
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          // Ask for current state as soon as we join the room
+          setTimeout(() => broadcast('request_state', {}), 500);
+        }
+      });
 
     channelRef.current = channel;
     return () => { channel.unsubscribe(); };
-  }, [roomCode, currentSong]);
+  }, [roomCode, currentSong, isPlaying]);
 
-  const broadcast = (type: string, data: any) => {
-    if (roomCode && channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'sync',
-        payload: { type, data }
-      });
+  const playSong = async (song: Song, fromSync: boolean = false) => {
+    if (!audioRef.current) return;
+    
+    try {
+      // Get fresh details to ensure we have the correct download links
+      const details = await musicApi.getSongDetails(song.id);
+      const fullSong = details || song;
+      
+      const downloadUrls = fullSong.downloadUrl || [];
+      if (downloadUrls.length === 0) {
+        toast.error("No stream links found for this track.");
+        return;
+      }
+
+      // Find best quality link and ensure it's HTTPS
+      const bestLink = downloadUrls[downloadUrls.length - 1].link;
+      const streamUrl = bestLink.replace('http://', 'https://');
+      
+      const audio = audioRef.current;
+      audio.pause();
+      audio.src = streamUrl;
+      audio.load();
+      await audio.play();
+      
+      setCurrentSong(fullSong);
+      setIsPlaying(true);
+
+      if (!fromSync) {
+        setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
+        broadcast('play', { 
+          song: fullSong, 
+          playing: true, 
+          time: 0 
+        });
+      }
+    } catch (error) {
+      console.error('Playback Error:', error);
+      toast.error("Failed to play this track. Link might be expired.");
+      setIsPlaying(false);
     }
   };
 
+  const pauseSong = (fromSync: boolean = false) => {
+    audioRef.current?.pause();
+    setIsPlaying(false);
+    if (!fromSync) broadcast('pause', {});
+  };
+
+  const resumeSong = (fromSync: boolean = false) => {
+    audioRef.current?.play().catch(() => {});
+    setIsPlaying(true);
+    if (!fromSync) broadcast('resume', {});
+  };
+
+  const togglePlay = () => isPlaying ? pauseSong() : resumeSong();
+
+  const seek = (time: number, fromSync: boolean = false) => {
+    if (audioRef.current && isFinite(time)) {
+      audioRef.current.currentTime = time;
+      setCurrentTime(time);
+      if (!fromSync) broadcast('seek', { time });
+    }
+  };
+
+  // Rest of the implementation...
   const createPlaylist = (name: string) => {
     const newPlaylist: Playlist = {
       id: Math.random().toString(36).substr(2, 9),
@@ -214,59 +298,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
-
-  const playSong = async (song: Song, fromSync: boolean = false) => {
-    if (!audioRef.current) return;
-    
-    try {
-      const details = await musicApi.getSongDetails(song.id);
-      const fullSong = details || song;
-      
-      const streamUrl = fullSong.downloadUrl?.[fullSong.downloadUrl.length - 1]?.link?.replace('http://', 'https://');
-      
-      if (!streamUrl) {
-        toast.error("Stream link is broken.");
-        return;
-      }
-
-      const audio = audioRef.current;
-      audio.src = streamUrl;
-      await audio.play();
-      
-      setCurrentSong(fullSong);
-      setIsPlaying(true);
-
-      if (!fromSync) {
-        setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
-        broadcast('play', { song: fullSong });
-      }
-    } catch (error) {
-      console.error('Playback Error:', error);
-      setIsPlaying(false);
-    }
-  };
-
-  const pauseSong = (fromSync: boolean = false) => {
-    audioRef.current?.pause();
-    setIsPlaying(false);
-    if (!fromSync) broadcast('pause', {});
-  };
-
-  const resumeSong = (fromSync: boolean = false) => {
-    audioRef.current?.play().catch(() => {});
-    setIsPlaying(true);
-    if (!fromSync) broadcast('resume', {});
-  };
-
-  const togglePlay = () => isPlaying ? pauseSong() : resumeSong();
-
-  const seek = (time: number, fromSync: boolean = false) => {
-    if (audioRef.current && isFinite(time)) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
-      if (!fromSync) broadcast('seek', { time });
-    }
-  };
 
   return (
     <MusicContext.Provider value={{
