@@ -4,6 +4,8 @@ import React from 'react';
 import { useMusic } from '@/context/MusicContext';
 import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { getHighResImage } from '@/lib/image-utils';
+import { ListenTogether } from './ListenTogether';
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -16,7 +18,7 @@ export const MusicPlayer = () => {
 
   if (!currentSong) return null;
 
-  const imageUrl = currentSong.image[0].link;
+  const imageUrl = getHighResImage(currentSong.image);
 
   return (
     <div 
@@ -24,10 +26,15 @@ export const MusicPlayer = () => {
     >
       {/* Current Song Info */}
       <div className="flex items-center gap-4 w-full md:w-1/3">
-        <img src={imageUrl} alt={currentSong.name} className="w-14 h-14 rounded-lg shadow-lg" />
-        <div className="overflow-hidden">
+        <img src={imageUrl} alt={currentSong.name} className="w-14 h-14 rounded-lg shadow-lg object-cover bg-accent/10" />
+        <div className="overflow-hidden min-w-0 flex-1">
           <h4 className="font-bold text-sm truncate" dangerouslySetInnerHTML={{ __html: currentSong.name }}></h4>
-          <p className="text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: currentSong.primaryArtists }}></p>
+          <div className="flex items-center gap-2 overflow-hidden">
+            <p className="text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: currentSong.primaryArtists }}></p>
+          </div>
+        </div>
+        <div className="hidden sm:block">
+          <ListenTogether />
         </div>
       </div>
 
