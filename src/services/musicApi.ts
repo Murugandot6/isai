@@ -1,5 +1,23 @@
 const BASE_URL = 'https://saavn.sumit.co/api';
 
+export interface Image {
+  quality: string;
+  link: string;
+}
+
+export interface DownloadUrl {
+  quality: string;
+  link: string;
+}
+
+export interface Artist {
+  id: string;
+  name: string;
+  role: string;
+  type: string;
+  image: Image[];
+}
+
 export interface Song {
   id: string;
   name: string;
@@ -16,10 +34,12 @@ export interface Song {
   primaryArtists: string;
   featuredArtists: string;
   artists: {
-    primary: { name: string; id: string; image: { link: string; quality: string }[] }[];
+    primary: Artist[];
+    all: Artist[];
   };
-  image: { link: string; quality: string }[];
-  downloadUrl: { link: string; quality: string }[];
+  image: Image[];
+  downloadUrl: DownloadUrl[];
+  hasLyrics: boolean;
 }
 
 export const musicApi = {

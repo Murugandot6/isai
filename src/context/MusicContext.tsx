@@ -1,12 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
-import { Song } from '@/services/musicApi';
+import { Song, musicApi } from '@/services/musicApi';
+import { toast } from 'sonner';
 
 interface MusicContextType {
   currentSong: Song | null;
   isPlaying: boolean;
-  playSong: (song: Song) => void;
+  playSong: (song: Song) => Promise<void>;
   pauseSong: () => void;
   resumeSong: () => void;
   togglePlay: () => void;
@@ -36,15 +37,21 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
     const handleEnded = () => setIsPlaying(false);
+    const handleError = () => {
+      toast.error("Failed to load audio stream. Please try again.");
+      setIsPlaying(false);
+    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
       audio.pause();
     };
   }, []);
@@ -55,16 +62,34 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [volume]);
 
-  const playSong = (song: Song) => {
+  const playSong = async (song: Song) => {
     if (!audioRef.current) return;
     
-    // Get highest quality download link
-    const streamUrl = song.downloadUrl[song.downloadUrl.length - 1].link;
-    
-    audioRef.current.src = streamUrl;
-    audioRef.current.play();
-    setCurrentSong(song);
-    setIsPlaying(true);
+    try {
+      // Step 1: Ensure we have full details including downloadUrl
+      // Sometimes search results are abbreviated
+      let fullSong = song;
+      if (!song.downloadUrl || song.downloadUrl.length === 0) {
+        fullSong = await musicApi.getSongDetails(song.id);
+      }
+      
+      // Step 2: Extract highest quality download link (last item in array)
+      const downloadUrls = fullSong.downloadUrl;
+      if (!downloadUrls || downloadUrls.length === 0) {
+        throw new Error("No stream URL available");
+      }
+      
+      const streamUrl = downloadUrls[downloadUrls.length - 1].link;
+      
+      audioRef.current.src = streamUrl;
+      await audioRef.current.play();
+      
+      setCurrentSong(fullSong);
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Error playing song:', error);
+      toast.error("Could not play this track");
+    }
   };
 
   const pauseSong = () => {
@@ -73,7 +98,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resumeSong = () => {
-    audioRef.current?.play();
+    audioRef.current?.play().catch(console.error);
     setIsPlaying(true);
   };
 
