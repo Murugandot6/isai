@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Music, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
+import { Music, Mail, Lock, User, ArrowRight, Loader2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -42,7 +42,7 @@ const Login = () => {
           },
         });
         if (error) throw error;
-        toast.success("Check your email for the confirmation link!");
+        toast.success("Account created! Please check your email (and spam folder) for the confirmation link.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -132,6 +132,15 @@ const Login = () => {
             )}
           </Button>
         </form>
+
+        {isSignUp && (
+          <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
+            <Info size={16} className="text-primary shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              If you don't receive the email within a minute, please check your <strong>Spam</strong> folder.
+            </p>
+          </div>
+        )}
 
         <div className="text-center pt-4">
           <button
