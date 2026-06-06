@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 
 const LANGUAGES = [
   { id: 'english', label: 'English' },
+  { id: 'tamil', label: 'Tamil' },
   { id: 'hindi', label: 'Hindi' },
   { id: 'spanish', label: 'Spanish' },
   { id: 'french', label: 'French' },
@@ -24,16 +25,17 @@ const Radio = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLang, setSelectedLang] = useState('english');
   const [searchQuery, setSearchQuery] = useState('');
-  const { playSong, currentSong, isPlaying, togglePlay } = useMusic();
+  const { playSong, currentSong, isPlaying } = useMusic();
 
   useEffect(() => {
     const fetchStations = async () => {
       setLoading(true);
       try {
         const data = await radioApi.getStations(selectedLang);
-        setStations(data);
+        setStations(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Failed to fetch stations', error);
+        setStations([]);
       } finally {
         setLoading(false);
       }
@@ -42,7 +44,6 @@ const Radio = () => {
   }, [selectedLang]);
 
   const handlePlayStation = (station: RadioStation) => {
-    // We wrap the radio station into a Song-like object for the MusicPlayer
     const songData: any = {
       id: station.stationuuid,
       name: station.name,
@@ -86,7 +87,6 @@ const Radio = () => {
           </div>
         </div>
 
-        {/* Global Language Filter */}
         <div className="mb-10 overflow-x-auto pb-2 scrollbar-none">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-4 py-2 bg-accent/5 rounded-full border border-accent/10 text-xs font-bold text-muted-foreground mr-2 shrink-0">
@@ -115,7 +115,7 @@ const Radio = () => {
             Array.from({ length: 12 }).map((_, i) => (
               <Skeleton key={i} className="h-24 w-full rounded-2xl" />
             ))
-          ) : (
+          ) : filteredStations.length > 0 ? (
             filteredStations.map((station) => {
               const isActive = currentSong?.id === station.stationuuid;
               return (
@@ -155,6 +155,10 @@ const Radio = () => {
                 </div>
               );
             })
+          ) : (
+            <div className="col-span-full text-center py-20 text-muted-foreground">
+              No stations found for this language.
+            </div>
           )}
         </div>
       </div>

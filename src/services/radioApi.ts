@@ -17,7 +17,8 @@ export interface RadioStation {
 
 export const radioApi = {
   getStations: async (language: string = 'english', limit: number = 50) => {
-    const res = await fetch(`${BASE_URL}/stations/bybacktranslation/${encodeURIComponent(language)}?limit=${limit}&order=votes&reverse=true`);
+    // Changed from 'bybacktranslation' to the standard 'bylanguage' endpoint
+    const res = await fetch(`${BASE_URL}/stations/bylanguage/${encodeURIComponent(language)}?limit=${limit}&order=votes&reverse=true`);
     const data = await res.json();
     return data as RadioStation[];
   },
