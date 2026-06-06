@@ -54,7 +54,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
-  const isInitialSyncRef = useRef(true);
+  const isChannelReady = useRef(false);
+  const messageQueue = useRef<any[]>([]);
 
   // State Ref for Realtime access
   const stateRef = useRef({ currentSong, isPlaying, roomCode });
@@ -110,12 +111,17 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const broadcast = useCallback((type: string, data: any) => {
-    if (stateRef.current.roomCode && channelRef.current) {
+    const payload = { type, data, timestamp: Date.now() };
+    
+    if (stateRef.current.roomCode && channelRef.current && isChannelReady.current) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'sync',
-        payload: { type, data }
+        payload
       });
+    } else if (stateRef.current.roomCode) {
+      // Queue message if channel isn't ready yet
+      messageQueue.current.push(payload);
     }
   }, []);
 
@@ -226,12 +232,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         channelRef.current.unsubscribe();
         channelRef.current = null;
       }
-      isInitialSyncRef.current = true;
+      isChannelReady.current = false;
       return;
     }
 
     const channel = supabase.channel(`room:${roomCode}`, {
-      config: { broadcast: { self: false } }
+      config: { broadcast: { self: false, ack: true } }
     });
 
     channel
@@ -253,15 +259,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           case 'play':
             if (data.song) {
               const isDifferentSong = !stateRef.current.currentSong || stateRef.current.currentSong.id !== data.song.id;
-              if (isDifferentSong || isInitialSyncRef.current) {
-                isInitialSyncRef.current = false;
+              if (isDifferentSong) {
                 play(data.song, true).then(() => {
                   if (data.time && audioRef.current) {
                     audioRef.current.currentTime = data.time;
-                  }
-                  if (data.playing === false) {
-                    audioRef.current?.pause();
-                    setIsPlaying(false);
                   }
                 });
               } else if (data.time && currentAudio && Math.abs(data.time - currentAudio.currentTime) > 3) {
@@ -284,6 +285,16 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
+          isChannelReady.current = true;
+          toast.success("Connected to room!");
+          
+          // Send any queued messages
+          while (messageQueue.current.length > 0) {
+            const msg = messageQueue.current.shift();
+            channel.send({ type: 'broadcast', event: 'sync', payload: msg });
+          }
+
+          // Ask for current state
           setTimeout(() => {
             functionsRef.current.broadcast('request_state', {});
           }, 1000);
@@ -293,6 +304,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     channelRef.current = channel;
     return () => { 
       channel.unsubscribe(); 
+      isChannelReady.current = false;
     };
   }, [roomCode]);
 
