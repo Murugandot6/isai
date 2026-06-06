@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Bell, Settings, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const LANGUAGES = [
   { id: 'hindi', label: 'Hindi' },
@@ -22,6 +23,8 @@ const Index = () => {
   const [trending, setTrending] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLangs, setSelectedLangs] = useState<string[]>(['hindi', 'english']);
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTrending = async () => {
@@ -37,6 +40,13 @@ const Index = () => {
     };
     fetchTrending();
   }, [selectedLangs]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
 
   const toggleLanguage = (id: string) => {
     setSelectedLangs(prev => 
@@ -56,13 +66,15 @@ const Index = () => {
             <p className="text-muted-foreground font-medium">Ready to discover something new today?</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative w-full md:w-64">
+            <form onSubmit={handleSearch} className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search songs..." 
                 className="pl-10 bg-accent/5 border-none focus-visible:ring-primary/20 rounded-xl"
               />
-            </div>
+            </form>
             <button className="p-2.5 bg-accent/5 rounded-xl hover:bg-accent/10 transition-colors"><Bell size={20} /></button>
             <button className="p-2.5 bg-accent/5 rounded-xl hover:bg-accent/10 transition-colors"><Settings size={20} /></button>
           </div>

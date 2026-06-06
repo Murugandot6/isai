@@ -1,12 +1,13 @@
 "use client";
 
 import React from 'react';
-import { Home, Search, Library, Music, Heart, Mic2 } from 'lucide-react';
+import { Home, Search, Library, Music, Heart, Mic2, Radio } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
+  { icon: Radio, label: 'Live Radio', path: '/radio' },
   { icon: Search, label: 'Search', path: '/search' },
   { icon: Library, label: 'Library', path: '/library' },
 ];
