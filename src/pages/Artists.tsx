@@ -220,7 +220,7 @@ const Artists = () => {
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 mb-8 md:mb-10">
           <div className="bg-primary/20 p-2 md:p-3 rounded-xl md:rounded-2xl">
-            <Mic2 className="text-primary" size={24} md:size={32} />
+            <Mic2 className="text-primary w-6 h-6 md:w-8 md:h-8" />
           </div>
           <div>
             <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends</h1>
