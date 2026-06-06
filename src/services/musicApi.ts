@@ -4,13 +4,13 @@ const BASE_URL = 'https://saavn.sumit.co/api';
 
 export interface Image {
   quality: string;
-  link: string;
+  link?: string;
   url?: string;
 }
 
 export interface DownloadUrl {
   quality: string;
-  link: string;
+  link?: string;
   url?: string;
 }
 
@@ -45,7 +45,6 @@ export const musicApi = {
   },
   searchSongs: async (query: string, page: number = 1, limit: number = 20) => {
     try {
-      // Using 'p' for page and 'n' for count as per standard Saavn API wrappers
       const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
@@ -64,6 +63,28 @@ export const musicApi = {
     } catch (error) {
       console.error("Details fetch error:", error);
       return null;
+    }
+  },
+  getArtistDetails: async (id: string, page: number = 0) => {
+    try {
+      const res = await fetch(`${BASE_URL}/artists/${id}?page=${page}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      return data.data;
+    } catch (error) {
+      console.error("Artist details fetch error:", error);
+      return null;
+    }
+  },
+  searchArtists: async (query: string) => {
+    try {
+      const res = await fetch(`${BASE_URL}/search/artists?query=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      return (data.data?.results || []) as any[];
+    } catch (error) {
+      console.error("Artist search error:", error);
+      return [];
     }
   }
 };

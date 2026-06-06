@@ -9,26 +9,49 @@ import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getHighResImage } from '@/lib/image-utils';
 
-const FAMOUS_ARTISTS = [
-  { name: 'A.R. Rahman', id: 'rahman', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300' },
-  { name: 'Anirudh Ravichander', id: 'anirudh', image: 'https://images.unsplash.com/photo-1514525253361-bee8718a300a?q=80&w=300' },
-  { name: 'Yuvan Shankar Raja', id: 'yuvan', image: 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=300' },
-  { name: 'Sid Sriram', id: 'sid', image: 'https://images.unsplash.com/photo-1525362035658-555345479d6c?q=80&w=300' },
-  { name: 'Dhanush', id: 'dhanush', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=300' },
-  { name: 'Shreya Ghoshal', id: 'shreya', image: 'https://images.unsplash.com/photo-1459749411177-042180ceea72?q=80&w=300' },
-  { name: 'Vijay Antony', id: 'vijay', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300' },
-  { name: 'Harris Jayaraj', id: 'harris', image: 'https://images.unsplash.com/photo-1514525253361-bee8718a300a?q=80&w=300' },
+// Real Saavn Artist IDs for popular Indian artists
+const POPULAR_ARTISTS = [
+  { name: 'A.R. Rahman', id: '456269' },
+  { name: 'Anirudh Ravichander', id: '459320' },
+  { name: 'Yuvan Shankar Raja', id: '456863' },
+  { name: 'Sid Sriram', id: '468117' },
+  { name: 'Dhanush', id: '459633' },
+  { name: 'Shreya Ghoshal', id: '456287' },
+  { name: 'Vijay Antony', id: '457434' },
+  { name: 'Harris Jayaraj', id: '456862' },
+  { name: 'Ilaiyaraaja', id: '456561' },
+  { name: 'Santhosh Narayanan', id: '458918' },
+  { name: 'G.V. Prakash Kumar', id: '457145' },
+  { name: 'D. Imman', id: '457141' },
 ];
 
 const Artists = () => {
   const { playSong, selectedLanguages } = useMusic();
+  const [artistsList, setArtistsList] = useState<any[]>([]);
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
+
+  // Fetch initial artist data (real photos)
+  useEffect(() => {
+    const fetchArtists = async () => {
+      setLoading(true);
+      try {
+        const details = await Promise.all(
+          POPULAR_ARTISTS.map(a => musicApi.getArtistDetails(a.id))
+        );
+        setArtistsList(details.filter(d => d !== null));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArtists();
+  }, []);
 
   const lastSongElementRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
@@ -41,20 +64,26 @@ const Artists = () => {
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
 
-  const fetchSongs = useCallback(async (artistName: string, pageNum: number) => {
+  const fetchArtistSongs = useCallback(async (artistId: string, pageNum: number) => {
     setLoading(true);
     try {
-      const results = await musicApi.searchSongs(artistName, pageNum, 30);
+      const data = await musicApi.getArtistDetails(artistId, pageNum);
+      if (!data) {
+        setHasMore(false);
+        return;
+      }
+
+      const songs = data.topSongs || [];
       
       // Filter by global selected languages
-      const filteredResults = results.filter(song => 
+      const filteredResults = songs.filter((song: Song) => 
         selectedLanguages.includes(song.language.toLowerCase())
       );
 
-      if (results.length === 0) {
+      if (songs.length === 0) {
         setHasMore(false);
       } else {
-        setArtistSongs(prev => pageNum === 1 ? filteredResults : [...prev, ...filteredResults]);
+        setArtistSongs(prev => pageNum === 0 ? filteredResults : [...prev, ...filteredResults]);
       }
     } catch (error) {
       console.error("Failed to fetch artist songs", error);
@@ -65,13 +94,13 @@ const Artists = () => {
 
   useEffect(() => {
     if (selectedArtist) {
-      fetchSongs(selectedArtist.name, page);
+      fetchArtistSongs(selectedArtist.id, page);
     }
-  }, [selectedArtist, page, fetchSongs]);
+  }, [selectedArtist, page, fetchArtistSongs]);
 
   const handleArtistClick = (artist: any) => {
     setArtistSongs([]);
-    setPage(1);
+    setPage(0);
     setHasMore(true);
     setSelectedArtist(artist);
   };
@@ -98,8 +127,8 @@ const Artists = () => {
           </Button>
 
           <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-            <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20">
-              <img src={selectedArtist.image} alt={selectedArtist.name} className="w-full h-full object-cover" />
+            <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 bg-accent/10">
+              <img src={getHighResImage(selectedArtist.image)} alt={selectedArtist.name} className="w-full h-full object-cover" />
             </div>
             <div className="text-center md:text-left">
               <h1 className="text-5xl font-black tracking-tighter mb-4">{selectedArtist.name}</h1>
@@ -174,27 +203,36 @@ const Artists = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-8">
-          {FAMOUS_ARTISTS.map((artist) => (
-            <div 
-              key={artist.id} 
-              onClick={() => handleArtistClick(artist)}
-              className="group flex flex-col items-center text-center cursor-pointer"
-            >
-              <div className="relative w-full aspect-square rounded-full overflow-hidden mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300">
-                <img 
-                  src={artist.image} 
-                  alt={artist.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-                <div className="absolute bottom-2 right-2 bg-primary p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Star size={12} fill="white" className="text-white" />
-                </div>
+          {loading && artistsList.length === 0 ? (
+            Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-4">
+                <Skeleton className="w-full aspect-square rounded-full" />
+                <Skeleton className="h-4 w-24" />
               </div>
-              <h3 className="font-bold text-sm group-hover:text-primary transition-colors">{artist.name}</h3>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Artist</p>
-            </div>
-          ))}
+            ))
+          ) : (
+            artistsList.map((artist) => (
+              <div 
+                key={artist.id} 
+                onClick={() => handleArtistClick(artist)}
+                className="group flex flex-col items-center text-center cursor-pointer"
+              >
+                <div className="relative w-full aspect-square rounded-full overflow-hidden mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
+                  <img 
+                    src={getHighResImage(artist.image)} 
+                    alt={artist.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
+                  <div className="absolute bottom-2 right-2 bg-primary p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Star size={12} fill="white" className="text-white" />
+                  </div>
+                </div>
+                <h3 className="font-bold text-sm group-hover:text-primary transition-colors">{artist.name}</h3>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Artist</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </MainLayout>
