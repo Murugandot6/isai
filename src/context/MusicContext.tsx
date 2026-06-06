@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { Song, musicApi } from '@/services/musicApi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,7 +52,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isHost, setIsHost] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi', 'tamil']);
   
-  // Refs to avoid re-subscribing to Supabase when state changes
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const channelRef = useRef<any>(null);
+  const isInitialSyncRef = useRef(true);
+
+  // State Ref for Realtime access
   const stateRef = useRef({ currentSong, isPlaying, roomCode });
   useEffect(() => {
     stateRef.current = { currentSong, isPlaying, roomCode };
@@ -72,10 +76,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const saved = localStorage.getItem('sonic_playlists');
     return saved ? JSON.parse(saved) : [];
   });
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const channelRef = useRef<any>(null);
-  const isInitialSyncRef = useRef(true);
 
   useEffect(() => {
     localStorage.setItem('sonic_liked_songs', JSON.stringify(likedSongs));
@@ -109,7 +109,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  const broadcast = (type: string, data: any) => {
+  const broadcast = useCallback((type: string, data: any) => {
     if (stateRef.current.roomCode && channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
@@ -117,88 +117,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         payload: { type, data }
       });
     }
-  };
+  }, []);
 
-  // Stable subscription effect - only depends on roomCode
-  useEffect(() => {
-    if (!roomCode) {
-      if (channelRef.current) {
-        channelRef.current.unsubscribe();
-        channelRef.current = null;
-      }
-      isInitialSyncRef.current = true;
-      return;
-    }
-
-    const channel = supabase.channel(`room:${roomCode}`, {
-      config: { broadcast: { self: false } }
-    });
-
-    channel
-      .on('broadcast', { event: 'sync' }, ({ payload }) => {
-        const { type, data } = payload;
-        const currentAudio = audioRef.current;
-        
-        switch (type) {
-          case 'request_state':
-            // If someone asks for state, and we have a song, tell them what's playing
-            if (stateRef.current.currentSong) {
-              broadcast('play', { 
-                song: stateRef.current.currentSong, 
-                playing: stateRef.current.isPlaying, 
-                time: currentAudio?.currentTime || 0
-              });
-            }
-            break;
-          case 'play':
-            if (data.song) {
-              const isDifferentSong = !stateRef.current.currentSong || stateRef.current.currentSong.id !== data.song.id;
-              
-              if (isDifferentSong || isInitialSyncRef.current) {
-                isInitialSyncRef.current = false;
-                playSong(data.song, true).then(() => {
-                  if (data.time && audioRef.current) {
-                    audioRef.current.currentTime = data.time;
-                  }
-                  if (data.playing === false) {
-                    audioRef.current?.pause();
-                    setIsPlaying(false);
-                  }
-                });
-              } else if (data.time && currentAudio && Math.abs(data.time - currentAudio.currentTime) > 3) {
-                currentAudio.currentTime = data.time;
-              }
-            }
-            break;
-          case 'pause':
-            pauseSong(true);
-            break;
-          case 'resume':
-            resumeSong(true);
-            break;
-          case 'seek':
-            if (currentAudio && Math.abs(data.time - currentAudio.currentTime) > 2) {
-              seek(data.time, true);
-            }
-            break;
-        }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          // When we join, ask the room what is currently playing
-          setTimeout(() => {
-            broadcast('request_state', {});
-          }, 500);
-        }
-      });
-
-    channelRef.current = channel;
-    return () => { 
-      channel.unsubscribe(); 
-    };
-  }, [roomCode]);
-
-  const playSong = async (song: Song, fromSync: boolean = false) => {
+  const playSong = useCallback(async (song: Song, fromSync: boolean = false) => {
     if (!audioRef.current) return;
     
     const toastId = fromSync ? null : toast.loading("Loading track...");
@@ -248,7 +169,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           success = true;
           break;
         } catch (e) {
-          console.warn("Link failed, trying next quality...", e);
           continue;
         }
       }
@@ -272,29 +192,111 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (toastId) toast.error("Failed to play this track.", { id: toastId });
       setIsPlaying(false);
     }
-  };
+  }, [broadcast]);
 
-  const pauseSong = (fromSync: boolean = false) => {
+  const pauseSong = useCallback((fromSync: boolean = false) => {
     audioRef.current?.pause();
     setIsPlaying(false);
     if (!fromSync) broadcast('pause', {});
-  };
+  }, [broadcast]);
 
-  const resumeSong = (fromSync: boolean = false) => {
+  const resumeSong = useCallback((fromSync: boolean = false) => {
     audioRef.current?.play().catch(() => {});
     setIsPlaying(true);
     if (!fromSync) broadcast('resume', {});
-  };
+  }, [broadcast]);
 
-  const togglePlay = () => isPlaying ? pauseSong() : resumeSong();
-
-  const seek = (time: number, fromSync: boolean = false) => {
+  const seek = useCallback((time: number, fromSync: boolean = false) => {
     if (audioRef.current && isFinite(time)) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
       if (!fromSync) broadcast('seek', { time });
     }
-  };
+  }, [broadcast]);
+
+  // Functions Ref to avoid stale closures in subscription
+  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast });
+  useEffect(() => {
+    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast };
+  }, [playSong, pauseSong, resumeSong, seek, broadcast]);
+
+  useEffect(() => {
+    if (!roomCode) {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
+      isInitialSyncRef.current = true;
+      return;
+    }
+
+    const channel = supabase.channel(`room:${roomCode}`, {
+      config: { broadcast: { self: false } }
+    });
+
+    channel
+      .on('broadcast', { event: 'sync' }, ({ payload }) => {
+        const { type, data } = payload;
+        const { playSong: play, pauseSong: pause, resumeSong: resume, seek: sk, broadcast: bc } = functionsRef.current;
+        const currentAudio = audioRef.current;
+        
+        switch (type) {
+          case 'request_state':
+            if (stateRef.current.currentSong) {
+              bc('play', { 
+                song: stateRef.current.currentSong, 
+                playing: stateRef.current.isPlaying, 
+                time: currentAudio?.currentTime || 0
+              });
+            }
+            break;
+          case 'play':
+            if (data.song) {
+              const isDifferentSong = !stateRef.current.currentSong || stateRef.current.currentSong.id !== data.song.id;
+              if (isDifferentSong || isInitialSyncRef.current) {
+                isInitialSyncRef.current = false;
+                play(data.song, true).then(() => {
+                  if (data.time && audioRef.current) {
+                    audioRef.current.currentTime = data.time;
+                  }
+                  if (data.playing === false) {
+                    audioRef.current?.pause();
+                    setIsPlaying(false);
+                  }
+                });
+              } else if (data.time && currentAudio && Math.abs(data.time - currentAudio.currentTime) > 3) {
+                currentAudio.currentTime = data.time;
+              }
+            }
+            break;
+          case 'pause':
+            pause(true);
+            break;
+          case 'resume':
+            resume(true);
+            break;
+          case 'seek':
+            if (currentAudio && Math.abs(data.time - currentAudio.currentTime) > 2) {
+              sk(data.time, true);
+            }
+            break;
+        }
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setTimeout(() => {
+            functionsRef.current.broadcast('request_state', {});
+          }, 1000);
+        }
+      });
+
+    channelRef.current = channel;
+    return () => { 
+      channel.unsubscribe(); 
+    };
+  }, [roomCode]);
+
+  const togglePlay = () => isPlaying ? pauseSong() : resumeSong();
 
   const createPlaylist = (name: string) => {
     const newPlaylist: Playlist = {
