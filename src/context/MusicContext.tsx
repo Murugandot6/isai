@@ -40,8 +40,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
-      // Important for cross-origin audio streams
-      audioRef.current.crossOrigin = "anonymous";
+      // Removing crossOrigin as it often triggers CORS/CORB blocks on media servers
+      // that are not explicitly configured to handle anonymous requests for media.
     }
     
     const audio = audioRef.current;
@@ -53,11 +53,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(false);
       setCurrentTime(0);
     };
-    const handleError = (e: any) => {
-      console.error("Audio error:", audio.error);
+    const handleError = () => {
+      const error = audio.error;
+      console.error("Audio player error:", error);
       setIsPlaying(false);
+      
       if (audio.src) {
-        toast.error("Unable to play this track. It might be restricted or unavailable.");
+        toast.error("Playback failed. This stream may be blocked or unavailable.");
       }
     };
 
@@ -76,7 +78,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // Real-time Sync logic using Supabase
+  // Real-time Sync logic
   useEffect(() => {
     if (!roomCode) {
       if (channelRef.current) {
@@ -104,7 +106,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => { channel.unsubscribe(); };
   }, [roomCode, isHost, currentSong, isPlaying]);
 
-  // Host broadcasting
   useEffect(() => {
     if (!isHost || !roomCode || !channelRef.current) return;
     const interval = setInterval(() => {
@@ -126,28 +127,27 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     try {
       let fullSong = song;
-      // Fetch details if download links are missing
-      if (!song.downloadUrl || song.downloadUrl.length === 0) {
-        const details = await musicApi.getSongDetails(song.id);
-        if (details) fullSong = details;
-      }
+      // Re-fetch details to ensure we have fresh, non-expired stream URLs
+      const details = await musicApi.getSongDetails(song.id);
+      if (details) fullSong = details;
       
       const downloadUrls = fullSong.downloadUrl;
       if (!downloadUrls || downloadUrls.length === 0) {
-        toast.error("No playable source found.");
+        toast.error("No playable sources available for this track.");
         return;
       }
       
-      // Select 160kbps (index 2 or 3) as it's the most compatible across browsers
-      const qualityIndex = downloadUrls.length >= 3 ? 2 : downloadUrls.length - 1;
+      // Prefer 160kbps (usually index 2) as it's the most compatible across all browsers
+      // index 0: 12kbps, 1: 48kbps, 2: 96kbps, 3: 160kbps, 4: 320kbps (roughly)
+      const qualityIndex = downloadUrls.length > 3 ? 3 : downloadUrls.length - 1;
       let streamUrl = (downloadUrls[qualityIndex] as any).link || (downloadUrls[qualityIndex] as any).url;
       
       if (!streamUrl) {
-        toast.error("Invalid stream URL.");
+        toast.error("Stream URL is missing.");
         return;
       }
 
-      // Ensure HTTPS and remove any accidental encoding that breaks audio tags
+      // Convert to HTTPS if it's HTTP
       streamUrl = String(streamUrl).replace('http://', 'https://');
       
       const audio = audioRef.current;
@@ -155,7 +155,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.src = streamUrl;
       audio.load();
       
-      await audio.play();
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.error("Playback interrupted or blocked:", err);
+          setIsPlaying(false);
+        });
+      }
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
@@ -168,7 +174,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
       }
     } catch (error: any) {
-      console.error('Playback failed:', error);
+      console.error('Playback Error:', error);
       setIsPlaying(false);
     }
   };
@@ -183,7 +189,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const resumeSong = (fromSync: boolean = false) => {
     if (audioRef.current?.src) {
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch(err => console.error("Resume failed:", err));
       setIsPlaying(true);
       if (isHost && roomCode && !fromSync && channelRef.current) {
         channelRef.current.send({ type: 'broadcast', event: 'sync', payload: { playing: true, time: audioRef.current?.currentTime } });
