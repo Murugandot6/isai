@@ -1,30 +1,49 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Search as SearchIcon, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useSearchParams } from 'react-router-dom';
 
 const Search = () => {
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQuery = searchParams.get('q') || '';
+  
+  const [query, setQuery] = useState(urlQuery);
   const [results, setResults] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const performSearch = useCallback(async (searchQuery: string) => {
+    if (!searchQuery.trim()) return;
 
     setLoading(true);
     try {
-      const data = await musicApi.searchSongs(query);
+      const data = await musicApi.searchSongs(searchQuery);
       setResults(data);
     } catch (error) {
       console.error('Search failed', error);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Handle initial search from URL
+  useEffect(() => {
+    if (urlQuery) {
+      setQuery(urlQuery);
+      performSearch(urlQuery);
+    }
+  }, [urlQuery, performSearch]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    
+    // Update URL which triggers the useEffect
+    setSearchParams({ q: query });
   };
 
   return (
@@ -32,7 +51,7 @@ const Search = () => {
       <div className="p-6 md:p-10 max-w-7xl mx-auto">
         <div className="max-w-2xl mx-auto mb-12">
           <h1 className="text-4xl font-black mb-8 tracking-tight text-center">Find Your Sound</h1>
-          <form onSubmit={handleSearch} className="relative group">
+          <form onSubmit={handleSubmit} className="relative group">
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={24} />
             <Input 
               value={query}
@@ -54,7 +73,7 @@ const Search = () => {
         {results.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-in fade-in duration-500">
             {results.map((song) => (
-              <SongCard key={song.id} song={song} />
+              <SongCard key={song.id} song={song} allSongs={results} />
             ))}
           </div>
         ) : !loading && (
@@ -62,8 +81,12 @@ const Search = () => {
             <div className="bg-accent/5 p-8 rounded-full mb-6">
               <SearchIcon size={48} className="text-muted-foreground/30" />
             </div>
-            <h3 className="text-xl font-bold mb-2">Start Exploring</h3>
-            <p className="text-muted-foreground max-w-xs">Search for your favorite tracks and listen to them instantly for free.</p>
+            <h3 className="text-xl font-bold mb-2">
+              {urlQuery ? `No results for "${urlQuery}"` : "Start Exploring"}
+            </h3>
+            <p className="text-muted-foreground max-w-xs">
+              {urlQuery ? "Try searching for something else or check your spelling." : "Search for your favorite tracks and listen to them instantly for free."}
+            </p>
           </div>
         )}
       </div>
