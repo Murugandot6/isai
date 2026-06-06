@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { radioApi, RadioStation } from '@/services/radioApi';
-import { Radio as RadioIcon, Play, Pause, Search } from 'lucide-react';
+import { Radio as RadioIcon, Play, Pause, Search, Heart } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMusic } from '@/context/MusicContext';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ const Radio = () => {
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const { playSong, currentSong, isPlaying, selectedLanguages } = useMusic();
+  const { playSong, currentSong, isPlaying, selectedLanguages, toggleLikeStation, isStationLiked } = useMusic();
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -34,24 +34,19 @@ const Radio = () => {
   }, [selectedLanguages]);
 
   const handlePlayStation = (station: RadioStation) => {
-    // Convert radio stations to the Song format for the player
-    const radioSongs = filteredStations.map(s => ({
-      id: s.stationuuid,
-      name: s.name,
+    const radioSong = {
+      id: station.stationuuid,
+      name: station.name,
       type: 'radio',
-      primaryArtists: s.tags || 'Live FM',
-      image: [{ link: s.favicon || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=200' }],
-      downloadUrl: [{ link: s.url_resolved }],
-      language: s.language,
+      primaryArtists: station.tags || 'Live FM',
+      image: [{ link: station.favicon || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=200' }],
+      downloadUrl: [{ link: station.url_resolved }],
+      language: station.language,
       album: { id: 'radio', name: 'Live Radio', url: '' },
       year: '',
       duration: 0
-    }));
-
-    const currentRadioSong = radioSongs.find(s => s.id === station.stationuuid);
-    if (currentRadioSong) {
-      playSong(currentRadioSong as any, radioSongs as any);
-    }
+    };
+    playSong(radioSong as any);
   };
 
   const filteredStations = stations.filter(s => 
@@ -94,18 +89,21 @@ const Radio = () => {
           ) : filteredStations.length > 0 ? (
             filteredStations.map((station) => {
               const isActive = currentSong?.id === station.stationuuid;
+              const liked = isStationLiked(station.stationuuid);
               return (
                 <div 
                   key={station.stationuuid}
-                  onClick={() => handlePlayStation(station)}
                   className={cn(
-                    "flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 cursor-pointer group",
+                    "flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 group relative",
                     isActive 
                       ? "bg-primary/10 border-primary/30" 
                       : "bg-card/50 border-transparent hover:border-accent/20 hover:bg-accent/5"
                   )}
                 >
-                  <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-xl bg-accent/10">
+                  <div 
+                    onClick={() => handlePlayStation(station)}
+                    className="relative w-14 h-14 shrink-0 overflow-hidden rounded-xl bg-accent/10 cursor-pointer"
+                  >
                     <img 
                       src={station.favicon || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=200'} 
                       alt={station.name} 
@@ -119,15 +117,26 @@ const Radio = () => {
                       {isActive && isPlaying ? <Pause size={18} fill="currentColor" className="text-white" /> : <Play size={18} fill="currentColor" className="text-white" />}
                     </div>
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handlePlayStation(station)}>
                     <h3 className="font-bold text-sm truncate">{station.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="secondary" className="bg-accent/10 text-[8px] font-bold px-1.5 py-0">
                         {station.votes.toLocaleString()} VOTES
                       </Badge>
-                      <span className="text-[10px] text-muted-foreground truncate">{station.country}</span>
                     </div>
                   </div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLikeStation(station);
+                    }}
+                    className={cn(
+                      "p-2 rounded-full transition-all",
+                      liked ? "text-primary" : "text-muted-foreground hover:text-primary"
+                    )}
+                  >
+                    <Heart size={18} fill={liked ? "currentColor" : "none"} />
+                  </button>
                 </div>
               );
             })

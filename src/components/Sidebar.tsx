@@ -15,7 +15,7 @@ const navItems = [
 const secondaryItems = [
   { icon: Music, label: 'Songs', path: '/songs' },
   { icon: Mic2, label: 'Artists', path: '/artists' },
-  { icon: Heart, label: 'Liked', path: '/liked' },
+  { icon: Heart, label: 'Favourites', path: '/favourites' },
 ];
 
 export const Sidebar = () => {
@@ -55,7 +55,12 @@ export const Sidebar = () => {
           <Link
             key={item.path}
             to={item.path}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent/10 hover:text-foreground transition-all duration-200"
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              location.pathname === item.path 
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+            )}
           >
             <item.icon size={20} />
             {item.label}

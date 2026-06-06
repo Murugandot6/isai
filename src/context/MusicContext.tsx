@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { Song, musicApi } from '@/services/musicApi';
+import { RadioStation } from '@/services/radioApi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -37,6 +38,9 @@ interface MusicContextType {
   likedSongs: Song[];
   toggleLike: (song: Song) => void;
   isLiked: (songId: string) => boolean;
+  likedStations: RadioStation[];
+  toggleLikeStation: (station: RadioStation) => void;
+  isStationLiked: (stationId: string) => boolean;
   recentlyPlayed: Song[];
   playlists: Playlist[];
   createPlaylist: (name: string) => void;
@@ -71,21 +75,16 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const isChannelReady = useRef(false);
   const messageQueue = useRef<any[]>([]);
 
-  // Initialize Audio on mount
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
     }
-    
     const audio = audioRef.current;
     audio.volume = isMuted ? 0 : volume;
-
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
-    
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
@@ -98,25 +97,31 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode]);
 
   const [likedSongs, setLikedSongs] = useState<Song[]>(() => {
-    const saved = localStorage.getItem('sonic_liked_songs');
+    const saved = localStorage.getItem('isai_liked_songs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [likedStations, setLikedStations] = useState<RadioStation[]>(() => {
+    const saved = localStorage.getItem('isai_liked_stations');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>(() => {
-    const saved = localStorage.getItem('sonic_recent_songs');
+    const saved = localStorage.getItem('isai_recent_songs');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
-    const saved = localStorage.getItem('sonic_playlists');
+    const saved = localStorage.getItem('isai_playlists');
     return saved ? JSON.parse(saved) : [];
   });
 
   useEffect(() => {
-    localStorage.setItem('sonic_liked_songs', JSON.stringify(likedSongs));
-    localStorage.setItem('sonic_recent_songs', JSON.stringify(recentlyPlayed));
-    localStorage.setItem('sonic_playlists', JSON.stringify(playlists));
-  }, [likedSongs, recentlyPlayed, playlists]);
+    localStorage.setItem('isai_liked_songs', JSON.stringify(likedSongs));
+    localStorage.setItem('isai_liked_stations', JSON.stringify(likedStations));
+    localStorage.setItem('isai_recent_songs', JSON.stringify(recentlyPlayed));
+    localStorage.setItem('isai_playlists', JSON.stringify(playlists));
+  }, [likedSongs, likedStations, recentlyPlayed, playlists]);
 
   const broadcast = useCallback((type: string, data: any) => {
     const payload = { type, data, timestamp: Date.now() };
@@ -128,36 +133,27 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
-    
+    if (!audioRef.current) audioRef.current = new Audio();
     const toastId = fromSync ? null : toast.loading("Loading track...");
-    
     try {
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO');
       const fullSong = isRadio ? song : (await musicApi.getSongDetails(song.id) || song);
-      
       const downloadUrls = fullSong.downloadUrl || [];
       if (downloadUrls.length === 0) {
         if (toastId) toast.error("No stream links found.", { id: toastId });
         return;
       }
-
       const links = [...downloadUrls].reverse();
       let success = false;
-
       for (const linkObj of links) {
         try {
           const rawUrl = linkObj.link || linkObj.url;
           if (!rawUrl) continue;
           const streamUrl = rawUrl.replace('http://', 'https://');
-          
           const audio = audioRef.current;
           audio.pause();
           audio.src = streamUrl;
           audio.load();
-          
           await new Promise((resolve, reject) => {
             const onCanPlay = () => { resolve(true); audio.removeEventListener('canplay', onCanPlay); };
             const onError = () => { reject(new Error("Link broken")); audio.removeEventListener('error', onError); };
@@ -165,19 +161,15 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             audio.addEventListener('error', onError);
             setTimeout(() => reject(new Error("Timeout")), 10000);
           });
-
           await audio.play();
           success = true;
           break;
         } catch (e) { continue; }
       }
-
       if (!success) throw new Error("All stream links failed");
-      
       setCurrentSong(fullSong);
       setIsPlaying(true);
       if (toastId) toast.dismiss(toastId);
-
       if (newQueue) {
         setQueue(newQueue);
         const idx = newQueue.findIndex(s => s.id === song.id);
@@ -186,7 +178,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const idx = stateRef.current.queue.findIndex(s => s.id === song.id);
         setCurrentIndex(idx);
       }
-
       if (!fromSync) {
         setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
         broadcast('play', { song: fullSong, playing: true, time: 0, queue: newQueue || stateRef.current.queue });
@@ -201,20 +192,14 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const playNext = useCallback((fromSync: boolean = false) => {
     const { queue, currentIndex, isShuffle, repeatMode } = stateRef.current;
     if (queue.length === 0) return;
-
     let nextIndex = currentIndex + 1;
-    
     if (isShuffle) {
       nextIndex = Math.floor(Math.random() * queue.length);
-      // Ensure we don't play the same song if there are others
-      if (nextIndex === currentIndex && queue.length > 1) {
-        nextIndex = (nextIndex + 1) % queue.length;
-      }
+      if (nextIndex === currentIndex && queue.length > 1) nextIndex = (nextIndex + 1) % queue.length;
     } else if (nextIndex >= queue.length) {
       if (repeatMode === 'all') nextIndex = 0;
       else return;
     }
-
     playSong(queue[nextIndex]);
     if (!fromSync) broadcast('next', {});
   }, [playSong, broadcast]);
@@ -222,13 +207,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const playPrevious = useCallback((fromSync: boolean = false) => {
     const { queue, currentIndex, repeatMode } = stateRef.current;
     if (queue.length === 0) return;
-
     let prevIndex = currentIndex - 1;
     if (prevIndex < 0) {
       if (repeatMode === 'all') prevIndex = queue.length - 1;
       else prevIndex = 0;
     }
-
     playSong(queue[prevIndex]);
     if (!fromSync) broadcast('prev', {});
   }, [playSong, broadcast]);
@@ -351,19 +334,27 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setPlaylists(prev => prev.map(p => p.id === playlistId ? { ...p, songs: p.songs.filter(s => s.id !== songId) } : p));
   };
   const toggleLanguage = (lang: string) => setSelectedLanguages(prev => prev.includes(lang) ? prev.length > 1 ? prev.filter(l => l !== lang) : prev : [...prev, lang]);
+  
   const toggleLike = (song: Song) => setLikedSongs(prev => {
     const exists = prev.find(s => s.id === song.id);
-    if (exists) { toast.info(`Removed from liked songs`); return prev.filter(s => s.id !== song.id); }
-    toast.success(`Added to liked songs`); return [song, ...prev];
+    if (exists) return prev.filter(s => s.id !== song.id);
+    return [song, ...prev];
   });
   const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
+
+  const toggleLikeStation = (station: RadioStation) => setLikedStations(prev => {
+    const exists = prev.find(s => s.stationuuid === station.stationuuid);
+    if (exists) return prev.filter(s => s.stationuuid !== station.stationuuid);
+    return [station, ...prev];
+  });
+  const isStationLiked = (stationId: string) => likedStations.some(s => s.stationuuid === stationId);
 
   return (
     <MusicContext.Provider value={{
       currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious,
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
-      selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, recentlyPlayed, playlists,
-      createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat
+      selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation, isStationLiked,
+      recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat
     }}>
       {children}
     </MusicContext.Provider>
