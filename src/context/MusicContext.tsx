@@ -29,15 +29,16 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio();
-    audioRef.current.volume = volume;
-
-    const audio = audioRef.current;
+    const audio = new Audio();
+    audio.volume = volume;
+    audio.crossOrigin = "anonymous"; // Important for cross-origin streams
+    audioRef.current = audio;
 
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
     const handleEnded = () => setIsPlaying(false);
-    const handleError = () => {
+    const handleError = (e: any) => {
+      console.error("Audio error:", e);
       toast.error("Failed to load audio stream. Please try again.");
       setIsPlaying(false);
     };
@@ -67,28 +68,36 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     try {
       // Step 1: Ensure we have full details including downloadUrl
-      // Sometimes search results are abbreviated
       let fullSong = song;
       if (!song.downloadUrl || song.downloadUrl.length === 0) {
         fullSong = await musicApi.getSongDetails(song.id);
       }
       
-      // Step 2: Extract highest quality download link (last item in array)
+      // Step 2: Extract highest quality download link
       const downloadUrls = fullSong.downloadUrl;
       if (!downloadUrls || downloadUrls.length === 0) {
         throw new Error("No stream URL available");
       }
       
-      const streamUrl = downloadUrls[downloadUrls.length - 1].link;
+      // Get the highest quality (last item) and force HTTPS
+      let streamUrl = downloadUrls[downloadUrls.length - 1].link;
+      streamUrl = streamUrl.replace('http://', 'https://');
       
       audioRef.current.src = streamUrl;
-      await audioRef.current.play();
+      audioRef.current.load(); // Force load the new source
+      
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        await playPromise;
+      }
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
     } catch (error) {
       console.error('Error playing song:', error);
-      toast.error("Could not play this track");
+      toast.error("Could not play this track. It might be restricted in your region.");
+      setIsPlaying(false);
     }
   };
 
@@ -98,8 +107,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resumeSong = () => {
-    audioRef.current?.play().catch(console.error);
-    setIsPlaying(true);
+    if (audioRef.current && audioRef.current.src) {
+      audioRef.current.play().catch(err => {
+        console.error("Resume error:", err);
+        toast.error("Could not resume playback");
+      });
+      setIsPlaying(true);
+    }
   };
 
   const togglePlay = () => {
