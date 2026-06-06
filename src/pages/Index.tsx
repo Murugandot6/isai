@@ -22,10 +22,7 @@ const Index = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch trending based on selected languages
         const trendingData = await musicApi.getTrending(selectedLanguages.join(','));
-        
-        // Fetch featured content based on the primary selected language
         const primaryLang = selectedLanguages[0] || 'tamil';
         const featuredData = await musicApi.searchSongs(`${primaryLang} hits`);
         
@@ -47,10 +44,13 @@ const Index = () => {
     }
   };
 
+  const navigateToSearch = (query: string) => {
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
+
   return (
     <MainLayout>
       <div className="p-6 md:p-10 max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black mb-2 tracking-tight">Vanakkam,</h1>
@@ -71,7 +71,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Featured Hero */}
         <div 
           className="relative h-[350px] rounded-3xl overflow-hidden mb-16 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
           onClick={() => trendingSongs.length > 0 && playSong(trendingSongs[0], trendingSongs)}
@@ -92,7 +91,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Language Specific Hits Section (NOW FIRST) */}
         <section className="mb-16">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -101,7 +99,12 @@ const Index = () => {
               </div>
               <h3 className="text-2xl font-black tracking-tight capitalize">{selectedLanguages[0] || 'Tamil'} Hits</h3>
             </div>
-            <button className="text-xs font-bold text-primary hover:underline underline-offset-4">VIEW ALL</button>
+            <button 
+              onClick={() => navigateToSearch(`${selectedLanguages[0] || 'Tamil'} hits`)}
+              className="text-xs font-bold text-primary hover:underline underline-offset-4"
+            >
+              VIEW ALL
+            </button>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -121,7 +124,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Trending Section (NOW SECOND) */}
         <section className="mb-16">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -130,7 +132,12 @@ const Index = () => {
               </div>
               <h3 className="text-2xl font-black tracking-tight">Trending Now</h3>
             </div>
-            <button className="text-xs font-bold text-primary hover:underline underline-offset-4">EXPLORE ALL</button>
+            <button 
+              onClick={() => navigateToSearch('trending')}
+              className="text-xs font-bold text-primary hover:underline underline-offset-4"
+            >
+              EXPLORE ALL
+            </button>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">

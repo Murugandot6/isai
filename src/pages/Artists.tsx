@@ -13,17 +13,17 @@ import { getHighResImage } from '@/lib/image-utils';
 
 const POPULAR_ARTISTS = [
   { name: 'A.R. Rahman', id: '456269' },
+  { name: 'Ilaiyaraaja', id: '456561' },
   { name: 'Anirudh Ravichander', id: '459320' },
   { name: 'Yuvan Shankar Raja', id: '456863' },
-  { name: 'Sid Sriram', id: '468117' },
-  { name: 'Dhanush', id: '459633' },
-  { name: 'Shreya Ghoshal', id: '456287' },
-  { name: 'Vijay Antony', id: '457434' },
   { name: 'Harris Jayaraj', id: '456862' },
-  { name: 'Ilaiyaraaja', id: '456561' },
-  { name: 'Santhosh Narayanan', id: '458918' },
   { name: 'G.V. Prakash Kumar', id: '457145' },
-  { name: 'D. Imman', id: '457141' },
+  { name: 'Santhosh Narayanan', id: '458918' },
+  { name: 'Vairamuthu', id: '456864' },
+  { name: 'Na. Muthukumar', id: '485956' },
+  { name: 'Vaali', id: '456865' },
+  { name: 'Sid Sriram', id: '468117' },
+  { name: 'Shreya Ghoshal', id: '456287' },
 ];
 
 const Artists = () => {
@@ -37,7 +37,6 @@ const Artists = () => {
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  // Fetch initial artist list
   useEffect(() => {
     const fetchArtists = async () => {
       setLoading(true);
@@ -74,8 +73,6 @@ const Artists = () => {
       }
 
       const songs = data.topSongs || [];
-      
-      // Filter by global selected languages
       const filteredResults = songs.filter((song: Song) => 
         selectedLanguages.includes(song.language.toLowerCase())
       );
@@ -94,8 +91,6 @@ const Artists = () => {
 
   useEffect(() => {
     if (selectedArtist) {
-      // If we are in focused mode, we keep fetching. 
-      // If not, we only fetch the first page for the overview.
       if (focusedLanguage || page === 0) {
         fetchArtistSongs(selectedArtist.id, page);
       }
@@ -114,7 +109,6 @@ const Artists = () => {
     setFocusedLanguage(null);
   };
 
-  // Group songs by language
   const groupedSongs = useMemo(() => {
     return artistSongs.reduce((acc: Record<string, Song[]>, song) => {
       const lang = song.language.charAt(0).toUpperCase() + song.language.slice(1);
@@ -166,7 +160,6 @@ const Artists = () => {
 
           <div className="space-y-16">
             {focusedLanguage ? (
-              // Focused Language View
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-3 mb-8">
                   <div className="bg-primary/10 p-2 rounded-lg">
@@ -184,7 +177,6 @@ const Artists = () => {
                 </div>
               </section>
             ) : (
-              // Overview Mode
               Object.entries(groupedSongs).map(([language, songs]) => (
                 <section key={language} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex items-center justify-between mb-6">
