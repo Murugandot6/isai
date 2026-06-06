@@ -7,7 +7,6 @@ import { SongCard } from '@/components/SongCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Bell, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { motion } from 'framer-motion';
 
 const Index = () => {
   const [trending, setTrending] = useState<Song[]>([]);
@@ -49,12 +48,8 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Featured Hero (Simulated) */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative h-[300px] rounded-3xl overflow-hidden mb-12 group cursor-pointer shadow-2xl"
-        >
+        {/* Featured Hero */}
+        <div className="relative h-[300px] rounded-3xl overflow-hidden mb-12 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10">
           <img 
             src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070&auto=format&fit=crop" 
             alt="Hero" 
@@ -66,7 +61,7 @@ const Index = () => {
             <p className="text-white/70 max-w-md text-sm leading-relaxed mb-6">Escape reality with our hand-picked selection of the best lo-fi beats and relaxing melodies.</p>
             <button className="bg-white text-black px-8 py-3 rounded-full font-bold text-sm hover:bg-primary hover:text-white transition-all w-fit">Listen Now</button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Trending Section */}
         <section>

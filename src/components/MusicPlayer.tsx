@@ -4,7 +4,6 @@ import React from 'react';
 import { useMusic } from '@/context/MusicContext';
 import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -20,10 +19,8 @@ export const MusicPlayer = () => {
   const imageUrl = currentSong.image[0].link;
 
   return (
-    <motion.div 
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border p-4 px-6 z-50 flex flex-col md:flex-row items-center gap-4"
+    <div 
+      className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border p-4 px-6 z-50 flex flex-col md:flex-row items-center gap-4 animate-in slide-in-from-bottom duration-500"
     >
       {/* Current Song Info */}
       <div className="flex items-center gap-4 w-full md:w-1/3">
@@ -73,6 +70,6 @@ export const MusicPlayer = () => {
           className="w-24 cursor-pointer"
         />
       </div>
-    </motion.div>
+    </div>
   );
 };

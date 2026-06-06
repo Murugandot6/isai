@@ -6,7 +6,6 @@ import { musicApi, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Search as SearchIcon, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const Search = () => {
   const [query, setQuery] = useState('');
@@ -52,34 +51,21 @@ const Search = () => {
           </form>
         </div>
 
-        <AnimatePresence mode="wait">
-          {results.length > 0 ? (
-            <motion.div 
-              key="results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-            >
-              {results.map((song) => (
-                <SongCard key={song.id} song={song} />
-              ))}
-            </motion.div>
-          ) : !loading && (
-            <motion.div 
-              key="empty"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <div className="bg-accent/5 p-8 rounded-full mb-6">
-                <SearchIcon size={48} className="text-muted-foreground/30" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Start Exploring</h3>
-              <p className="text-muted-foreground max-w-xs">Search for your favorite tracks and listen to them instantly for free.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {results.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-in fade-in duration-500">
+            {results.map((song) => (
+              <SongCard key={song.id} song={song} />
+            ))}
+          </div>
+        ) : !loading && (
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-in slide-in-from-top-4 duration-500">
+            <div className="bg-accent/5 p-8 rounded-full mb-6">
+              <SearchIcon size={48} className="text-muted-foreground/30" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Start Exploring</h3>
+            <p className="text-muted-foreground max-w-xs">Search for your favorite tracks and listen to them instantly for free.</p>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
