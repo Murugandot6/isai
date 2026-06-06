@@ -184,10 +184,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
     if (!audioRef.current) audioRef.current = new Audio();
-    const toastId = fromSync ? null : toast.loading("Loading track...");
+    const toastId = fromSync ? null : toast.loading("Loading stream...");
     
     try {
-      const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO');
+      const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO') || song.album?.id === 'radio';
       
       let fullSong = song;
       if (!isRadio && (!song.downloadUrl || song.downloadUrl.length === 0)) {
@@ -256,7 +256,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch (error) {
       console.error('Playback Error:', error);
-      if (toastId) toast.error("Failed to play this track.", { id: toastId });
+      if (toastId) toast.error("Failed to play this station.", { id: toastId });
       setIsPlaying(false);
     }
   }, [broadcast]);
@@ -331,6 +331,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [broadcast]);
 
   const seek = useCallback((time: number, fromSync: boolean = false) => {
+    // Disable timeline seeking for live radio streams
+    const isRadio = stateRef.current.currentSong?.type === 'radio' || stateRef.current.currentSong?.album?.id === 'radio';
+    if (isRadio) return;
+
     if (audioRef.current && isFinite(time)) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
@@ -393,7 +397,15 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             if (stateRef.current.currentSong) bc('play', { song: stateRef.current.currentSong, playing: stateRef.current.isPlaying, time: audioRef.current?.currentTime || 0, queue: stateRef.current.queue });
             break;
           case 'play':
-            if (data.song) play(data.song, data.queue, true).then(() => { if (data.time) audioRef.current!.currentTime = data.time; });
+            if (data.song) {
+              const isRadioSong = data.song.type === 'radio' || data.song.album?.id === 'radio';
+              play(data.song, data.queue, true).then(() => { 
+                // ONLY update currentTime if this is not a live FM radio station!
+                if (data.time && !isRadioSong && audioRef.current) {
+                  audioRef.current.currentTime = data.time; 
+                }
+              });
+            }
             break;
           case 'pause': pause(true); break;
           case 'resume': resume(true); break;
