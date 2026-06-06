@@ -9,10 +9,13 @@ import { Search as SearchIcon, Loader2, Music, Disc } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMusic } from '@/context/MusicContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
+  const { selectedLanguages } = useMusic();
   
   const [query, setQuery] = useState(urlQuery);
   const [songResults, setSongResults] = useState<Song[]>([]);
@@ -26,17 +29,26 @@ const Search = () => {
     setLoading(true);
     try {
       const [songs, albums] = await Promise.all([
-        musicApi.searchSongs(searchQuery),
-        musicApi.searchAlbums(searchQuery)
+        musicApi.searchSongs(searchQuery, 1, 50), // Fetch more to allow for filtering
+        musicApi.searchAlbums(searchQuery, 1, 50)
       ]);
-      setSongResults(songs);
-      setAlbumResults(albums);
+      
+      // Filter results by selected languages
+      const filteredSongs = songs.filter(s => 
+        selectedLanguages.includes(s.language.toLowerCase())
+      );
+      const filteredAlbums = albums.filter(a => 
+        selectedLanguages.includes(a.language.toLowerCase())
+      );
+
+      setSongResults(filteredSongs);
+      setAlbumResults(filteredAlbums);
     } catch (error) {
       console.error('Search failed', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedLanguages]);
 
   useEffect(() => {
     if (urlQuery) {
@@ -75,7 +87,23 @@ const Search = () => {
           </form>
         </div>
 
-        {(songResults.length > 0 || albumResults.length > 0) ? (
+        {loading ? (
+          <div className="space-y-8">
+            <div className="flex gap-4">
+              <Skeleton className="h-10 w-24 rounded-xl" />
+              <Skeleton className="h-10 w-24 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-square w-full rounded-2xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (songResults.length > 0 || albumResults.length > 0) ? (
           <Tabs defaultValue="songs" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-fit">
               <TabsTrigger value="songs" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
@@ -112,10 +140,10 @@ const Search = () => {
               <SearchIcon size={48} className="text-muted-foreground/30" />
             </div>
             <h3 className="text-xl font-bold mb-2">
-              {urlQuery ? `No results for "${urlQuery}"` : "Start Exploring"}
+              {urlQuery ? `No results for "${urlQuery}" in your selected languages` : "Start Exploring"}
             </h3>
             <p className="text-muted-foreground max-w-xs">
-              {urlQuery ? "Try searching for something else or check your spelling." : "Search for your favorite tracks and listen to them instantly for free."}
+              {urlQuery ? "Try searching for something else or check your language filters in the header." : "Search for your favorite tracks and listen to them instantly for free."}
             </p>
           </div>
         )}

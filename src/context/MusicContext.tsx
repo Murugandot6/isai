@@ -67,7 +67,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isMuted, setIsMuted] = useState(false);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi', 'tamil']);
+  // Set Tamil as default language
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['tamil']);
   
   const [queue, setQueue] = useState<Song[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
@@ -261,16 +262,34 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [broadcast]);
 
   const playNext = useCallback((fromSync: boolean = false) => {
-    const { queue, currentIndex, isShuffle, repeatMode } = stateRef.current;
+    const { queue, currentIndex, isShuffle, repeatMode, currentSong } = stateRef.current;
     if (queue.length === 0) return;
+    
     let nextIndex = currentIndex + 1;
+    
     if (isShuffle) {
-      nextIndex = Math.floor(Math.random() * queue.length);
-      if (nextIndex === currentIndex && queue.length > 1) nextIndex = (nextIndex + 1) % queue.length;
+      // Shuffle within the same language if possible
+      const sameLangSongs = queue.filter(s => s.language === currentSong?.language);
+      
+      if (sameLangSongs.length > 1) {
+        const randomSong = sameLangSongs[Math.floor(Math.random() * sameLangSongs.length)];
+        nextIndex = queue.findIndex(s => s.id === randomSong.id);
+        // Ensure we don't play the same song twice if there are options
+        if (nextIndex === currentIndex && sameLangSongs.length > 1) {
+           const otherSongs = sameLangSongs.filter(s => s.id !== currentSong?.id);
+           const fallbackSong = otherSongs[Math.floor(Math.random() * otherSongs.length)];
+           nextIndex = queue.findIndex(s => s.id === fallbackSong.id);
+        }
+      } else {
+        // Fallback to normal shuffle if no other songs in same language
+        nextIndex = Math.floor(Math.random() * queue.length);
+        if (nextIndex === currentIndex && queue.length > 1) nextIndex = (nextIndex + 1) % queue.length;
+      }
     } else if (nextIndex >= queue.length) {
       if (repeatMode === 'all') nextIndex = 0;
       else return;
     }
+    
     playSong(queue[nextIndex]);
     if (!fromSync) broadcast('next', {});
   }, [playSong, broadcast]);

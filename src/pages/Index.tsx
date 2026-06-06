@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
 
 const Index = () => {
-  const [tamilSongs, setTamilSongs] = useState<Song[]>([]);
+  const [featuredSongs, setFeaturedSongs] = useState<Song[]>([]);
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,12 +22,15 @@ const Index = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [tamilData, trendingData] = await Promise.all([
-          musicApi.searchSongs('Tamil hits'),
-          musicApi.getTrending(selectedLanguages.join(','))
-        ]);
-        setTamilSongs(tamilData);
+        // Fetch trending based on selected languages
+        const trendingData = await musicApi.getTrending(selectedLanguages.join(','));
+        
+        // Fetch featured content based on the primary selected language
+        const primaryLang = selectedLanguages[0] || 'tamil';
+        const featuredData = await musicApi.searchSongs(`${primaryLang} hits`);
+        
         setTrendingSongs(trendingData);
+        setFeaturedSongs(featuredData);
       } catch (error) {
         console.error('Failed to fetch content', error);
       } finally {
@@ -118,14 +121,14 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Tamil Hits Section */}
+        {/* Language Specific Hits Section */}
         <section>
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="bg-primary/20 p-2 rounded-xl">
                 <Sparkles className="text-primary" size={20} />
               </div>
-              <h3 className="text-2xl font-black tracking-tight">Tamil Hits</h3>
+              <h3 className="text-2xl font-black tracking-tight capitalize">{selectedLanguages[0] || 'Tamil'} Hits</h3>
             </div>
             <button className="text-xs font-bold text-primary hover:underline underline-offset-4">VIEW ALL</button>
           </div>
@@ -140,8 +143,8 @@ const Index = () => {
                 </div>
               ))
             ) : (
-              tamilSongs.slice(0, 10).map((song) => (
-                <SongCard key={song.id} song={song} allSongs={tamilSongs} />
+              featuredSongs.slice(0, 10).map((song) => (
+                <SongCard key={song.id} song={song} allSongs={featuredSongs} />
               ))
             )}
           </div>
