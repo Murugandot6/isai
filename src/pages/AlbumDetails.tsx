@@ -23,23 +23,28 @@ const AlbumDetails = () => {
       if (!id) return;
       setLoading(true);
       try {
+        // 1. Fetch the basic album details
         const data = await musicApi.getAlbumDetails(id);
+        
         if (data && data.songs && data.songs.length > 0) {
-          // The album API often returns songs with the album's image.
-          // To get the "correct" song-specific images, we fetch the full details for all songs in bulk.
+          // 2. The album endpoint often returns the album cover for all songs.
+          // We fetch the specific song details in bulk to get the "real" individual images.
           const songIds = data.songs.map(s => s.id);
           const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
           
           if (fullSongs && fullSongs.length > 0) {
-            // Map the full details back to the album's song list order
-            // This ensures we use the song-specific metadata (including images) from the /songs endpoint
-            data.songs = data.songs.map(originalSong => {
+            // 3. Map the enriched data back to the album's song list
+            const enrichedSongs = data.songs.map(originalSong => {
               const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
-              return fullDetail || originalSong;
+              // If we found full details, use them (they contain the correct individual images)
+              return fullDetail ? { ...fullDetail } : originalSong;
             });
+            data.songs = enrichedSongs;
           }
         }
-        setAlbum(data);
+        
+        // 4. Set the state with the enriched data
+        setAlbum(data ? { ...data } : null);
       } catch (error) {
         console.error("Failed to fetch album details", error);
       } finally {
