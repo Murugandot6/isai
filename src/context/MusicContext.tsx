@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
-import { Song, musicApi } from '@/services/musicApi';
+import { Song, musicApi, normalizeSong } from '@/services/musicApi';
 import { RadioStation } from '@/services/radioApi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,6 +50,7 @@ interface MusicContextType {
   toggleShuffle: (fromSync?: boolean) => void;
   repeatMode: 'none' | 'one' | 'all';
   toggleRepeat: (fromSync?: boolean) => void;
+  queue: Song[];
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -135,25 +136,42 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
     if (!audioRef.current) audioRef.current = new Audio();
     const toastId = fromSync ? null : toast.loading("Loading track...");
+    
     try {
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO');
-      const fullSong = isRadio ? song : (await musicApi.getSongDetails(song.id) || song);
+      
+      // Ensure we have the full song details with download URLs
+      let fullSong = song;
+      if (!isRadio && (!song.downloadUrl || song.downloadUrl.length === 0)) {
+        const details = await musicApi.getSongDetails(song.id);
+        if (details) fullSong = details;
+      }
+      
+      // Final normalization check
+      fullSong = normalizeSong(fullSong);
+
       const downloadUrls = fullSong.downloadUrl || [];
-      if (downloadUrls.length === 0) {
+      if (downloadUrls.length === 0 && !isRadio) {
         if (toastId) toast.error("No stream links found.", { id: toastId });
         return;
       }
-      const links = [...downloadUrls].reverse();
+
+      const audio = audioRef.current;
+      audio.pause();
+
+      // For radio, use the direct URL. For songs, try the highest quality link.
+      const links = isRadio ? [{ link: (song as any).downloadUrl?.[0]?.link || (song as any).url }] : [...downloadUrls].reverse();
+      
       let success = false;
       for (const linkObj of links) {
         try {
-          const rawUrl = linkObj.link || linkObj.url;
+          const rawUrl = linkObj.link || (linkObj as any).url;
           if (!rawUrl) continue;
+          
           const streamUrl = rawUrl.replace('http://', 'https://');
-          const audio = audioRef.current;
-          audio.pause();
           audio.src = streamUrl;
           audio.load();
+          
           await new Promise((resolve, reject) => {
             const onCanPlay = () => { resolve(true); audio.removeEventListener('canplay', onCanPlay); };
             const onError = () => { reject(new Error("Link broken")); audio.removeEventListener('error', onError); };
@@ -161,23 +179,28 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             audio.addEventListener('error', onError);
             setTimeout(() => reject(new Error("Timeout")), 10000);
           });
+          
           await audio.play();
           success = true;
           break;
         } catch (e) { continue; }
       }
+
       if (!success) throw new Error("All stream links failed");
+
       setCurrentSong(fullSong);
       setIsPlaying(true);
       if (toastId) toast.dismiss(toastId);
+
       if (newQueue) {
-        setQueue(newQueue);
+        setQueue(newQueue.map(normalizeSong));
         const idx = newQueue.findIndex(s => s.id === song.id);
         setCurrentIndex(idx);
       } else if (stateRef.current.queue.length > 0) {
         const idx = stateRef.current.queue.findIndex(s => s.id === song.id);
         setCurrentIndex(idx);
       }
+
       if (!fromSync) {
         setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
         broadcast('play', { song: fullSong, playing: true, time: 0, queue: newQueue || stateRef.current.queue });
@@ -354,7 +377,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious,
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation, isStationLiked,
-      recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat
+      recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat,
+      queue
     }}>
       {children}
     </MusicContext.Provider>

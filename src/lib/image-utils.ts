@@ -9,17 +9,17 @@ export const getHighResImage = (image: any) => {
   
   if (!image) return fallback;
 
-  // If it's already a string, just clean it up
+  // If it's already a string
   if (typeof image === 'string') {
     return image.replace('http://', 'https://');
   }
 
-  // If it's an array of image objects
+  // If it's an array of image objects (standard Saavn API format)
   if (Array.isArray(image) && image.length > 0) {
-    // Get the last item (usually highest quality)
+    // Get the last item (highest quality)
     const imageObj = image[image.length - 1];
     
-    // Some API versions use 'link', others use 'url'
+    // Handle both 'link' and 'url' properties
     const imageUrl = imageObj.link || imageObj.url;
     
     if (imageUrl && typeof imageUrl === 'string') {
