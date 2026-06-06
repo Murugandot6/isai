@@ -69,6 +69,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
+  const isInitialSyncRef = useRef(true);
 
   useEffect(() => {
     localStorage.setItem('sonic_liked_songs', JSON.stringify(likedSongs));
@@ -112,13 +113,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Sync effect with initialization request
   useEffect(() => {
     if (!roomCode) {
       if (channelRef.current) {
         channelRef.current.unsubscribe();
         channelRef.current = null;
       }
+      isInitialSyncRef.current = true;
       return;
     }
 
@@ -132,7 +133,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         switch (type) {
           case 'request_state':
-            // If someone joins and asks for state, and we are playing, share it
             if (currentSong) {
               broadcast('play', { 
                 song: currentSong, 
@@ -143,14 +143,21 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             break;
           case 'play':
             if (data.song) {
-              // Only trigger play if it's a different song or we are starting from scratch
-              if (!currentSong || currentSong.id !== data.song.id) {
+              const shouldPlay = !currentSong || currentSong.id !== data.song.id || isInitialSyncRef.current;
+              
+              if (shouldPlay) {
+                isInitialSyncRef.current = false;
                 playSong(data.song, true).then(() => {
-                  if (data.time) audioRef.current!.currentTime = data.time;
-                  if (data.playing === false) audioRef.current?.pause();
+                  if (data.time && audioRef.current) {
+                    audioRef.current.currentTime = data.time;
+                  }
+                  if (data.playing === false) {
+                    audioRef.current?.pause();
+                    setIsPlaying(false);
+                  }
                 });
-              } else if (data.time && Math.abs(data.time - audioRef.current!.currentTime) > 3) {
-                audioRef.current!.currentTime = data.time;
+              } else if (data.time && audioRef.current && Math.abs(data.time - audioRef.current.currentTime) > 3) {
+                audioRef.current.currentTime = data.time;
               }
             }
             break;
@@ -161,7 +168,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             resumeSong(true);
             break;
           case 'seek':
-            if (Math.abs(data.time - audioRef.current!.currentTime) > 2) {
+            if (audioRef.current && Math.abs(data.time - audioRef.current.currentTime) > 2) {
               seek(data.time, true);
             }
             break;
@@ -169,8 +176,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          // Ask for current state as soon as we join the room
-          setTimeout(() => broadcast('request_state', {}), 500);
+          // Small delay to ensure channel is ready
+          setTimeout(() => {
+            broadcast('request_state', {});
+          }, 1000);
         }
       });
 
@@ -181,29 +190,66 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const playSong = async (song: Song, fromSync: boolean = false) => {
     if (!audioRef.current) return;
     
+    const toastId = fromSync ? null : toast.loading("Loading track...");
+    
     try {
-      // Get fresh details to ensure we have the correct download links
       const details = await musicApi.getSongDetails(song.id);
       const fullSong = details || song;
       
       const downloadUrls = fullSong.downloadUrl || [];
       if (downloadUrls.length === 0) {
-        toast.error("No stream links found for this track.");
+        if (toastId) toast.error("No stream links found.", { id: toastId });
         return;
       }
 
-      // Find best quality link and ensure it's HTTPS
-      const bestLink = downloadUrls[downloadUrls.length - 1].link;
-      const streamUrl = bestLink.replace('http://', 'https://');
-      
-      const audio = audioRef.current;
-      audio.pause();
-      audio.src = streamUrl;
-      audio.load();
-      await audio.play();
+      // Try highest quality first, then fallback
+      const links = [...downloadUrls].reverse();
+      let success = false;
+
+      for (const linkObj of links) {
+        try {
+          const streamUrl = linkObj.link.replace('http://', 'https://');
+          const audio = audioRef.current;
+          
+          audio.pause();
+          audio.src = streamUrl;
+          audio.load();
+          
+          // We need to wait for a bit of data to ensure the link isn't broken
+          await new Promise((resolve, reject) => {
+            const onCanPlay = () => {
+              audio.removeEventListener('canplay', onCanPlay);
+              audio.removeEventListener('error', onError);
+              resolve(true);
+            };
+            const onError = () => {
+              audio.removeEventListener('canplay', onCanPlay);
+              audio.removeEventListener('error', onError);
+              reject(new Error("Link broken"));
+            };
+            audio.addEventListener('canplay', onCanPlay);
+            audio.addEventListener('error', onError);
+            
+            // Timeout for the check
+            setTimeout(() => reject(new Error("Timeout")), 5000);
+          });
+
+          await audio.play();
+          success = true;
+          break;
+        } catch (e) {
+          console.warn("Link failed, trying next quality...", e);
+          continue;
+        }
+      }
+
+      if (!success) {
+        throw new Error("All stream links failed");
+      }
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
+      if (toastId) toast.success(`Playing: ${fullSong.name}`, { id: toastId });
 
       if (!fromSync) {
         setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
@@ -215,7 +261,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch (error) {
       console.error('Playback Error:', error);
-      toast.error("Failed to play this track. Link might be expired.");
+      if (toastId) toast.error("Failed to play this track. Try another one.", { id: toastId });
       setIsPlaying(false);
     }
   };
@@ -242,7 +288,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Rest of the implementation...
   const createPlaylist = (name: string) => {
     const newPlaylist: Playlist = {
       id: Math.random().toString(36).substr(2, 9),
