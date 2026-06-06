@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Disc, Calendar, Music, Loader2 } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
+import { useMusic } from '@/context/MusicContext';
 
 const AlbumDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,13 @@ const AlbumDetails = () => {
       setLoading(true);
       try {
         const data = await musicApi.getAlbumDetails(id);
+        if (data && data.songs) {
+          // Ensure songs have the album image if they don't have their own high-res data
+          data.songs = data.songs.map(s => ({
+            ...s,
+            image: (s.image && s.image.length > 0) ? s.image : data.image
+          }));
+        }
         setAlbum(data);
       } catch (error) {
         console.error("Failed to fetch album details", error);
@@ -121,5 +129,4 @@ const AlbumDetails = () => {
   );
 };
 
-import { useMusic } from '@/context/MusicContext';
 export default AlbumDetails;
