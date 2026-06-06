@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
-import { Mic2, Star, ArrowLeft, Play, Loader2 } from 'lucide-react';
+import { Mic2, Star, ArrowLeft, Play, Loader2, Globe } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const FAMOUS_ARTISTS = [
   { name: 'A.R. Rahman', id: 'rahman', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=300' },
@@ -21,21 +22,67 @@ const FAMOUS_ARTISTS = [
 ];
 
 const Artists = () => {
-  const { playSong } = useMusic();
+  const { playSong, selectedLanguages } = useMusic();
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const observer = useRef<IntersectionObserver | null>(null);
 
-  const handleArtistClick = async (artist: any) => {
-    setSelectedArtist(artist);
+  const lastSongElementRef = useCallback((node: HTMLDivElement) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
+
+  const fetchSongs = useCallback(async (artistName: string, pageNum: number) => {
     setLoading(true);
     try {
-      const results = await musicApi.searchSongs(artist.name);
-      setArtistSongs(results);
+      const results = await musicApi.searchSongs(artistName, pageNum, 30);
+      
+      // Filter by global selected languages
+      const filteredResults = results.filter(song => 
+        selectedLanguages.includes(song.language.toLowerCase())
+      );
+
+      if (results.length === 0) {
+        setHasMore(false);
+      } else {
+        setArtistSongs(prev => pageNum === 1 ? filteredResults : [...prev, ...filteredResults]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch artist songs", error);
     } finally {
       setLoading(false);
     }
+  }, [selectedLanguages]);
+
+  useEffect(() => {
+    if (selectedArtist) {
+      fetchSongs(selectedArtist.name, page);
+    }
+  }, [selectedArtist, page, fetchSongs]);
+
+  const handleArtistClick = (artist: any) => {
+    setArtistSongs([]);
+    setPage(1);
+    setHasMore(true);
+    setSelectedArtist(artist);
   };
+
+  // Group songs by language
+  const groupedSongs = artistSongs.reduce((acc: Record<string, Song[]>, song) => {
+    const lang = song.language.charAt(0).toUpperCase() + song.language.slice(1);
+    if (!acc[lang]) acc[lang] = [];
+    acc[lang].push(song);
+    return acc;
+  }, {});
 
   if (selectedArtist) {
     return (
@@ -62,24 +109,50 @@ const Artists = () => {
                   className="rounded-full px-8 h-12 font-bold gap-2 shadow-xl shadow-primary/20"
                 >
                   <Play size={18} fill="currentColor" />
-                  Play Top Tracks
+                  Play All
                 </Button>
-                <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">{artistSongs.length} Tracks Found</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedLanguages.map(lang => (
+                    <Badge key={lang} variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[10px] font-bold">
+                      {lang}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <Skeleton key={i} className="aspect-square rounded-2xl" />
-              ))}
+          <div className="space-y-12">
+            {Object.entries(groupedSongs).map(([language, songs]) => (
+              <section key={language} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-accent/10 p-2 rounded-lg">
+                    <Globe size={18} className="text-muted-foreground" />
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight">{language} Tracks</h2>
+                  <span className="text-xs font-bold text-muted-foreground bg-accent/5 px-2 py-0.5 rounded-full">{songs.length}</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                  {songs.map((song, index) => (
+                    <div key={`${song.id}-${index}`} ref={index === songs.length - 1 ? lastSongElementRef : null}>
+                      <SongCard song={song} allSongs={artistSongs} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          {loading && (
+            <div className="flex justify-center py-12">
+              <Loader2 className="animate-spin text-primary" size={32} />
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {artistSongs.map((song) => (
-                <SongCard key={song.id} song={song} allSongs={artistSongs} />
-              ))}
+          )}
+
+          {!loading && artistSongs.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground font-bold">No songs found for your selected languages.</p>
+              <p className="text-xs text-muted-foreground mt-2">Try adding more languages in the header.</p>
             </div>
           )}
         </div>

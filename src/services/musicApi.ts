@@ -1,18 +1,17 @@
 "use client";
 
-// Using the API endpoint provided by the user
 const BASE_URL = 'https://saavn.sumit.co/api';
 
 export interface Image {
   quality: string;
   link: string;
-  url?: string; // Adding optional url property
+  url?: string;
 }
 
 export interface DownloadUrl {
   quality: string;
   link: string;
-  url?: string; // Adding optional url property
+  url?: string;
 }
 
 export interface Song {
@@ -44,9 +43,10 @@ export const musicApi = {
       return await musicApi.searchSongs('latest hits');
     }
   },
-  searchSongs: async (query: string) => {
+  searchSongs: async (query: string, page: number = 1, limit: number = 20) => {
     try {
-      const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&limit=20`);
+      // Using 'p' for page and 'n' for count as per standard Saavn API wrappers
+      const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       return (data.data?.results || []) as Song[];
@@ -57,7 +57,6 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      // Changed 'id' to 'ids' as many Saavn API wrappers expect a comma-separated list of IDs
       const res = await fetch(`${BASE_URL}/songs?ids=${id}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
