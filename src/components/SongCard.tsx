@@ -2,18 +2,23 @@
 
 import React from 'react';
 import { Song } from '@/services/musicApi';
-import { Play, Pause, Globe } from 'lucide-react';
+import { Play, Pause, Globe, Heart } from 'lucide-react';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export const SongCard: React.FC<{ song: Song }> = ({ song }) => {
-  const { currentSong, isPlaying, playSong, togglePlay } = useMusic();
+  const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked } = useMusic();
   const isCurrent = currentSong?.id === song.id;
+  const liked = isLiked(song.id);
   
   const imageUrl = getHighResImage(song.image);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // If clicking the heart, don't trigger play
+    if ((e.target as HTMLElement).closest('.like-button')) return;
+    
     if (isCurrent) {
       togglePlay();
     } else {
@@ -41,6 +46,17 @@ export const SongCard: React.FC<{ song: Song }> = ({ song }) => {
             {song.language}
           </Badge>
         </div>
+
+        {/* Like Button */}
+        <button 
+          onClick={() => toggleLike(song)}
+          className={cn(
+            "like-button absolute top-2 right-2 z-10 p-2 rounded-full transition-all duration-300 backdrop-blur-md",
+            liked ? "bg-primary text-white opacity-100" : "bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-black/60"
+          )}
+        >
+          <Heart size={14} fill={liked ? "currentColor" : "none"} />
+        </button>
 
         <div className={`absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${isCurrent && isPlaying ? 'opacity-100' : ''}`}>
           <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">

@@ -21,9 +21,12 @@ interface MusicContextType {
   setRoomCode: (code: string | null) => void;
   isHost: boolean;
   setIsHost: (isHost: boolean) => void;
-  // Global Language Settings
   selectedLanguages: string[];
   toggleLanguage: (lang: string) => void;
+  // Library & Liked Songs
+  likedSongs: Song[];
+  toggleLike: (song: Song) => void;
+  isLiked: (songId: string) => boolean;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -38,8 +41,19 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isHost, setIsHost] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi']);
   
+  // Initialize liked songs from localStorage
+  const [likedSongs, setLikedSongs] = useState<Song[]>(() => {
+    const saved = localStorage.getItem('sonic_liked_songs');
+    return saved ? JSON.parse(saved) : [];
+  });
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
+
+  // Persist liked songs
+  useEffect(() => {
+    localStorage.setItem('sonic_liked_songs', JSON.stringify(likedSongs));
+  }, [likedSongs]);
 
   useEffect(() => {
     if (!audioRef.current) {
@@ -81,6 +95,20 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         : [...prev, lang]
     );
   };
+
+  const toggleLike = (song: Song) => {
+    setLikedSongs(prev => {
+      const exists = prev.find(s => s.id === song.id);
+      if (exists) {
+        toast.info(`Removed ${song.name} from your library`);
+        return prev.filter(s => s.id !== song.id);
+      }
+      toast.success(`Added ${song.name} to your library`);
+      return [song, ...prev];
+    });
+  };
+
+  const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
 
   // Real-time Sync logic
   useEffect(() => {
@@ -191,7 +219,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       currentSong, isPlaying, playSong, pauseSong, resumeSong,
       togglePlay, currentTime, duration, volume, setVolume, seek,
       roomCode, setRoomCode, isHost, setIsHost,
-      selectedLanguages, toggleLanguage
+      selectedLanguages, toggleLanguage,
+      likedSongs, toggleLike, isLiked
     }}>
       {children}
     </MusicContext.Provider>

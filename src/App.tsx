@@ -7,6 +7,7 @@ import { MusicProvider } from "@/context/MusicContext";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Radio from "./pages/Radio";
+import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/search" element={<Search />} />
             <Route path="/radio" element={<Radio />} />
+            <Route path="/library" element={<Library />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
