@@ -31,16 +31,29 @@ export interface Song {
   downloadUrl: DownloadUrl[];
 }
 
+export interface Album {
+  id: string;
+  name: string;
+  year: string;
+  type: string;
+  playCount: string;
+  language: string;
+  explicitContent: boolean;
+  songCount: string;
+  url: string;
+  primaryArtists: string;
+  image: Image[];
+  songs?: Song[];
+}
+
 /**
  * Normalizes song data from different API endpoints to a consistent format.
- * Some endpoints return artists as objects, others as strings.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
 
   let primaryArtists = song.primaryArtists;
   
-  // If primaryArtists is missing but artists object exists (common in Artist Top Songs API)
   if (!primaryArtists && song.artists) {
     if (Array.isArray(song.artists.primary)) {
       primaryArtists = song.artists.primary.map((a: any) => a.name).join(', ');
@@ -52,7 +65,6 @@ export const normalizeSong = (song: any): Song => {
   return {
     ...song,
     primaryArtists: primaryArtists || 'Unknown Artist',
-    // Ensure image and downloadUrl are arrays
     image: Array.isArray(song.image) ? song.image : [],
     downloadUrl: Array.isArray(song.downloadUrl) ? song.downloadUrl : []
   };
@@ -81,6 +93,32 @@ export const musicApi = {
     } catch (error) {
       console.error("Search fetch error:", error);
       return [];
+    }
+  },
+  searchAlbums: async (query: string, page: number = 1, limit: number = 20) => {
+    try {
+      const res = await fetch(`${BASE_URL}/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      return (data.data?.results || []) as Album[];
+    } catch (error) {
+      console.error("Album search error:", error);
+      return [];
+    }
+  },
+  getAlbumDetails: async (id: string) => {
+    try {
+      const res = await fetch(`${BASE_URL}/albums?id=${id}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      const album = data.data;
+      if (album && album.songs) {
+        album.songs = album.songs.map(normalizeSong);
+      }
+      return album as Album;
+    } catch (error) {
+      console.error("Album details fetch error:", error);
+      return null;
     }
   },
   getSongDetails: async (id: string) => {

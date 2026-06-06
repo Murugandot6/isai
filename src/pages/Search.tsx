@@ -2,27 +2,35 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Song } from '@/services/musicApi';
+import { musicApi, Song, Album } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
-import { Search as SearchIcon, Loader2 } from 'lucide-react';
+import { AlbumCard } from '@/components/AlbumCard';
+import { Search as SearchIcon, Loader2, Music, Disc } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   
   const [query, setQuery] = useState(urlQuery);
-  const [results, setResults] = useState<Song[]>([]);
+  const [songResults, setSongResults] = useState<Song[]>([]);
+  const [albumResults, setAlbumResults] = useState<Album[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('songs');
 
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
 
     setLoading(true);
     try {
-      const data = await musicApi.searchSongs(searchQuery);
-      setResults(data);
+      const [songs, albums] = await Promise.all([
+        musicApi.searchSongs(searchQuery),
+        musicApi.searchAlbums(searchQuery)
+      ]);
+      setSongResults(songs);
+      setAlbumResults(albums);
     } catch (error) {
       console.error('Search failed', error);
     } finally {
@@ -30,7 +38,6 @@ const Search = () => {
     }
   }, []);
 
-  // Handle initial search from URL
   useEffect(() => {
     if (urlQuery) {
       setQuery(urlQuery);
@@ -41,8 +48,6 @@ const Search = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-    
-    // Update URL which triggers the useEffect
     setSearchParams({ q: query });
   };
 
@@ -56,7 +61,7 @@ const Search = () => {
             <Input 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for songs, artists, or albums..." 
+              placeholder="Search for songs, movies, or albums..." 
               className="pl-12 py-7 bg-accent/5 border-2 border-transparent focus-visible:ring-0 focus-visible:border-primary/20 rounded-2xl text-lg transition-all"
             />
             <button 
@@ -70,12 +75,37 @@ const Search = () => {
           </form>
         </div>
 
-        {results.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-in fade-in duration-500">
-            {results.map((song) => (
-              <SongCard key={song.id} song={song} allSongs={results} />
-            ))}
-          </div>
+        {(songResults.length > 0 || albumResults.length > 0) ? (
+          <Tabs defaultValue="songs" className="w-full" onValueChange={setActiveTab}>
+            <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-fit">
+              <TabsTrigger value="songs" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Music size={16} />
+                Songs
+                <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{songResults.length}</span>
+              </TabsTrigger>
+              <TabsTrigger value="albums" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Disc size={16} />
+                Albums
+                <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{albumResults.length}</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="songs" className="animate-in fade-in duration-500">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {songResults.map((song) => (
+                  <SongCard key={song.id} song={song} allSongs={songResults} />
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="albums" className="animate-in fade-in duration-500">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {albumResults.map((album) => (
+                  <AlbumCard key={album.id} album={album} />
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         ) : !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center animate-in slide-in-from-top-4 duration-500">
             <div className="bg-accent/5 p-8 rounded-full mb-6">
