@@ -5,32 +5,37 @@ import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings } from 'lucide-react';
+import { Search, Bell, Settings, TrendingUp, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
 
 const Index = () => {
   const [tamilSongs, setTamilSongs] = useState<Song[]>([]);
+  const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const { playSong } = useMusic();
+  const { playSong, selectedLanguages } = useMusic();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTamilContent = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await musicApi.searchSongs('Tamil hits');
-        setTamilSongs(data);
+        const [tamilData, trendingData] = await Promise.all([
+          musicApi.searchSongs('Tamil hits'),
+          musicApi.getTrending(selectedLanguages.join(','))
+        ]);
+        setTamilSongs(tamilData);
+        setTrendingSongs(trendingData);
       } catch (error) {
-        console.error('Failed to fetch Tamil songs', error);
+        console.error('Failed to fetch content', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchTamilContent();
-  }, []);
+    fetchData();
+  }, [selectedLanguages]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +51,7 @@ const Index = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black mb-2 tracking-tight">Vanakkam,</h1>
-            <p className="text-muted-foreground font-medium">Explore the best of Tamil cinema and independent music.</p>
+            <p className="text-muted-foreground font-medium">Your personalized soundtrack for today.</p>
           </div>
           <div className="flex items-center gap-4">
             <form onSubmit={handleSearch} className="relative w-full md:w-64">
@@ -65,32 +70,40 @@ const Index = () => {
 
         {/* Featured Hero */}
         <div 
-          className="relative h-[300px] rounded-3xl overflow-hidden mb-12 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
-          onClick={() => tamilSongs.length > 0 && playSong(tamilSongs[0], tamilSongs)}
+          className="relative h-[350px] rounded-3xl overflow-hidden mb-16 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
+          onClick={() => trendingSongs.length > 0 && playSong(trendingSongs[0], trendingSongs)}
         >
           <img 
             src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2070&auto=format&fit=crop" 
-            alt="Tamil Music Hero" 
+            alt="Music Hero" 
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-8 md:p-12">
-            <span className="bg-primary/20 backdrop-blur-md text-primary-foreground text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-white/10 w-fit mb-4">Must Listen</span>
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tighter">Tamil Unplugged & Melodies</h2>
-            <p className="text-white/70 max-w-md text-sm leading-relaxed mb-6">Discover soulful renditions and the latest chart-topping hits from Kollywood.</p>
-            <button className="bg-white text-black px-8 py-3 rounded-full font-bold text-sm hover:bg-primary hover:text-white transition-all w-fit">Listen Now</button>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-8 md:p-12">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="bg-primary text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full">Featured</span>
+              <span className="bg-white/10 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-white/10">New Release</span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter">Global Hits & Melodies</h2>
+            <p className="text-white/70 max-w-md text-sm leading-relaxed mb-8">Experience the most streamed tracks across your favorite languages.</p>
+            <button className="bg-primary text-white px-10 py-4 rounded-full font-bold text-sm hover:scale-105 transition-all w-fit shadow-xl shadow-primary/30">Listen Now</button>
           </div>
         </div>
 
-        {/* Tamil Songs Section */}
-        <section>
+        {/* Trending Section */}
+        <section className="mb-16">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-2xl font-black tracking-tight">Tamil Hits</h3>
-            <button className="text-xs font-bold text-primary hover:underline underline-offset-4">VIEW ALL</button>
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-500/20 p-2 rounded-xl">
+                <TrendingUp className="text-orange-500" size={20} />
+              </div>
+              <h3 className="text-2xl font-black tracking-tight">Trending Now</h3>
+            </div>
+            <button className="text-xs font-bold text-primary hover:underline underline-offset-4">EXPLORE ALL</button>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {loading ? (
-              Array.from({ length: 15 }).map((_, i) => (
+              Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-square w-full rounded-2xl" />
                   <Skeleton className="h-4 w-3/4" />
@@ -98,7 +111,36 @@ const Index = () => {
                 </div>
               ))
             ) : (
-              tamilSongs.map((song) => (
+              trendingSongs.slice(0, 10).map((song) => (
+                <SongCard key={song.id} song={song} allSongs={trendingSongs} />
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Tamil Hits Section */}
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/20 p-2 rounded-xl">
+                <Sparkles className="text-primary" size={20} />
+              </div>
+              <h3 className="text-2xl font-black tracking-tight">Tamil Hits</h3>
+            </div>
+            <button className="text-xs font-bold text-primary hover:underline underline-offset-4">VIEW ALL</button>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-square w-full rounded-2xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))
+            ) : (
+              tamilSongs.slice(0, 10).map((song) => (
                 <SongCard key={song.id} song={song} allSongs={tamilSongs} />
               ))
             )}

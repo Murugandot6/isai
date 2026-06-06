@@ -1,11 +1,18 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useMusic } from '@/context/MusicContext';
-import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle, Repeat1 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle, Repeat1, ListMusic, X } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getHighResImage } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -17,7 +24,7 @@ export const MusicPlayer = () => {
   const { 
     currentSong, isPlaying, togglePlay, currentTime, duration, seek, 
     volume, setVolume, playNext, playPrevious, isShuffle, toggleShuffle, 
-    repeatMode, toggleRepeat 
+    repeatMode, toggleRepeat, queue, playSong
   } = useMusic();
 
   if (!currentSong) return null;
@@ -61,7 +68,7 @@ export const MusicPlayer = () => {
           </button>
           <button 
             onClick={() => playPrevious()}
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <SkipBack size={24} fill="currentColor" />
           </button>
@@ -73,7 +80,7 @@ export const MusicPlayer = () => {
           </button>
           <button 
             onClick={() => playNext()}
-            className="text-foreground hover:text-primary transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <SkipForward size={24} fill="currentColor" />
           </button>
@@ -98,16 +105,61 @@ export const MusicPlayer = () => {
         </div>
       </div>
 
-      {/* Volume (Desktop) */}
-      <div className="hidden md:flex items-center justify-end gap-3 w-1/3">
-        <Volume2 size={20} className="text-muted-foreground" />
-        <Slider 
-          value={[volume * 100]} 
-          max={100} 
-          step={1}
-          onValueChange={([val]) => setVolume(val / 100)}
-          className="w-24 cursor-pointer"
-        />
+      {/* Volume & Queue (Desktop) */}
+      <div className="hidden md:flex items-center justify-end gap-4 w-1/3">
+        <div className="flex items-center gap-2">
+          <Volume2 size={18} className="text-muted-foreground" />
+          <Slider 
+            value={[volume * 100]} 
+            max={100} 
+            step={1}
+            onValueChange={([val]) => setVolume(val / 100)}
+            className="w-24 cursor-pointer"
+          />
+        </div>
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <button className="p-2 rounded-full hover:bg-accent/10 text-muted-foreground hover:text-foreground transition-colors">
+              <ListMusic size={20} />
+            </button>
+          </SheetTrigger>
+          <SheetContent className="w-[400px] bg-card border-border p-0">
+            <SheetHeader className="p-6 border-b border-border">
+              <SheetTitle className="text-2xl font-black">Up Next</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto h-[calc(100vh-100px)] p-4 space-y-2">
+              {queue.length > 0 ? (
+                queue.map((song, idx) => {
+                  const isCurrent = currentSong.id === song.id;
+                  return (
+                    <div 
+                      key={`${song.id}-${idx}`}
+                      onClick={() => playSong(song)}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all",
+                        isCurrent ? "bg-primary/10 border border-primary/20" : "hover:bg-accent/5"
+                      )}
+                    >
+                      <img src={getHighResImage(song.image)} className="w-10 h-10 rounded-lg object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <p className={cn("text-sm font-bold truncate", isCurrent ? "text-primary" : "text-foreground")} dangerouslySetInnerHTML={{ __html: song.name }}></p>
+                        <p className="text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: song.primaryArtists }}></p>
+                      </div>
+                      {isCurrent && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
+                  <ListMusic size={48} className="mb-4 opacity-20" />
+                  <p className="font-bold">Queue is empty</p>
+                  <p className="text-xs">Play a song to start your queue.</p>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );

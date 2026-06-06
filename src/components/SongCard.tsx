@@ -2,27 +2,44 @@
 
 import React from 'react';
 import { Song } from '@/services/musicApi';
-import { Play, Pause, Globe, Heart } from 'lucide-react';
+import { Play, Pause, Globe, Heart, MoreHorizontal, Plus, Share2, ListMusic } from 'lucide-react';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
+import { toast } from 'sonner';
 
 export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, allSongs }) => {
-  const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked } = useMusic();
+  const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked, playlists, addToPlaylist } = useMusic();
   const isCurrent = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   
   const imageUrl = getHighResImage(song.image);
 
   const handleClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('.like-button')) return;
+    if ((e.target as HTMLElement).closest('.action-button')) return;
     
     if (isCurrent) {
       togglePlay();
     } else {
       playSong(song, allSongs);
     }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.origin + `/#/search?q=${encodeURIComponent(song.name)}`);
+    toast.success("Link copied to clipboard!");
   };
 
   return (
@@ -45,15 +62,57 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
           </Badge>
         </div>
 
-        <button 
-          onClick={() => toggleLike(song)}
-          className={cn(
-            "like-button absolute top-2 right-2 z-10 p-2 rounded-full transition-all duration-300 backdrop-blur-md",
-            liked ? "bg-primary text-white opacity-100" : "bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-black/60"
-          )}
-        >
-          <Heart size={14} fill={liked ? "currentColor" : "none"} />
-        </button>
+        <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
+          <button 
+            onClick={() => toggleLike(song)}
+            className={cn(
+              "action-button p-2 rounded-full transition-all duration-300 backdrop-blur-md",
+              liked ? "bg-primary text-white opacity-100" : "bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-black/60"
+            )}
+          >
+            <Heart size={14} fill={liked ? "currentColor" : "none"} />
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="action-button p-2 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-black/60 backdrop-blur-md transition-all">
+                <MoreHorizontal size={14} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 rounded-xl bg-card border-border shadow-2xl">
+              <DropdownMenuLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2 rounded-lg m-1 cursor-pointer">
+                  <Plus size={16} />
+                  <span>Add to Playlist</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="rounded-xl bg-card border-border shadow-2xl min-w-[180px]">
+                  {playlists.length > 0 ? (
+                    playlists.map(p => (
+                      <DropdownMenuItem 
+                        key={p.id} 
+                        onClick={() => addToPlaylist(p.id, song)}
+                        className="gap-2 rounded-lg m-1 cursor-pointer"
+                      >
+                        <ListMusic size={14} />
+                        <span className="truncate">{p.name}</span>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled className="text-xs italic p-4">No playlists found</DropdownMenuItem>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              <DropdownMenuItem onClick={handleShare} className="gap-2 rounded-lg m-1 cursor-pointer">
+                <Share2 size={16} />
+                <span>Share Song</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         <div className={`absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${isCurrent && isPlaying ? 'opacity-100' : ''}`}>
           <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
