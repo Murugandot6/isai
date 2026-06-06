@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Toast,
@@ -21,8 +24,8 @@ export function Toaster() {
               {description && (
                 <ToastDescription>{description}</ToastDescription>
               )}
+              {action}
             </div>
-            {action}
             <ToastClose />
           </Toast>
         );
