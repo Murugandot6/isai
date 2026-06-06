@@ -5,32 +5,23 @@ import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings, Filter } from 'lucide-react';
+import { Search, Bell, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-
-const LANGUAGES = [
-  { id: 'hindi', label: 'Hindi' },
-  { id: 'english', label: 'English' },
-  { id: 'punjabi', label: 'Punjabi' },
-  { id: 'telugu', label: 'Telugu' },
-  { id: 'tamil', label: 'Tamil' },
-  { id: 'marathi', label: 'Marathi' },
-];
+import { useMusic } from '@/context/MusicContext';
 
 const Index = () => {
   const [trending, setTrending] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLangs, setSelectedLangs] = useState<string[]>(['hindi', 'english']);
   const [searchTerm, setSearchTerm] = useState('');
+  const { selectedLanguages } = useMusic();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTrending = async () => {
       setLoading(true);
       try {
-        const data = await musicApi.getTrending(selectedLangs.join(','));
+        const data = await musicApi.getTrending(selectedLanguages.join(','));
         setTrending(data);
       } catch (error) {
         console.error('Failed to fetch trending', error);
@@ -39,21 +30,13 @@ const Index = () => {
       }
     };
     fetchTrending();
-  }, [selectedLangs]);
+  }, [selectedLanguages]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
-  };
-
-  const toggleLanguage = (id: string) => {
-    setSelectedLangs(prev => 
-      prev.includes(id) 
-        ? prev.filter(l => l !== id) 
-        : [...prev, id]
-    );
   };
 
   return (
@@ -63,7 +46,7 @@ const Index = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black mb-2 tracking-tight">Good evening,</h1>
-            <p className="text-muted-foreground font-medium">Ready to discover something new today?</p>
+            <p className="text-muted-foreground font-medium">Content is synced to your global language preferences.</p>
           </div>
           <div className="flex items-center gap-4">
             <form onSubmit={handleSearch} className="relative w-full md:w-64">
@@ -92,30 +75,6 @@ const Index = () => {
             <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tighter">Late Night Chill & Lo-fi</h2>
             <p className="text-white/70 max-w-md text-sm leading-relaxed mb-6">Escape reality with our hand-picked selection of the best lo-fi beats and relaxing melodies.</p>
             <button className="bg-white text-black px-8 py-3 rounded-full font-bold text-sm hover:bg-primary hover:text-white transition-all w-fit">Listen Now</button>
-          </div>
-        </div>
-
-        {/* Language Filter */}
-        <div className="mb-10 overflow-x-auto pb-2 scrollbar-none">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 bg-accent/5 rounded-full border border-accent/10 text-xs font-bold text-muted-foreground mr-2 shrink-0">
-              <Filter size={14} />
-              LANGUAGES
-            </div>
-            {LANGUAGES.map(lang => (
-              <button
-                key={lang.id}
-                onClick={() => toggleLanguage(lang.id)}
-                className={cn(
-                  "px-5 py-2 rounded-full text-xs font-bold transition-all shrink-0 border",
-                  selectedLangs.includes(lang.id)
-                    ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20"
-                    : "bg-accent/5 border-transparent text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-                )}
-              >
-                {lang.label}
-              </button>
-            ))}
           </div>
         </div>
 

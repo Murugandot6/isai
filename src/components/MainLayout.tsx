@@ -4,6 +4,7 @@ import React from 'react';
 import { Sidebar } from './Sidebar';
 import { MusicPlayer } from './MusicPlayer';
 import { ListenTogether } from './ListenTogether';
+import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
 import { Music } from 'lucide-react';
 
@@ -20,8 +21,11 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             </div>
             <span className="text-lg font-black tracking-tight italic">SONIC</span>
           </div>
-          <div className="hidden lg:block" /> {/* Spacer for desktop */}
-          <ListenTogether />
+          <div className="hidden lg:block" /> 
+          <div className="flex items-center gap-3">
+            <LanguageSelector />
+            <ListenTogether />
+          </div>
         </header>
 
         <main className="flex-1 relative pb-40 md:pb-32">

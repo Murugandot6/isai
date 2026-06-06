@@ -21,6 +21,9 @@ interface MusicContextType {
   setRoomCode: (code: string | null) => void;
   isHost: boolean;
   setIsHost: (isHost: boolean) => void;
+  // Global Language Settings
+  selectedLanguages: string[];
+  toggleLanguage: (lang: string) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -33,6 +36,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [volume, setVolume] = useState(0.7);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi']);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
@@ -52,13 +56,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setCurrentTime(0);
     };
     const handleError = () => {
-      const error = audio.error;
-      console.error("Audio player error:", error);
       setIsPlaying(false);
-      
-      if (audio.src) {
-        toast.error("Stream unavailable. Try another song.");
-      }
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -75,6 +73,14 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.src = "";
     };
   }, []);
+
+  const toggleLanguage = (lang: string) => {
+    setSelectedLanguages(prev => 
+      prev.includes(lang) 
+        ? prev.length > 1 ? prev.filter(l => l !== lang) : prev 
+        : [...prev, lang]
+    );
+  };
 
   // Real-time Sync logic
   useEffect(() => {
@@ -104,27 +110,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => { channel.unsubscribe(); };
   }, [roomCode, isHost, currentSong, isPlaying]);
 
-  useEffect(() => {
-    if (!isHost || !roomCode || !channelRef.current) return;
-    const interval = setInterval(() => {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'sync',
-        payload: { song: currentSong, playing: isPlaying, time: audioRef.current?.currentTime || 0 }
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isHost, roomCode, currentSong, isPlaying]);
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume;
-  }, [volume]);
-
   const playSong = async (song: Song, fromSync: boolean = false) => {
     if (!audioRef.current) return;
     
     try {
-      // Re-fetch details to get the freshest stream URLs as they expire quickly
       const details = await musicApi.getSongDetails(song.id);
       const fullSong = details || song;
       
@@ -134,8 +123,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return;
       }
       
-      // Best balance quality for web playback is usually around 160kbps
-      // We search for the 160kbps link specifically if possible
       const bestUrlObj = downloadUrls.find((d: any) => d.quality === '160kbps') || downloadUrls[downloadUrls.length - 1];
       let streamUrl = (bestUrlObj as any).link || (bestUrlObj as any).url;
       
@@ -144,7 +131,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return;
       }
 
-      // Ensure HTTPS
       streamUrl = String(streamUrl).replace('http://', 'https://');
       
       const audio = audioRef.current;
@@ -204,7 +190,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <MusicContext.Provider value={{
       currentSong, isPlaying, playSong, pauseSong, resumeSong,
       togglePlay, currentTime, duration, volume, setVolume, seek,
-      roomCode, setRoomCode, isHost, setIsHost
+      roomCode, setRoomCode, isHost, setIsHost,
+      selectedLanguages, toggleLanguage
     }}>
       {children}
     </MusicContext.Provider>

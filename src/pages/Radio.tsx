@@ -3,35 +3,26 @@
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { radioApi, RadioStation } from '@/services/radioApi';
-import { Radio as RadioIcon, Play, Pause, Globe, Filter, Search, Loader2 } from 'lucide-react';
+import { Radio as RadioIcon, Play, Pause, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMusic } from '@/context/MusicContext';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
-const LANGUAGES = [
-  { id: 'english', label: 'English' },
-  { id: 'tamil', label: 'Tamil' },
-  { id: 'hindi', label: 'Hindi' },
-  { id: 'spanish', label: 'Spanish' },
-  { id: 'french', label: 'French' },
-  { id: 'german', label: 'German' },
-  { id: 'punjabi', label: 'Punjabi' },
-];
-
 const Radio = () => {
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLang, setSelectedLang] = useState('english');
   const [searchQuery, setSearchQuery] = useState('');
-  const { playSong, currentSong, isPlaying } = useMusic();
+  const { playSong, currentSong, isPlaying, selectedLanguages } = useMusic();
 
   useEffect(() => {
     const fetchStations = async () => {
       setLoading(true);
       try {
-        const data = await radioApi.getStations(selectedLang);
+        // Use the primary selected language for Radio search
+        const primaryLang = selectedLanguages[0] || 'english';
+        const data = await radioApi.getStations(primaryLang);
         setStations(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Failed to fetch stations', error);
@@ -41,7 +32,7 @@ const Radio = () => {
       }
     };
     fetchStations();
-  }, [selectedLang]);
+  }, [selectedLanguages]);
 
   const handlePlayStation = (station: RadioStation) => {
     const songData: any = {
@@ -71,7 +62,7 @@ const Radio = () => {
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">LIVE FM</Badge>
             </div>
             <h1 className="text-4xl font-black tracking-tight">World Radio</h1>
-            <p className="text-muted-foreground font-medium">Listen to live broadcasts from across the globe.</p>
+            <p className="text-muted-foreground font-medium">Broadcasts from: <span className="text-primary font-bold uppercase">{selectedLanguages.join(', ')}</span></p>
           </div>
           
           <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -84,29 +75,6 @@ const Radio = () => {
                 className="pl-9 bg-accent/5 border-none h-11 rounded-xl"
               />
             </div>
-          </div>
-        </div>
-
-        <div className="mb-10 overflow-x-auto pb-2 scrollbar-none">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 bg-accent/5 rounded-full border border-accent/10 text-xs font-bold text-muted-foreground mr-2 shrink-0">
-              <Filter size={14} />
-              STATION LANGUAGE
-            </div>
-            {LANGUAGES.map(lang => (
-              <button
-                key={lang.id}
-                onClick={() => setSelectedLang(lang.id)}
-                className={cn(
-                  "px-5 py-2 rounded-full text-xs font-bold transition-all shrink-0 border",
-                  selectedLang === lang.id
-                    ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20"
-                    : "bg-accent/5 border-transparent text-muted-foreground hover:bg-accent/10 hover:text-foreground"
-                )}
-              >
-                {lang.label}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -157,7 +125,7 @@ const Radio = () => {
             })
           ) : (
             <div className="col-span-full text-center py-20 text-muted-foreground">
-              No stations found for this language.
+              No stations found for your selected languages.
             </div>
           )}
         </div>
