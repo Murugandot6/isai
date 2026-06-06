@@ -52,6 +52,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isHost, setIsHost] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi', 'tamil']);
   
+  // Refs to avoid re-subscribing to Supabase when state changes
+  const stateRef = useRef({ currentSong, isPlaying, roomCode });
+  useEffect(() => {
+    stateRef.current = { currentSong, isPlaying, roomCode };
+  }, [currentSong, isPlaying, roomCode]);
+
   const [likedSongs, setLikedSongs] = useState<Song[]>(() => {
     const saved = localStorage.getItem('sonic_liked_songs');
     return saved ? JSON.parse(saved) : [];
@@ -104,7 +110,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const broadcast = (type: string, data: any) => {
-    if (roomCode && channelRef.current) {
+    if (stateRef.current.roomCode && channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'sync',
@@ -113,6 +119,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Stable subscription effect - only depends on roomCode
   useEffect(() => {
     if (!roomCode) {
       if (channelRef.current) {
@@ -130,22 +137,24 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     channel
       .on('broadcast', { event: 'sync' }, ({ payload }) => {
         const { type, data } = payload;
+        const currentAudio = audioRef.current;
         
         switch (type) {
           case 'request_state':
-            if (currentSong) {
+            // If someone asks for state, and we have a song, tell them what's playing
+            if (stateRef.current.currentSong) {
               broadcast('play', { 
-                song: currentSong, 
-                playing: isPlaying, 
-                time: audioRef.current?.currentTime 
+                song: stateRef.current.currentSong, 
+                playing: stateRef.current.isPlaying, 
+                time: currentAudio?.currentTime || 0
               });
             }
             break;
           case 'play':
             if (data.song) {
-              const shouldPlay = !currentSong || currentSong.id !== data.song.id || isInitialSyncRef.current;
+              const isDifferentSong = !stateRef.current.currentSong || stateRef.current.currentSong.id !== data.song.id;
               
-              if (shouldPlay) {
+              if (isDifferentSong || isInitialSyncRef.current) {
                 isInitialSyncRef.current = false;
                 playSong(data.song, true).then(() => {
                   if (data.time && audioRef.current) {
@@ -156,8 +165,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                     setIsPlaying(false);
                   }
                 });
-              } else if (data.time && audioRef.current && Math.abs(data.time - audioRef.current.currentTime) > 3) {
-                audioRef.current.currentTime = data.time;
+              } else if (data.time && currentAudio && Math.abs(data.time - currentAudio.currentTime) > 3) {
+                currentAudio.currentTime = data.time;
               }
             }
             break;
@@ -168,7 +177,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             resumeSong(true);
             break;
           case 'seek':
-            if (audioRef.current && Math.abs(data.time - audioRef.current.currentTime) > 2) {
+            if (currentAudio && Math.abs(data.time - currentAudio.currentTime) > 2) {
               seek(data.time, true);
             }
             break;
@@ -176,15 +185,18 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
+          // When we join, ask the room what is currently playing
           setTimeout(() => {
             broadcast('request_state', {});
-          }, 1000);
+          }, 500);
         }
       });
 
     channelRef.current = channel;
-    return () => { channel.unsubscribe(); };
-  }, [roomCode, currentSong, isPlaying]);
+    return () => { 
+      channel.unsubscribe(); 
+    };
+  }, [roomCode]);
 
   const playSong = async (song: Song, fromSync: boolean = false) => {
     if (!audioRef.current) return;
@@ -201,13 +213,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return;
       }
 
-      // Try highest quality first, then fallback
       const links = [...downloadUrls].reverse();
       let success = false;
 
       for (const linkObj of links) {
         try {
-          // Handle both 'link' and 'url' properties safely
           const rawUrl = linkObj.link || linkObj.url;
           if (!rawUrl) continue;
 
@@ -231,7 +241,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             };
             audio.addEventListener('canplay', onCanPlay);
             audio.addEventListener('error', onError);
-            setTimeout(() => reject(new Error("Timeout")), 8000);
+            setTimeout(() => reject(new Error("Timeout")), 10000);
           });
 
           await audio.play();
@@ -243,9 +253,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
-      if (!success) {
-        throw new Error("All stream links failed");
-      }
+      if (!success) throw new Error("All stream links failed");
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
@@ -261,7 +269,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch (error) {
       console.error('Playback Error:', error);
-      if (toastId) toast.error("Failed to play this track. Try another one.", { id: toastId });
+      if (toastId) toast.error("Failed to play this track.", { id: toastId });
       setIsPlaying(false);
     }
   };
