@@ -22,6 +22,7 @@ interface MusicContextType {
   togglePlay: () => void;
   playNext: (fromSync?: boolean) => void;
   playPrevious: (fromSync?: boolean) => void;
+  addToNext: (song: Song) => void;
   currentTime: number;
   duration: number;
   volume: number;
@@ -140,14 +141,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO');
       
-      // Ensure we have the full song details with download URLs
       let fullSong = song;
       if (!isRadio && (!song.downloadUrl || song.downloadUrl.length === 0)) {
         const details = await musicApi.getSongDetails(song.id);
         if (details) fullSong = details;
       }
       
-      // Final normalization check
       fullSong = normalizeSong(fullSong);
 
       const downloadUrls = fullSong.downloadUrl || [];
@@ -159,7 +158,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const audio = audioRef.current;
       audio.pause();
 
-      // For radio, use the direct URL. For songs, try the highest quality link.
       const links = isRadio ? [{ link: (song as any).downloadUrl?.[0]?.link || (song as any).url }] : [...downloadUrls].reverse();
       
       let success = false;
@@ -199,6 +197,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } else if (stateRef.current.queue.length > 0) {
         const idx = stateRef.current.queue.findIndex(s => s.id === song.id);
         setCurrentIndex(idx);
+      } else {
+        // If no queue exists, start a new one with just this song
+        setQueue([fullSong]);
+        setCurrentIndex(0);
       }
 
       if (!fromSync) {
@@ -239,6 +241,18 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!fromSync) broadcast('prev', {});
   }, [playSong, broadcast]);
 
+  const addToNext = useCallback((song: Song) => {
+    const normalized = normalizeSong(song);
+    setQueue(prev => {
+      const newQueue = [...prev];
+      const insertAt = currentIndex + 1;
+      newQueue.splice(insertAt, 0, normalized);
+      return newQueue;
+    });
+    toast.success("Added to play next");
+    broadcast('queue_update', { queue: [...stateRef.current.queue] });
+  }, [currentIndex, broadcast]);
+
   const pauseSong = useCallback((fromSync: boolean = false) => {
     audioRef.current?.pause();
     setIsPlaying(false);
@@ -278,10 +292,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleMute = () => setIsMuted(prev => !prev);
 
-  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat });
+  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext });
   useEffect(() => {
-    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat };
-  }, [playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat]);
+    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext };
+  }, [playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -323,6 +337,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           case 'seek': sk(data.time, true); break;
           case 'shuffle': shuf(true); break;
           case 'repeat': rep(true); break;
+          case 'queue_update': setQueue(data.queue); break;
         }
       })
       .subscribe((status) => {
@@ -374,7 +389,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   return (
     <MusicContext.Provider value={{
-      currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious,
+      currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious, addToNext,
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation, isStationLiked,
       recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat,

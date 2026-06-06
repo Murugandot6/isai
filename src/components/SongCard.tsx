@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Song } from '@/services/musicApi';
-import { Play, Pause, Globe, Heart, MoreHorizontal, Plus, Share2, ListMusic } from 'lucide-react';
+import { Play, Pause, Globe, Heart, MoreHorizontal, Plus, Share2, ListMusic, ListPlus } from 'lucide-react';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,7 @@ import {
 import { toast } from 'sonner';
 
 export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, allSongs }) => {
-  const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked, playlists, addToPlaylist } = useMusic();
+  const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked, playlists, addToPlaylist, addToNext } = useMusic();
   const isCurrent = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   
@@ -83,6 +83,11 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
               <DropdownMenuLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Options</DropdownMenuLabel>
               <DropdownMenuSeparator />
               
+              <DropdownMenuItem onClick={() => addToNext(song)} className="gap-2 rounded-lg m-1 cursor-pointer">
+                <ListPlus size={16} />
+                <span>Play Next</span>
+              </DropdownMenuItem>
+
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="gap-2 rounded-lg m-1 cursor-pointer">
                   <Plus size={16} />
