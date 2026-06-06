@@ -28,6 +28,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
   const imageUrl = getHighResImage(song.image);
 
   const handleClick = (e: React.MouseEvent) => {
+    // Prevent playback if clicking an action button or if the event came from the dropdown menu
     if ((e.target as HTMLElement).closest('.action-button')) return;
     
     if (isCurrent) {
@@ -37,7 +38,8 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
     }
   };
 
-  const handleShare = () => {
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(window.location.origin + `/#/search?q=${encodeURIComponent(song.name)}`);
     toast.success("Link copied to clipboard!");
   };
@@ -64,7 +66,10 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
 
         <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
           <button 
-            onClick={() => toggleLike(song)}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleLike(song);
+            }}
             className={cn(
               "action-button p-2 rounded-full transition-all duration-300 backdrop-blur-md",
               liked ? "bg-primary text-white opacity-100" : "bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-black/60"
@@ -75,15 +80,28 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="action-button p-2 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-black/60 backdrop-blur-md transition-all">
+              <button 
+                onClick={(e) => e.stopPropagation()}
+                className="action-button p-2 rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 hover:bg-black/60 backdrop-blur-md transition-all"
+              >
                 <MoreHorizontal size={14} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl bg-card border-border shadow-2xl">
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56 rounded-xl bg-card border-border shadow-2xl"
+              onClick={(e) => e.stopPropagation()} // Prevent clicks in the menu from bubbling to the card
+            >
               <DropdownMenuLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Options</DropdownMenuLabel>
               <DropdownMenuSeparator />
               
-              <DropdownMenuItem onClick={() => addToNext(song)} className="gap-2 rounded-lg m-1 cursor-pointer">
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToNext(song);
+                }} 
+                className="gap-2 rounded-lg m-1 cursor-pointer"
+              >
                 <ListPlus size={16} />
                 <span>Play Next</span>
               </DropdownMenuItem>
@@ -98,7 +116,10 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
                     playlists.map(p => (
                       <DropdownMenuItem 
                         key={p.id} 
-                        onClick={() => addToPlaylist(p.id, song)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToPlaylist(p.id, song);
+                        }}
                         className="gap-2 rounded-lg m-1 cursor-pointer"
                       >
                         <ListMusic size={14} />

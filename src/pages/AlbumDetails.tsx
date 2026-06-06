@@ -30,8 +30,9 @@ const AlbumDetails = () => {
           const songIds = data.songs.map(s => s.id);
           const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
           
-          if (fullSongs.length > 0) {
+          if (fullSongs && fullSongs.length > 0) {
             // Map the full details back to the album's song list order
+            // This ensures we use the song-specific metadata (including images) from the /songs endpoint
             data.songs = data.songs.map(originalSong => {
               const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
               return fullDetail || originalSong;
