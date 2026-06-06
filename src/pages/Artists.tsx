@@ -11,19 +11,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getHighResImage } from '@/lib/image-utils';
 
-const POPULAR_ARTISTS = [
+const TAMIL_LEGENDS = [
   { name: 'A.R. Rahman', id: '456269' },
   { name: 'Ilaiyaraaja', id: '456561' },
   { name: 'Anirudh Ravichander', id: '459320' },
   { name: 'Yuvan Shankar Raja', id: '456863' },
   { name: 'Harris Jayaraj', id: '456862' },
+  { name: 'S.P. Balasubrahmanyam', id: '456042' },
   { name: 'G.V. Prakash Kumar', id: '457145' },
   { name: 'Santhosh Narayanan', id: '458918' },
+  { name: 'Sid Sriram', id: '468117' },
   { name: 'Vairamuthu', id: '456864' },
   { name: 'Na. Muthukumar', id: '485956' },
   { name: 'Vaali', id: '456865' },
-  { name: 'Sid Sriram', id: '468117' },
-  { name: 'Shreya Ghoshal', id: '456287' },
 ];
 
 const Artists = () => {
@@ -42,7 +42,7 @@ const Artists = () => {
       setLoading(true);
       try {
         const details = await Promise.all(
-          POPULAR_ARTISTS.map(a => musicApi.getArtistDetails(a.id))
+          TAMIL_LEGENDS.map(a => musicApi.getArtistDetails(a.id))
         );
         setArtistsList(details.filter(d => d !== null));
       } finally {
@@ -73,8 +73,9 @@ const Artists = () => {
       }
 
       const songs = data.topSongs || [];
+      // Filter results by selected languages, but prioritize Tamil for these artists
       const filteredResults = songs.filter((song: Song) => 
-        selectedLanguages.includes(song.language.toLowerCase())
+        selectedLanguages.includes(song.language.toLowerCase()) || song.language.toLowerCase() === 'tamil'
       );
 
       if (songs.length === 0) {
@@ -121,35 +122,35 @@ const Artists = () => {
   if (selectedArtist) {
     return (
       <MainLayout>
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-6 md:mb-8">
             <Button 
               variant="ghost" 
               onClick={focusedLanguage ? handleBackToOverview : () => setSelectedArtist(null)}
-              className="gap-2 hover:bg-accent/10 rounded-xl"
+              className="gap-2 hover:bg-accent/10 rounded-xl h-9 px-3"
             >
-              <ArrowLeft size={18} />
-              {focusedLanguage ? `Back to ${selectedArtist.name} Overview` : 'Back to Artists'}
+              <ArrowLeft size={16} />
+              <span className="text-sm">{focusedLanguage ? 'Back' : 'Artists'}</span>
             </Button>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-            <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 bg-accent/10">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mb-10 md:mb-12">
+            <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 bg-accent/10">
               <img src={getHighResImage(selectedArtist.image)} alt={selectedArtist.name} className="w-full h-full object-cover" />
             </div>
             <div className="text-center md:text-left">
-              <h1 className="text-5xl font-black tracking-tighter mb-4">{selectedArtist.name}</h1>
-              <div className="flex items-center justify-center md:justify-start gap-4">
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-3 md:mb-4">{selectedArtist.name}</h1>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <Button 
                   onClick={() => artistSongs.length > 0 && playSong(artistSongs[0], artistSongs)}
-                  className="rounded-full px-8 h-12 font-bold gap-2 shadow-xl shadow-primary/20"
+                  className="rounded-full px-6 md:px-8 h-10 md:h-12 font-bold gap-2 shadow-xl shadow-primary/20"
                 >
-                  <Play size={18} fill="currentColor" />
+                  <Play size={16} fill="currentColor" />
                   Play All
                 </Button>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedLanguages.map(lang => (
-                    <Badge key={lang} variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[10px] font-bold">
+                    <Badge key={lang} variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[9px] font-bold">
                       {lang}
                     </Badge>
                   ))}
@@ -158,17 +159,16 @@ const Artists = () => {
             </div>
           </div>
 
-          <div className="space-y-16">
+          <div className="space-y-12 md:space-y-16">
             {focusedLanguage ? (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center gap-3 mb-8">
+                <div className="flex items-center gap-3 mb-6 md:mb-8">
                   <div className="bg-primary/10 p-2 rounded-lg">
-                    <Globe size={20} className="text-primary" />
+                    <Globe size={18} className="text-primary" />
                   </div>
-                  <h2 className="text-3xl font-black tracking-tight">{focusedLanguage} Tracks</h2>
-                  <Badge variant="outline" className="ml-2">{groupedSongs[focusedLanguage]?.length || 0} Loaded</Badge>
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">{focusedLanguage} Tracks</h2>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                   {groupedSongs[focusedLanguage]?.map((song, index) => (
                     <div key={`${song.id}-${index}`} ref={index === (groupedSongs[focusedLanguage]?.length || 0) - 1 ? lastSongElementRef : null}>
                       <SongCard song={song} allSongs={groupedSongs[focusedLanguage]} />
@@ -179,23 +179,23 @@ const Artists = () => {
             ) : (
               Object.entries(groupedSongs).map(([language, songs]) => (
                 <section key={language} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-4 md:mb-6">
                     <div className="flex items-center gap-3">
                       <div className="bg-accent/10 p-2 rounded-lg">
-                        <Globe size={18} className="text-muted-foreground" />
+                        <Globe size={16} className="text-muted-foreground" />
                       </div>
-                      <h2 className="text-2xl font-black tracking-tight">{language}</h2>
+                      <h2 className="text-xl md:text-2xl font-black tracking-tight">{language}</h2>
                     </div>
                     <Button 
                       variant="link" 
-                      className="text-primary font-bold gap-1 hover:no-underline group"
+                      className="text-primary font-bold gap-1 hover:no-underline group h-auto p-0"
                       onClick={() => setFocusedLanguage(language)}
                     >
                       View All
-                      <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                     {songs.slice(0, 10).map((song, index) => (
                       <SongCard key={`${song.id}-${index}`} song={song} allSongs={songs} />
                     ))}
@@ -210,13 +210,6 @@ const Artists = () => {
               <Loader2 className="animate-spin text-primary" size={32} />
             </div>
           )}
-
-          {!loading && artistSongs.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground font-bold">No songs found for your selected languages.</p>
-              <p className="text-xs text-muted-foreground mt-2">Try adding more languages in the header.</p>
-            </div>
-          )}
         </div>
       </MainLayout>
     );
@@ -224,18 +217,18 @@ const Artists = () => {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="bg-primary/20 p-3 rounded-2xl">
-            <Mic2 className="text-primary" size={32} />
+      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+        <div className="flex items-center gap-3 md:gap-4 mb-8 md:mb-10">
+          <div className="bg-primary/20 p-2 md:p-3 rounded-xl md:rounded-2xl">
+            <Mic2 className="text-primary" size={24} md:size={32} />
           </div>
           <div>
-            <h1 className="text-4xl font-black tracking-tight">Famous Artists</h1>
-            <p className="text-muted-foreground font-medium">Explore legends and rising stars of the industry.</p>
+            <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends</h1>
+            <p className="text-xs md:text-sm text-muted-foreground font-medium">The icons who shaped the sound of Tamil cinema.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 md:gap-8">
           {loading && artistsList.length === 0 ? (
             Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-4">
@@ -250,7 +243,7 @@ const Artists = () => {
                 onClick={() => handleArtistClick(artist)}
                 className="group flex flex-col items-center text-center cursor-pointer"
               >
-                <div className="relative w-full aspect-square rounded-full overflow-hidden mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
+                <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
                   <img 
                     src={getHighResImage(artist.image)} 
                     alt={artist.name} 
@@ -258,11 +251,11 @@ const Artists = () => {
                   />
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
                   <div className="absolute bottom-2 right-2 bg-primary p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Star size={12} fill="white" className="text-white" />
+                    <Star size={10} fill="white" className="text-white" />
                   </div>
                 </div>
-                <h3 className="font-bold text-sm group-hover:text-primary transition-colors">{artist.name}</h3>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Artist</p>
+                <h3 className="font-bold text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-1">{artist.name}</h3>
+                <p className="text-[9px] md:text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Legend</p>
               </div>
             ))
           )}

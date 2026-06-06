@@ -33,7 +33,7 @@ export const MusicPlayer = () => {
 
   return (
     <div 
-      className="fixed bottom-[60px] lg:bottom-0 left-0 right-0 bg-background/90 backdrop-blur-2xl border-t border-border p-3 px-4 lg:p-4 lg:px-6 z-40 flex flex-col md:flex-row items-center gap-2 md:gap-4 animate-in slide-in-from-bottom duration-500"
+      className="fixed bottom-[56px] lg:bottom-0 left-0 right-0 bg-background/95 backdrop-blur-2xl border-t border-border p-2 px-4 lg:p-4 lg:px-6 z-40 flex flex-col md:flex-row items-center gap-2 md:gap-4 animate-in slide-in-from-bottom duration-500"
     >
       {/* Progress Bar - Top of player on mobile */}
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent/10 md:hidden">
@@ -47,12 +47,18 @@ export const MusicPlayer = () => {
       <div className="flex items-center gap-3 w-full md:w-1/3">
         <img src={imageUrl} alt={currentSong.name} className="w-10 h-10 md:w-14 md:h-14 rounded-lg shadow-lg object-cover bg-accent/10" />
         <div className="overflow-hidden min-w-0 flex-1">
-          <h4 className="font-bold text-xs md:text-sm truncate" dangerouslySetInnerHTML={{ __html: currentSong.name }}></h4>
-          <p className="text-[10px] md:text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: currentSong.primaryArtists }}></p>
+          <h4 className="font-bold text-[11px] md:text-sm truncate" dangerouslySetInnerHTML={{ __html: currentSong.name }}></h4>
+          <p className="text-[9px] md:text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: currentSong.primaryArtists }}></p>
         </div>
-        <div className="flex items-center gap-4 md:hidden">
+        <div className="flex items-center gap-3 md:hidden">
+           <button onClick={() => playPrevious()} className="text-muted-foreground">
+            <SkipBack size={20} fill="currentColor" />
+          </button>
            <button onClick={togglePlay} className="text-foreground">
             {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+          </button>
+           <button onClick={() => playNext()} className="text-muted-foreground">
+            <SkipForward size={20} fill="currentColor" />
           </button>
         </div>
       </div>
@@ -126,7 +132,7 @@ export const MusicPlayer = () => {
               <ListMusic size={20} />
             </button>
           </SheetTrigger>
-          <SheetContent className="w-[400px] bg-card border-border p-0">
+          <SheetContent className="w-full sm:w-[400px] bg-card border-border p-0">
             <SheetHeader className="p-6 border-b border-border">
               <SheetTitle className="text-2xl font-black">Up Next</SheetTitle>
             </SheetHeader>
