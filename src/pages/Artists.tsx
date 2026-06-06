@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
-import { Mic2, Star, ArrowLeft, Play, Loader2, Globe } from 'lucide-react';
+import { Mic2, Star, ArrowLeft, Play, Loader2, Globe, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getHighResImage } from '@/lib/image-utils';
 
-// Real Saavn Artist IDs for popular Indian artists
 const POPULAR_ARTISTS = [
   { name: 'A.R. Rahman', id: '456269' },
   { name: 'Anirudh Ravichander', id: '459320' },
@@ -31,13 +30,14 @@ const Artists = () => {
   const { playSong, selectedLanguages } = useMusic();
   const [artistsList, setArtistsList] = useState<any[]>([]);
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
+  const [focusedLanguage, setFocusedLanguage] = useState<string | null>(null);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  // Fetch initial artist data (real photos)
+  // Fetch initial artist list
   useEffect(() => {
     const fetchArtists = async () => {
       setLoading(true);
@@ -54,7 +54,7 @@ const Artists = () => {
   }, []);
 
   const lastSongElementRef = useCallback((node: HTMLDivElement) => {
-    if (loading) return;
+    if (loading || !focusedLanguage) return;
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
@@ -62,7 +62,7 @@ const Artists = () => {
       }
     });
     if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
+  }, [loading, hasMore, focusedLanguage]);
 
   const fetchArtistSongs = useCallback(async (artistId: string, pageNum: number) => {
     setLoading(true);
@@ -94,37 +94,50 @@ const Artists = () => {
 
   useEffect(() => {
     if (selectedArtist) {
-      fetchArtistSongs(selectedArtist.id, page);
+      // If we are in focused mode, we keep fetching. 
+      // If not, we only fetch the first page for the overview.
+      if (focusedLanguage || page === 0) {
+        fetchArtistSongs(selectedArtist.id, page);
+      }
     }
-  }, [selectedArtist, page, fetchArtistSongs]);
+  }, [selectedArtist, page, fetchArtistSongs, focusedLanguage]);
 
   const handleArtistClick = (artist: any) => {
     setArtistSongs([]);
     setPage(0);
     setHasMore(true);
+    setFocusedLanguage(null);
     setSelectedArtist(artist);
   };
 
+  const handleBackToOverview = () => {
+    setFocusedLanguage(null);
+  };
+
   // Group songs by language
-  const groupedSongs = artistSongs.reduce((acc: Record<string, Song[]>, song) => {
-    const lang = song.language.charAt(0).toUpperCase() + song.language.slice(1);
-    if (!acc[lang]) acc[lang] = [];
-    acc[lang].push(song);
-    return acc;
-  }, {});
+  const groupedSongs = useMemo(() => {
+    return artistSongs.reduce((acc: Record<string, Song[]>, song) => {
+      const lang = song.language.charAt(0).toUpperCase() + song.language.slice(1);
+      if (!acc[lang]) acc[lang] = [];
+      acc[lang].push(song);
+      return acc;
+    }, {});
+  }, [artistSongs]);
 
   if (selectedArtist) {
     return (
       <MainLayout>
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={() => setSelectedArtist(null)}
-            className="mb-8 gap-2 hover:bg-accent/10 rounded-xl"
-          >
-            <ArrowLeft size={18} />
-            Back to Artists
-          </Button>
+          <div className="flex items-center justify-between mb-8">
+            <Button 
+              variant="ghost" 
+              onClick={focusedLanguage ? handleBackToOverview : () => setSelectedArtist(null)}
+              className="gap-2 hover:bg-accent/10 rounded-xl"
+            >
+              <ArrowLeft size={18} />
+              {focusedLanguage ? `Back to ${selectedArtist.name} Overview` : 'Back to Artists'}
+            </Button>
+          </div>
 
           <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
             <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 bg-accent/10">
@@ -151,25 +164,53 @@ const Artists = () => {
             </div>
           </div>
 
-          <div className="space-y-12">
-            {Object.entries(groupedSongs).map(([language, songs]) => (
-              <section key={language} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="bg-accent/10 p-2 rounded-lg">
-                    <Globe size={18} className="text-muted-foreground" />
+          <div className="space-y-16">
+            {focusedLanguage ? (
+              // Focused Language View
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="bg-primary/10 p-2 rounded-lg">
+                    <Globe size={20} className="text-primary" />
                   </div>
-                  <h2 className="text-2xl font-black tracking-tight">{language} Tracks</h2>
-                  <span className="text-xs font-bold text-muted-foreground bg-accent/5 px-2 py-0.5 rounded-full">{songs.length}</span>
+                  <h2 className="text-3xl font-black tracking-tight">{focusedLanguage} Tracks</h2>
+                  <Badge variant="outline" className="ml-2">{groupedSongs[focusedLanguage]?.length || 0} Loaded</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {songs.map((song, index) => (
-                    <div key={`${song.id}-${index}`} ref={index === songs.length - 1 ? lastSongElementRef : null}>
-                      <SongCard song={song} allSongs={artistSongs} />
+                  {groupedSongs[focusedLanguage]?.map((song, index) => (
+                    <div key={`${song.id}-${index}`} ref={index === (groupedSongs[focusedLanguage]?.length || 0) - 1 ? lastSongElementRef : null}>
+                      <SongCard song={song} allSongs={groupedSongs[focusedLanguage]} />
                     </div>
                   ))}
                 </div>
               </section>
-            ))}
+            ) : (
+              // Overview Mode
+              Object.entries(groupedSongs).map(([language, songs]) => (
+                <section key={language} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-accent/10 p-2 rounded-lg">
+                        <Globe size={18} className="text-muted-foreground" />
+                      </div>
+                      <h2 className="text-2xl font-black tracking-tight">{language}</h2>
+                    </div>
+                    <Button 
+                      variant="link" 
+                      className="text-primary font-bold gap-1 hover:no-underline group"
+                      onClick={() => setFocusedLanguage(language)}
+                    >
+                      View All
+                      <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {songs.slice(0, 10).map((song, index) => (
+                      <SongCard key={`${song.id}-${index}`} song={song} allSongs={songs} />
+                    ))}
+                  </div>
+                </section>
+              ))
+            )}
           </div>
 
           {loading && (
