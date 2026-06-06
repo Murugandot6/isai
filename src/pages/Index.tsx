@@ -92,7 +92,36 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Trending Section */}
+        {/* Language Specific Hits Section (NOW FIRST) */}
+        <section className="mb-16">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/20 p-2 rounded-xl">
+                <Sparkles className="text-primary" size={20} />
+              </div>
+              <h3 className="text-2xl font-black tracking-tight capitalize">{selectedLanguages[0] || 'Tamil'} Hits</h3>
+            </div>
+            <button className="text-xs font-bold text-primary hover:underline underline-offset-4">VIEW ALL</button>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="aspect-square w-full rounded-2xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))
+            ) : (
+              featuredSongs.slice(0, 10).map((song) => (
+                <SongCard key={song.id} song={song} allSongs={featuredSongs} />
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Trending Section (NOW SECOND) */}
         <section className="mb-16">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -116,35 +145,6 @@ const Index = () => {
             ) : (
               trendingSongs.slice(0, 10).map((song) => (
                 <SongCard key={song.id} song={song} allSongs={trendingSongs} />
-              ))
-            )}
-          </div>
-        </section>
-
-        {/* Language Specific Hits Section */}
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/20 p-2 rounded-xl">
-                <Sparkles className="text-primary" size={20} />
-              </div>
-              <h3 className="text-2xl font-black tracking-tight capitalize">{selectedLanguages[0] || 'Tamil'} Hits</h3>
-            </div>
-            <button className="text-xs font-bold text-primary hover:underline underline-offset-4">VIEW ALL</button>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-square w-full rounded-2xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              ))
-            ) : (
-              featuredSongs.slice(0, 10).map((song) => (
-                <SongCard key={song.id} song={song} allSongs={featuredSongs} />
               ))
             )}
           </div>
