@@ -5,17 +5,29 @@ import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings } from 'lucide-react';
+import { Search, Bell, Settings, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+
+const LANGUAGES = [
+  { id: 'hindi', label: 'Hindi' },
+  { id: 'english', label: 'English' },
+  { id: 'punjabi', label: 'Punjabi' },
+  { id: 'telugu', label: 'Telugu' },
+  { id: 'tamil', label: 'Tamil' },
+  { id: 'marathi', label: 'Marathi' },
+];
 
 const Index = () => {
   const [trending, setTrending] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedLangs, setSelectedLangs] = useState<string[]>(['hindi', 'english']);
 
   useEffect(() => {
     const fetchTrending = async () => {
+      setLoading(true);
       try {
-        const data = await musicApi.getTrending();
+        const data = await musicApi.getTrending(selectedLangs.join(','));
         setTrending(data);
       } catch (error) {
         console.error('Failed to fetch trending', error);
@@ -24,7 +36,15 @@ const Index = () => {
       }
     };
     fetchTrending();
-  }, []);
+  }, [selectedLangs]);
+
+  const toggleLanguage = (id: string) => {
+    setSelectedLangs(prev => 
+      prev.includes(id) 
+        ? prev.filter(l => l !== id) 
+        : [...prev, id]
+    );
+  };
 
   return (
     <MainLayout>
@@ -63,6 +83,30 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Language Filter */}
+        <div className="mb-10 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-accent/5 rounded-full border border-accent/10 text-xs font-bold text-muted-foreground mr-2 shrink-0">
+              <Filter size={14} />
+              LANGUAGES
+            </div>
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang.id}
+                onClick={() => toggleLanguage(lang.id)}
+                className={cn(
+                  "px-5 py-2 rounded-full text-xs font-bold transition-all shrink-0 border",
+                  selectedLangs.includes(lang.id)
+                    ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "bg-accent/5 border-transparent text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+                )}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Trending Section */}
         <section>
           <div className="flex items-center justify-between mb-8">
@@ -72,7 +116,7 @@ const Index = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {loading ? (
-              Array.from({ length: 10 }).map((_, i) => (
+              Array.from({ length: 15 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-square w-full rounded-2xl" />
                   <Skeleton className="h-4 w-3/4" />

@@ -24,6 +24,7 @@ export interface Song {
   id: string;
   name: string;
   type: string;
+  language: string;
   album: {
     id: string;
     name: string;
@@ -45,21 +46,20 @@ export interface Song {
 }
 
 export const musicApi = {
-  getTrending: async () => {
-    const res = await fetch(`${BASE_URL}/search/songs?query=trending&limit=20`);
+  getTrending: async (languages: string = 'hindi,english') => {
+    // We use search with language filter to get a better variety
+    const res = await fetch(`${BASE_URL}/search/songs?query=trending&limit=40&language=${languages}`);
     const data = await res.json();
     return (data.data?.results || []) as Song[];
   },
   searchSongs: async (query: string) => {
-    const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&limit=30`);
+    const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&limit=40`);
     const data = await res.json();
     return (data.data?.results || []) as Song[];
   },
   getSongDetails: async (id: string) => {
-    // The plan suggests /api/songs/{id} format
     const res = await fetch(`${BASE_URL}/songs/${id}`);
     const data = await res.json();
-    // Return the first song in the data array if it exists
     return (data.data && data.data.length > 0) ? data.data[0] as Song : null;
   }
 };
