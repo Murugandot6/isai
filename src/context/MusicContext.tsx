@@ -25,6 +25,8 @@ interface MusicContextType {
   duration: number;
   volume: number;
   setVolume: (v: number) => void;
+  isMuted: boolean;
+  toggleMute: () => void;
   seek: (time: number, fromSync?: boolean) => void;
   roomCode: string | null;
   setRoomCode: (code: string | null) => void;
@@ -41,9 +43,9 @@ interface MusicContextType {
   addToPlaylist: (playlistId: string, song: Song) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
   isShuffle: boolean;
-  toggleShuffle: () => void;
+  toggleShuffle: (fromSync?: boolean) => void;
   repeatMode: 'none' | 'one' | 'all';
-  toggleRepeat: () => void;
+  toggleRepeat: (fromSync?: boolean) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -54,6 +56,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
+  const [isMuted, setIsMuted] = useState(false);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi', 'tamil']);
@@ -75,7 +78,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     
     const audio = audioRef.current;
-    audio.volume = volume;
+    audio.volume = isMuted ? 0 : volume;
 
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
@@ -87,7 +90,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, []);
+  }, [volume, isMuted]);
 
   const stateRef = useRef({ currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode });
   useEffect(() => {
@@ -141,7 +144,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return;
       }
 
-      // Try highest quality first (usually last in array)
       const links = [...downloadUrls].reverse();
       let success = false;
 
@@ -174,7 +176,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
-      if (toastId) toast.success(`Playing: ${fullSong.name}`, { id: toastId });
+      if (toastId) toast.dismiss(toastId);
 
       if (newQueue) {
         setQueue(newQueue);
@@ -187,7 +189,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (!fromSync) {
         setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
-        broadcast('play', { song: fullSong, playing: true, time: 0, queue: newQueue });
+        broadcast('play', { song: fullSong, playing: true, time: 0, queue: newQueue || stateRef.current.queue });
       }
     } catch (error) {
       console.error('Playback Error:', error);
@@ -204,6 +206,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     if (isShuffle) {
       nextIndex = Math.floor(Math.random() * queue.length);
+      // Ensure we don't play the same song if there are others
+      if (nextIndex === currentIndex && queue.length > 1) {
+        nextIndex = (nextIndex + 1) % queue.length;
+      }
     } else if (nextIndex >= queue.length) {
       if (repeatMode === 'all') nextIndex = 0;
       else return;
@@ -247,22 +253,29 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [broadcast]);
 
-  const toggleShuffle = () => {
-    setIsShuffle(!isShuffle);
-    toast.info(`Shuffle ${!isShuffle ? 'On' : 'Off'}`);
+  const toggleShuffle = (fromSync: boolean = false) => {
+    setIsShuffle(prev => {
+      const next = !prev;
+      if (!fromSync) broadcast('shuffle', { isShuffle: next });
+      return next;
+    });
   };
 
-  const toggleRepeat = () => {
+  const toggleRepeat = (fromSync: boolean = false) => {
     const modes: ('none' | 'one' | 'all')[] = ['none', 'one', 'all'];
-    const nextMode = modes[(modes.indexOf(repeatMode) + 1) % modes.length];
-    setRepeatMode(nextMode);
-    toast.info(`Repeat Mode: ${nextMode.toUpperCase()}`);
+    setRepeatMode(prev => {
+      const next = modes[(modes.indexOf(prev) + 1) % modes.length];
+      if (!fromSync) broadcast('repeat', { repeatMode: next });
+      return next;
+    });
   };
 
-  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious });
+  const toggleMute = () => setIsMuted(prev => !prev);
+
+  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat });
   useEffect(() => {
-    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious };
-  }, [playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious]);
+    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat };
+  }, [playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -289,7 +302,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     channel
       .on('broadcast', { event: 'sync' }, ({ payload }) => {
         const { type, data } = payload;
-        const { playSong: play, pauseSong: pause, resumeSong: resume, seek: sk, broadcast: bc, playNext: next, playPrevious: prev } = functionsRef.current;
+        const { playSong: play, pauseSong: pause, resumeSong: resume, seek: sk, broadcast: bc, playNext: next, playPrevious: prev, toggleShuffle: shuf, toggleRepeat: rep } = functionsRef.current;
         switch (type) {
           case 'request_state':
             if (stateRef.current.currentSong) bc('play', { song: stateRef.current.currentSong, playing: stateRef.current.isPlaying, time: audioRef.current?.currentTime || 0, queue: stateRef.current.queue });
@@ -302,6 +315,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           case 'next': next(true); break;
           case 'prev': prev(true); break;
           case 'seek': sk(data.time, true); break;
+          case 'shuffle': shuf(true); break;
+          case 'repeat': rep(true); break;
         }
       })
       .subscribe((status) => {
@@ -346,7 +361,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <MusicContext.Provider value={{
       currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious,
-      currentTime, duration, volume, setVolume, seek, roomCode, setRoomCode, isHost, setIsHost,
+      currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, recentlyPlayed, playlists,
       createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat
     }}>

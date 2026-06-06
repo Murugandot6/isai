@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useMusic } from '@/context/MusicContext';
-import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle, Repeat1, ListMusic, X } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Shuffle, Repeat1, ListMusic } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getHighResImage } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
@@ -23,8 +23,8 @@ const formatTime = (seconds: number) => {
 export const MusicPlayer = () => {
   const { 
     currentSong, isPlaying, togglePlay, currentTime, duration, seek, 
-    volume, setVolume, playNext, playPrevious, isShuffle, toggleShuffle, 
-    repeatMode, toggleRepeat, queue, playSong
+    volume, setVolume, isMuted, toggleMute, playNext, playPrevious, 
+    isShuffle, toggleShuffle, repeatMode, toggleRepeat, queue, playSong
   } = useMusic();
 
   if (!currentSong) return null;
@@ -61,7 +61,7 @@ export const MusicPlayer = () => {
       <div className="hidden md:flex flex-col items-center gap-2 w-full md:w-1/3">
         <div className="flex items-center gap-6">
           <button 
-            onClick={toggleShuffle}
+            onClick={() => toggleShuffle()}
             className={cn("transition-colors", isShuffle ? "text-primary" : "text-muted-foreground hover:text-foreground")}
           >
             <Shuffle size={18} />
@@ -85,7 +85,7 @@ export const MusicPlayer = () => {
             <SkipForward size={24} fill="currentColor" />
           </button>
           <button 
-            onClick={toggleRepeat}
+            onClick={() => toggleRepeat()}
             className={cn("transition-colors", repeatMode !== 'none' ? "text-primary" : "text-muted-foreground hover:text-foreground")}
           >
             {repeatMode === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}
@@ -108,9 +108,11 @@ export const MusicPlayer = () => {
       {/* Volume & Queue (Desktop) */}
       <div className="hidden md:flex items-center justify-end gap-4 w-1/3">
         <div className="flex items-center gap-2">
-          <Volume2 size={18} className="text-muted-foreground" />
+          <button onClick={toggleMute} className="text-muted-foreground hover:text-foreground transition-colors">
+            {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
           <Slider 
-            value={[volume * 100]} 
+            value={[isMuted ? 0 : volume * 100]} 
             max={100} 
             step={1}
             onValueChange={([val]) => setVolume(val / 100)}
