@@ -1,7 +1,7 @@
 "use client";
 
-// Using a more stable community-hosted instance
-const BASE_URL = 'https://jiosaavn-api-beta.vercel.app';
+// Using a highly stable and well-maintained instance
+const BASE_URL = 'https://saavn.me';
 
 export interface Image {
   quality: string;
@@ -49,10 +49,19 @@ export interface Song {
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
-      const res = await fetch(`${BASE_URL}/search/songs?query=trending&limit=40&language=${languages}`);
+      // Use the specific trending endpoint if available, otherwise search for popular
+      const res = await fetch(`${BASE_URL}/modules?language=${languages}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      return (data.data?.results || []) as Song[];
+      
+      // Extract trending from modules if available, else fallback to a general search
+      if (data.data?.trending?.songs) {
+        return data.data.trending.songs as Song[];
+      }
+      
+      const searchRes = await fetch(`${BASE_URL}/search/songs?query=top%20songs&limit=40&language=${languages}`);
+      const searchData = await searchRes.json();
+      return (searchData.data?.results || []) as Song[];
     } catch (error) {
       console.error("Trending fetch error:", error);
       return [];

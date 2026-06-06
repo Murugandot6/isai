@@ -37,7 +37,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
 
-  // Initialize Audio
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
@@ -45,6 +44,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     const audio = audioRef.current;
     audio.volume = volume;
+    // Set preload to auto to help with some browser blocking
+    audio.preload = "auto";
 
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
@@ -53,10 +54,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setCurrentTime(0);
     };
     const handleError = (e: any) => {
-      console.error("Audio player error:", e);
+      console.error("Audio error event:", audio.error);
       setIsPlaying(false);
       if (audio.src) {
-        toast.error("Playback failed. This stream may be blocked or unavailable.");
+        toast.error("Stream currently unavailable. Try another song.");
       }
     };
 
@@ -71,10 +72,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       audio.pause();
+      audio.src = "";
     };
   }, []);
 
-  // Supabase Real-time Sync logic
+  // Sync Logic
   useEffect(() => {
     if (!roomCode) {
       if (channelRef.current) {
@@ -91,54 +93,31 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     channel
       .on('broadcast', { event: 'sync' }, ({ payload }) => {
         if (isHost) return; 
-
         const { song, playing, time } = payload;
-        
-        if (song && (!currentSong || currentSong.id !== song.id)) {
-          playSong(song, true);
-        }
-
-        if (playing !== undefined && playing !== isPlaying) {
-          if (playing) resumeSong(true);
-          else pauseSong(true);
-        }
-
-        if (time !== undefined && Math.abs(time - audioRef.current!.currentTime) > 2) {
-          seek(time, true);
-        }
+        if (song && (!currentSong || currentSong.id !== song.id)) playSong(song, true);
+        if (playing !== undefined && playing !== isPlaying) playing ? resumeSong(true) : pauseSong(true);
+        if (time !== undefined && Math.abs(time - audioRef.current!.currentTime) > 2) seek(time, true);
       })
       .subscribe();
 
     channelRef.current = channel;
-
-    return () => {
-      channel.unsubscribe();
-    };
+    return () => { channel.unsubscribe(); };
   }, [roomCode, isHost, currentSong, isPlaying]);
 
-  // Broadcast state if Host
   useEffect(() => {
     if (!isHost || !roomCode || !channelRef.current) return;
-
     const interval = setInterval(() => {
       channelRef.current.send({
         type: 'broadcast',
         event: 'sync',
-        payload: {
-          song: currentSong,
-          playing: isPlaying,
-          time: audioRef.current?.currentTime || 0
-        }
+        payload: { song: currentSong, playing: isPlaying, time: audioRef.current?.currentTime || 0 }
       });
     }, 2000);
-
     return () => clearInterval(interval);
   }, [isHost, roomCode, currentSong, isPlaying]);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
+    if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
   const playSong = async (song: Song, fromSync: boolean = false) => {
@@ -146,27 +125,25 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     try {
       let fullSong = song;
-      if (!song.downloadUrl || song.downloadUrl.length === 0) {
-        const details = await musicApi.getSongDetails(song.id);
-        if (details) fullSong = details;
-      }
+      // Ensure we have fresh download links
+      const details = await musicApi.getSongDetails(song.id);
+      if (details) fullSong = details;
       
       const downloadUrls = fullSong.downloadUrl;
       if (!downloadUrls || downloadUrls.length === 0) {
-        toast.error("No playable links found for this track.");
+        toast.error("Playable link not found.");
         return;
       }
       
-      // Select best quality (usually the last one)
-      const bestQualityObj = downloadUrls[downloadUrls.length - 1];
-      let streamUrl = (bestQualityObj as any).link || (bestQualityObj as any).url;
+      // Prefer mid-range quality (usually index 2 or 3) as they often bypass CORS better than high-bitrate ones
+      const qualityIndex = downloadUrls.length > 2 ? 2 : downloadUrls.length - 1;
+      let streamUrl = (downloadUrls[qualityIndex] as any).link || (downloadUrls[qualityIndex] as any).url;
       
       if (!streamUrl) {
-        toast.error("Invalid audio stream.");
+        toast.error("Invalid stream.");
         return;
       }
 
-      // Force HTTPS for all streams to avoid mixed content blocks
       streamUrl = String(streamUrl).replace('http://', 'https://');
       
       const audio = audioRef.current;
@@ -174,10 +151,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.src = streamUrl;
       audio.load();
       
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        await playPromise;
-      }
+      await audio.play();
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
@@ -199,43 +173,28 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     audioRef.current?.pause();
     setIsPlaying(false);
     if (isHost && roomCode && !fromSync && channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'sync',
-        payload: { playing: false, time: audioRef.current?.currentTime }
-      });
+      channelRef.current.send({ type: 'broadcast', event: 'sync', payload: { playing: false, time: audioRef.current?.currentTime } });
     }
   };
 
   const resumeSong = (fromSync: boolean = false) => {
-    if (audioRef.current && audioRef.current.src) {
+    if (audioRef.current?.src) {
       audioRef.current.play().catch(console.error);
       setIsPlaying(true);
       if (isHost && roomCode && !fromSync && channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'sync',
-          payload: { playing: true, time: audioRef.current?.currentTime }
-        });
+        channelRef.current.send({ type: 'broadcast', event: 'sync', payload: { playing: true, time: audioRef.current?.currentTime } });
       }
     }
   };
 
-  const togglePlay = () => {
-    if (isPlaying) pauseSong();
-    else resumeSong();
-  };
+  const togglePlay = () => isPlaying ? pauseSong() : resumeSong();
 
   const seek = (time: number, fromSync: boolean = false) => {
     if (audioRef.current && isFinite(time)) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
       if (isHost && roomCode && !fromSync && channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'sync',
-          payload: { time }
-        });
+        channelRef.current.send({ type: 'broadcast', event: 'sync', payload: { time } });
       }
     }
   };
