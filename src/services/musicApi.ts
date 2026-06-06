@@ -1,6 +1,6 @@
 "use client";
 
-const BASE_URL = 'https://saavn.sumit.co/api';
+const BASE_URL = 'https://saavn.dev/api';
 
 export interface Image {
   quality: string;
@@ -47,19 +47,33 @@ export interface Song {
 
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
-    // We use search with language filter to get a better variety
-    const res = await fetch(`${BASE_URL}/search/songs?query=trending&limit=40&language=${languages}`);
-    const data = await res.json();
-    return (data.data?.results || []) as Song[];
+    try {
+      const res = await fetch(`${BASE_URL}/search/songs?query=trending&limit=40&language=${languages}`);
+      const data = await res.json();
+      return (data.data?.results || []) as Song[];
+    } catch (error) {
+      console.error("Trending fetch error:", error);
+      return [];
+    }
   },
   searchSongs: async (query: string) => {
-    const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&limit=40`);
-    const data = await res.json();
-    return (data.data?.results || []) as Song[];
+    try {
+      const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&limit=40`);
+      const data = await res.json();
+      return (data.data?.results || []) as Song[];
+    } catch (error) {
+      console.error("Search fetch error:", error);
+      return [];
+    }
   },
   getSongDetails: async (id: string) => {
-    const res = await fetch(`${BASE_URL}/songs/${id}`);
-    const data = await res.json();
-    return (data.data && data.data.length > 0) ? data.data[0] as Song : null;
+    try {
+      const res = await fetch(`${BASE_URL}/songs/${id}`);
+      const data = await res.json();
+      return (data.data && data.data.length > 0) ? data.data[0] as Song : null;
+    } catch (error) {
+      console.error("Details fetch error:", error);
+      return null;
+    }
   }
 };
