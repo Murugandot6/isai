@@ -19,7 +19,7 @@ import { useMusic } from '@/context/MusicContext';
 
 export const ListenTogether = () => {
   const { roomCode, setRoomCode, isHost, setIsHost } = useMusic();
-  const [localCode, setLocalCode] = useState(`SONIC-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+  const [localCode, setLocalCode] = useState(`ISAI-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -115,7 +115,7 @@ export const ListenTogether = () => {
             <TabsContent value="join" className="space-y-6 pt-6">
               <form onSubmit={handleJoin} className="space-y-4">
                 <Input 
-                  placeholder="Enter Code (e.g. SONIC-XY12Z)" 
+                  placeholder="Enter Code (e.g. ISAI-XY12Z)" 
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   className="bg-accent/5 border-2 border-transparent focus-visible:border-primary/20 h-12 text-lg font-bold tracking-widest rounded-xl text-center"

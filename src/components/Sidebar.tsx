@@ -27,7 +27,7 @@ export const Sidebar = () => {
         <div className="bg-primary p-2 rounded-xl">
           <Music className="text-primary-foreground" size={24} />
         </div>
-        <span className="text-xl font-black tracking-tight italic">SONIC</span>
+        <span className="text-xl font-black tracking-tight italic">isai</span>
       </div>
 
       <nav className="space-y-1 mb-8">

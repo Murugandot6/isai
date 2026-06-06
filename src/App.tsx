@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { MusicProvider } from "@/context/MusicContext";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
@@ -20,7 +20,7 @@ const App = () => (
       <MusicProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter future={{ v7_relativeSplatPath: true }}>
+        <HashRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/search" element={<Search />} />
@@ -30,7 +30,7 @@ const App = () => (
             <Route path="/artists" element={<Artists />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </MusicProvider>
     </TooltipProvider>
   </QueryClientProvider>
