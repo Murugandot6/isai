@@ -1,6 +1,6 @@
 "use client";
 
-// Using a highly stable and well-maintained instance
+// Using the most stable public instance based on the docs
 const BASE_URL = 'https://saavn.me';
 
 export interface Image {
@@ -11,14 +11,6 @@ export interface Image {
 export interface DownloadUrl {
   quality: string;
   link: string;
-}
-
-export interface Artist {
-  id: string;
-  name: string;
-  role: string;
-  type: string;
-  image: Image[];
 }
 
 export interface Song {
@@ -32,36 +24,29 @@ export interface Song {
     url: string;
   };
   year: string;
-  releaseDate: string;
   duration: number;
-  label: string;
   primaryArtists: string;
-  featuredArtists: string;
-  artists: {
-    primary: Artist[];
-    all: Artist[];
-  };
   image: Image[];
   downloadUrl: DownloadUrl[];
-  hasLyrics: boolean;
 }
 
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
-      // Use the specific trending endpoint if available, otherwise search for popular
-      const res = await fetch(`${BASE_URL}/modules?language=${languages}`);
+      // The /modules endpoint provides the home page data including trending songs
+      const res = await fetch(`${BASE_URL}/modules?language=${encodeURIComponent(languages)}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       
-      // Extract trending from modules if available, else fallback to a general search
-      if (data.data?.trending?.songs) {
-        return data.data.trending.songs as Song[];
+      // Navigate through the data structure: data -> trending -> songs
+      const trendingSongs = data.data?.trending?.songs || [];
+      
+      if (trendingSongs.length === 0) {
+        // Fallback to a search if trending is empty
+        return await musicApi.searchSongs('trending');
       }
       
-      const searchRes = await fetch(`${BASE_URL}/search/songs?query=top%20songs&limit=40&language=${languages}`);
-      const searchData = await searchRes.json();
-      return (searchData.data?.results || []) as Song[];
+      return trendingSongs as Song[];
     } catch (error) {
       console.error("Trending fetch error:", error);
       return [];
@@ -69,7 +54,7 @@ export const musicApi = {
   },
   searchSongs: async (query: string) => {
     try {
-      const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&limit=40`);
+      const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&limit=20`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       return (data.data?.results || []) as Song[];
