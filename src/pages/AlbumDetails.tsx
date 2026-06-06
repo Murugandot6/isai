@@ -24,13 +24,8 @@ const AlbumDetails = () => {
       setLoading(true);
       try {
         const data = await musicApi.getAlbumDetails(id);
-        if (data && data.songs) {
-          // Ensure songs have the album image if they don't have their own high-res data
-          data.songs = data.songs.map(s => ({
-            ...s,
-            image: (s.image && s.image.length > 0) ? s.image : data.image
-          }));
-        }
+        // We no longer manually override song images here.
+        // This allows the SongCard to use the song's own image if it exists.
         setAlbum(data);
       } catch (error) {
         console.error("Failed to fetch album details", error);
