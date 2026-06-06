@@ -7,7 +7,7 @@ import { Radio as RadioIcon, Play, Pause, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMusic } from '@/context/MusicContext';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/utils/utils';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
 const Radio = () => {
