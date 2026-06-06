@@ -58,7 +58,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isHost, setIsHost] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['english', 'hindi', 'tamil']);
   
-  // Queue Management
   const [queue, setQueue] = useState<Song[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isShuffle, setIsShuffle] = useState(false);
@@ -68,6 +67,27 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const channelRef = useRef<any>(null);
   const isChannelReady = useRef(false);
   const messageQueue = useRef<any[]>([]);
+
+  // Initialize Audio on mount
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    
+    const audio = audioRef.current;
+    audio.volume = volume;
+
+    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const handleLoadedMetadata = () => setDuration(audio.duration);
+    
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, []);
 
   const stateRef = useRef({ currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode });
   useEffect(() => {
@@ -105,12 +125,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
     
     const toastId = fromSync ? null : toast.loading("Loading track...");
     
     try {
-      // If it's a radio station, we don't need full details
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO');
       const fullSong = isRadio ? song : (await musicApi.getSongDetails(song.id) || song);
       
@@ -120,6 +141,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return;
       }
 
+      // Try highest quality first (usually last in array)
       const links = [...downloadUrls].reverse();
       let success = false;
 
@@ -128,6 +150,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const rawUrl = linkObj.link || linkObj.url;
           if (!rawUrl) continue;
           const streamUrl = rawUrl.replace('http://', 'https://');
+          
           const audio = audioRef.current;
           audio.pause();
           audio.src = streamUrl;
