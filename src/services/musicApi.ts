@@ -135,6 +135,18 @@ export const musicApi = {
       return null;
     }
   },
+  getSongsDetailsBulk: async (ids: string[]) => {
+    try {
+      const res = await fetch(`${BASE_URL}/songs?ids=${ids.join(',')}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      const results = (data.data || []) as any[];
+      return results.map(normalizeSong);
+    } catch (error) {
+      console.error("Bulk details fetch error:", error);
+      return [];
+    }
+  },
   getArtistDetails: async (id: string, page: number = 0) => {
     try {
       const res = await fetch(`${BASE_URL}/artists/${id}?page=${page}`);

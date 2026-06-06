@@ -24,8 +24,20 @@ const AlbumDetails = () => {
       setLoading(true);
       try {
         const data = await musicApi.getAlbumDetails(id);
-        // We no longer manually override song images here.
-        // This allows the SongCard to use the song's own image if it exists.
+        if (data && data.songs && data.songs.length > 0) {
+          // The album API often returns songs with the album's image.
+          // To get the "correct" song-specific images, we fetch the full details for all songs in bulk.
+          const songIds = data.songs.map(s => s.id);
+          const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
+          
+          if (fullSongs.length > 0) {
+            // Map the full details back to the album's song list order
+            data.songs = data.songs.map(originalSong => {
+              const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
+              return fullDetail || originalSong;
+            });
+          }
+        }
         setAlbum(data);
       } catch (error) {
         console.error("Failed to fetch album details", error);
