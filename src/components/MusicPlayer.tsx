@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { useMusic } from '@/context/MusicContext';
-import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, Repeat, Shuffle, Repeat1 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getHighResImage } from '@/lib/image-utils';
+import { cn } from '@/lib/utils';
 
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -13,7 +14,11 @@ const formatTime = (seconds: number) => {
 };
 
 export const MusicPlayer = () => {
-  const { currentSong, isPlaying, togglePlay, currentTime, duration, seek, volume, setVolume } = useMusic();
+  const { 
+    currentSong, isPlaying, togglePlay, currentTime, duration, seek, 
+    volume, setVolume, playNext, playPrevious, isShuffle, toggleShuffle, 
+    repeatMode, toggleRepeat 
+  } = useMusic();
 
   if (!currentSong) return null;
 
@@ -48,16 +53,36 @@ export const MusicPlayer = () => {
       {/* Controls & Progress (Desktop) */}
       <div className="hidden md:flex flex-col items-center gap-2 w-full md:w-1/3">
         <div className="flex items-center gap-6">
-          <button className="text-muted-foreground hover:text-foreground transition-colors"><Shuffle size={18} /></button>
-          <button className="text-foreground hover:text-primary transition-colors"><SkipBack size={24} fill="currentColor" /></button>
+          <button 
+            onClick={toggleShuffle}
+            className={cn("transition-colors", isShuffle ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+          >
+            <Shuffle size={18} />
+          </button>
+          <button 
+            onClick={() => playPrevious()}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            <SkipBack size={24} fill="currentColor" />
+          </button>
           <button 
             onClick={togglePlay}
-            className="bg-primary text-primary-foreground p-3 rounded-full hover:scale-105 transition-transform"
+            className="bg-primary text-primary-foreground p-3 rounded-full hover:scale-105 transition-transform shadow-lg shadow-primary/20"
           >
             {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
           </button>
-          <button className="text-foreground hover:text-primary transition-colors"><SkipForward size={24} fill="currentColor" /></button>
-          <button className="text-muted-foreground hover:text-foreground transition-colors"><Repeat size={18} /></button>
+          <button 
+            onClick={() => playNext()}
+            className="text-foreground hover:text-primary transition-colors"
+          >
+            <SkipForward size={24} fill="currentColor" />
+          </button>
+          <button 
+            onClick={toggleRepeat}
+            className={cn("transition-colors", repeatMode !== 'none' ? "text-primary" : "text-muted-foreground hover:text-foreground")}
+          >
+            {repeatMode === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}
+          </button>
         </div>
         
         <div className="flex items-center gap-3 w-full max-w-md">

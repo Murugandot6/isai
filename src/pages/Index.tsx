@@ -14,13 +14,13 @@ const Index = () => {
   const [tamilSongs, setTamilSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const { playSong } = useMusic();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTamilContent = async () => {
       setLoading(true);
       try {
-        // Fetching specifically Tamil hits for the home page
         const data = await musicApi.searchSongs('Tamil hits');
         setTamilSongs(data);
       } catch (error) {
@@ -64,7 +64,10 @@ const Index = () => {
         </div>
 
         {/* Featured Hero */}
-        <div className="relative h-[300px] rounded-3xl overflow-hidden mb-12 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10">
+        <div 
+          className="relative h-[300px] rounded-3xl overflow-hidden mb-12 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
+          onClick={() => tamilSongs.length > 0 && playSong(tamilSongs[0], tamilSongs)}
+        >
           <img 
             src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2070&auto=format&fit=crop" 
             alt="Tamil Music Hero" 
@@ -96,7 +99,7 @@ const Index = () => {
               ))
             ) : (
               tamilSongs.map((song) => (
-                <SongCard key={song.id} song={song} />
+                <SongCard key={song.id} song={song} allSongs={tamilSongs} />
               ))
             )}
           </div>

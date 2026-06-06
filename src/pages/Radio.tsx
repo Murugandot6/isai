@@ -20,7 +20,6 @@ const Radio = () => {
     const fetchStations = async () => {
       setLoading(true);
       try {
-        // Use the primary selected language for Radio search
         const primaryLang = selectedLanguages[0] || 'english';
         const data = await radioApi.getStations(primaryLang);
         setStations(Array.isArray(data) ? data : []);
@@ -35,15 +34,24 @@ const Radio = () => {
   }, [selectedLanguages]);
 
   const handlePlayStation = (station: RadioStation) => {
-    const songData: any = {
-      id: station.stationuuid,
-      name: station.name,
-      primaryArtists: station.tags || 'Live FM',
-      image: [{ link: station.favicon || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=200' }],
-      downloadUrl: [{ link: station.url_resolved }],
-      language: station.language
-    };
-    playSong(songData);
+    // Convert radio stations to the Song format for the player
+    const radioSongs = filteredStations.map(s => ({
+      id: s.stationuuid,
+      name: s.name,
+      type: 'radio',
+      primaryArtists: s.tags || 'Live FM',
+      image: [{ link: s.favicon || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=200' }],
+      downloadUrl: [{ link: s.url_resolved }],
+      language: s.language,
+      album: { id: 'radio', name: 'Live Radio', url: '' },
+      year: '',
+      duration: 0
+    }));
+
+    const currentRadioSong = radioSongs.find(s => s.id === station.stationuuid);
+    if (currentRadioSong) {
+      playSong(currentRadioSong as any, radioSongs as any);
+    }
   };
 
   const filteredStations = stations.filter(s => 

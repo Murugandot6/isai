@@ -8,7 +8,7 @@ import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-export const SongCard: React.FC<{ song: Song }> = ({ song }) => {
+export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, allSongs }) => {
   const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked } = useMusic();
   const isCurrent = currentSong?.id === song.id;
   const liked = isLiked(song.id);
@@ -16,13 +16,12 @@ export const SongCard: React.FC<{ song: Song }> = ({ song }) => {
   const imageUrl = getHighResImage(song.image);
 
   const handleClick = (e: React.MouseEvent) => {
-    // If clicking the heart, don't trigger play
     if ((e.target as HTMLElement).closest('.like-button')) return;
     
     if (isCurrent) {
       togglePlay();
     } else {
-      playSong(song);
+      playSong(song, allSongs);
     }
   };
 
@@ -39,7 +38,6 @@ export const SongCard: React.FC<{ song: Song }> = ({ song }) => {
           loading="lazy"
         />
         
-        {/* Language Badge */}
         <div className="absolute top-2 left-2 z-10">
           <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] font-bold uppercase border-none text-white flex items-center gap-1 py-0.5">
             <Globe size={10} />
@@ -47,7 +45,6 @@ export const SongCard: React.FC<{ song: Song }> = ({ song }) => {
           </Badge>
         </div>
 
-        {/* Like Button */}
         <button 
           onClick={() => toggleLike(song)}
           className={cn(
