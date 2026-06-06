@@ -1,7 +1,7 @@
 "use client";
 
-// Switching to a more reliable endpoint with better CORS support
-const BASE_URL = 'https://jiosaavn-api-beta.vercel.app';
+// Using the API endpoint provided by the user
+const BASE_URL = 'https://saavn.sumit.co/api';
 
 export interface Image {
   quality: string;
@@ -33,23 +33,17 @@ export interface Song {
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
-      // Beta API uses a different path for trending/modules
-      const res = await fetch(`${BASE_URL}/modules?language=${encodeURIComponent(languages)}`);
+      // The trending endpoint on this API
+      const res = await fetch(`${BASE_URL}/trending?language=${encodeURIComponent(languages)}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       
-      // Extract trending songs
-      const trendingSongs = data.data?.trending?.songs || [];
-      
-      if (trendingSongs.length === 0) {
-        return await musicApi.searchSongs('latest');
-      }
-      
-      return trendingSongs as Song[];
+      // Structure: data -> results
+      return (data.data || []) as Song[];
     } catch (error) {
       console.error("Trending fetch error:", error);
-      // Fallback search to keep the UI alive
-      return await musicApi.searchSongs('top songs');
+      // Fallback search
+      return await musicApi.searchSongs('latest hits');
     }
   },
   searchSongs: async (query: string) => {

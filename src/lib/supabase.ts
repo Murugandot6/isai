@@ -1,4 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// This ensures all parts of the app use the same validated client
+// Export the already initialized client to fix import resolution and environment variable errors
 export { supabase };

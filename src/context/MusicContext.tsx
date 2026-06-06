@@ -40,8 +40,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
-      // Removing crossOrigin as it often triggers CORS/CORB blocks on media servers
-      // that are not explicitly configured to handle anonymous requests for media.
     }
     
     const audio = audioRef.current;
@@ -59,7 +57,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(false);
       
       if (audio.src) {
-        toast.error("Playback failed. This stream may be blocked or unavailable.");
+        toast.error("Stream unavailable. Try another song.");
       }
     };
 
@@ -126,28 +124,27 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!audioRef.current) return;
     
     try {
-      let fullSong = song;
-      // Re-fetch details to ensure we have fresh, non-expired stream URLs
+      // Re-fetch details to get the freshest stream URLs as they expire quickly
       const details = await musicApi.getSongDetails(song.id);
-      if (details) fullSong = details;
+      const fullSong = details || song;
       
       const downloadUrls = fullSong.downloadUrl;
       if (!downloadUrls || downloadUrls.length === 0) {
-        toast.error("No playable sources available for this track.");
+        toast.error("No playable sources found.");
         return;
       }
       
-      // Prefer 160kbps (usually index 2) as it's the most compatible across all browsers
-      // index 0: 12kbps, 1: 48kbps, 2: 96kbps, 3: 160kbps, 4: 320kbps (roughly)
-      const qualityIndex = downloadUrls.length > 3 ? 3 : downloadUrls.length - 1;
-      let streamUrl = (downloadUrls[qualityIndex] as any).link || (downloadUrls[qualityIndex] as any).url;
+      // Best balance quality for web playback is usually around 160kbps
+      // We search for the 160kbps link specifically if possible
+      const bestUrlObj = downloadUrls.find((d: any) => d.quality === '160kbps') || downloadUrls[downloadUrls.length - 1];
+      let streamUrl = (bestUrlObj as any).link || (bestUrlObj as any).url;
       
       if (!streamUrl) {
-        toast.error("Stream URL is missing.");
+        toast.error("Stream link is broken.");
         return;
       }
 
-      // Convert to HTTPS if it's HTTP
+      // Ensure HTTPS
       streamUrl = String(streamUrl).replace('http://', 'https://');
       
       const audio = audioRef.current;
@@ -155,13 +152,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.src = streamUrl;
       audio.load();
       
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          console.error("Playback interrupted or blocked:", err);
-          setIsPlaying(false);
-        });
-      }
+      await audio.play();
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
