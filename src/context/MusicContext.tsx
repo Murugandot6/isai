@@ -38,10 +38,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const handleLoadedMetadata = () => setDuration(audio.duration);
     const handleEnded = () => setIsPlaying(false);
     const handleError = (e: any) => {
-      console.error("Audio error:", e);
-      // Only show error if we actually have a source set
+      console.error("Audio engine error:", e);
       if (audio.src) {
-        toast.error("Failed to load audio stream. Please try another song.");
+        toast.error("Audio playback interrupted. The link might be expired.");
       }
       setIsPlaying(false);
     };
@@ -70,32 +69,37 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!audioRef.current) return;
     
     try {
-      // Step 1: Ensure we have full details including downloadUrl
+      // Step 1: Ensure we have the full song object with stream URLs
       let fullSong = song;
       if (!song.downloadUrl || song.downloadUrl.length === 0) {
         const details = await musicApi.getSongDetails(song.id);
-        if (details) fullSong = details;
+        if (details) {
+          fullSong = details;
+        } else {
+          throw new Error("Could not retrieve song details");
+        }
       }
       
-      // Step 2: Extract highest quality download link
+      // Step 2: Extract the best available stream URL
       const downloadUrls = fullSong.downloadUrl;
       if (!downloadUrls || downloadUrls.length === 0) {
         throw new Error("No download URLs found for this song");
       }
       
-      // Get the highest quality available
+      // Some API versions use 'link', others might use 'url'
+      // We'll take the highest quality (usually last)
       const bestQualityObj = downloadUrls[downloadUrls.length - 1];
-      let streamUrl = bestQualityObj?.link;
+      let streamUrl = (bestQualityObj as any).link || (bestQualityObj as any).url;
       
       if (!streamUrl) {
-        throw new Error("Stream URL is missing");
+        throw new Error("Stream URL is missing in the data");
       }
       
-      // Ensure HTTPS safely
-      streamUrl = streamUrl.startsWith('http://') 
-        ? streamUrl.replace('http://', 'https://') 
-        : streamUrl;
+      // Clean up the URL: force HTTPS and ensure it's a string
+      streamUrl = String(streamUrl).replace('http://', 'https://');
       
+      // Step 3: Prepare the player
+      audioRef.current.pause();
       audioRef.current.src = streamUrl;
       audioRef.current.load();
       
@@ -107,9 +111,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       setCurrentSong(fullSong);
       setIsPlaying(true);
-    } catch (error) {
-      console.error('Error playing song:', error);
-      toast.error("This track cannot be played due to technical restrictions.");
+    } catch (error: any) {
+      console.error('Playback Error:', error);
+      toast.error(error.message || "Unable to play this track. Please try another one.");
       setIsPlaying(false);
     }
   };
