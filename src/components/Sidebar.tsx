@@ -1,9 +1,10 @@
 "use client";
 
 import React from 'react';
-import { Home, Search, Library, Music, Heart, Mic2, Radio } from 'lucide-react';
+import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
@@ -20,6 +21,7 @@ const secondaryItems = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="hidden lg:flex flex-col w-64 border-r border-border h-screen sticky top-0 bg-card/20 backdrop-blur-sm p-6">
@@ -49,7 +51,7 @@ export const Sidebar = () => {
         ))}
       </nav>
 
-      <nav className="space-y-1">
+      <nav className="space-y-1 mb-8">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Your Space</p>
         {secondaryItems.map((item) => (
           <Link
@@ -66,6 +68,32 @@ export const Sidebar = () => {
             {item.label}
           </Link>
         ))}
+      </nav>
+
+      <nav className="space-y-1">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Account</p>
+        {user ? (
+          <button
+            onClick={() => signOut()}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+          >
+            <LogOut size={20} />
+            Logout
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              location.pathname === '/login' 
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+            )}
+          >
+            <LogIn size={20} />
+            Login / Sign Up
+          </Link>
+        )}
       </nav>
 
       <div className="mt-auto bg-gradient-to-br from-primary/10 to-transparent p-4 rounded-2xl border border-primary/10">

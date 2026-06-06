@@ -6,9 +6,22 @@ import { MusicPlayer } from './MusicPlayer';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
-import { Music } from 'lucide-react';
+import { Music, User, LogIn } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, signOut } = useAuth();
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -25,6 +38,47 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           <div className="flex items-center gap-3">
             <LanguageSelector />
             <ListenTogether />
+            
+            <div className="h-8 w-[1px] bg-border/50 mx-1 hidden sm:block" />
+
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full bg-accent/5 border-border hover:bg-accent/10 transition-all overflow-hidden">
+                    {user.user_metadata?.avatar_url ? (
+                      <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={18} className="text-muted-foreground" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-2xl bg-card border-border shadow-2xl">
+                  <DropdownMenuLabel className="font-bold text-xs uppercase tracking-widest text-muted-foreground">My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-border/50" />
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-bold truncate">{user.user_metadata?.username || user.email}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator className="bg-border/50" />
+                  <DropdownMenuItem className="rounded-lg m-1 cursor-pointer focus:bg-primary/10 focus:text-primary font-medium">
+                    Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => signOut()}
+                    className="rounded-lg m-1 cursor-pointer focus:bg-destructive/10 focus:text-destructive font-medium"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/login">
+                <Button variant="default" size="sm" className="rounded-full font-bold gap-2 px-4 h-9 shadow-lg shadow-primary/20">
+                  <LogIn size={16} />
+                  <span className="hidden sm:inline">Login</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </header>
 
