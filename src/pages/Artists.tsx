@@ -16,6 +16,7 @@ const TAMIL_LEGENDS = [
   { name: 'Yuvan Shankar Raja', id: '456863' },
   { name: 'A.R. Rahman', id: '456269' },
   { name: 'Anirudh Ravichander', id: '459320' },
+  { name: 'Vijay', id: '456121' },
   { name: 'Ilaiyaraaja', id: '456561' },
   { name: 'Harris Jayaraj', id: '456862' },
   { name: 'S.P. Balasubrahmanyam', id: '456042' },
