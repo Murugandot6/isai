@@ -145,30 +145,30 @@ const Artists = () => {
             <Button 
               variant="ghost" 
               onClick={focusedLanguage ? handleBackToOverview : () => setSelectedArtist(null)}
-              className="gap-2 hover:bg-accent/10 rounded-xl h-9 px-3"
+              className="gap-1.5 hover:bg-accent/10 rounded-xl h-9 px-3 text-xs md:text-sm"
             >
               <ArrowLeft size={16} />
-              <span className="text-sm">{focusedLanguage ? 'Back' : 'Artists'}</span>
+              <span>{focusedLanguage ? 'Back' : 'Artists'}</span>
             </Button>
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mb-10 md:mb-12">
-            <div className="w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 bg-accent/10">
+            <div className="w-28 h-28 md:w-48 md:h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 bg-accent/10 shrink-0">
               <img src={getHighResImage(selectedArtist.image)} alt={selectedArtist.name} className="w-full h-full object-cover" />
             </div>
-            <div className="text-center md:text-left">
-              <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-3 md:mb-4">{selectedArtist.name}</h1>
+            <div className="text-center md:text-left flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight">{selectedArtist.name}</h1>
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <Button 
                   onClick={() => artistSongs.length > 0 && playSong(artistSongs[0], artistSongs)}
-                  className="rounded-full px-6 md:px-8 h-10 md:h-12 font-bold gap-2 shadow-xl shadow-primary/20"
+                  className="rounded-full px-6 md:px-8 h-10 md:h-12 font-bold gap-2 shadow-xl shadow-primary/20 text-xs md:text-sm w-full md:w-auto"
                 >
-                  <Play size={16} fill="currentColor" />
+                  <Play size={14} md:size={16} fill="currentColor" />
                   Play All
                 </Button>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
                   {selectedLanguages.map(lang => (
-                    <Badge key={lang} variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[9px] font-bold">
+                    <Badge key={lang} variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[8px] md:text-[9px] font-bold">
                       {lang}
                     </Badge>
                   ))}
@@ -177,14 +177,14 @@ const Artists = () => {
             </div>
           </div>
 
-          <div className="space-y-12 md:space-y-16">
+          <div className="space-y-10 md:space-y-16">
             {focusedLanguage ? (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center gap-3 mb-6 md:mb-8">
+                <div className="flex items-center gap-2.5 mb-6 md:mb-8">
                   <div className="bg-primary/10 p-2 rounded-lg">
-                    <Globe size={18} className="text-primary" />
+                    <Globe size={16} md:size={18} className="text-primary" />
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">{focusedLanguage} Tracks</h2>
+                  <h2 className="text-xl md:text-3xl font-black tracking-tight">{focusedLanguage} Tracks</h2>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                   {groupedSongs[focusedLanguage]?.map((song, index) => (
@@ -198,19 +198,19 @@ const Artists = () => {
               Object.entries(groupedSongs).map(([language, songs]) => (
                 <section key={language} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex items-center justify-between mb-4 md:mb-6">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       <div className="bg-accent/10 p-2 rounded-lg">
-                        <Globe size={16} className="text-muted-foreground" />
+                        <Globe size={14} md:size={16} className="text-muted-foreground" />
                       </div>
-                      <h2 className="text-xl md:text-2xl font-black tracking-tight">{language}</h2>
+                      <h2 className="text-lg md:text-2xl font-black tracking-tight">{language}</h2>
                     </div>
                     <Button 
                       variant="link" 
-                      className="text-primary font-bold gap-1 hover:no-underline group h-auto p-0"
+                      className="text-primary font-bold gap-1 hover:no-underline group h-auto p-0 text-xs md:text-sm"
                       onClick={() => setFocusedLanguage(language)}
                     >
                       View All
-                      <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight size={12} md:size={14} className="group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
@@ -236,10 +236,10 @@ const Artists = () => {
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="bg-primary/20 p-2 md:p-3 rounded-xl md:rounded-2xl">
-              <Mic2 className="text-primary w-6 h-6 md:w-8 md:h-8" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/20 p-2 rounded-xl">
+              <Mic2 className="text-primary w-5 h-5 md:w-6 md:h-6" />
             </div>
             <div>
               <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends & Stars</h1>
@@ -248,31 +248,31 @@ const Artists = () => {
           </div>
 
           <form onSubmit={handleSearch} className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for any artist..." 
-              className="pl-10 bg-accent/5 border-none h-11 rounded-xl focus-visible:ring-primary/20"
+              className="pl-9 bg-accent/5 border-none h-10 rounded-xl focus-visible:ring-primary/20 text-sm"
             />
-            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-primary" size={16} />}
+            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-primary" size={14} />}
           </form>
         </div>
 
         {searchResults.length > 0 ? (
-          <section className="mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-black tracking-tight">Search Results</h2>
-              <Button variant="ghost" size="sm" onClick={() => setSearchResults([])} className="text-xs font-bold">CLEAR</Button>
+          <section className="mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-black tracking-tight">Search Results</h2>
+              <Button variant="ghost" size="sm" onClick={() => setSearchResults([])} className="text-[10px] font-bold">CLEAR</Button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 md:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
               {searchResults.map((artist) => (
                 <div 
                   key={artist.id} 
                   onClick={() => handleArtistClick(artist)}
                   className="group flex flex-col items-center text-center cursor-pointer"
                 >
-                  <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
+                  <div className="relative w-full aspect-square rounded-full overflow-hidden mb-2.5 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
                     <img 
                       src={getHighResImage(artist.image)} 
                       alt={artist.name} 
@@ -286,12 +286,12 @@ const Artists = () => {
           </section>
         ) : null}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
           {loading && artistsList.length === 0 ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-4">
+              <div key={i} className="flex flex-col items-center gap-3">
                 <Skeleton className="w-full aspect-square rounded-full" />
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
               </div>
             ))
           ) : (
@@ -301,7 +301,7 @@ const Artists = () => {
                 onClick={() => handleArtistClick(artist)}
                 className="group flex flex-col items-center text-center cursor-pointer"
               >
-                <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
+                <div className="relative w-full aspect-square rounded-full overflow-hidden mb-2.5 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
                   <img 
                     src={getHighResImage(artist.image)} 
                     alt={artist.name} 
@@ -313,7 +313,7 @@ const Artists = () => {
                   </div>
                 </div>
                 <h3 className="font-bold text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-1">{artist.name}</h3>
-                <p className="text-[9px] md:text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Legend</p>
+                <p className="text-[8px] md:text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Legend</p>
               </div>
             ))
           )}

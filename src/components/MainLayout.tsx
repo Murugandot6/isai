@@ -44,27 +44,27 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Global Header */}
-        <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md border-b border-border/50 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 lg:hidden">
+        <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md border-b border-border/50 px-3 md:px-6 py-2.5 md:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 lg:hidden shrink-0">
             <div className="bg-primary p-1.5 rounded-lg">
-              <Music className="text-primary-foreground" size={16} />
+              <Music className="text-primary-foreground" size={14} />
             </div>
-            <span className="text-base font-black tracking-tight italic">anbae</span>
+            <span className="text-sm font-black tracking-tight italic">anbae</span>
           </div>
           <div className="hidden lg:block" /> 
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1.5 md:gap-3 ml-auto">
             <LanguageSelector />
             <ListenTogether />
             
-            <div className="h-6 w-[1px] bg-border/50 mx-1 hidden sm:block" />
+            <div className="h-5 w-[1px] bg-border/50 mx-0.5 hidden sm:block" />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-accent/5 border-border hover:bg-accent/10 transition-all overflow-hidden">
+                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-accent/5 border-border hover:bg-accent/10 transition-all overflow-hidden shrink-0">
                   {user.user_metadata?.avatar_url ? (
                     <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <User size={16} className="text-muted-foreground" />
+                    <User size={14} className="text-muted-foreground" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
@@ -95,7 +95,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         </header>
 
         {/* Main Content with extra padding for mobile player + nav */}
-        <main className="flex-1 relative pb-[180px] md:pb-32">
+        <main className="flex-1 relative pb-[160px] md:pb-32">
           {children}
         </main>
       </div>

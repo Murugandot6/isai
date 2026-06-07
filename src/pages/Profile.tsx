@@ -154,89 +154,89 @@ const Profile = () => {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-10 max-w-2xl mx-auto">
+      <div className="p-4 md:p-10 max-w-2xl mx-auto">
         <Button 
           variant="ghost" 
           onClick={() => navigate(-1)}
-          className="mb-8 gap-2 hover:bg-accent/10 rounded-xl"
+          className="mb-6 md:mb-8 gap-1.5 hover:bg-accent/10 rounded-xl h-9 px-3 text-xs md:text-sm"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
           Back
         </Button>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-full grid grid-cols-2">
-            <TabsTrigger value="profile" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <User size={16} />
+          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-6 md:mb-8 w-full grid grid-cols-2">
+            <TabsTrigger value="profile" className="rounded-xl py-2.5 md:py-3 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
+              <User size={14} md:size={16} />
               Edit Profile
             </TabsTrigger>
-            <TabsTrigger value="invites" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <KeyRound size={16} />
+            <TabsTrigger value="invites" className="rounded-xl py-2.5 md:py-3 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
+              <KeyRound size={14} md:size={16} />
               Invite Codes
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
-              <div className="flex flex-col items-center mb-10">
+            <div className="bg-card border border-border rounded-3xl p-5 md:p-8 shadow-xl">
+              <div className="flex flex-col items-center mb-8 md:mb-10">
                 <div className="relative group">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-accent/10 border-4 border-primary/20 shadow-2xl">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-accent/10 border-4 border-primary/20 shadow-2xl">
                     {profile.avatar_url ? (
                       <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        <User size={48} />
+                        <User size={36} md:size={48} />
                       </div>
                     )}
                   </div>
-                  <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
-                    <Camera size={18} />
+                  <button className="absolute bottom-0 right-0 bg-primary text-white p-1.5 md:p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+                    <Camera size={14} md:size={18} />
                   </button>
                 </div>
-                <h1 className="text-2xl font-black mt-4 tracking-tight">Edit Profile</h1>
-                <p className="text-muted-foreground text-sm">{user?.email}</p>
+                <h1 className="text-xl md:text-2xl font-black mt-4 tracking-tight">Edit Profile</h1>
+                <p className="text-muted-foreground text-xs md:text-sm">{user?.email}</p>
               </div>
 
-              <form onSubmit={handleSave} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Username</Label>
+              <form onSubmit={handleSave} className="space-y-4 md:space-y-6">
+                <div className="space-y-1.5">
+                  <Label htmlFor="username" className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Username</Label>
                   <Input 
                     id="username"
                     value={profile.username}
                     onChange={(e) => setProfile({...profile, username: e.target.value})}
                     placeholder="Your unique username"
-                    className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="bg-accent/5 border-none h-11 md:h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="full_name" className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
                   <Input 
                     id="full_name"
                     value={profile.full_name}
                     onChange={(e) => setProfile({...profile, full_name: e.target.value})}
                     placeholder="Your display name"
-                    className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="bg-accent/5 border-none h-11 md:h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 text-sm"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="avatar_url" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Avatar URL</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="avatar_url" className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Avatar URL</Label>
                   <Input 
                     id="avatar_url"
                     value={profile.avatar_url}
                     onChange={(e) => setProfile({...profile, avatar_url: e.target.value})}
                     placeholder="https://example.com/avatar.jpg"
-                    className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="bg-accent/5 border-none h-11 md:h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 text-sm"
                   />
                 </div>
 
                 <Button 
                   type="submit" 
                   disabled={saving}
-                  className="w-full h-12 rounded-xl font-bold text-base shadow-xl shadow-primary/20 mt-4"
+                  className="w-full h-11 md:h-12 rounded-xl font-bold text-sm md:text-base shadow-xl shadow-primary/20 mt-4"
                 >
-                  {saving ? <Loader2 className="animate-spin mr-2" size={20} /> : <Save className="mr-2" size={20} />}
+                  {saving ? <Loader2 className="animate-spin mr-2" size={18} md:size={20} /> : <Save className="mr-2" size={18} md:size={20} />}
                   Save Changes
                 </Button>
               </form>
@@ -244,18 +244,18 @@ const Profile = () => {
           </TabsContent>
 
           <TabsContent value="invites" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
-              <div className="flex items-center justify-between mb-8">
+            <div className="bg-card border border-border rounded-3xl p-5 md:p-8 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight">Manage Invites</h2>
-                  <p className="text-muted-foreground text-xs mt-1">Generate and share invite codes with friends.</p>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight">Manage Invites</h2>
+                  <p className="text-muted-foreground text-[10px] md:text-xs mt-0.5">Generate and share invite codes with friends.</p>
                 </div>
                 <Button 
                   onClick={generateInviteCode} 
                   disabled={generating}
-                  className="rounded-xl gap-2 font-bold shadow-lg shadow-primary/20"
+                  className="rounded-xl gap-1.5 font-bold shadow-lg shadow-primary/20 text-xs h-10 w-full sm:w-auto"
                 >
-                  {generating ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                  {generating ? <Loader2 className="animate-spin" size={14} /> : <Plus size={14} />}
                   Generate Code
                 </Button>
               </div>
@@ -265,42 +265,42 @@ const Profile = () => {
                   <Loader2 className="animate-spin text-primary" size={32} />
                 </div>
               ) : inviteCodes.length > 0 ? (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
                   {inviteCodes.map((item) => (
                     <div 
                       key={item.id} 
-                      className="flex items-center justify-between p-4 rounded-2xl bg-accent/5 border border-border/50 hover:border-primary/20 transition-all"
+                      className="flex items-center justify-between p-3 md:p-4 rounded-2xl bg-accent/5 border border-border/50 hover:border-primary/20 transition-all"
                     >
-                      <div className="flex items-center gap-3">
-                        <KeyRound className="text-primary" size={18} />
-                        <span className="font-mono font-bold text-base tracking-wider">{item.code}</span>
+                      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                        <KeyRound className="text-primary shrink-0" size={16} md:size={18} />
+                        <span className="font-mono font-bold text-sm md:text-base tracking-wider truncate">{item.code}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           onClick={() => copyToClipboard(item.code, item.id)}
-                          className="h-9 w-9 rounded-xl hover:bg-accent/10"
+                          className="h-8 w-8 md:h-9 md:w-9 rounded-xl hover:bg-accent/10"
                         >
-                          {copiedId === item.id ? <Check className="text-green-500" size={16} /> : <Copy size={16} />}
+                          {copiedId === item.id ? <Check className="text-green-500" size={14} md:size={16} /> : <Copy size={14} md:size={16} />}
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           onClick={() => deleteInviteCode(item.id)}
-                          className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                          className="h-8 w-8 md:h-9 md:w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} md:size={16} />
                         </Button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-accent/20 rounded-2xl">
-                  <KeyRound size={36} className="text-muted-foreground/30 mb-3" />
-                  <h3 className="font-bold text-sm mb-1">No invite codes generated</h3>
-                  <p className="text-muted-foreground text-xs max-w-xs">Click the button above to generate your first invite code.</p>
+                <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-accent/20 rounded-2xl">
+                  <KeyRound size={32} className="text-muted-foreground/30 mb-2.5" />
+                  <h3 className="font-bold text-xs md:text-sm mb-0.5">No invite codes generated</h3>
+                  <p className="text-muted-foreground text-[10px] md:text-xs max-w-xs px-4">Click the button above to generate your first invite code.</p>
                 </div>
               )}
             </div>

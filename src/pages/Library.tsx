@@ -32,76 +32,76 @@ const Library = () => {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-black tracking-tight">Your Library</h1>
-            <p className="text-muted-foreground font-medium">Manage your favorites, playlists, and watch history.</p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight">Your Library</h1>
+            <p className="text-xs md:text-sm text-muted-foreground font-medium">Manage your favorites, playlists, and watch history.</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="rounded-xl gap-2 h-11 px-6 font-bold shadow-lg shadow-primary/20">
-                <Plus size={18} />
+              <Button className="rounded-xl gap-1.5 h-10 px-4 font-bold shadow-lg shadow-primary/20 text-xs w-full md:w-auto">
+                <Plus size={16} />
                 New Playlist
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-border">
+            <DialogContent className="bg-card border-border max-w-[90vw] sm:max-w-md rounded-3xl">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black">Create Playlist</DialogTitle>
+                <DialogTitle className="text-xl md:text-2xl font-black">Create Playlist</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreatePlaylist} className="space-y-4 pt-4">
                 <Input 
                   placeholder="Playlist Name (e.g. Tamil Vibes)" 
                   value={newPlaylistName}
                   onChange={(e) => setNewPlaylistName(e.target.value)}
-                  className="bg-accent/5 h-12 rounded-xl border-none font-bold"
+                  className="bg-accent/5 h-11 rounded-xl border-none font-bold text-sm"
                   autoFocus
                 />
-                <Button type="submit" className="w-full h-12 rounded-xl font-bold">Create</Button>
+                <Button type="submit" className="w-full h-11 rounded-xl font-bold text-sm">Create</Button>
               </form>
             </DialogContent>
           </Dialog>
         </div>
 
         <Tabs defaultValue="liked" className="w-full">
-          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-fit flex flex-wrap">
-            <TabsTrigger value="liked" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Heart size={16} />
+          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-6 md:mb-8 w-fit flex flex-wrap gap-1">
+            <TabsTrigger value="liked" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+              <Heart size={14} />
               Liked Songs
-              {likedSongs.length > 0 && <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{likedSongs.length}</span>}
+              {likedSongs.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full">{likedSongs.length}</span>}
             </TabsTrigger>
-            <TabsTrigger value="watched" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <History size={16} />
+            <TabsTrigger value="watched" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+              <History size={14} />
               Continue Watching
-              {recentlyWatched.length > 0 && <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{recentlyWatched.length}</span>}
+              {recentlyWatched.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full">{recentlyWatched.length}</span>}
             </TabsTrigger>
-            <TabsTrigger value="playlists" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <ListMusic size={16} />
+            <TabsTrigger value="playlists" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+              <ListMusic size={14} />
               Playlists
-              {playlists.length > 0 && <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{playlists.length}</span>}
+              {playlists.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full">{playlists.length}</span>}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="liked" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
             {likedSongs.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {likedSongs.map((song) => (
                   <SongCard key={song.id} song={song} />
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
-                <Heart size={48} className="text-muted-foreground/30 mb-6" />
-                <h3 className="text-xl font-bold mb-2">No liked songs yet</h3>
-                <p className="text-muted-foreground max-w-xs mb-8">Tap the heart icon on any song to save it here.</p>
+              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
+                <Heart size={36} md:size={48} className="text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-bold mb-1">No liked songs yet</h3>
+                <p className="text-xs text-muted-foreground max-w-xs mb-6">Tap the heart icon on any song to save it here.</p>
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="watched" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
             {recentlyWatched.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 {recentlyWatched.map((movie) => (
                   <div 
                     key={movie.id}
@@ -112,45 +112,45 @@ const Library = () => {
                       <img src={movie.backdrop} alt={movie.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-xl">
-                          <Play size={20} fill="currentColor" className="ml-1" />
+                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-xl">
+                          <Play size={16} fill="currentColor" className="ml-0.5" />
                         </div>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-sm truncate group-hover:text-primary transition-colors">{movie.title}</h3>
-                      <p className="text-[10px] text-muted-foreground font-bold mt-1">Continue Watching</p>
+                    <div className="p-3 md:p-4">
+                      <h3 className="font-bold text-xs md:text-sm truncate group-hover:text-primary transition-colors">{movie.title}</h3>
+                      <p className="text-[9px] md:text-[10px] text-muted-foreground font-bold mt-1">Continue Watching</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
-                <Film size={48} className="text-muted-foreground/30 mb-6" />
-                <h3 className="text-xl font-bold mb-2">No watch history</h3>
-                <p className="text-muted-foreground max-w-xs">Start watching movies in the Cinema section to see them here.</p>
+              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
+                <Film size={36} md:size={48} className="text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-bold mb-1">No watch history</h3>
+                <p className="text-xs text-muted-foreground max-w-xs">Start watching movies in the Cinema section to see them here.</p>
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="playlists" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="group bg-gradient-to-br from-primary to-purple-600 rounded-3xl p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer shadow-xl transition-transform hover:-translate-y-1">
-                  <Heart size={40} className="mb-4 text-white fill-white" />
-                  <h3 className="text-2xl font-black text-white">Liked Songs</h3>
-                  <p className="text-white/70 font-bold text-sm uppercase tracking-wider">{likedSongs.length} Tracks</p>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="group bg-gradient-to-br from-primary to-purple-600 rounded-3xl p-6 md:p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer shadow-xl transition-transform hover:-translate-y-1">
+                  <Heart size={32} md:size={40} className="mb-3 md:mb-4 text-white fill-white" />
+                  <h3 className="text-xl md:text-2xl font-black text-white">Liked Songs</h3>
+                  <p className="text-white/70 font-bold text-xs uppercase tracking-wider">{likedSongs.length} Tracks</p>
                 </div>
 
                 {playlists.map(playlist => (
-                  <div key={playlist.id} className="group bg-accent/5 border border-accent/10 rounded-3xl p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer transition-all hover:bg-accent/10 hover:-translate-y-1">
+                  <div key={playlist.id} className="group bg-accent/5 border border-accent/10 rounded-3xl p-6 md:p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer transition-all hover:bg-accent/10 hover:-translate-y-1">
                     <div className="flex justify-between items-start mb-auto">
-                      <div className="bg-primary/20 p-3 rounded-2xl">
-                        <ListMusic className="text-primary" size={24} />
+                      <div className="bg-primary/20 p-2.5 md:p-3 rounded-2xl">
+                        <ListMusic className="text-primary" size={20} md:size={24} />
                       </div>
-                      <button className="text-muted-foreground hover:text-foreground"><MoreVertical size={20} /></button>
+                      <button className="text-muted-foreground hover:text-foreground"><MoreVertical size={18} md:size={20} /></button>
                     </div>
-                    <h3 className="text-2xl font-black">{playlist.name}</h3>
-                    <p className="text-muted-foreground font-bold text-sm uppercase tracking-wider">{playlist.songs.length} Tracks</p>
+                    <h3 className="text-xl md:text-2xl font-black">{playlist.name}</h3>
+                    <p className="text-muted-foreground font-bold text-xs uppercase tracking-wider">{playlist.songs.length} Tracks</p>
                   </div>
                 ))}
              </div>

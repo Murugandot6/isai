@@ -41,14 +41,14 @@ const Featured = () => {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
-        <div className="flex items-center gap-4 mb-12">
-          <div className="bg-primary/20 p-3 rounded-2xl">
-            <Sparkles className="text-primary" size={32} />
+      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+        <div className="flex items-center gap-3 md:gap-4 mb-8 md:mb-12">
+          <div className="bg-primary/20 p-2.5 md:p-3 rounded-2xl">
+            <Sparkles className="text-primary" size={24} md:size={32} />
           </div>
           <div>
-            <h1 className="text-4xl font-black tracking-tight">Featured Playlists</h1>
-            <p className="text-muted-foreground font-medium">Explore the best of Tamil music collections.</p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight">Featured Playlists</h1>
+            <p className="text-xs md:text-sm text-muted-foreground font-medium">Explore the best of Tamil music collections.</p>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ const Featured = () => {
             <Loader2 className="animate-spin text-primary" size={48} />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
             {playlists.map((playlist) => (
               <div 
                 key={playlist.id}
@@ -69,9 +69,9 @@ const Featured = () => {
                   alt={playlist.name} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-8 flex flex-col justify-end">
-                  <h3 className="text-white font-black text-2xl mb-2" dangerouslySetInnerHTML={{ __html: playlist.name }}></h3>
-                  <p className="text-white/60 text-xs font-bold uppercase tracking-widest">{playlist.songCount} Tracks</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6 md:p-8 flex flex-col justify-end">
+                  <h3 className="text-white font-black text-xl md:text-2xl mb-1 md:mb-2 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h3>
+                  <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{playlist.songCount} Tracks</p>
                 </div>
               </div>
             ))}

@@ -55,36 +55,34 @@ const Radio = () => {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="bg-primary/20 p-2 rounded-xl">
-                <RadioIcon className="text-primary" size={24} />
+                <RadioIcon className="text-primary" size={20} />
               </div>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">LIVE FM</Badge>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold">LIVE FM</Badge>
             </div>
-            <h1 className="text-4xl font-black tracking-tight">World Radio</h1>
-            <p className="text-muted-foreground font-medium">Broadcasts from: <span className="text-primary font-bold uppercase">{selectedLanguages.join(', ')}</span></p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight">World Radio</h1>
+            <p className="text-xs md:text-sm text-muted-foreground font-medium">Broadcasts from: <span className="text-primary font-bold uppercase">{selectedLanguages.join(', ')}</span></p>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-              <Input 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search stations..." 
-                className="pl-9 bg-accent/5 border-none h-11 rounded-xl"
-              />
-            </div>
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <Input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search stations..." 
+              className="pl-9 bg-accent/5 border-none h-10 rounded-xl text-sm"
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
           {loading ? (
             Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+              <Skeleton key={i} className="h-20 md:h-24 w-full rounded-2xl" />
             ))
           ) : filteredStations.length > 0 ? (
             filteredStations.map((station) => {
@@ -94,7 +92,7 @@ const Radio = () => {
                 <div 
                   key={station.stationuuid}
                   className={cn(
-                    "flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 group relative",
+                    "flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-2xl border transition-all duration-300 group relative",
                     isActive 
                       ? "bg-primary/10 border-primary/30" 
                       : "bg-card/50 border-transparent hover:border-accent/20 hover:bg-accent/5"
@@ -102,7 +100,7 @@ const Radio = () => {
                 >
                   <div 
                     onClick={() => handlePlayStation(station)}
-                    className="relative w-14 h-14 shrink-0 overflow-hidden rounded-xl bg-accent/10 cursor-pointer"
+                    className="relative w-12 h-12 md:w-14 md:h-14 shrink-0 overflow-hidden rounded-xl bg-accent/10 cursor-pointer"
                   >
                     <img 
                       src={station.favicon || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=200'} 
@@ -114,11 +112,11 @@ const Radio = () => {
                       "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
                       isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     )}>
-                      {isActive && isPlaying ? <Pause size={18} fill="currentColor" className="text-white" /> : <Play size={18} fill="currentColor" className="text-white" />}
+                      {isActive && isPlaying ? <Pause size={16} fill="currentColor" className="text-white" /> : <Play size={16} fill="currentColor" className="text-white" />}
                     </div>
                   </div>
                   <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handlePlayStation(station)}>
-                    <h3 className="font-bold text-sm truncate">{station.name}</h3>
+                    <h3 className="font-bold text-xs md:text-sm truncate">{station.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="secondary" className="bg-accent/10 text-[8px] font-bold px-1.5 py-0">
                         {station.votes.toLocaleString()} VOTES
@@ -131,17 +129,17 @@ const Radio = () => {
                       toggleLikeStation(station);
                     }}
                     className={cn(
-                      "p-2 rounded-full transition-all",
+                      "p-2 rounded-full transition-all shrink-0",
                       liked ? "text-primary" : "text-muted-foreground hover:text-primary"
                     )}
                   >
-                    <Heart size={18} fill={liked ? "currentColor" : "none"} />
+                    <Heart size={16} fill={liked ? "currentColor" : "none"} />
                   </button>
                 </div>
               );
             })
           ) : (
-            <div className="col-span-full text-center py-20 text-muted-foreground">
+            <div className="col-span-full text-center py-16 md:py-20 text-xs md:text-sm text-muted-foreground">
               No stations found for your selected languages.
             </div>
           )}

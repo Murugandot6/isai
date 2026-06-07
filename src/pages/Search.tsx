@@ -65,35 +65,37 @@ const Search = () => {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
-        <div className="max-w-2xl mx-auto mb-12">
-          <h1 className="text-4xl font-black mb-8 tracking-tight text-center">Find Your Sound</h1>
-          <form onSubmit={handleSubmit} className="relative group">
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={24} />
-            <Input 
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for songs, movies, or albums..." 
-              className="pl-12 py-7 bg-accent/5 border-2 border-transparent focus-visible:ring-0 focus-visible:border-primary/20 rounded-2xl text-lg transition-all"
-            />
+      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+        <div className="max-w-2xl mx-auto mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl font-black mb-6 md:mb-8 tracking-tight text-center">Find Your Sound</h1>
+          <form onSubmit={handleSubmit} className="relative group flex items-center gap-2">
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={20} />
+              <Input 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Songs, movies, or albums..." 
+                className="pl-11 pr-4 py-6 bg-accent/5 border-2 border-transparent focus-visible:ring-0 focus-visible:border-primary/20 rounded-2xl text-sm md:text-base transition-all h-12 md:h-14"
+              />
+            </div>
             <button 
               type="submit"
               disabled={loading}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-5 py-2 rounded-xl font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2"
+              className="bg-primary text-primary-foreground px-4 md:px-6 h-12 md:h-14 rounded-2xl font-bold text-xs md:text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-1.5 shrink-0 shadow-lg shadow-primary/20"
             >
-              {loading && <Loader2 className="animate-spin" size={16} />}
-              Search
+              {loading ? <Loader2 className="animate-spin" size={14} md:size={16} /> : <SearchIcon size={14} md:size={16} />}
+              <span className="hidden sm:inline">Search</span>
             </button>
           </form>
         </div>
 
         {loading ? (
           <div className="space-y-8">
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <Skeleton className="h-10 w-24 rounded-xl" />
               <Skeleton className="h-10 w-24 rounded-xl" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-square w-full rounded-2xl" />
@@ -105,21 +107,21 @@ const Search = () => {
           </div>
         ) : (songResults.length > 0 || albumResults.length > 0) ? (
           <Tabs defaultValue="songs" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-fit">
-              <TabsTrigger value="songs" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-                <Music size={16} />
+            <TabsList className="bg-accent/5 p-1 rounded-2xl mb-6 md:mb-8 w-fit">
+              <TabsTrigger value="songs" className="rounded-xl px-4 md:px-6 py-2 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Music size={14} md:size={16} />
                 Songs
-                <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{songResults.length}</span>
+                <span className="ml-1 text-[9px] md:text-[10px] bg-white/20 px-1.5 rounded-full">{songResults.length}</span>
               </TabsTrigger>
-              <TabsTrigger value="albums" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-                <Disc size={16} />
+              <TabsTrigger value="albums" className="rounded-xl px-4 md:px-6 py-2 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Disc size={14} md:size={16} />
                 Albums
-                <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{albumResults.length}</span>
+                <span className="ml-1 text-[9px] md:text-[10px] bg-white/20 px-1.5 rounded-full">{albumResults.length}</span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="songs" className="animate-in fade-in duration-500">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {songResults.map((song) => (
                   <SongCard key={song.id} song={song} allSongs={songResults} />
                 ))}
@@ -127,7 +129,7 @@ const Search = () => {
             </TabsContent>
 
             <TabsContent value="albums" className="animate-in fade-in duration-500">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {albumResults.map((album) => (
                   <AlbumCard key={album.id} album={album} />
                 ))}
@@ -135,14 +137,14 @@ const Search = () => {
             </TabsContent>
           </Tabs>
         ) : !loading && (
-          <div className="flex flex-col items-center justify-center py-20 text-center animate-in slide-in-from-top-4 duration-500">
-            <div className="bg-accent/5 p-8 rounded-full mb-6">
-              <SearchIcon size={48} className="text-muted-foreground/30" />
+          <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center animate-in slide-in-from-top-4 duration-500">
+            <div className="bg-accent/5 p-6 md:p-8 rounded-full mb-4 md:mb-6">
+              <SearchIcon size={36} md:size={48} className="text-muted-foreground/30" />
             </div>
-            <h3 className="text-xl font-bold mb-2">
+            <h3 className="text-lg md:text-xl font-bold mb-2">
               {urlQuery ? `No results for "${urlQuery}" in your selected languages` : "Start Exploring"}
             </h3>
-            <p className="text-muted-foreground max-w-xs">
+            <p className="text-xs md:text-sm text-muted-foreground max-w-xs">
               {urlQuery ? "Try searching for something else or check your language filters in the header." : "Search for your favorite tracks and listen to them instantly for free."}
             </p>
           </div>

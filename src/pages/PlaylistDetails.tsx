@@ -57,48 +57,48 @@ const PlaylistDetails = () => {
 
   return (
     <MainLayout>
-      <div className="p-6 md:p-10 max-w-7xl mx-auto">
+      <div className="p-4 md:p-10 max-w-7xl mx-auto">
         <Button 
           variant="ghost" 
           onClick={() => navigate(-1)}
-          className="mb-8 gap-2 hover:bg-accent/10 rounded-xl"
+          className="mb-6 md:mb-8 gap-1.5 hover:bg-accent/10 rounded-xl h-9 px-3 text-xs md:text-sm"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
           Back
         </Button>
 
-        <div className="flex flex-col md:flex-row items-center md:items-end gap-8 mb-12">
-          <div className="w-64 h-64 rounded-3xl overflow-hidden shadow-2xl bg-accent/10">
+        <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 mb-10 md:mb-12">
+          <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-3xl overflow-hidden shadow-2xl bg-accent/10 shrink-0">
             <img src={getHighResImage(playlist.image)} alt={playlist.name} className="w-full h-full object-cover" />
           </div>
-          <div className="text-center md:text-left flex-1">
-            <div className="flex items-center justify-center md:justify-start gap-2 mb-4">
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[10px] font-bold">
+          <div className="text-center md:text-left flex-1 min-w-0">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[9px] font-bold">
                 PLAYLIST
               </Badge>
-              <Badge variant="outline" className="text-[10px] font-bold uppercase">
+              <Badge variant="outline" className="text-[9px] font-bold uppercase">
                 {playlist.language}
               </Badge>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-4" dangerouslySetInnerHTML={{ __html: playlist.name }}></h1>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-muted-foreground font-medium">
-              <div className="flex items-center gap-2">
-                <ListMusic size={18} />
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h1>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-muted-foreground font-medium text-xs md:text-sm">
+              <div className="flex items-center gap-1.5">
+                <ListMusic size={16} />
                 <span>{playlist.songCount} Songs</span>
               </div>
               {playlist.year && (
-                <div className="flex items-center gap-2">
-                  <Clock size={18} />
+                <div className="flex items-center gap-1.5">
+                  <Clock size={16} />
                   <span>{playlist.year}</span>
                 </div>
               )}
             </div>
-            <div className="mt-8">
+            <div className="mt-6 md:mt-8">
               <Button 
                 onClick={() => playlist.songs && playlist.songs.length > 0 && playSong(playlist.songs[0], playlist.songs)}
-                className="rounded-full px-10 h-14 font-bold gap-3 shadow-xl shadow-primary/20 text-lg"
+                className="rounded-full px-8 md:px-10 h-11 md:h-14 font-bold gap-2 md:gap-3 shadow-xl shadow-primary/20 text-sm md:text-lg w-full md:w-auto"
               >
-                <Play size={20} fill="currentColor" />
+                <Play size={16} md:size={20} fill="currentColor" />
                 Play Playlist
               </Button>
             </div>
@@ -106,14 +106,14 @@ const PlaylistDetails = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-2.5 mb-6 md:mb-8">
             <div className="bg-primary/10 p-2 rounded-lg">
-              <Music size={20} className="text-primary" />
+              <Music size={18} className="text-primary" />
             </div>
-            <h2 className="text-2xl font-black tracking-tight">Tracks</h2>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight">Tracks</h2>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {playlist.songs?.map((song) => (
               <SongCard key={song.id} song={song} allSongs={playlist.songs} />
             ))}
