@@ -25,21 +25,25 @@ const AlbumDetails = () => {
       try {
         const data = await musicApi.getAlbumDetails(id);
         
-        if (data && data.songs && data.songs.length > 0) {
+        // Ensure we have a list of songs even if the API uses different property names
+        const songsList = data.songs || data.list || [];
+        
+        if (songsList.length > 0) {
           try {
-            const songIds = data.songs.map(s => s.id.toString());
+            const songIds = songsList.map((s: any) => s.id.toString());
             const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
             
             if (fullSongs && fullSongs.length > 0) {
-              const enrichedSongs = data.songs.map(originalSong => {
-                const fullDetail = fullSongs.find(fs => fs.id.toString() === originalSong.id.toString());
-                return fullDetail ? { ...fullDetail } : originalSong;
-              });
-              data.songs = enrichedSongs;
+              data.songs = fullSongs;
+            } else {
+              data.songs = songsList;
             }
           } catch (bulkError) {
             console.warn("Failed to fetch bulk song details:", bulkError);
+            data.songs = songsList;
           }
+        } else {
+          data.songs = [];
         }
         
         setAlbum(data);
