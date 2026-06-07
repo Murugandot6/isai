@@ -29,17 +29,22 @@ const AlbumDetails = () => {
         if (data && data.songs && data.songs.length > 0) {
           // 2. The album endpoint often returns the album cover for all songs.
           // We fetch the specific song details in bulk to get the "real" individual images.
-          const songIds = data.songs.map(s => s.id);
-          const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
-          
-          if (fullSongs && fullSongs.length > 0) {
-            // 3. Map the enriched data back to the album's song list
-            const enrichedSongs = data.songs.map(originalSong => {
-              const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
-              // If we found full details, use them (they contain the correct individual images)
-              return fullDetail ? { ...fullDetail } : originalSong;
-            });
-            data.songs = enrichedSongs;
+          // We wrap this in a separate try/catch so that if it fails, the album still loads!
+          try {
+            const songIds = data.songs.map(s => s.id);
+            const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
+            
+            if (fullSongs && fullSongs.length > 0) {
+              // 3. Map the enriched data back to the album's song list
+              const enrichedSongs = data.songs.map(originalSong => {
+                const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
+                // If we found full details, use them (they contain the correct individual images)
+                return fullDetail ? { ...fullDetail } : originalSong;
+              });
+              data.songs = enrichedSongs;
+            }
+          } catch (bulkError) {
+            console.warn("Failed to fetch bulk song details, using original album songs:", bulkError);
           }
         }
         
@@ -94,21 +99,21 @@ const AlbumDetails = () => {
           <div className="text-center md:text-left flex-1 min-w-0">
             <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
               <Badge variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[9px] font-bold">
-                {album.type.toUpperCase()}
+                {album.type ? album.type.toUpperCase() : 'ALBUM'}
               </Badge>
               <Badge variant="outline" className="text-[9px] font-bold uppercase">
-                {album.language}
+                {album.language || 'unknown'}
               </Badge>
             </div>
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight" dangerouslySetInnerHTML={{ __html: album.name }}></h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-muted-foreground font-medium text-xs md:text-sm">
               <div className="flex items-center gap-1.5">
                 <Disc size={16} />
-                <span>{album.songCount} Songs</span>
+                <span>{album.songCount || (album.songs ? album.songs.length : 0)} Songs</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
-                <span>{album.year}</span>
+                <span>{album.year || 'N/A'}</span>
               </div>
             </div>
             <div className="mt-6 md:mt-8">
@@ -132,9 +137,13 @@ const AlbumDetails = () => {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {album.songs?.map((song) => (
-              <SongCard key={song.id} song={song} allSongs={album.songs} />
-            ))}
+            {album.songs && album.songs.length > 0 ? (
+              album.songs.map((song) => (
+                <SongCard key={song.id} song={song} allSongs={album.songs} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-10 text-muted-foreground text-sm">No songs found in this album.</div>
+            )}
           </div>
         </div>
       </div>
