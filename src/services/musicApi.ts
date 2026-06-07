@@ -65,7 +65,8 @@ export interface Playlist {
 }
 
 /**
- * Normalizes song data from the new API to maintain compatibility with the UI.
+ * Normalizes song data from the API to maintain compatibility with the UI.
+ * Handles variations in field names and structures.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
@@ -93,7 +94,7 @@ export const normalizeSong = (song: any): Song => {
     }));
   }
 
-  // Normalize download URLs (handle both camelCase and snake_case)
+  // Normalize download URLs
   let downloadUrls = song.downloadUrl || song.download_url;
   if (downloadUrls && !Array.isArray(downloadUrls)) {
     downloadUrls = [{ quality: '320kbps', link: typeof downloadUrls === 'string' ? downloadUrls : (downloadUrls.link || downloadUrls.url) }];
@@ -120,14 +121,14 @@ const fetchWithProxy = async (endpoint: string) => {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   const json = await res.json();
-  // Most Saavn APIs wrap data in a 'data' field
+  // The API wraps data in a 'data' field
   return json.data || json;
 };
 
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
-      // Using search as a reliable way to get trending content across different API versions
+      // Using search/songs with 'trending' query as recommended for curated lists
       const data = await fetchWithProxy(`/search/songs?query=trending&language=${encodeURIComponent(languages)}&limit=20`);
       const results = (data.results || data || []) as any[];
       return results.map(normalizeSong);
@@ -136,7 +137,7 @@ export const musicApi = {
       return await musicApi.searchSongs('latest hits');
     }
   },
-  searchSongs: async (query: string, page: number = 1, limit: number = 20) => {
+  searchSongs: async (query: string, page: number = 0, limit: number = 20) => {
     try {
       const data = await fetchWithProxy(`/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       const results = (data.results || data || []) as any[];
@@ -146,7 +147,7 @@ export const musicApi = {
       return [];
     }
   },
-  searchAlbums: async (query: string, page: number = 1, limit: number = 20) => {
+  searchAlbums: async (query: string, page: number = 0, limit: number = 20) => {
     try {
       const data = await fetchWithProxy(`/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       return (data.results || data || []) as Album[];
@@ -155,7 +156,7 @@ export const musicApi = {
       return [];
     }
   },
-  searchArtists: async (query: string, page: number = 1, limit: number = 20) => {
+  searchArtists: async (query: string, page: number = 0, limit: number = 20) => {
     try {
       const data = await fetchWithProxy(`/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       return (data.results || data || []) as any[];
@@ -190,6 +191,7 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
+      // Using the /songs?id= format which supports single or multiple IDs
       const data = await fetchWithProxy(`/songs?id=${id}`);
       const songData = Array.isArray(data) ? data[0] : data;
       return songData ? normalizeSong(songData) : null;
@@ -208,9 +210,9 @@ export const musicApi = {
       return [];
     }
   },
-  getArtistDetails: async (id: string, page: number = 0) => {
+  getArtistDetails: async (id: string) => {
     try {
-      const data = await fetchWithProxy(`/artists?id=${id}&page=${page}`);
+      const data = await fetchWithProxy(`/artists?id=${id}`);
       if (data && data.topSongs) {
         data.topSongs = data.topSongs.map(normalizeSong);
       }
@@ -218,6 +220,16 @@ export const musicApi = {
     } catch (error) {
       console.error("Artist details fetch error:", error);
       return null;
+    }
+  },
+  getArtistSongs: async (id: string, page: number = 0) => {
+    try {
+      const data = await fetchWithProxy(`/artists/${id}/songs?page=${page}`);
+      const results = (data.results || data || []) as any[];
+      return results.map(normalizeSong);
+    } catch (error) {
+      console.error("Artist songs fetch error:", error);
+      return [];
     }
   }
 };
