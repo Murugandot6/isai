@@ -1,20 +1,20 @@
 "use client";
 
-// Base URL includes the /api prefix as documented
+// Base URL for the JioSaavn API worker
 const API_BASE = 'https://jiosaavn-api.imurugan.workers.dev/api';
-// Proxy for handling potential CORS or direct fetch issues
-const PROXY = 'https://api.allorigins.win/raw?url=';
+// Using corsproxy.io as it's generally more reliable and faster for raw data
+const PROXY = 'https://corsproxy.io/?';
 
 export interface Image {
   quality: string;
   url?: string;
-  link?: string; // Fallback for some variations
+  link?: string;
 }
 
 export interface DownloadUrl {
   quality: string;
   url?: string;
-  link?: string; // Fallback for some variations
+  link?: string;
 }
 
 export interface Song {
@@ -66,17 +66,14 @@ export interface Playlist {
 
 /**
  * Robust utility to get the track count from any album or playlist object.
- * Prioritizes the actual songs array length as per documentation best practices.
  */
 export const getContainerCount = (item: any): string => {
   if (!item) return "0";
   
-  // 1. Documentation says: songCount = album.songs.length
   if (item.songs && Array.isArray(item.songs) && item.songs.length > 0) {
     return item.songs.length.toString();
   }
 
-  // 2. Fallback to documented field names
   const count = item.songCount || 
                 item.song_count || 
                 item.songs_count || 
@@ -93,12 +90,10 @@ export const getContainerCount = (item: any): string => {
 
 /**
  * Normalizes song data from the API to maintain compatibility with the UI.
- * Prioritizes the "url" field inside image and download arrays as per documentation.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
 
-  // Handle artist formats
   let artists = 'Unknown Artist';
   if (song.artists) {
     const primary = song.artists.primary || song.artists.all || [];
@@ -113,7 +108,6 @@ export const normalizeSong = (song: any): Song => {
       : song.primaryArtists;
   }
 
-  // Handle images - prioritize .url as per docs
   let rawImages = song.image || [];
   let images: Image[] = [];
   if (Array.isArray(rawImages)) {
@@ -125,7 +119,6 @@ export const normalizeSong = (song: any): Song => {
     images = [{ quality: '500x500', url: rawImages }];
   }
 
-  // Fallback to album image if song image is missing
   if (images.length === 0 && song.album?.image) {
     const albumImg = song.album.image;
     if (Array.isArray(albumImg)) {
@@ -136,7 +129,6 @@ export const normalizeSong = (song: any): Song => {
     }
   }
 
-  // Handle download URLs - prioritize .url
   let rawDownloads = song.downloadUrl || [];
   let downloads: DownloadUrl[] = [];
   if (Array.isArray(rawDownloads)) {
@@ -161,21 +153,28 @@ export const normalizeSong = (song: any): Song => {
 const fetchWithProxy = async (endpoint: string) => {
   const targetUrl = `${API_BASE}${endpoint}`;
   
+  // Try direct fetch first as it's the most efficient
   try {
-    const res = await fetch(targetUrl);
+    const res = await fetch(targetUrl, { signal: AbortSignal.timeout(5000) });
     if (res.ok) {
       const json = await res.json();
       return json.data || json;
     }
   } catch (e) {
-    console.warn("Direct fetch failed, falling back to proxy:", e);
+    console.warn("Direct fetch failed or timed out, trying proxy...");
   }
 
-  const url = `${PROXY}${encodeURIComponent(targetUrl)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-  const json = await res.json();
-  return json.data || json;
+  // Fallback to proxy
+  try {
+    const proxyUrl = `${PROXY}${encodeURIComponent(targetUrl)}`;
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
+    const json = await res.json();
+    return json.data || json;
+  } catch (e) {
+    console.error("All fetch attempts failed:", e);
+    throw e;
+  }
 };
 
 export const musicApi = {
@@ -215,7 +214,6 @@ export const musicApi = {
   },
   getAlbumDetails: async (id: string) => {
     try {
-      // Using path parameter as documented: /api/albums/{id}
       const data = await fetchWithProxy(`/albums/${id}`);
       if (data && data.songs) {
         data.songs = data.songs.map(normalizeSong);
@@ -227,7 +225,6 @@ export const musicApi = {
   },
   getPlaylistDetails: async (id: string) => {
     try {
-      // Documentation structure: /api/playlists/{id}
       const data = await fetchWithProxy(`/playlists/${id}`);
       if (data && data.songs) {
         data.songs = data.songs.map(normalizeSong);
@@ -239,7 +236,6 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      // Documented path: /api/songs/{id}
       const data = await fetchWithProxy(`/songs/${id}`);
       const songData = Array.isArray(data) ? data[0] : data;
       return songData ? normalizeSong(songData) : null;
@@ -250,7 +246,6 @@ export const musicApi = {
   getSongsDetailsBulk: async (ids: string[]) => {
     if (!ids || ids.length === 0) return [];
     try {
-      // Bulk fetch documented using query param: /api/songs?ids={ids}
       const data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
       const results = (Array.isArray(data) ? data : (data.results ? data.results : [data])) as any[];
       return results.filter(Boolean).map(normalizeSong);
