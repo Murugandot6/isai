@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, Info } from 'lucide-react';
+import { Server, Info, ShieldAlert } from 'lucide-react';
 
 interface StreamPlayerProps {
   movie: Movie;
@@ -38,7 +38,9 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             className="w-full h-full border-none"
             allowFullScreen
             scrolling="no"
-            referrerPolicy="no-referrer" // Layer 1 Ad-Blocker: Referrer Stripping
+            referrerPolicy="no-referrer" // Layer 1: Referrer Stripping (hides domain from ad networks)
+            // Layer 2: HTML5 Sandbox (Blocks popups, new tabs, and redirects completely)
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
             allow="autoplay; encrypted-media"
           />
         </div>
@@ -65,9 +67,15 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         </div>
       </div>
 
-      <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
-        <Info size={16} className="text-primary shrink-0 mt-0.5" />
-        <p>If the video doesn't load or is slow, try switching to a different streaming server above. Referrer stripping is active to minimize popups and ads.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
+          <Info size={16} className="text-primary shrink-0 mt-0.5" />
+          <p>If the video doesn't load or is slow, try switching to a different streaming server above. Referrer stripping is active to minimize tracking.</p>
+        </div>
+        <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
+          <ShieldAlert size={16} className="text-primary shrink-0 mt-0.5" />
+          <p><strong>Advanced Popup Blocker Active:</strong> The player is sandboxed. Popups, new tabs, and automatic redirects are strictly blocked by your browser.</p>
+        </div>
       </div>
     </div>
   );
