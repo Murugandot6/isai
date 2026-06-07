@@ -33,36 +33,30 @@ const Login = () => {
 
     const formattedCode = inviteCode.trim().toUpperCase();
 
-    // Frontend fallback check to ensure the user is never blocked by Supabase schema cache issues
-    const isFallbackValid = formattedCode === '0460' || formattedCode === '11X13Y';
+    try {
+      // Dynamically validate the invite code against the Supabase 'invite_codes' table
+      const { data: inviteData, error: inviteError } = await supabase
+        .from('invite_codes')
+        .select('code')
+        .eq('code', formattedCode)
+        .maybeSingle();
 
-    if (!isFallbackValid) {
-      try {
-        // Dynamically validate the invite code against the Supabase 'invite_codes' table
-        const { data: inviteData, error: inviteError } = await supabase
-          .from('invite_codes')
-          .select('code')
-          .eq('code', formattedCode)
-          .maybeSingle();
-
-        if (inviteError) {
-          console.error("Supabase error checking invite code:", inviteError);
-          // If there's a schema cache or table missing error, we still block unless they used the fallback code
-          toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
-          setLoading(false);
-          return;
-        }
-
-        if (!inviteData) {
-          toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
-          setLoading(false);
-          return;
-        }
-      } catch (error) {
+      if (inviteError) {
+        console.error("Supabase error checking invite code:", inviteError);
         toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
         setLoading(false);
         return;
       }
+
+      if (!inviteData) {
+        toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
+      setLoading(false);
+      return;
     }
 
     try {
