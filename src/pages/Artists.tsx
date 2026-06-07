@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
-import { Mic2, Star, ArrowLeft, Play, Loader2, Globe, ChevronRight } from 'lucide-react';
+import { Mic2, Star, ArrowLeft, Play, Loader2, Globe, ChevronRight, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { getHighResImage } from '@/lib/image-utils';
 
 const TAMIL_LEGENDS = [
@@ -21,18 +22,25 @@ const TAMIL_LEGENDS = [
   { name: 'G.V. Prakash Kumar', id: '457145' },
   { name: 'Santhosh Narayanan', id: '458918' },
   { name: 'Sid Sriram', id: '468117' },
-  { name: 'Vairamuthu', id: '456864' },
-  { name: 'Na. Muthukumar', id: '485956' },
-  { name: 'Vaali', id: '456865' },
+  { name: 'D. Imman', id: '458032' },
+  { name: 'Vijay Antony', id: '457144' },
+  { name: 'Hiphop Tamizha', id: '459633' },
+  { name: 'Vidyasagar', id: '456861' },
+  { name: 'Deva', id: '456860' },
+  { name: 'Karthik', id: '456117' },
+  { name: 'Chinmayi Sripada', id: '456214' },
 ];
 
 const Artists = () => {
   const { playSong, selectedLanguages } = useMusic();
   const [artistsList, setArtistsList] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
   const [focusedLanguage, setFocusedLanguage] = useState<string | null>(null);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
@@ -51,6 +59,23 @@ const Artists = () => {
     };
     fetchArtists();
   }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const results = await musicApi.searchArtists(searchQuery);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Search failed", error);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const lastSongElementRef = useCallback((node: HTMLDivElement) => {
     if (loading || !focusedLanguage) return;
@@ -218,15 +243,55 @@ const Artists = () => {
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 md:gap-4 mb-8 md:mb-10">
-          <div className="bg-primary/20 p-2 md:p-3 rounded-xl md:rounded-2xl">
-            <Mic2 className="text-primary w-6 h-6 md:w-8 md:h-8" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="bg-primary/20 p-2 md:p-3 rounded-xl md:rounded-2xl">
+              <Mic2 className="text-primary w-6 h-6 md:w-8 md:h-8" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends</h1>
+              <p className="text-xs md:text-sm text-muted-foreground font-medium">The icons who shaped the sound of Tamil cinema.</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends</h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-medium">The icons who shaped the sound of Tamil cinema.</p>
-          </div>
+
+          <form onSubmit={handleSearch} className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for any artist..." 
+              className="pl-10 bg-accent/5 border-none h-11 rounded-xl focus-visible:ring-primary/20"
+            />
+            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-primary" size={16} />}
+          </form>
         </div>
+
+        {searchResults.length > 0 ? (
+          <section className="mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-black tracking-tight">Search Results</h2>
+              <Button variant="ghost" size="sm" onClick={() => setSearchResults([])} className="text-xs font-bold">CLEAR</Button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 md:gap-8">
+              {searchResults.map((artist) => (
+                <div 
+                  key={artist.id} 
+                  onClick={() => handleArtistClick(artist)}
+                  className="group flex flex-col items-center text-center cursor-pointer"
+                >
+                  <div className="relative w-full aspect-square rounded-full overflow-hidden mb-3 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
+                    <img 
+                      src={getHighResImage(artist.image)} 
+                      alt={artist.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </div>
+                  <h3 className="font-bold text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-1">{artist.name}</h3>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 md:gap-8">
           {loading && artistsList.length === 0 ? (

@@ -106,6 +106,17 @@ export const musicApi = {
       return [];
     }
   },
+  searchArtists: async (query: string, page: number = 1, limit: number = 20) => {
+    try {
+      const res = await fetch(`${BASE_URL}/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      return (data.data?.results || []) as any[];
+    } catch (error) {
+      console.error("Artist search error:", error);
+      return [];
+    }
+  },
   getAlbumDetails: async (id: string) => {
     try {
       const res = await fetch(`${BASE_URL}/albums?id=${id}`);
