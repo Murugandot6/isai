@@ -198,8 +198,8 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      const data = await fetchWithProxy(`/songs?id=${id}`);
-      const songData = Array.isArray(data) ? data[0] : data;
+      const data = await fetchWithProxy(`/songs?ids=${id}`);
+      const songData = Array.isArray(data) ? data[0] : (data.results ? data.results[0] : data);
       return songData ? normalizeSong(songData) : null;
     } catch (error) {
       console.error("Details fetch error:", error);
@@ -208,8 +208,8 @@ export const musicApi = {
   },
   getSongsDetailsBulk: async (ids: string[]) => {
     try {
-      const data = await fetchWithProxy(`/songs?id=${ids.join(',')}`);
-      const results = (Array.isArray(data) ? data : [data]) as any[];
+      const data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
+      const results = (Array.isArray(data) ? data : (data.results ? data.results : [data])) as any[];
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Bulk details fetch error:", error);
@@ -219,8 +219,9 @@ export const musicApi = {
   getArtistDetails: async (id: string) => {
     try {
       const data = await fetchWithProxy(`/artists?id=${id}`);
-      if (data && data.topSongs) {
-        data.topSongs = data.topSongs.map(normalizeSong);
+      if (data) {
+        const songsList = data.topSongs || data.songs || [];
+        data.topSongs = songsList.map(normalizeSong);
       }
       return data;
     } catch (error) {
@@ -231,7 +232,7 @@ export const musicApi = {
   getArtistSongs: async (id: string, page: number = 0) => {
     try {
       const data = await fetchWithProxy(`/artists/${id}/songs?page=${page}`);
-      const results = (data.results || data || []) as any[];
+      const results = (data.results || data.songs || data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Artist songs fetch error:", error);
