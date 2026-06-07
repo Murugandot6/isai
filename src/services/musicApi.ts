@@ -1,9 +1,8 @@
 "use client";
 
-// Using a CORS proxy to ensure stability across different environments
-const PROXY = 'https://corsproxy.io/?';
+// Using allorigins as a more reliable proxy for raw API data
+const PROXY = 'https://api.allorigins.win/raw?url=';
 const API_BASE = 'https://jiosaavn.rajputhemant.dev/api';
-const BASE_URL = `${PROXY}${encodeURIComponent(API_BASE)}`;
 
 export interface Image {
   quality: string;
@@ -66,12 +65,10 @@ export interface Playlist {
 
 /**
  * Normalizes song data from the API to maintain compatibility with the UI.
- * Ensures downloadUrl and image arrays are always present and correctly formatted.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
 
-  // Handle primary artists
   let primaryArtists = song.primaryArtists;
   if (Array.isArray(primaryArtists)) {
     primaryArtists = primaryArtists.map((a: any) => a.name).join(', ');
@@ -83,7 +80,6 @@ export const normalizeSong = (song: any): Song => {
       : song.artists.primary;
   }
 
-  // Normalize images - ensure they have a 'link' property
   let images = song.image || song.images || [];
   if (!Array.isArray(images)) {
     images = [{ quality: '500x500', link: typeof images === 'string' ? images : (images.link || images.url) }];
@@ -94,7 +90,6 @@ export const normalizeSong = (song: any): Song => {
     }));
   }
 
-  // Normalize download URLs - ensure they have a 'link' property
   let downloadUrls = song.downloadUrl || song.download_url || [];
   if (!Array.isArray(downloadUrls)) {
     downloadUrls = [{ quality: '320kbps', link: typeof downloadUrls === 'string' ? downloadUrls : (downloadUrls.link || downloadUrls.url) }];
@@ -117,7 +112,11 @@ export const normalizeSong = (song: any): Song => {
 };
 
 const fetchWithProxy = async (endpoint: string) => {
-  const url = `${PROXY}${encodeURIComponent(`${API_BASE}${endpoint}`)}`;
+  // Construct the full target URL first
+  const targetUrl = `${API_BASE}${endpoint}`;
+  // Encode the entire target URL to pass it safely through the proxy
+  const url = `${PROXY}${encodeURIComponent(targetUrl)}`;
+  
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   const json = await res.json();
@@ -189,8 +188,7 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      // Using path parameter as per documentation for single song
-      const data = await fetchWithProxy(`/songs/${id}`);
+      const data = await fetchWithProxy(`/songs?id=${id}`);
       const songData = Array.isArray(data) ? data[0] : data;
       return songData ? normalizeSong(songData) : null;
     } catch (error) {
