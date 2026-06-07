@@ -176,7 +176,7 @@ const Index = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-blue-500/20 p-2 rounded-xl">
-                <item.icon size={18} className="text-blue-500" />
+                <Disc size={18} className="text-blue-500" />
               </div>
               <h3 className="text-xl md:text-2xl font-black tracking-tight">Tamil Movie Hits</h3>
             </div>
@@ -244,7 +244,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {loading ? (
               Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="space-y-3">

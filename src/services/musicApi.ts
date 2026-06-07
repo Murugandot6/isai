@@ -65,30 +65,37 @@ export interface Playlist {
 
 /**
  * Robust utility to get the track count from any album or playlist object.
- * Handles diverse API formats including nested fields and ID lists.
+ * Handles diverse API formats including nested fields, ID lists, and different naming conventions.
  */
 export const getContainerCount = (item: any): string => {
   if (!item) return "0";
   
-  // 1. Check direct fields (various common names)
-  const directCount = item.songCount || item.song_count || item.songs_count || item.total_songs;
-  if (directCount && parseInt(directCount) > 0) return directCount.toString();
-  
-  // 2. Check nested more_info (very common in search results)
-  const moreInfo = item.more_info || {};
-  const nestedCount = moreInfo.song_count || moreInfo.total_songs || moreInfo.songs_count;
-  if (nestedCount && parseInt(nestedCount) > 0) return nestedCount.toString();
-  
-  // 3. Check for list of IDs (common in some summary responses)
-  const pids = moreInfo.song_pids || moreInfo.pids;
-  if (pids && typeof pids === 'string') {
-    const count = pids.split(',').filter(Boolean).length;
-    if (count > 0) return count.toString();
+  // 1. Aggressively check all possible direct and nested count fields
+  const count = item.songCount || 
+                item.song_count || 
+                item.songs_count || 
+                item.total_songs || 
+                item.more_info?.song_count || 
+                item.more_info?.total_songs || 
+                item.more_info?.songs_count ||
+                item.more_info?.song_pids?.split(',').length ||
+                item.more_info?.pids?.split(',').length;
+
+  if (count !== null && count !== undefined && count !== '') {
+    const parsed = parseInt(count.toString());
+    if (!isNaN(parsed) && parsed > 0) return parsed.toString();
   }
   
-  // 4. Fallback to the actual songs array length
+  // 2. Fallback to the actual songs array length if populated
   if (item.songs && Array.isArray(item.songs) && item.songs.length > 0) {
     return item.songs.length.toString();
+  }
+  
+  // 3. Last resort: check if there's a list of IDs in string format
+  const pids = item.more_info?.song_pids || item.more_info?.pids;
+  if (pids && typeof pids === 'string') {
+    const c = pids.split(',').filter(Boolean).length;
+    if (c > 0) return c.toString();
   }
   
   return "0";
