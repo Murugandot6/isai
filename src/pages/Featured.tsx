@@ -44,7 +44,7 @@ const Featured = () => {
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 mb-8 md:mb-12">
           <div className="bg-primary/20 p-2.5 md:p-3 rounded-2xl">
-            <Sparkles className="text-primary" size={24} md:size={32} />
+            <Sparkles className="text-primary w-6 h-6 md:w-8 md:h-8" />
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight">Featured Playlists</h1>

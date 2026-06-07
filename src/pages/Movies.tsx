@@ -130,7 +130,7 @@ const Movies = () => {
             {/* Player Header */}
             <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10 bg-black sticky top-0 z-10 gap-4">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                <Tv className="text-primary shrink-0" size={20} md:size={24} />
+                <Tv className="text-primary shrink-0 w-5 h-5 md:w-6 md:h-6" />
                 <div className="min-w-0">
                   <h2 className="text-sm md:text-lg font-black text-white flex items-center gap-1.5 truncate">
                     {currentMovie.title}
@@ -152,7 +152,7 @@ const Movies = () => {
                   onClick={() => closeMovie()}
                   className="p-1.5 md:p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
                 >
-                  <X size={18} md:size={20} />
+                  <X className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
               </div>
             </div>

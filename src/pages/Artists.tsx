@@ -163,7 +163,7 @@ const Artists = () => {
                   onClick={() => artistSongs.length > 0 && playSong(artistSongs[0], artistSongs)}
                   className="rounded-full px-6 md:px-8 h-10 md:h-12 font-bold gap-2 shadow-xl shadow-primary/20 text-xs md:text-sm w-full md:w-auto"
                 >
-                  <Play size={14} md:size={16} fill="currentColor" />
+                  <Play className="w-3.5 h-3.5 md:w-4 md:h-4" fill="currentColor" />
                   Play All
                 </Button>
                 <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
@@ -182,7 +182,7 @@ const Artists = () => {
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-2.5 mb-6 md:mb-8">
                   <div className="bg-primary/10 p-2 rounded-lg">
-                    <Globe size={16} md:size={18} className="text-primary" />
+                    <Globe className="text-primary w-4 h-4 md:w-[18px] md:h-[18px]" />
                   </div>
                   <h2 className="text-xl md:text-3xl font-black tracking-tight">{focusedLanguage} Tracks</h2>
                 </div>
@@ -200,7 +200,7 @@ const Artists = () => {
                   <div className="flex items-center justify-between mb-4 md:mb-6">
                     <div className="flex items-center gap-2.5">
                       <div className="bg-accent/10 p-2 rounded-lg">
-                        <Globe size={14} md:size={16} className="text-muted-foreground" />
+                        <Globe className="text-muted-foreground w-3.5 h-3.5 md:w-4 md:h-4" />
                       </div>
                       <h2 className="text-lg md:text-2xl font-black tracking-tight">{language}</h2>
                     </div>
@@ -210,7 +210,7 @@ const Artists = () => {
                       onClick={() => setFocusedLanguage(language)}
                     >
                       View All
-                      <ChevronRight size={12} md:size={14} className="group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight className="group-hover:translate-x-1 transition-transform w-3 h-3 md:w-3.5 md:h-3.5" />
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">

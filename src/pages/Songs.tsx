@@ -14,7 +14,7 @@ const Songs = () => {
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 mb-8 md:mb-10">
           <div className="bg-primary/20 p-2.5 md:p-3 rounded-2xl">
-            <History className="text-primary" size={24} md:size={32} />
+            <History className="text-primary w-6 h-6 md:w-8 md:h-8" />
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight">Recently Played</h1>
@@ -30,7 +30,7 @@ const Songs = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center bg-accent/5 rounded-3xl border-2 border-dashed border-accent/10">
-            <Music size={36} md:size={48} className="text-muted-foreground/30 mb-4" />
+            <Music className="text-muted-foreground/30 mb-4 w-9 h-9 md:w-12 md:h-12" />
             <h3 className="text-lg md:text-xl font-bold mb-1">No history yet</h3>
             <p className="text-xs text-muted-foreground max-w-xs">Start listening to music and we'll track your history here.</p>
           </div>

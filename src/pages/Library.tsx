@@ -92,7 +92,7 @@ const Library = () => {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
-                <Heart size={36} md:size={48} className="text-muted-foreground/30 mb-4" />
+                <Heart className="text-muted-foreground/30 mb-4 w-9 h-9 md:w-12 md:h-12" />
                 <h3 className="text-lg font-bold mb-1">No liked songs yet</h3>
                 <p className="text-xs text-muted-foreground max-w-xs mb-6">Tap the heart icon on any song to save it here.</p>
               </div>
@@ -126,7 +126,7 @@ const Library = () => {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
-                <Film size={36} md:size={48} className="text-muted-foreground/30 mb-4" />
+                <Film className="text-muted-foreground/30 mb-4 w-9 h-9 md:w-12 md:h-12" />
                 <h3 className="text-lg font-bold mb-1">No watch history</h3>
                 <p className="text-xs text-muted-foreground max-w-xs">Start watching movies in the Cinema section to see them here.</p>
               </div>
@@ -136,7 +136,7 @@ const Library = () => {
           <TabsContent value="playlists" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 <div className="group bg-gradient-to-br from-primary to-purple-600 rounded-3xl p-6 md:p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer shadow-xl transition-transform hover:-translate-y-1">
-                  <Heart size={32} md:size={40} className="mb-3 md:mb-4 text-white fill-white" />
+                  <Heart size={32} className="mb-3 md:mb-4 text-white fill-white" />
                   <h3 className="text-xl md:text-2xl font-black text-white">Liked Songs</h3>
                   <p className="text-white/70 font-bold text-xs uppercase tracking-wider">{likedSongs.length} Tracks</p>
                 </div>
@@ -145,9 +145,9 @@ const Library = () => {
                   <div key={playlist.id} className="group bg-accent/5 border border-accent/10 rounded-3xl p-6 md:p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer transition-all hover:bg-accent/10 hover:-translate-y-1">
                     <div className="flex justify-between items-start mb-auto">
                       <div className="bg-primary/20 p-2.5 md:p-3 rounded-2xl">
-                        <ListMusic className="text-primary" size={20} md:size={24} />
+                        <ListMusic className="text-primary w-5 h-5 md:w-6 md:h-6" />
                       </div>
-                      <button className="text-muted-foreground hover:text-foreground"><MoreVertical size={18} md:size={20} /></button>
+                      <button className="text-muted-foreground hover:text-foreground"><MoreVertical className="w-4.5 h-4.5 md:w-5 md:h-5" /></button>
                     </div>
                     <h3 className="text-xl md:text-2xl font-black">{playlist.name}</h3>
                     <p className="text-muted-foreground font-bold text-xs uppercase tracking-wider">{playlist.songs.length} Tracks</p>

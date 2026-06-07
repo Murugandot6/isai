@@ -167,11 +167,11 @@ const Profile = () => {
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="bg-accent/5 p-1 rounded-2xl mb-6 md:mb-8 w-full grid grid-cols-2">
             <TabsTrigger value="profile" className="rounded-xl py-2.5 md:py-3 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
-              <User size={14} md:size={16} />
+              <User className="w-3.5 h-3.5 md:w-4 md:h-4" />
               Edit Profile
             </TabsTrigger>
             <TabsTrigger value="invites" className="rounded-xl py-2.5 md:py-3 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
-              <KeyRound size={14} md:size={16} />
+              <KeyRound className="w-3.5 h-3.5 md:w-4 md:h-4" />
               Invite Codes
             </TabsTrigger>
           </TabsList>
@@ -185,12 +185,12 @@ const Profile = () => {
                       <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        <User size={36} md:size={48} />
+                        <User className="w-9 h-9 md:w-12 md:h-12" />
                       </div>
                     )}
                   </div>
                   <button className="absolute bottom-0 right-0 bg-primary text-white p-1.5 md:p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
-                    <Camera size={14} md:size={18} />
+                    <Camera className="w-3.5 h-3.5 md:w-4.5 md:h-4.5" />
                   </button>
                 </div>
                 <h1 className="text-xl md:text-2xl font-black mt-4 tracking-tight">Edit Profile</h1>
@@ -236,7 +236,7 @@ const Profile = () => {
                   disabled={saving}
                   className="w-full h-11 md:h-12 rounded-xl font-bold text-sm md:text-base shadow-xl shadow-primary/20 mt-4"
                 >
-                  {saving ? <Loader2 className="animate-spin mr-2" size={18} md:size={20} /> : <Save className="mr-2" size={18} md:size={20} />}
+                  {saving ? <Loader2 className="animate-spin mr-2 w-4.5 h-4.5 md:w-5 md:h-5" /> : <Save className="mr-2 w-4.5 h-4.5 md:w-5 md:h-5" />}
                   Save Changes
                 </Button>
               </form>
@@ -272,7 +272,7 @@ const Profile = () => {
                       className="flex items-center justify-between p-3 md:p-4 rounded-2xl bg-accent/5 border border-border/50 hover:border-primary/20 transition-all"
                     >
                       <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                        <KeyRound className="text-primary shrink-0" size={16} md:size={18} />
+                        <KeyRound className="text-primary shrink-0 w-4 h-4 md:w-4.5 md:h-4.5" />
                         <span className="font-mono font-bold text-sm md:text-base tracking-wider truncate">{item.code}</span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -282,7 +282,7 @@ const Profile = () => {
                           onClick={() => copyToClipboard(item.code, item.id)}
                           className="h-8 w-8 md:h-9 md:w-9 rounded-xl hover:bg-accent/10"
                         >
-                          {copiedId === item.id ? <Check className="text-green-500" size={14} md:size={16} /> : <Copy size={14} md:size={16} />}
+                          {copiedId === item.id ? <Check className="text-green-500 w-3.5 h-3.5 md:w-4 md:h-4" /> : <Copy className="w-3.5 h-3.5 md:w-4 md:h-4" />}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -290,7 +290,7 @@ const Profile = () => {
                           onClick={() => deleteInviteCode(item.id)}
                           className="h-8 w-8 md:h-9 md:w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
                         >
-                          <Trash2 size={14} md:size={16} />
+                          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         </Button>
                       </div>
                     </div>

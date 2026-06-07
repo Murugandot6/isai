@@ -98,7 +98,7 @@ const PlaylistDetails = () => {
                 onClick={() => playlist.songs && playlist.songs.length > 0 && playSong(playlist.songs[0], playlist.songs)}
                 className="rounded-full px-8 md:px-10 h-11 md:h-14 font-bold gap-2 md:gap-3 shadow-xl shadow-primary/20 text-sm md:text-lg w-full md:w-auto"
               >
-                <Play size={16} md:size={20} fill="currentColor" />
+                <Play className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" />
                 Play Playlist
               </Button>
             </div>
