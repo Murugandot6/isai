@@ -1,10 +1,11 @@
 "use client";
 
 import React from 'react';
-import { Movie } from '@/context/MusicContext';
-import { Play, Info, Star } from 'lucide-react';
+import { Movie, useMusic } from '@/context/MusicContext';
+import { Play, Info, Star, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface MovieHeroProps {
   movie: Movie;
@@ -12,20 +13,20 @@ interface MovieHeroProps {
 }
 
 export const MovieHero: React.FC<MovieHeroProps> = ({ movie, onPlay }) => {
+  const { toggleLikeMovie, isMovieLiked } = useMusic();
+  const liked = isMovieLiked(movie.id);
+
   return (
     <div className="relative h-[450px] md:h-[550px] w-full rounded-3xl overflow-hidden mb-12 group shadow-2xl">
-      {/* Backdrop Image */}
       <img 
         src={movie.backdrop} 
         alt={movie.title} 
         className="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-105"
       />
       
-      {/* Cinematic Gradients */}
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/20 to-transparent" />
 
-      {/* Content Overlay */}
       <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 max-w-2xl">
         <div className="flex items-center gap-3 mb-4">
           <Badge className="bg-primary text-white font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5">
@@ -53,6 +54,16 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movie, onPlay }) => {
           >
             <Play size={16} fill="currentColor" />
             Play Movie
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => toggleLikeMovie(movie)}
+            className={cn(
+              "rounded-xl w-12 h-12 p-0 border-white/20 bg-white/5 backdrop-blur-md transition-all",
+              liked ? "text-primary border-primary/30 bg-primary/10" : "text-white hover:bg-white/10"
+            )}
+          >
+            <Heart size={20} fill={liked ? "currentColor" : "none"} />
           </Button>
           <Badge variant="outline" className="text-white border-white/20 text-xs font-bold px-4 py-2 rounded-xl bg-white/5 backdrop-blur-md">
             {movie.genre}

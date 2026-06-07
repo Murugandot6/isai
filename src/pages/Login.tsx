@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound } from 'lucide-react';
+import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,32 +32,23 @@ const Login = () => {
 
     setLoading(true);
 
-    // Only validate invite code during sign-up
     if (isSignUp) {
       const formattedCode = inviteCode.trim().toUpperCase();
 
       try {
-        // Dynamically validate the invite code against the Supabase 'invite_codes' table
         const { data: inviteData, error: inviteError } = await supabase
           .from('invite_codes')
           .select('code')
           .eq('code', formattedCode)
           .maybeSingle();
 
-        if (inviteError) {
-          console.error("Supabase error checking invite code:", inviteError);
-          toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
-          setLoading(false);
-          return;
-        }
-
-        if (!inviteData) {
+        if (inviteError || !inviteData) {
           toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
           setLoading(false);
           return;
         }
       } catch (error) {
-        toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
+        toast.error("Invalid Invite Code!");
         setLoading(false);
         return;
       }
@@ -140,17 +132,23 @@ const Login = () => {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                className="pl-10 pr-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
-          {/* Invite Code Field - Only shown during Sign Up */}
           {isSignUp && (
             <div className="space-y-2">
               <div className="relative">
@@ -183,7 +181,6 @@ const Login = () => {
           </Button>
         </form>
 
-        {/* Invite Code Info Box - Only shown during Sign Up */}
         {isSignUp && (
           <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 animate-in fade-in duration-300">
             <Info size={16} className="text-primary shrink-0 mt-0.5" />

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
-import { Heart, ListMusic, Plus, Clock, MoreVertical, Play } from 'lucide-react';
+import { Heart, ListMusic, Plus, Clock, MoreVertical, Play, Film, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 
 const Library = () => {
-  const { likedSongs, playlists, createPlaylist, playSong } = useMusic();
+  const { likedSongs, playlists, createPlaylist, recentlyWatched, playMovie } = useMusic();
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -36,7 +36,7 @@ const Library = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-black tracking-tight">Your Library</h1>
-            <p className="text-muted-foreground font-medium">Manage your favorites and playlists.</p>
+            <p className="text-muted-foreground font-medium">Manage your favorites, playlists, and watch history.</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -65,11 +65,16 @@ const Library = () => {
         </div>
 
         <Tabs defaultValue="liked" className="w-full">
-          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-fit">
+          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-fit flex flex-wrap">
             <TabsTrigger value="liked" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
               <Heart size={16} />
               Liked Songs
               {likedSongs.length > 0 && <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{likedSongs.length}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="watched" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+              <History size={16} />
+              Continue Watching
+              {recentlyWatched.length > 0 && <span className="ml-1 text-[10px] bg-white/20 px-1.5 rounded-full">{recentlyWatched.length}</span>}
             </TabsTrigger>
             <TabsTrigger value="playlists" className="rounded-xl px-6 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
               <ListMusic size={16} />
@@ -94,16 +99,48 @@ const Library = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="watched" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {recentlyWatched.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {recentlyWatched.map((movie) => (
+                  <div 
+                    key={movie.id}
+                    onClick={() => playMovie(movie)}
+                    className="group relative bg-card/40 border border-border/50 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-500 hover:-translate-y-1.5 cursor-pointer"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <img src={movie.backdrop} alt={movie.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-xl">
+                          <Play size={20} fill="currentColor" className="ml-1" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-sm truncate group-hover:text-primary transition-colors">{movie.title}</h3>
+                      <p className="text-[10px] text-muted-foreground font-bold mt-1">Continue Watching</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
+                <Film size={48} className="text-muted-foreground/30 mb-6" />
+                <h3 className="text-xl font-bold mb-2">No watch history</h3>
+                <p className="text-muted-foreground max-w-xs">Start watching movies in the Cinema section to see them here.</p>
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="playlists" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Default Liked Playlist Card */}
                 <div className="group bg-gradient-to-br from-primary to-purple-600 rounded-3xl p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer shadow-xl transition-transform hover:-translate-y-1">
                   <Heart size={40} className="mb-4 text-white fill-white" />
                   <h3 className="text-2xl font-black text-white">Liked Songs</h3>
                   <p className="text-white/70 font-bold text-sm uppercase tracking-wider">{likedSongs.length} Tracks</p>
                 </div>
 
-                {/* Custom Playlists */}
                 {playlists.map(playlist => (
                   <div key={playlist.id} className="group bg-accent/5 border border-accent/10 rounded-3xl p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer transition-all hover:bg-accent/10 hover:-translate-y-1">
                     <div className="flex justify-between items-start mb-auto">
