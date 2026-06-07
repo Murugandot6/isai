@@ -82,9 +82,9 @@ const Index = () => {
   };
 
   const getCount = (item: any) => {
-    if (item.songCount && parseInt(item.songCount) > 0) return item.songCount;
-    if (item.song_count && parseInt(item.song_count) > 0) return item.song_count;
-    if (item.more_info?.song_count && parseInt(item.more_info.song_count) > 0) return item.more_info.song_count;
+    // Standardize count logic for the home page cards
+    const count = item.songCount || item.song_count || item.more_info?.song_count || item.more_info?.total_songs;
+    if (count && parseInt(count) > 0) return count;
     return (item.songs ? item.songs.length : 0).toString();
   };
 
