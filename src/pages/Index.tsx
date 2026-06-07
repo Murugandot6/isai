@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Song, Playlist, Album } from '@/services/musicApi';
+import { musicApi, Song, Playlist, Album, getContainerCount } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { AlbumCard } from '@/components/AlbumCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -79,13 +79,6 @@ const Index = () => {
     if (searchTerm.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
-  };
-
-  const getCount = (item: any) => {
-    // Standardize count logic for the home page cards
-    const count = item.songCount || item.song_count || item.more_info?.song_count || item.more_info?.total_songs;
-    if (count && parseInt(count) > 0) return count;
-    return (item.songs ? item.songs.length : 0).toString();
   };
 
   return (
@@ -169,7 +162,7 @@ const Index = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 md:p-6 flex flex-col justify-end">
                     <h4 className="text-white font-black text-base md:text-xl mb-0.5 md:mb-1 truncate" dangerouslySetInnerHTML={{ __html: playlist.name }}></h4>
                     <p className="text-white/60 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
-                      {getCount(playlist)} Tracks
+                      {getContainerCount(playlist)} Tracks
                     </p>
                   </div>
                 </div>
@@ -183,7 +176,7 @@ const Index = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-blue-500/20 p-2 rounded-xl">
-                <Disc className="text-blue-500" size={18} />
+                <item.icon size={18} className="text-blue-500" />
               </div>
               <h3 className="text-xl md:text-2xl font-black tracking-tight">Tamil Movie Hits</h3>
             </div>
@@ -251,7 +244,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {loading ? (
               Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="space-y-3">

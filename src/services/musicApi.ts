@@ -64,6 +64,37 @@ export interface Playlist {
 }
 
 /**
+ * Robust utility to get the track count from any album or playlist object.
+ * Handles diverse API formats including nested fields and ID lists.
+ */
+export const getContainerCount = (item: any): string => {
+  if (!item) return "0";
+  
+  // 1. Check direct fields (various common names)
+  const directCount = item.songCount || item.song_count || item.songs_count || item.total_songs;
+  if (directCount && parseInt(directCount) > 0) return directCount.toString();
+  
+  // 2. Check nested more_info (very common in search results)
+  const moreInfo = item.more_info || {};
+  const nestedCount = moreInfo.song_count || moreInfo.total_songs || moreInfo.songs_count;
+  if (nestedCount && parseInt(nestedCount) > 0) return nestedCount.toString();
+  
+  // 3. Check for list of IDs (common in some summary responses)
+  const pids = moreInfo.song_pids || moreInfo.pids;
+  if (pids && typeof pids === 'string') {
+    const count = pids.split(',').filter(Boolean).length;
+    if (count > 0) return count.toString();
+  }
+  
+  // 4. Fallback to the actual songs array length
+  if (item.songs && Array.isArray(item.songs) && item.songs.length > 0) {
+    return item.songs.length.toString();
+  }
+  
+  return "0";
+};
+
+/**
  * Normalizes song data from the API to maintain compatibility with the UI.
  */
 export const normalizeSong = (song: any): Song => {
@@ -85,7 +116,6 @@ export const normalizeSong = (song: any): Song => {
   if (!Array.isArray(images)) {
     images = [{ quality: '500x500', link: typeof images === 'string' ? images : (images.link || images.url) }];
   } else if (images.length === 0 && song.album?.image) {
-    // Fallback to album image if song image is missing
     const albumImg = song.album.image;
     images = Array.isArray(albumImg) ? albumImg : [{ quality: '500x500', link: albumImg }];
   } else {

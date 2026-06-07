@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Album } from '@/services/musicApi';
+import { Album, getContainerCount } from '@/services/musicApi';
 import { Play, Disc, Calendar } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
@@ -13,21 +13,7 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
   if (!album) return null;
 
   const imageUrl = getHighResImage(album.image);
-  
-  // Use the working logic: check direct songCount, then fallback to songs array
-  // Also check more_info.song_count which is common in search results
-  const getSongCount = () => {
-    const a = album as any;
-    const directCount = a.songCount || a.song_count || a.more_info?.song_count || a.more_info?.total_songs;
-    
-    if (directCount && parseInt(directCount) > 0) {
-      return directCount;
-    }
-    
-    return (album.songs ? album.songs.length : 0).toString();
-  };
-
-  const songCount = getSongCount();
+  const songCount = getContainerCount(album);
 
   return (
     <div 
