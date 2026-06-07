@@ -173,90 +173,98 @@ export const musicApi = {
     }
   },
   getAlbumDetails: async (id: string) => {
+    let data = null;
+    
+    // Try query param first
     try {
-      // Try query param first
-      let data = await fetchWithProxy(`/albums?id=${id}`);
-      
-      // If it doesn't have songs, try path param
-      if (!data || !data.songs || data.songs.length === 0) {
-        try {
-          const pathData = await fetchWithProxy(`/albums/${id}`);
-          if (pathData && pathData.songs && pathData.songs.length > 0) {
-            data = pathData;
-          }
-        } catch (e) {
-          console.warn("Path param fetch failed for album:", e);
-        }
-      }
-
-      if (data && data.songs) {
-        data.songs = data.songs.map(normalizeSong);
-      }
-      return data as Album;
-    } catch (error) {
-      console.error("Album details fetch error:", error);
-      return null;
+      data = await fetchWithProxy(`/albums?id=${id}`);
+    } catch (e) {
+      console.warn("Query param fetch failed for album:", e);
     }
+    
+    // If query param failed or returned no songs, try path param
+    if (!data || !data.songs || data.songs.length === 0) {
+      try {
+        const pathData = await fetchWithProxy(`/albums/${id}`);
+        if (pathData && pathData.songs && pathData.songs.length > 0) {
+          data = pathData;
+        }
+      } catch (e) {
+        console.warn("Path param fetch failed for album:", e);
+      }
+    }
+
+    if (data && data.songs) {
+      data.songs = data.songs.map(normalizeSong);
+    }
+    return data as Album;
   },
   getPlaylistDetails: async (id: string) => {
+    let data = null;
+    
+    // Try query param first
     try {
-      // Try query param first
-      let data = await fetchWithProxy(`/playlists?id=${id}`);
-      
-      // If it doesn't have songs, try path param
-      if (!data || !data.songs || data.songs.length === 0) {
-        try {
-          const pathData = await fetchWithProxy(`/playlists/${id}`);
-          if (pathData && pathData.songs && pathData.songs.length > 0) {
-            data = pathData;
-          }
-        } catch (e) {
-          console.warn("Path param fetch failed for playlist:", e);
-        }
-      }
-
-      if (data && data.songs) {
-        data.songs = data.songs.map(normalizeSong);
-      }
-      return data as Playlist;
-    } catch (error) {
-      console.error("Playlist details fetch error:", error);
-      return null;
+      data = await fetchWithProxy(`/playlists?id=${id}`);
+    } catch (e) {
+      console.warn("Query param fetch failed for playlist:", e);
     }
+    
+    // If query param failed or returned no songs, try path param
+    if (!data || !data.songs || data.songs.length === 0) {
+      try {
+        const pathData = await fetchWithProxy(`/playlists/${id}`);
+        if (pathData && pathData.songs && pathData.songs.length > 0) {
+          data = pathData;
+        }
+      } catch (e) {
+        console.warn("Path param fetch failed for playlist:", e);
+      }
+    }
+
+    if (data && data.songs) {
+      data.songs = data.songs.map(normalizeSong);
+    }
+    return data as Playlist;
   },
   getSongDetails: async (id: string) => {
+    let data = null;
+    
     try {
-      let data = await fetchWithProxy(`/songs?ids=${id}`);
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        try {
-          data = await fetchWithProxy(`/songs/${id}`);
-        } catch (e) {
-          console.warn("Path param fetch failed for song:", e);
-        }
-      }
-      const songData = Array.isArray(data) ? data[0] : (data.results ? data.results[0] : data);
-      return songData ? normalizeSong(songData) : null;
-    } catch (error) {
-      console.error("Details fetch error:", error);
-      return null;
+      data = await fetchWithProxy(`/songs?ids=${id}`);
+    } catch (e) {
+      console.warn("Query param fetch failed for song:", e);
     }
+    
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      try {
+        data = await fetchWithProxy(`/songs/${id}`);
+      } catch (e) {
+        console.warn("Path param fetch failed for song:", e);
+      }
+    }
+    
+    const songData = Array.isArray(data) ? data[0] : (data.results ? data.results[0] : data);
+    return songData ? normalizeSong(songData) : null;
   },
   getSongsDetailsBulk: async (ids: string[]) => {
+    let data = null;
+    
     try {
-      let data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        try {
-          data = await Promise.all(ids.map(id => fetchWithProxy(`/songs/${id}`)));
-        } catch (e) {
-          console.warn("Path param fetch failed for bulk songs:", e);
-        }
-      }
-      const results = (Array.isArray(data) ? data : (data.results ? data.results : [data])) as any[];
-      return results.map(normalizeSong);
-    } catch (error) {
-      console.error("Bulk details fetch error:", error);
-      return [];
+      data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
+    } catch (e) {
+      console.warn("Query param fetch failed for bulk songs:", e);
     }
+    
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      try {
+        data = await Promise.all(ids.map(id => fetchWithProxy(`/songs/${id}`)));
+      } catch (e) {
+        console.warn("Path param fetch failed for bulk songs:", e);
+      }
+    }
+    
+    const results = (Array.isArray(data) ? data : (data.results ? data.results : [data])) as any[];
+    return results.map(normalizeSong);
   },
   getArtistDetails: async (id: string) => {
     try {
