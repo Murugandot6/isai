@@ -151,7 +151,7 @@ const Index = () => {
               featuredPlaylists.map((playlist) => (
                 <div 
                   key={playlist.id}
-                  onClick={() => playlist.songs && playlist.songs.length > 0 && playSong(playlist.songs[0], playlist.songs)}
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
                   className="group relative aspect-[16/10] sm:aspect-[16/9] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-lg transition-all hover:-translate-y-1"
                 >
                   <img 
@@ -161,7 +161,9 @@ const Index = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 md:p-6 flex flex-col justify-end">
                     <h4 className="text-white font-black text-base md:text-xl mb-0.5 md:mb-1 truncate" dangerouslySetInnerHTML={{ __html: playlist.name }}></h4>
-                    <p className="text-white/60 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">{playlist.songCount} Tracks</p>
+                    <p className="text-white/60 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
+                      {(playlist.songCount && parseInt(playlist.songCount) > 0) ? playlist.songCount : (playlist.songs ? playlist.songs.length : 0)} Tracks
+                    </p>
                   </div>
                 </div>
               ))
@@ -214,7 +216,7 @@ const Index = () => {
               decadePlaylists.map((playlist) => (
                 <div 
                   key={playlist.id}
-                  onClick={() => playlist.songs && playlist.songs.length > 0 && playSong(playlist.songs[0], playlist.songs)}
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
                   className="group relative h-24 md:h-32 rounded-2xl overflow-hidden cursor-pointer shadow-md transition-all hover:scale-105"
                 >
                   <img 

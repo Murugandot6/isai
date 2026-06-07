@@ -13,6 +13,11 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
   if (!album) return null;
 
   const imageUrl = getHighResImage(album.image);
+  
+  // Handle song count correctly: fallback to array length if API returns "0" or missing
+  const songCount = (album.songCount && parseInt(album.songCount) > 0) 
+    ? album.songCount 
+    : (album.songs ? album.songs.length : 0);
 
   return (
     <div 
@@ -30,7 +35,7 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
         <div className="absolute top-2 left-2 z-10">
           <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] font-bold uppercase border-none text-white flex items-center gap-1 py-0.5">
             <Disc size={10} />
-            {album.songCount || 0} Songs
+            {songCount} Songs
           </Badge>
         </div>
 
