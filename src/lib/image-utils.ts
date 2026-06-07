@@ -2,7 +2,7 @@
 
 /**
  * Extracts the highest quality image URL from the API response.
- * Handles both array of objects and single string formats.
+ * Follows the documentation best practice of using the 500x500 quality item.
  */
 export const getHighResImage = (image: any) => {
   const fallback = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=500';
@@ -14,13 +14,13 @@ export const getHighResImage = (image: any) => {
     return image.replace('http://', 'https://');
   }
 
-  // If it's an array of image objects (standard Saavn API format)
+  // Documentation shows an array of objects with a 'url' property
   if (Array.isArray(image) && image.length > 0) {
-    // Get the last item (highest quality)
-    const imageObj = image[image.length - 1];
+    // Try to find the 500x500 version specifically as recommended
+    const highRes = image.find(i => i.quality === '500x500') || image[image.length - 1];
     
-    // Handle both 'link' and 'url' properties
-    const imageUrl = imageObj.link || imageObj.url;
+    // Prioritize 'url' over 'link' as seen in the examples
+    const imageUrl = highRes.url || highRes.link;
     
     if (imageUrl && typeof imageUrl === 'string') {
       return imageUrl.replace('http://', 'https://');

@@ -1,19 +1,20 @@
 "use client";
 
-// Using allorigins as a fallback proxy for raw API data if direct fetch fails
-const PROXY = 'https://api.allorigins.win/raw?url=';
+// Base URL includes the /api prefix as documented
 const API_BASE = 'https://jiosaavn-api.imurugan.workers.dev/api';
+// Proxy for handling potential CORS or direct fetch issues
+const PROXY = 'https://api.allorigins.win/raw?url=';
 
 export interface Image {
   quality: string;
-  link?: string;
   url?: string;
+  link?: string; // Fallback for some variations
 }
 
 export interface DownloadUrl {
   quality: string;
-  link?: string;
   url?: string;
+  link?: string; // Fallback for some variations
 }
 
 export interface Song {
@@ -65,37 +66,26 @@ export interface Playlist {
 
 /**
  * Robust utility to get the track count from any album or playlist object.
- * Handles diverse API formats including nested fields, ID lists, and different naming conventions.
+ * Prioritizes the actual songs array length as per documentation best practices.
  */
 export const getContainerCount = (item: any): string => {
   if (!item) return "0";
   
-  // 1. Aggressively check all possible direct and nested count fields
+  // 1. Documentation says: songCount = album.songs.length
+  if (item.songs && Array.isArray(item.songs) && item.songs.length > 0) {
+    return item.songs.length.toString();
+  }
+
+  // 2. Fallback to documented field names
   const count = item.songCount || 
                 item.song_count || 
                 item.songs_count || 
                 item.total_songs || 
                 item.more_info?.song_count || 
-                item.more_info?.total_songs || 
-                item.more_info?.songs_count ||
-                item.more_info?.song_pids?.split(',').length ||
-                item.more_info?.pids?.split(',').length;
+                item.more_info?.total_songs;
 
   if (count !== null && count !== undefined && count !== '') {
-    const parsed = parseInt(count.toString());
-    if (!isNaN(parsed) && parsed > 0) return parsed.toString();
-  }
-  
-  // 2. Fallback to the actual songs array length if populated
-  if (item.songs && Array.isArray(item.songs) && item.songs.length > 0) {
-    return item.songs.length.toString();
-  }
-  
-  // 3. Last resort: check if there's a list of IDs in string format
-  const pids = item.more_info?.song_pids || item.more_info?.pids;
-  if (pids && typeof pids === 'string') {
-    const c = pids.split(',').filter(Boolean).length;
-    if (c > 0) return c.toString();
+    return count.toString();
   }
   
   return "0";
@@ -103,58 +93,56 @@ export const getContainerCount = (item: any): string => {
 
 /**
  * Normalizes song data from the API to maintain compatibility with the UI.
- * Aggressively searches for high-quality images and handles various artist object formats.
+ * Prioritizes the "url" field inside image and download arrays as per documentation.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
 
-  // Handle various artist formats (array of objects, single object, or string)
-  let primaryArtists = song.primaryArtists;
-  if (Array.isArray(primaryArtists)) {
-    primaryArtists = primaryArtists.map((a: any) => a.name).join(', ');
-  } else if (typeof primaryArtists === 'object' && primaryArtists !== null) {
-    primaryArtists = primaryArtists.name || 'Unknown Artist';
-  } else if (!primaryArtists && song.artists?.primary) {
-    primaryArtists = Array.isArray(song.artists.primary) 
-      ? song.artists.primary.map((a: any) => a.name).join(', ')
-      : song.artists.primary;
+  // Handle artist formats
+  let artists = 'Unknown Artist';
+  if (song.artists) {
+    const primary = song.artists.primary || song.artists.all || [];
+    if (Array.isArray(primary)) {
+      artists = primary.map((a: any) => a.name).join(', ');
+    } else if (typeof primary === 'string') {
+      artists = primary;
+    }
+  } else if (song.primaryArtists) {
+    artists = Array.isArray(song.primaryArtists) 
+      ? song.primaryArtists.map((a: any) => typeof a === 'string' ? a : a.name).join(', ')
+      : song.primaryArtists;
   }
 
-  // Extract images from all possible fields (image, images, or album.image)
-  let rawImages = song.image || song.images || [];
+  // Handle images - prioritize .url as per docs
+  let rawImages = song.image || [];
   let images: Image[] = [];
-
   if (Array.isArray(rawImages)) {
     images = rawImages.map((img: any) => ({
       quality: img.quality || '500x500',
-      link: img.link || img.url || (typeof img === 'string' ? img : '')
+      url: img.url || img.link || (typeof img === 'string' ? img : '')
     }));
   } else if (typeof rawImages === 'string') {
-    images = [{ quality: '500x500', link: rawImages }];
-  } else if (typeof rawImages === 'object' && rawImages !== null) {
-    images = [{ quality: '500x500', link: rawImages.link || rawImages.url || '' }];
+    images = [{ quality: '500x500', url: rawImages }];
   }
 
-  // If song image is empty, fallback to album image
+  // Fallback to album image if song image is missing
   if (images.length === 0 && song.album?.image) {
     const albumImg = song.album.image;
     if (Array.isArray(albumImg)) {
       images = albumImg.map((img: any) => ({
         quality: img.quality || '500x500',
-        link: img.link || img.url || (typeof img === 'string' ? img : '')
+        url: img.url || img.link || (typeof img === 'string' ? img : '')
       }));
-    } else {
-      images = [{ quality: '500x500', link: typeof albumImg === 'string' ? albumImg : (albumImg.link || albumImg.url) }];
     }
   }
 
-  let downloadUrls = song.downloadUrl || song.download_url || [];
-  if (!Array.isArray(downloadUrls)) {
-    downloadUrls = [{ quality: '320kbps', link: typeof downloadUrls === 'string' ? downloadUrls : (downloadUrls.link || downloadUrls.url) }];
-  } else {
-    downloadUrls = downloadUrls.map((dl: any) => ({
+  // Handle download URLs - prioritize .url
+  let rawDownloads = song.downloadUrl || [];
+  let downloads: DownloadUrl[] = [];
+  if (Array.isArray(rawDownloads)) {
+    downloads = rawDownloads.map((dl: any) => ({
       quality: dl.quality || '320kbps',
-      link: dl.link || dl.url || (typeof dl === 'string' ? dl : '')
+      url: dl.url || dl.link || (typeof dl === 'string' ? dl : '')
     }));
   }
 
@@ -162,9 +150,9 @@ export const normalizeSong = (song: any): Song => {
     ...song,
     id: song.id?.toString() || '',
     name: song.name || song.title || 'Unknown Track',
-    primaryArtists: primaryArtists || 'Unknown Artist',
+    primaryArtists: artists,
     image: images,
-    downloadUrl: downloadUrls,
+    downloadUrl: downloads,
     language: song.language || 'unknown',
     album: song.album || { id: 'unknown', name: 'Unknown Album', url: '' }
   };
@@ -191,7 +179,7 @@ const fetchWithProxy = async (endpoint: string) => {
 };
 
 export const musicApi = {
-  getTrending: async (languages: string = 'hindi,english') => {
+  getTrending: async (languages: string = 'tamil,hindi') => {
     try {
       const data = await fetchWithProxy(`/search/songs?query=trending&language=${encodeURIComponent(languages)}&limit=20`);
       const results = (data.results || data || []) as any[];
@@ -226,83 +214,49 @@ export const musicApi = {
     }
   },
   getAlbumDetails: async (id: string) => {
-    let data = null;
     try {
-      data = await fetchWithProxy(`/albums?id=${id}`);
-    } catch (e) {}
-    
-    if (!data || !data.songs || data.songs.length === 0) {
-      try {
-        const pathData = await fetchWithProxy(`/albums/${id}`);
-        if (pathData && pathData.songs) data = pathData;
-      } catch (e) {}
+      // Using path parameter as documented: /api/albums/{id}
+      const data = await fetchWithProxy(`/albums/${id}`);
+      if (data && data.songs) {
+        data.songs = data.songs.map(normalizeSong);
+      }
+      return data as Album;
+    } catch (e) {
+      return null;
     }
-
-    if (data && data.songs) {
-      data.songs = data.songs.map(normalizeSong);
-    }
-    return data as Album;
   },
   getPlaylistDetails: async (id: string) => {
-    let data = null;
     try {
-      data = await fetchWithProxy(`/playlists?id=${id}`);
-    } catch (e) {}
-    
-    if (!data || !data.songs || data.songs.length === 0) {
-      try {
-        const pathData = await fetchWithProxy(`/playlists/${id}`);
-        if (pathData && pathData.songs) data = pathData;
-      } catch (e) {}
+      // Documentation structure: /api/playlists/{id}
+      const data = await fetchWithProxy(`/playlists/${id}`);
+      if (data && data.songs) {
+        data.songs = data.songs.map(normalizeSong);
+      }
+      return data as Playlist;
+    } catch (e) {
+      return null;
     }
-
-    if (data && data.songs) {
-      data.songs = data.songs.map(normalizeSong);
-    }
-    return data as Playlist;
   },
   getSongDetails: async (id: string) => {
-    let data = null;
     try {
-      data = await fetchWithProxy(`/songs?ids=${id}`);
-    } catch (e) {}
-    
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      try {
-        data = await fetchWithProxy(`/songs/${id}`);
-      } catch (e) {}
+      // Documented path: /api/songs/{id}
+      const data = await fetchWithProxy(`/songs/${id}`);
+      const songData = Array.isArray(data) ? data[0] : data;
+      return songData ? normalizeSong(songData) : null;
+    } catch (e) {
+      return null;
     }
-    
-    const songData = Array.isArray(data) ? data[0] : (data.results ? data.results[0] : data);
-    return songData ? normalizeSong(songData) : null;
   },
   getSongsDetailsBulk: async (ids: string[]) => {
     if (!ids || ids.length === 0) return [];
-    let data = null;
-    
     try {
-      // Use standard ids parameter
-      data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
+      // Bulk fetch documented using query param: /api/songs?ids={ids}
+      const data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
+      const results = (Array.isArray(data) ? data : (data.results ? data.results : [data])) as any[];
+      return results.filter(Boolean).map(normalizeSong);
     } catch (e) {
-      console.warn("Bulk fetch failed, attempting individual song detail fallback");
+      return [];
     }
-    
-    // Fallback logic if the bulk endpoint doesn't return what we expect
-    if (!data || !data.results || (Array.isArray(data.results) && data.results.length === 0)) {
-      try {
-        const results = await Promise.allSettled(ids.map(id => fetchWithProxy(`/songs/${id}`)));
-        const songs = results
-          .filter(r => r.status === 'fulfilled')
-          .map(r => {
-            const val = (r as PromiseFulfilledResult<any>).value;
-            return Array.isArray(val) ? val[0] : val;
-          });
-        data = { results: songs };
-      } catch (e) {}
-    }
-    
-    const results = (Array.isArray(data) ? data : (data.results ? data.results : [data])) as any[];
-    return results.filter(Boolean).map(normalizeSong);
   },
   getArtistDetails: async (id: string) => {
     try {
@@ -316,16 +270,8 @@ export const musicApi = {
   getArtistSongs: async (id: string, page: number = 0) => {
     try {
       const data = await fetchWithProxy(`/artists/${id}/songs?page=${page}`);
-      const results = (data.results || data.songs || data || []) as any[];
+      const results = (data.songs || data.results || data || []) as any[];
       return results.map(normalizeSong);
-    } catch (error) {
-      return [];
-    }
-  },
-  getArtistAlbums: async (id: string, page: number = 0) => {
-    try {
-      const data = await fetchWithProxy(`/artists/${id}/albums?page=${page}`);
-      return (data.results || data.albums || data || []) as Album[];
     } catch (error) {
       return [];
     }
