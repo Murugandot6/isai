@@ -1,10 +1,9 @@
 "use client";
 
 import React from 'react';
-import { Album, getContainerCount } from '@/services/musicApi';
-import { Play, Disc, Calendar } from 'lucide-react';
+import { Album } from '@/services/musicApi';
+import { Play, Calendar } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
-import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 
 export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
@@ -13,7 +12,6 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
   if (!album) return null;
 
   const imageUrl = getHighResImage(album.image);
-  const songCount = getContainerCount(album);
 
   return (
     <div 
@@ -28,13 +26,6 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
           loading="lazy"
         />
         
-        <div className="absolute top-2 left-2 z-10">
-          <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] font-bold uppercase border-none text-white flex items-center gap-1 py-0.5">
-            <Disc size={10} />
-            {songCount} Songs
-          </Badge>
-        </div>
-
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
             <Play size={24} fill="currentColor" />

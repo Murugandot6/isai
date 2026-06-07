@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Album } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Disc, Calendar, Music, Loader2 } from 'lucide-react';
+import { ArrowLeft, Play, Calendar, Music, Loader2 } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
 import { useMusic } from '@/context/MusicContext';
@@ -27,12 +27,10 @@ const AlbumDetails = () => {
         
         if (data && data.songs && data.songs.length > 0) {
           try {
-            // Perform a robust bulk fetch for individual song details to get unique covers
             const songIds = data.songs.map(s => s.id.toString());
             const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
             
             if (fullSongs && fullSongs.length > 0) {
-              // Map back using string comparison to avoid type issues
               const enrichedSongs = data.songs.map(originalSong => {
                 const fullDetail = fullSongs.find(fs => fs.id.toString() === originalSong.id.toString());
                 return fullDetail ? { ...fullDetail } : originalSong;
@@ -75,8 +73,6 @@ const AlbumDetails = () => {
     );
   }
 
-  const songCount = album.songs ? album.songs.length : 0;
-
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
@@ -104,10 +100,6 @@ const AlbumDetails = () => {
             </div>
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight" dangerouslySetInnerHTML={{ __html: album.name }}></h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-muted-foreground font-medium text-xs md:text-sm">
-              <div className="flex items-center gap-1.5">
-                <Disc size={16} />
-                <span>{songCount} Songs</span>
-              </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
                 <span>{album.year || 'N/A'}</span>
