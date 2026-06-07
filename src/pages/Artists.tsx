@@ -13,23 +13,10 @@ import { Input } from '@/components/ui/input';
 import { getHighResImage } from '@/lib/image-utils';
 
 const TAMIL_LEGENDS = [
-  { name: 'Yuvan Shankar Raja', id: '456863' },
   { name: 'A.R. Rahman', id: '456269' },
-  { name: 'Anirudh Ravichander', id: '459320' },
   { name: 'Vijay', id: '456121' },
-  { name: 'Ilaiyaraaja', id: '456561' },
-  { name: 'Harris Jayaraj', id: '456862' },
-  { name: 'S.P. Balasubrahmanyam', id: '456042' },
-  { name: 'G.V. Prakash Kumar', id: '457145' },
-  { name: 'Santhosh Narayanan', id: '458918' },
-  { name: 'Sid Sriram', id: '468117' },
-  { name: 'D. Imman', id: '458032' },
-  { name: 'Vijay Antony', id: '457144' },
-  { name: 'Hiphop Tamizha', id: '459633' },
-  { name: 'Vidyasagar', id: '456861' },
-  { name: 'Deva', id: '456860' },
-  { name: 'Karthik', id: '456117' },
-  { name: 'Chinmayi Sripada', id: '456214' },
+  { name: 'Rajinikanth', id: '456119' },
+  { name: 'Yuvan Shankar Raja', id: '456863' },
 ];
 
 const Artists = () => {
@@ -99,7 +86,6 @@ const Artists = () => {
       }
 
       const songs = data.topSongs || [];
-      // Filter results by selected languages, but prioritize Tamil for these artists
       const filteredResults = songs.filter((song: Song) => 
         selectedLanguages.includes(song.language.toLowerCase()) || song.language.toLowerCase() === 'tamil'
       );
@@ -296,7 +282,7 @@ const Artists = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 md:gap-8">
           {loading && artistsList.length === 0 ? (
-            Array.from({ length: 12 }).map((_, i) => (
+            Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-4">
                 <Skeleton className="w-full aspect-square rounded-full" />
                 <Skeleton className="h-4 w-24" />
