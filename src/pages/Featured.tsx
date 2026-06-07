@@ -29,7 +29,6 @@ const Featured = () => {
     const fetchPlaylists = async () => {
       setLoading(true);
       try {
-        // Fetch in chunks to avoid rate limits or long wait times
         const data = await Promise.all(FEATURED_IDS.map(id => musicApi.getPlaylistDetails(id)));
         setPlaylists(data.filter(p => p !== null) as Playlist[]);
       } finally {
@@ -58,23 +57,26 @@ const Featured = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {playlists.map((playlist) => (
-              <div 
-                key={playlist.id}
-                onClick={() => navigate(`/playlist/${playlist.id}`)}
-                className="group relative aspect-square rounded-3xl overflow-hidden cursor-pointer shadow-xl transition-all hover:-translate-y-2"
-              >
-                <img 
-                  src={getHighResImage(playlist.image)} 
-                  alt={playlist.name} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6 md:p-8 flex flex-col justify-end">
-                  <h3 className="text-white font-black text-xl md:text-2xl mb-1 md:mb-2 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h3>
-                  <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{playlist.songCount} Tracks</p>
+            {playlists.map((playlist) => {
+              const songCount = (playlist as any).songCount || (playlist as any).song_count || (playlist.songs ? playlist.songs.length : 0);
+              return (
+                <div 
+                  key={playlist.id}
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
+                  className="group relative aspect-square rounded-3xl overflow-hidden cursor-pointer shadow-xl transition-all hover:-translate-y-2"
+                >
+                  <img 
+                    src={getHighResImage(playlist.image)} 
+                    alt={playlist.name} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6 md:p-8 flex flex-col justify-end">
+                    <h3 className="text-white font-black text-xl md:text-2xl mb-1 md:mb-2 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h3>
+                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{songCount} Tracks</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

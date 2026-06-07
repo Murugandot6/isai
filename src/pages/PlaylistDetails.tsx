@@ -23,27 +23,22 @@ const PlaylistDetails = () => {
       if (!id) return;
       setLoading(true);
       try {
-        // 1. Fetch the basic playlist details
         const data = await musicApi.getPlaylistDetails(id);
         
         if (data && data.songs && data.songs.length > 0) {
-          // 2. The playlist endpoint often returns the playlist cover for all songs.
-          // We fetch the specific song details in bulk to get the "real" individual images.
           try {
             const songIds = data.songs.map(s => s.id);
             const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
             
             if (fullSongs && fullSongs.length > 0) {
-              // 3. Map the enriched data back to the playlist's song list
               const enrichedSongs = data.songs.map(originalSong => {
                 const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
-                // If we found full details, use them (they contain the correct individual images)
                 return fullDetail ? { ...fullDetail } : originalSong;
               });
               data.songs = enrichedSongs;
             }
           } catch (bulkError) {
-            console.warn("Failed to fetch bulk song details, using original playlist songs:", bulkError);
+            console.warn("Failed to fetch bulk song details:", bulkError);
           }
         }
         
@@ -78,9 +73,7 @@ const PlaylistDetails = () => {
     );
   }
 
-  const songCount = playlist.songCount && parseInt(playlist.songCount) > 0 
-    ? playlist.songCount 
-    : (playlist.songs ? playlist.songs.length : 0);
+  const songCount = (playlist as any).songCount || (playlist as any).song_count || (playlist.songs ? playlist.songs.length : 0);
 
   return (
     <MainLayout>

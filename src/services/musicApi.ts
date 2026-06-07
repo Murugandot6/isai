@@ -80,9 +80,14 @@ export const normalizeSong = (song: any): Song => {
       : song.artists.primary;
   }
 
+  // Find images in various possible fields
   let images = song.image || song.images || [];
   if (!Array.isArray(images)) {
     images = [{ quality: '500x500', link: typeof images === 'string' ? images : (images.link || images.url) }];
+  } else if (images.length === 0 && song.album?.image) {
+    // Fallback to album image if song image is missing
+    const albumImg = song.album.image;
+    images = Array.isArray(albumImg) ? albumImg : [{ quality: '500x500', link: albumImg }];
   } else {
     images = images.map((img: any) => ({
       quality: img.quality || '500x500',
@@ -115,7 +120,6 @@ const fetchWithProxy = async (endpoint: string) => {
   const targetUrl = `${API_BASE}${endpoint}`;
   
   try {
-    // Try direct fetch first (much faster, no proxy overhead, native CORS support on Cloudflare Workers)
     const res = await fetch(targetUrl);
     if (res.ok) {
       const json = await res.json();
@@ -125,7 +129,6 @@ const fetchWithProxy = async (endpoint: string) => {
     console.warn("Direct fetch failed, falling back to proxy:", e);
   }
 
-  // Fallback to proxy if direct fetch fails
   const url = `${PROXY}${encodeURIComponent(targetUrl)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -140,8 +143,7 @@ export const musicApi = {
       const results = (data.results || data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
-      console.error("Trending fetch error:", error);
-      return await musicApi.searchSongs('latest hits');
+      return [];
     }
   },
   searchSongs: async (query: string, page: number = 0, limit: number = 20) => {
@@ -150,7 +152,6 @@ export const musicApi = {
       const results = (data.results || data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
-      console.error("Search fetch error:", error);
       return [];
     }
   },
@@ -159,7 +160,6 @@ export const musicApi = {
       const data = await fetchWithProxy(`/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       return (data.results || data || []) as Album[];
     } catch (error) {
-      console.error("Album search error:", error);
       return [];
     }
   },
@@ -168,30 +168,20 @@ export const musicApi = {
       const data = await fetchWithProxy(`/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       return (data.results || data || []) as any[];
     } catch (error) {
-      console.error("Artist search error:", error);
       return [];
     }
   },
   getAlbumDetails: async (id: string) => {
     let data = null;
-    
-    // Try query param first
     try {
       data = await fetchWithProxy(`/albums?id=${id}`);
-    } catch (e) {
-      console.warn("Query param fetch failed for album:", e);
-    }
+    } catch (e) {}
     
-    // If query param failed or returned no songs, try path param
     if (!data || !data.songs || data.songs.length === 0) {
       try {
         const pathData = await fetchWithProxy(`/albums/${id}`);
-        if (pathData && pathData.songs && pathData.songs.length > 0) {
-          data = pathData;
-        }
-      } catch (e) {
-        console.warn("Path param fetch failed for album:", e);
-      }
+        if (pathData && pathData.songs) data = pathData;
+      } catch (e) {}
     }
 
     if (data && data.songs) {
@@ -201,24 +191,15 @@ export const musicApi = {
   },
   getPlaylistDetails: async (id: string) => {
     let data = null;
-    
-    // Try query param first
     try {
       data = await fetchWithProxy(`/playlists?id=${id}`);
-    } catch (e) {
-      console.warn("Query param fetch failed for playlist:", e);
-    }
+    } catch (e) {}
     
-    // If query param failed or returned no songs, try path param
     if (!data || !data.songs || data.songs.length === 0) {
       try {
         const pathData = await fetchWithProxy(`/playlists/${id}`);
-        if (pathData && pathData.songs && pathData.songs.length > 0) {
-          data = pathData;
-        }
-      } catch (e) {
-        console.warn("Path param fetch failed for playlist:", e);
-      }
+        if (pathData && pathData.songs) data = pathData;
+      } catch (e) {}
     }
 
     if (data && data.songs) {
@@ -228,54 +209,45 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     let data = null;
-    
     try {
       data = await fetchWithProxy(`/songs?ids=${id}`);
-    } catch (e) {
-      console.warn("Query param fetch failed for song:", e);
-    }
+    } catch (e) {}
     
     if (!data || (Array.isArray(data) && data.length === 0)) {
       try {
         data = await fetchWithProxy(`/songs/${id}`);
-      } catch (e) {
-        console.warn("Path param fetch failed for song:", e);
-      }
+      } catch (e) {}
     }
     
     const songData = Array.isArray(data) ? data[0] : (data.results ? data.results[0] : data);
     return songData ? normalizeSong(songData) : null;
   },
   getSongsDetailsBulk: async (ids: string[]) => {
+    if (!ids || ids.length === 0) return [];
     let data = null;
     
     try {
       data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
-    } catch (e) {
-      console.warn("Query param fetch failed for bulk songs:", e);
-    }
+    } catch (e) {}
     
     if (!data || (Array.isArray(data) && data.length === 0)) {
       try {
-        data = await Promise.all(ids.map(id => fetchWithProxy(`/songs/${id}`)));
-      } catch (e) {
-        console.warn("Path param fetch failed for bulk songs:", e);
-      }
+        const results = await Promise.allSettled(ids.map(id => fetchWithProxy(`/songs/${id}`)));
+        data = results
+          .filter(r => r.status === 'fulfilled')
+          .map(r => (r as PromiseFulfilledResult<any>).value);
+      } catch (e) {}
     }
     
     const results = (Array.isArray(data) ? data : (data.results ? data.results : [data])) as any[];
-    return results.map(normalizeSong);
+    return results.filter(Boolean).map(normalizeSong);
   },
   getArtistDetails: async (id: string) => {
     try {
       const data = await fetchWithProxy(`/artists/${id}`);
-      if (data) {
-        const songsList = data.topSongs || data.songs || [];
-        data.topSongs = songsList.map(normalizeSong);
-      }
+      if (data && data.topSongs) data.topSongs = data.topSongs.map(normalizeSong);
       return data;
     } catch (error) {
-      console.error("Artist details fetch error:", error);
       return null;
     }
   },
@@ -285,7 +257,6 @@ export const musicApi = {
       const results = (data.results || data.songs || data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
-      console.error("Artist songs fetch error:", error);
       return [];
     }
   },
@@ -294,7 +265,6 @@ export const musicApi = {
       const data = await fetchWithProxy(`/artists/${id}/albums?page=${page}`);
       return (data.results || data.albums || data || []) as Album[];
     } catch (error) {
-      console.error("Artist albums fetch error:", error);
       return [];
     }
   }

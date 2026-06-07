@@ -14,9 +14,10 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
 
   const imageUrl = getHighResImage(album.image);
   
-  // Handle song count correctly: fallback to array length if API returns "0" or missing
-  const songCount = (album.songCount && parseInt(album.songCount) > 0) 
-    ? album.songCount 
+  // Resilient song count detection for search results
+  const rawCount = (album as any).songCount || (album as any).song_count || (album as any).songs_count || (album as any).total_songs || "0";
+  const songCount = parseInt(rawCount) > 0 
+    ? rawCount 
     : (album.songs ? album.songs.length : 0);
 
   return (
