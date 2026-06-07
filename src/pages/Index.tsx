@@ -8,6 +8,7 @@ import { AlbumCard } from '@/components/AlbumCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Bell, Settings, TrendingUp, Sparkles, ListMusic, Play, Disc, Calendar, Heart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
