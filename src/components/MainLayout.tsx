@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { MusicPlayer } from './MusicPlayer';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
+import { HeaderPlaylists } from './HeaderPlaylists';
 import { MobileNav } from './MobileNav';
 import { Music, User, LogIn, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -37,6 +38,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           </div>
           <div className="hidden lg:block" /> 
           <div className="flex items-center gap-2 md:gap-3">
+            <HeaderPlaylists />
             <LanguageSelector />
             <ListenTogether />
             
