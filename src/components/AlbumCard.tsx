@@ -1,8 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Album } from '@/services/musicApi';
-import { Play, Calendar } from 'lucide-react';
+import { Album, getContainerCount } from '@/services/musicApi';
+import { Play, Calendar, Music } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
   if (!album) return null;
 
   const imageUrl = getHighResImage(album.image);
+  const trackCount = getContainerCount(album);
 
   return (
     <div 
@@ -36,6 +37,8 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
       <div className="flex items-center gap-2 text-muted-foreground">
         <Calendar size={12} />
         <span className="text-[10px] font-bold">{album.year || 'N/A'}</span>
+        <span className="text-muted-foreground/30">•</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider">{trackCount} Songs</span>
       </div>
     </div>
   );

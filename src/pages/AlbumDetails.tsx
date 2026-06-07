@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Album } from '@/services/musicApi';
+import { musicApi, Album, getContainerCount } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Calendar, Music, Loader2 } from 'lucide-react';
+import { ArrowLeft, Play, Calendar, Music, Loader2, ListMusic } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
 import { useMusic } from '@/context/MusicContext';
@@ -73,6 +73,8 @@ const AlbumDetails = () => {
     );
   }
 
+  const trackCount = getContainerCount(album);
+
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
@@ -103,6 +105,10 @@ const AlbumDetails = () => {
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
                 <span>{album.year || 'N/A'}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ListMusic size={16} />
+                <span>{trackCount} Tracks</span>
               </div>
             </div>
             <div className="mt-6 md:mt-8">
