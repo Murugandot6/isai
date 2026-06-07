@@ -82,6 +82,30 @@ export const tmdbApi = {
     }
   },
 
+  getTopRatedMovies: async (): Promise<Movie[]> => {
+    try {
+      const res = await fetch(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
+      if (!res.ok) throw new Error("Failed to fetch top rated movies");
+      const data = await res.json();
+      return (data.results || []).map(mapTMDbToMovie);
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  },
+
+  getUpcomingMovies: async (): Promise<Movie[]> => {
+    try {
+      const res = await fetch(`${BASE_URL}/movie/upcoming?api_key=${API_KEY}`);
+      if (!res.ok) throw new Error("Failed to fetch upcoming movies");
+      const data = await res.json();
+      return (data.results || []).map(mapTMDbToMovie);
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  },
+
   searchMovies: async (query: string): Promise<Movie[]> => {
     try {
       const res = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
