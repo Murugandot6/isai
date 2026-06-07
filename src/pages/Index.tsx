@@ -133,13 +133,20 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Featured Playlists */}
+        {/* Featured Playlists with Custom Branding Title */}
         <section className="mb-16">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="bg-purple-500/20 p-2 rounded-xl">
-              <Sparkles className="text-purple-500" size={20} />
+          <div className="flex items-start gap-3 mb-8">
+            <div className="bg-primary/20 p-2.5 rounded-2xl shrink-0 mt-1">
+              <Sparkles className="text-primary" size={22} />
             </div>
-            <h3 className="text-2xl font-black tracking-tight">Featured Playlists</h3>
+            <div>
+              <h3 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
+                Listen together, anywhere, anytime
+              </h3>
+              <p className="text-sm text-muted-foreground font-medium mt-1">
+                Handpicked featured playlists synced perfectly for group auditory sessions.
+              </p>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
