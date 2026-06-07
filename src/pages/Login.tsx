@@ -183,21 +183,24 @@ const Login = () => {
           </Button>
         </form>
 
-        <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <Info size={16} className="text-primary shrink-0 mt-0.5" />
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            An invite code is required to access this platform. If you do not have an invite code, please contact{" "}
-            <a 
-              href="https://www.instagram.com/11x13y/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-primary hover:underline font-bold"
-            >
-              11x13y
-            </a>{" "}
-            on Instagram.
-          </p>
-        </div>
+        {/* Invite Code Info Box - Only shown during Sign Up */}
+        {isSignUp && (
+          <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 animate-in fade-in duration-300">
+            <Info size={16} className="text-primary shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              An invite code is required to access this platform. If you do not have an invite code, please contact{" "}
+              <a 
+                href="https://www.instagram.com/11x13y/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-primary hover:underline font-bold"
+              >
+                11x13y
+              </a>{" "}
+              on Instagram.
+            </p>
+          </div>
+        )}
 
         <div className="text-center pt-4">
           <button
