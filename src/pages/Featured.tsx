@@ -8,9 +8,16 @@ import { useNavigate } from 'react-router-dom';
 import { getHighResImage } from '@/lib/image-utils';
 
 const FEATURED_IDS = [
-  '1170578779', '1170578783', '901538755', '1170578788', 
-  '1074590003', '1133105280', '804092154', '901538752', 
-  '901538753', '1134651042'
+  '83409225', '82543613', '902306817', '67691546', '1134650280', 
+  '1265890645', '76182059', '109815423', '79316075', '929344231', 
+  '1299220479', '201508188', '1133105280', '789168950', '792884617', 
+  '84076492', '1268059887', '81145416', '66662540', '83410788', 
+  '919280091', '109118539', '787742136', '1219737282', '76293059', 
+  '58694540', '807292081', '807639710', '110785136', '848384706', 
+  '696005328', '782470134', '62125106', '61387835', '904072585', 
+  '67453091', '83970046', '1566837', '158225213', '81952675', 
+  '1212537058', '56019563', '913487155', '837803163', '829906546', 
+  '153577807', '838067360', '1218677238', '81861086', '889114311'
 ];
 
 const Featured = () => {
@@ -22,6 +29,7 @@ const Featured = () => {
     const fetchPlaylists = async () => {
       setLoading(true);
       try {
+        // Fetch in chunks to avoid rate limits or long wait times
         const data = await Promise.all(FEATURED_IDS.map(id => musicApi.getPlaylistDetails(id)));
         setPlaylists(data.filter(p => p !== null) as Playlist[]);
       } finally {
@@ -40,7 +48,7 @@ const Featured = () => {
           </div>
           <div>
             <h1 className="text-4xl font-black tracking-tight">Featured Playlists</h1>
-            <p className="text-muted-foreground font-medium">Handpicked Tamil collections for every mood.</p>
+            <p className="text-muted-foreground font-medium">Explore the best of Tamil music collections.</p>
           </div>
         </div>
 
