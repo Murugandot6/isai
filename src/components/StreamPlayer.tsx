@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useMusic, Movie } from '@/context/MusicContext';
+import React, { useState, useRef } from 'react';
+import { Movie } from '@/context/MusicContext';
 import { Server, Info } from 'lucide-react';
 
 interface StreamPlayerProps {
@@ -9,20 +9,20 @@ interface StreamPlayerProps {
 }
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const [embedServer, setEmbedServer] = useState<'vidsrc_to' | 'vidsrc_me' | 'embed_su' | 'autoembed'>('vidsrc_to');
+  const [embedServer, setEmbedServer] = useState<'xplay' | 'anyembed' | 'vidsync' | 'vidsrc'>('xplay');
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Embed URLs using TMDB ID
+  // Exact Embed URLs using TMDB ID
   const getEmbedUrl = () => {
     switch (embedServer) {
-      case 'vidsrc_to':
+      case 'xplay':
+        return `https://play.xpass.top/e/movie/${movie.id}`;
+      case 'anyembed':
+        return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}`;
+      case 'vidsync':
+        return `https://vidsync.xyz/embed/movie/${movie.id}`;
+      case 'vidsrc':
         return `https://vidsrc.to/embed/movie/${movie.id}`;
-      case 'vidsrc_me':
-        return `https://vidsrc.me/embed/movie?tmdb=${movie.id}`;
-      case 'embed_su':
-        return `https://embed.su/embed/movie/${movie.id}`;
-      case 'autoembed':
-        return `https://autoembed.co/movie/tmdb/${movie.id}`;
     }
   };
 
@@ -52,13 +52,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
           {/* Embed Server Switcher */}
           <div className="flex flex-wrap gap-2">
-            {(['vidsrc_to', 'vidsrc_me', 'embed_su', 'autoembed'] as const).map((srv) => (
+            {(['xplay', 'anyembed', 'vidsync', 'vidsrc'] as const).map((srv) => (
               <button
                 key={srv}
                 onClick={() => setEmbedServer(srv)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
               >
-                {srv === 'vidsrc_to' ? 'VidSrc.to' : srv === 'vidsrc_me' ? 'VidSrc.me' : srv === 'embed_su' ? 'Embed.su' : 'AutoEmbed'}
+                {srv === 'xplay' ? 'XPlay Cinema' : srv === 'anyembed' ? 'AnyEmbed' : srv === 'vidsync' ? 'VidSync' : 'VidSrc'}
               </button>
             ))}
           </div>
