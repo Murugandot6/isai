@@ -27,6 +27,14 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
           loading="lazy"
         />
         
+        {/* Track count badge inside the image */}
+        <div className="absolute top-2 right-2 z-10 transition-transform duration-300 group-hover:scale-110">
+          <div className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg border border-white/10">
+            <Music size={10} />
+            <span>{trackCount}</span>
+          </div>
+        </div>
+        
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
             <Play size={24} fill="currentColor" />
@@ -37,8 +45,6 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
       <div className="flex items-center gap-2 text-muted-foreground">
         <Calendar size={12} />
         <span className="text-[10px] font-bold">{album.year || 'N/A'}</span>
-        <span className="text-muted-foreground/30">•</span>
-        <span className="text-[10px] font-bold uppercase tracking-wider">{trackCount} Songs</span>
       </div>
     </div>
   );
