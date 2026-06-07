@@ -13,10 +13,16 @@ import { Input } from '@/components/ui/input';
 import { getHighResImage } from '@/lib/image-utils';
 
 const TAMIL_LEGENDS = [
+  { name: 'Anirudh Ravichander', id: '455663' },
   { name: 'A.R. Rahman', id: '456269' },
-  { name: 'Vijay', id: '456121' },
-  { name: 'Rajinikanth', id: '456119' },
-  { name: 'Yuvan Shankar Raja', id: '456863' },
+  { name: 'Dhanush', id: '455662' },
+  { name: 'Harris Jayaraj', id: '455243' },
+  { name: 'Yuvan Shankar Raja', id: '456091' },
+  { name: 'Vijay', id: '456196' },
+  { name: 'Suriya', id: '469191' },
+  { name: 'Sivakarthikeyan', id: '660015' },
+  { name: 'Silambarasan TR', id: '476818' },
+  { name: 'Vidyasagar', id: '455496' },
 ];
 
 const Artists = () => {
@@ -236,7 +242,7 @@ const Artists = () => {
               <Mic2 className="text-primary w-6 h-6 md:w-8 md:h-8" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends</h1>
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends & Stars</h1>
               <p className="text-xs md:text-sm text-muted-foreground font-medium">The icons who shaped the sound of Tamil cinema.</p>
             </div>
           </div>
@@ -282,7 +288,7 @@ const Artists = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 md:gap-8">
           {loading && artistsList.length === 0 ? (
-            Array.from({ length: 4 }).map((_, i) => (
+            Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-4">
                 <Skeleton className="w-full aspect-square rounded-full" />
                 <Skeleton className="h-4 w-24" />
