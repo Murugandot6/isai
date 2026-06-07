@@ -23,7 +23,30 @@ const PlaylistDetails = () => {
       if (!id) return;
       setLoading(true);
       try {
+        // 1. Fetch the basic playlist details
         const data = await musicApi.getPlaylistDetails(id);
+        
+        if (data && data.songs && data.songs.length > 0) {
+          // 2. The playlist endpoint often returns the playlist cover for all songs.
+          // We fetch the specific song details in bulk to get the "real" individual images.
+          try {
+            const songIds = data.songs.map(s => s.id);
+            const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
+            
+            if (fullSongs && fullSongs.length > 0) {
+              // 3. Map the enriched data back to the playlist's song list
+              const enrichedSongs = data.songs.map(originalSong => {
+                const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
+                // If we found full details, use them (they contain the correct individual images)
+                return fullDetail ? { ...fullDetail } : originalSong;
+              });
+              data.songs = enrichedSongs;
+            }
+          } catch (bulkError) {
+            console.warn("Failed to fetch bulk song details, using original playlist songs:", bulkError);
+          }
+        }
+        
         setPlaylist(data);
       } catch (error) {
         console.error("Failed to fetch playlist details", error);
@@ -55,6 +78,10 @@ const PlaylistDetails = () => {
     );
   }
 
+  const songCount = playlist.songCount && parseInt(playlist.songCount) > 0 
+    ? playlist.songCount 
+    : (playlist.songs ? playlist.songs.length : 0);
+
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
@@ -84,7 +111,7 @@ const PlaylistDetails = () => {
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-muted-foreground font-medium text-xs md:text-sm">
               <div className="flex items-center gap-1.5">
                 <ListMusic size={16} />
-                <span>{playlist.songCount} Songs</span>
+                <span>{songCount} Songs</span>
               </div>
               {playlist.year && (
                 <div className="flex items-center gap-1.5">
