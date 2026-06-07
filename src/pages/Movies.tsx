@@ -1,102 +1,52 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic, Movie } from '@/context/MusicContext';
-import { Play, Film, Star, Search, Tv, X, RefreshCw, Users, Info } from 'lucide-react';
+import { tmdbApi } from '@/services/tmdbApi';
+import { Play, Film, Star, Search, Tv, X, Users, Info, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-const CURATED_MOVIES: Movie[] = [
-  {
-    id: '968051',
-    title: 'Leo',
-    overview: 'An ordinary cafe owner becomes the target of a ruthless drug cartel who suspect him of being a legendary former assassin.',
-    backdrop: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200',
-    poster: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=400',
-    rating: 8.2,
-    year: '2023',
-    genre: 'Action / Thriller',
-    language: 'Tamil'
-  },
-  {
-    id: '828814',
-    title: 'Vikram',
-    overview: 'A special ops team is summoned to investigate a series of brutal murders committed by a masked group of vigilantes.',
-    backdrop: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200',
-    poster: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=400',
-    rating: 8.5,
-    year: '2022',
-    genre: 'Action / Crime',
-    language: 'Tamil'
-  },
-  {
-    id: '943822',
-    title: 'Jailer',
-    overview: 'A retired prison warden goes on a relentless manhunt to track down his son\'s kidnappers, unleashing his dark past.',
-    backdrop: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1200',
-    poster: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=400',
-    rating: 8.0,
-    year: '2023',
-    genre: 'Action / Drama',
-    language: 'Tamil'
-  },
-  {
-    id: '157336',
-    title: 'Interstellar',
-    overview: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
-    backdrop: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200',
-    poster: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=400',
-    rating: 8.7,
-    year: '2014',
-    genre: 'Sci-Fi / Adventure',
-    language: 'English'
-  },
-  {
-    id: '693134',
-    title: 'Dune: Part Two',
-    overview: 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.',
-    backdrop: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?q=80&w=1200',
-    poster: 'https://images.unsplash.com/photo-1547483238-f400e65ccd56?q=80&w=400',
-    rating: 8.6,
-    year: '2024',
-    genre: 'Sci-Fi / Drama',
-    language: 'English'
-  },
-  {
-    id: '27205',
-    title: 'Inception',
-    overview: 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea.',
-    backdrop: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=1200',
-    poster: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?q=80&w=400',
-    rating: 8.8,
-    year: '2010',
-    genre: 'Sci-Fi / Action',
-    language: 'English'
-  },
-  {
-    id: '579974',
-    title: 'RRR',
-    overview: 'A fictional history of two legendary revolutionaries and their journey away from home before they began fighting for their country.',
-    backdrop: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200',
-    poster: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=400',
-    rating: 8.3,
-    year: '2022',
-    genre: 'Action / Drama',
-    language: 'Telugu'
-  }
-];
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Movies = () => {
   const { currentMovie, playMovie, closeMovie, roomCode } = useMusic();
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
   const [server, setServer] = useState<'vidsrc' | 'vidsrc_xyz'>('vidsrc');
 
-  const filteredMovies = CURATED_MOVIES.filter(movie => 
-    movie.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    movie.genre.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    const loadMovies = async () => {
+      setLoading(true);
+      const trending = await tmdbApi.getTrendingMovies();
+      if (trending.length > 0) {
+        setMovies(trending);
+      } else {
+        const popular = await tmdbApi.getPopularMovies();
+        setMovies(popular);
+      }
+      setLoading(false);
+    };
+    loadMovies();
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setLoading(true);
+      const trending = await tmdbApi.getTrendingMovies();
+      setMovies(trending);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const results = await tmdbApi.searchMovies(searchQuery);
+    setMovies(results);
+    setLoading(false);
+  };
 
   const getEmbedUrl = (movieId: string) => {
     if (server === 'vidsrc') {
@@ -121,7 +71,7 @@ const Movies = () => {
             <p className="text-muted-foreground font-medium">Watch blockbusters together in real-time sync.</p>
           </div>
           
-          <div className="relative w-full md:w-80">
+          <form onSubmit={handleSearch} className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
               value={searchQuery}
@@ -129,7 +79,7 @@ const Movies = () => {
               placeholder="Search movies or genres..." 
               className="pl-10 bg-accent/5 border-none h-11 rounded-xl focus-visible:ring-primary/20"
             />
-          </div>
+          </form>
         </div>
 
         {/* Theater Mode Player Overlay */}
@@ -209,62 +159,83 @@ const Movies = () => {
         )}
 
         {/* Curated Movies Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredMovies.map((movie) => (
-            <div 
-              key={movie.id}
-              className="group relative bg-card/40 border border-border/50 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
-            >
-              {/* Backdrop Image */}
-              <div className="relative aspect-[16/10] overflow-hidden bg-accent/10">
-                <img 
-                  src={movie.backdrop} 
-                  alt={movie.title} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                
-                {/* Play Button Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="aspect-[16/10] w-full rounded-3xl" />
+                <Skeleton className="h-6 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : movies.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {movies.map((movie) => (
+              <div 
+                key={movie.id}
+                className="group relative bg-card/40 border border-border/50 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
+              >
+                {/* Backdrop Image */}
+                <div className="relative aspect-[16/10] overflow-hidden bg-accent/10">
+                  <img 
+                    src={movie.backdrop} 
+                    alt={movie.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = movie.poster;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  
+                  {/* Play Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Button 
+                      onClick={() => playMovie(movie)}
+                      className="rounded-full w-14 h-14 bg-primary text-white shadow-xl shadow-primary/30 hover:scale-110 transition-transform"
+                    >
+                      <Play size={24} fill="currentColor" />
+                    </Button>
+                  </div>
+
+                  {/* Rating Badge */}
+                  <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl flex items-center gap-1 text-xs font-bold text-yellow-500">
+                    <Star size={12} fill="currentColor" />
+                    {movie.rating}
+                  </div>
+                </div>
+
+                {/* Movie Details */}
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px] font-bold uppercase">
+                        {movie.language}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground font-bold">{movie.year}</span>
+                    </div>
+                    <h3 className="text-xl font-black tracking-tight mb-2 group-hover:text-primary transition-colors line-clamp-1">{movie.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-4">{movie.overview}</p>
+                  </div>
+
                   <Button 
                     onClick={() => playMovie(movie)}
-                    className="rounded-full w-14 h-14 bg-primary text-white shadow-xl shadow-primary/30 hover:scale-110 transition-transform"
+                    className="w-full rounded-xl font-bold gap-2 h-11 bg-accent/10 hover:bg-primary hover:text-white text-foreground transition-all"
                   >
-                    <Play size={24} fill="currentColor" />
+                    <Play size={16} fill="currentColor" />
+                    Watch Now
                   </Button>
                 </div>
-
-                {/* Rating Badge */}
-                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl flex items-center gap-1 text-xs font-bold text-yellow-500">
-                  <Star size={12} fill="currentColor" />
-                  {movie.rating}
-                </div>
               </div>
-
-              {/* Movie Details */}
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px] font-bold uppercase">
-                      {movie.language}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground font-bold">{movie.year}</span>
-                  </div>
-                  <h3 className="text-xl font-black tracking-tight mb-2 group-hover:text-primary transition-colors">{movie.title}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-4">{movie.overview}</p>
-                </div>
-
-                <Button 
-                  onClick={() => playMovie(movie)}
-                  className="w-full rounded-xl font-bold gap-2 h-11 bg-accent/10 hover:bg-primary hover:text-white text-foreground transition-all"
-                >
-                  <Play size={16} fill="currentColor" />
-                  Watch Now
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Film size={48} className="text-muted-foreground/30 mb-4" />
+            <h3 className="text-xl font-bold">No movies found</h3>
+            <p className="text-muted-foreground max-w-xs">Try searching for another title or check back later.</p>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
