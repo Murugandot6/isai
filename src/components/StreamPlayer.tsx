@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, Info, ShieldAlert } from 'lucide-react';
+import { Server, Info, Shield } from 'lucide-react';
 
 interface StreamPlayerProps {
   movie: Movie;
@@ -38,9 +38,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             className="w-full h-full border-none"
             allowFullScreen
             scrolling="no"
-            referrerPolicy="no-referrer" // Layer 1: Referrer Stripping (hides domain from ad networks)
-            // Layer 2: HTML5 Sandbox (Blocks popups, new tabs, and redirects completely)
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+            referrerPolicy="no-referrer" // Hides domain from ad networks to protect privacy
             allow="autoplay; encrypted-media"
           />
         </div>
@@ -73,8 +71,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           <p>If the video doesn't load or is slow, try switching to a different streaming server above. Referrer stripping is active to minimize tracking.</p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
-          <ShieldAlert size={16} className="text-primary shrink-0 mt-0.5" />
-          <p><strong>Advanced Popup Blocker Active:</strong> The player is sandboxed. Popups, new tabs, and automatic redirects are strictly blocked by your browser.</p>
+          <Shield size={16} className="text-primary shrink-0 mt-0.5" />
+          <p><strong>Privacy Protection Active:</strong> Referrer stripping is enabled to hide your connection details from third-party ad networks.</p>
         </div>
       </div>
     </div>
