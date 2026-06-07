@@ -22,13 +22,15 @@ import { toast } from 'sonner';
 
 export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, allSongs }) => {
   const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked, playlists, addToPlaylist, addToNext } = useMusic();
+  
+  if (!song) return null;
+
   const isCurrent = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   
   const imageUrl = getHighResImage(song.image);
 
   const handleClick = (e: React.MouseEvent) => {
-    // Prevent playback if clicking an action button or if the event came from the dropdown menu
     if ((e.target as HTMLElement).closest('.action-button')) return;
     
     if (isCurrent) {
@@ -40,7 +42,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(window.location.origin + `/#/search?q=${encodeURIComponent(song.name)}`);
+    navigator.clipboard.writeText(window.location.origin + `/#/search?q=${encodeURIComponent(song.name || '')}`);
     toast.success("Link copied to clipboard!");
   };
 
@@ -52,7 +54,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
       <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-accent/10 shadow-lg">
         <img 
           src={imageUrl} 
-          alt={song.name} 
+          alt={song.name || 'Song'} 
           className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
         />
@@ -60,7 +62,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
         <div className="absolute top-2 left-2 z-10">
           <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] font-bold uppercase border-none text-white flex items-center gap-1 py-0.5">
             <Globe size={10} />
-            {song.language}
+            {song.language || 'unknown'}
           </Badge>
         </div>
 
@@ -90,7 +92,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
             <DropdownMenuContent 
               align="end" 
               className="w-56 rounded-xl bg-card border-border shadow-2xl"
-              onClick={(e) => e.stopPropagation()} // Prevent clicks in the menu from bubbling to the card
+              onClick={(e) => e.stopPropagation()}
             >
               <DropdownMenuLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Options</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -112,7 +114,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
                   <span>Add to Playlist</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="rounded-xl bg-card border-border shadow-2xl min-w-[180px]">
-                  {playlists.length > 0 ? (
+                  {playlists && playlists.length > 0 ? (
                     playlists.map(p => (
                       <DropdownMenuItem 
                         key={p.id} 
@@ -146,8 +148,8 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
           </div>
         </div>
       </div>
-      <h3 className="font-semibold text-sm truncate mb-0.5" dangerouslySetInnerHTML={{ __html: song.name }}></h3>
-      <p className="text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: song.primaryArtists }}></p>
+      <h3 className="font-semibold text-sm truncate mb-0.5" dangerouslySetInnerHTML={{ __html: song.name || 'Unknown Track' }}></h3>
+      <p className="text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: song.primaryArtists || 'Unknown Artist' }}></p>
     </div>
   );
 };

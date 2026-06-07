@@ -115,12 +115,29 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedLikedMovies = localStorage.getItem('isai_liked_movies');
     const savedRecentMovies = localStorage.getItem('isai_recent_movies');
 
-    if (savedLiked) setLikedSongs(JSON.parse(savedLiked));
-    if (savedStations) setLikedStations(JSON.parse(savedStations));
-    if (savedRecent) setRecentlyPlayed(JSON.parse(savedRecent));
-    if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
-    if (savedLikedMovies) setLikedMovies(JSON.parse(savedLikedMovies));
-    if (savedRecentMovies) setRecentlyWatched(JSON.parse(savedRecentMovies));
+    try {
+      if (savedLiked) setLikedSongs(JSON.parse(savedLiked));
+    } catch (e) { console.error("Error parsing liked songs", e); }
+
+    try {
+      if (savedStations) setLikedStations(JSON.parse(savedStations));
+    } catch (e) { console.error("Error parsing liked stations", e); }
+
+    try {
+      if (savedRecent) setRecentlyPlayed(JSON.parse(savedRecent));
+    } catch (e) { console.error("Error parsing recent songs", e); }
+
+    try {
+      if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
+    } catch (e) { console.error("Error parsing playlists", e); }
+
+    try {
+      if (savedLikedMovies) setLikedMovies(JSON.parse(savedLikedMovies));
+    } catch (e) { console.error("Error parsing liked movies", e); }
+
+    try {
+      if (savedRecentMovies) setRecentlyWatched(JSON.parse(savedRecentMovies));
+    } catch (e) { console.error("Error parsing recent movies", e); }
   }, []);
 
   useEffect(() => {
@@ -158,7 +175,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
-      // Removing strict crossOrigin to avoid issues with streams that don't support it
       audioRef.current.preload = "auto";
     }
     const audio = audioRef.current;
@@ -203,7 +219,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO') || song.album?.id === 'radio';
       
       let fullSong = song;
-      // Always fetch fresh details to get the latest download URLs
       if (!isRadio) {
         const details = await musicApi.getSongDetails(song.id);
         if (details) fullSong = details;
@@ -219,10 +234,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       audio.pause();
       
-      // Prepare links: Radio uses url_resolved, Songs use downloadUrl array
       const links = isRadio 
         ? [{ link: (song as any).downloadUrl?.[0]?.link || (song as any).url_resolved || (song as any).url }] 
-        : [...downloadUrls].reverse(); // Try highest quality first
+        : [...downloadUrls].reverse();
       
       let success = false;
       for (const linkObj of links) {
@@ -234,7 +248,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           audio.src = streamUrl;
           audio.load();
           
-          // Direct play attempt
           await audio.play();
           success = true;
           break;
