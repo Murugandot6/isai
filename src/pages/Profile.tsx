@@ -4,18 +4,29 @@ import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Camera, Save, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Camera, Save, Loader2, ArrowLeft, KeyRound, Plus, Copy, Check, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+
+interface InviteCode {
+  id: number;
+  code: string;
+  created_at: string;
+}
 
 const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   
   const [profile, setProfile] = useState({
     username: '',
@@ -44,7 +55,25 @@ const Profile = () => {
     };
 
     fetchProfile();
+    fetchInviteCodes();
   }, [user]);
+
+  const fetchInviteCodes = async () => {
+    setLoadingCodes(true);
+    try {
+      const { data, error } = await supabase
+        .from('invite_codes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setInviteCodes(data || []);
+    } catch (error: any) {
+      console.error("Error fetching invite codes:", error);
+    } finally {
+      setLoadingCodes(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +98,50 @@ const Profile = () => {
     }
   };
 
+  const generateInviteCode = async () => {
+    setGenerating(true);
+    const newCode = `ISAI-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    
+    try {
+      const { data, error } = await supabase
+        .from('invite_codes')
+        .insert([{ code: newCode }])
+        .select();
+
+      if (error) throw error;
+      
+      toast.success(`Generated code: ${newCode}`);
+      fetchInviteCodes();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to generate invite code");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const deleteInviteCode = async (id: number) => {
+    try {
+      const { error } = await supabase
+        .from('invite_codes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success("Invite code deleted");
+      setInviteCodes(prev => prev.filter(item => item.id !== id));
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete invite code");
+    }
+  };
+
+  const copyToClipboard = (code: string, id: number) => {
+    navigator.clipboard.writeText(code);
+    setCopiedId(id);
+    toast.success("Copied to clipboard!");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -91,70 +164,148 @@ const Profile = () => {
           Back
         </Button>
 
-        <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
-          <div className="flex flex-col items-center mb-10">
-            <div className="relative group">
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-accent/10 border-4 border-primary/20 shadow-2xl">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    <User size={48} />
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-8 w-full grid grid-cols-2">
+            <TabsTrigger value="profile" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+              <User size={16} />
+              Edit Profile
+            </TabsTrigger>
+            <TabsTrigger value="invites" className="rounded-xl py-3 font-bold gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+              <KeyRound size={16} />
+              Invite Codes
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
+              <div className="flex flex-col items-center mb-10">
+                <div className="relative group">
+                  <div className="w-32 h-32 rounded-full overflow-hidden bg-accent/10 border-4 border-primary/20 shadow-2xl">
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <User size={48} />
+                      </div>
+                    )}
                   </div>
-                )}
+                  <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+                    <Camera size={18} />
+                  </button>
+                </div>
+                <h1 className="text-2xl font-black mt-4 tracking-tight">Edit Profile</h1>
+                <p className="text-muted-foreground text-sm">{user?.email}</p>
               </div>
-              <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
-                <Camera size={18} />
-              </button>
-            </div>
-            <h1 className="text-2xl font-black mt-4 tracking-tight">Edit Profile</h1>
-            <p className="text-muted-foreground text-sm">{user?.email}</p>
-          </div>
 
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="username" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Username</Label>
-              <Input 
-                id="username"
-                value={profile.username}
-                onChange={(e) => setProfile({...profile, username: e.target.value})}
-                placeholder="Your unique username"
-                className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
-              />
-            </div>
+              <form onSubmit={handleSave} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Username</Label>
+                  <Input 
+                    id="username"
+                    value={profile.username}
+                    onChange={(e) => setProfile({...profile, username: e.target.value})}
+                    placeholder="Your unique username"
+                    className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
-              <Input 
-                id="full_name"
-                value={profile.full_name}
-                onChange={(e) => setProfile({...profile, full_name: e.target.value})}
-                placeholder="Your display name"
-                className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="full_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                  <Input 
+                    id="full_name"
+                    value={profile.full_name}
+                    onChange={(e) => setProfile({...profile, full_name: e.target.value})}
+                    placeholder="Your display name"
+                    className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="avatar_url" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Avatar URL</Label>
-              <Input 
-                id="avatar_url"
-                value={profile.avatar_url}
-                onChange={(e) => setProfile({...profile, avatar_url: e.target.value})}
-                placeholder="https://example.com/avatar.jpg"
-                className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="avatar_url" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Avatar URL</Label>
+                  <Input 
+                    id="avatar_url"
+                    value={profile.avatar_url}
+                    onChange={(e) => setProfile({...profile, avatar_url: e.target.value})}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                  />
+                </div>
 
-            <Button 
-              type="submit" 
-              disabled={saving}
-              className="w-full h-12 rounded-xl font-bold text-base shadow-xl shadow-primary/20 mt-4"
-            >
-              {saving ? <Loader2 className="animate-spin mr-2" size={20} /> : <Save className="mr-2" size={20} />}
-              Save Changes
-            </Button>
-          </form>
-        </div>
+                <Button 
+                  type="submit" 
+                  disabled={saving}
+                  className="w-full h-12 rounded-xl font-bold text-base shadow-xl shadow-primary/20 mt-4"
+                >
+                  {saving ? <Loader2 className="animate-spin mr-2" size={20} /> : <Save className="mr-2" size={20} />}
+                  Save Changes
+                </Button>
+              </form>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="invites" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-2xl font-black tracking-tight">Manage Invites</h2>
+                  <p className="text-muted-foreground text-xs mt-1">Generate and share invite codes with friends.</p>
+                </div>
+                <Button 
+                  onClick={generateInviteCode} 
+                  disabled={generating}
+                  className="rounded-xl gap-2 font-bold shadow-lg shadow-primary/20"
+                >
+                  {generating ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                  Generate Code
+                </Button>
+              </div>
+
+              {loadingCodes ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="animate-spin text-primary" size={32} />
+                </div>
+              ) : inviteCodes.length > 0 ? (
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  {inviteCodes.map((item) => (
+                    <div 
+                      key={item.id} 
+                      className="flex items-center justify-between p-4 rounded-2xl bg-accent/5 border border-border/50 hover:border-primary/20 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <KeyRound className="text-primary" size={18} />
+                        <span className="font-mono font-bold text-base tracking-wider">{item.code}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => copyToClipboard(item.code, item.id)}
+                          className="h-9 w-9 rounded-xl hover:bg-accent/10"
+                        >
+                          {copiedId === item.id ? <Check className="text-green-500" size={16} /> : <Copy size={16} />}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => deleteInviteCode(item.id)}
+                          className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-accent/20 rounded-2xl">
+                  <KeyRound size={36} className="text-muted-foreground/30 mb-3" />
+                  <h3 className="font-bold text-sm mb-1">No invite codes generated</h3>
+                  <p className="text-muted-foreground text-xs max-w-xs">Click the button above to generate your first invite code.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );
