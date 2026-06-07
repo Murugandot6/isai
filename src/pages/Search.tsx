@@ -83,7 +83,7 @@ const Search = () => {
               disabled={loading}
               className="bg-primary text-primary-foreground px-4 md:px-6 h-12 md:h-14 rounded-2xl font-bold text-xs md:text-sm hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-1.5 shrink-0 shadow-lg shadow-primary/20"
             >
-              {loading ? <Loader2 className="animate-spin" size={14} md:size={16} /> : <SearchIcon size={14} md:size={16} />}
+              {loading ? <Loader2 className="animate-spin" size={16} /> : <SearchIcon size={16} />}
               <span className="hidden sm:inline">Search</span>
             </button>
           </form>
@@ -109,12 +109,12 @@ const Search = () => {
           <Tabs defaultValue="songs" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="bg-accent/5 p-1 rounded-2xl mb-6 md:mb-8 w-fit">
               <TabsTrigger value="songs" className="rounded-xl px-4 md:px-6 py-2 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
-                <Music size={14} md:size={16} />
+                <Music size={16} />
                 Songs
                 <span className="ml-1 text-[9px] md:text-[10px] bg-white/20 px-1.5 rounded-full">{songResults.length}</span>
               </TabsTrigger>
               <TabsTrigger value="albums" className="rounded-xl px-4 md:px-6 py-2 font-bold gap-1.5 text-xs md:text-sm data-[state=active]:bg-primary data-[state=active]:text-white">
-                <Disc size={14} md:size={16} />
+                <Disc size={16} />
                 Albums
                 <span className="ml-1 text-[9px] md:text-[10px] bg-white/20 px-1.5 rounded-full">{albumResults.length}</span>
               </TabsTrigger>
@@ -139,7 +139,7 @@ const Search = () => {
         ) : !loading && (
           <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center animate-in slide-in-from-top-4 duration-500">
             <div className="bg-accent/5 p-6 md:p-8 rounded-full mb-4 md:mb-6">
-              <SearchIcon size={36} md:size={48} className="text-muted-foreground/30" />
+              <SearchIcon size={40} className="text-muted-foreground/30" />
             </div>
             <h3 className="text-lg md:text-xl font-bold mb-2">
               {urlQuery ? `No results for "${urlQuery}" in your selected languages` : "Start Exploring"}
