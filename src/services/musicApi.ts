@@ -149,7 +149,8 @@ export const musicApi = {
   },
   getPlaylistDetails: async (id: string) => {
     try {
-      const res = await fetch(`${BASE_URL}/playlists?id=${id}`);
+      // Increased limit to 100 to fetch more songs from the playlist
+      const res = await fetch(`${BASE_URL}/playlists?id=${id}&limit=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       const playlist = data.data;
