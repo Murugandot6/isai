@@ -15,7 +15,6 @@ import Favourites from "./pages/Favourites";
 import AlbumDetails from "./pages/AlbumDetails";
 import PlaylistDetails from "./pages/PlaylistDetails";
 import Featured from "./pages/Featured";
-import EditorsChoice from "./pages/EditorsChoice";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -41,7 +40,6 @@ const App = () => (
               <Route path="/artists" element={<Artists />} />
               <Route path="/favourites" element={<Favourites />} />
               <Route path="/featured" element={<Featured />} />
-              <Route path="/editors-choice" element={<EditorsChoice />} />
               <Route path="/album/:id" element={<AlbumDetails />} />
               <Route path="/playlist/:id" element={<PlaylistDetails />} />
               <Route path="*" element={<NotFound />} />
