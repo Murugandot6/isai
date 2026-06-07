@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-const VALID_INVITE_CODES = ['11X13Y', 'ISAI2025', 'VIP-MEMBER', 'STREAM-SYNC'];
-
 const Login = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -31,16 +29,24 @@ const Login = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate Invite Code
-    const formattedCode = inviteCode.trim().toUpperCase();
-    if (!VALID_INVITE_CODES.includes(formattedCode)) {
-      toast.error("Invalid Invite Code! Please contact the administrator.");
-      return;
-    }
-
     setLoading(true);
 
+    const formattedCode = inviteCode.trim().toUpperCase();
+
     try {
+      // Dynamically validate the invite code against the Supabase 'invite_codes' table
+      const { data: inviteData, error: inviteError } = await supabase
+        .from('invite_codes')
+        .select('code')
+        .eq('code', formattedCode)
+        .maybeSingle();
+
+      if (inviteError || !inviteData) {
+        toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
+        setLoading(false);
+        return;
+      }
+
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
@@ -53,7 +59,7 @@ const Login = () => {
           },
         });
         if (error) throw error;
-        toast.success("Account created! Please check your email (and spam folder) for the confirmation link.");
+        toast.success("Account created! Please check your email for the confirmation link.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -134,7 +140,7 @@ const Login = () => {
               <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
                 type="text"
-                placeholder="Invite Code (e.g. 11X13Y)"
+                placeholder="Invite Code"
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
                 className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 font-bold tracking-wider"
@@ -162,7 +168,16 @@ const Login = () => {
         <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
           <Info size={16} className="text-primary shrink-0 mt-0.5" />
           <p className="text-[10px] text-muted-foreground leading-relaxed">
-            An invite code is required to access this platform. Try using <strong>11X13Y</strong> or <strong>ISAI2025</strong>.
+            An invite code is required to access this platform. If you do not have an invite code, please contact{" "}
+            <a 
+              href="https://www.instagram.com/11x13y/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-primary hover:underline font-bold"
+            >
+              11x13y
+            </a>{" "}
+            on Instagram.
           </p>
         </div>
 
