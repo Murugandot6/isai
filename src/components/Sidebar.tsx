@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles } from 'lucide-react';
+import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Sparkles, label: 'Featured', path: '/featured' },
+  { icon: Film, label: 'Movies', path: '/movies' },
   { icon: Radio, label: 'Live Radio', path: '/radio' },
   { icon: Search, label: 'Search', path: '/search' },
   { icon: Library, label: 'Library', path: '/library' },

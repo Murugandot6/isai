@@ -14,6 +14,18 @@ export interface Playlist {
   createdAt: number;
 }
 
+export interface Movie {
+  id: string;
+  title: string;
+  overview: string;
+  backdrop: string;
+  poster: string;
+  rating: number;
+  year: string;
+  genre: string;
+  language: string;
+}
+
 interface MusicContextType {
   currentSong: Song | null;
   isPlaying: boolean;
@@ -53,6 +65,10 @@ interface MusicContextType {
   repeatMode: 'none' | 'one' | 'all';
   toggleRepeat: (fromSync?: boolean) => void;
   queue: Song[];
+  // Movie Sync Extensions
+  currentMovie: Movie | null;
+  playMovie: (movie: Movie, fromSync?: boolean) => void;
+  closeMovie: (fromSync?: boolean) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -67,13 +83,15 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isMuted, setIsMuted] = useState(false);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
-  // Set Tamil as default language
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['tamil']);
   
   const [queue, setQueue] = useState<Song[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
+
+  // Movie State
+  const [currentMovie, setCurrentMovie] = useState<Movie | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
@@ -168,10 +186,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [volume, isMuted]);
 
-  const stateRef = useRef({ currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode });
+  const stateRef = useRef({ currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode, currentMovie });
   useEffect(() => {
-    stateRef.current = { currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode };
-  }, [currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode]);
+    stateRef.current = { currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode, currentMovie };
+  }, [currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode, currentMovie]);
 
   const broadcast = useCallback((type: string, data: any) => {
     const payload = { type, data, timestamp: Date.now() };
@@ -187,6 +205,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const toastId = fromSync ? null : toast.loading("Loading stream...");
     
     try {
+      // Close movie if playing
+      if (stateRef.current.currentMovie) {
+        setCurrentMovie(null);
+      }
+
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO') || song.album?.id === 'radio';
       
       let fullSong = song;
@@ -261,6 +284,28 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [broadcast]);
 
+  // Movie Playback & Sync Functions
+  const playMovie = useCallback((movie: Movie, fromSync: boolean = false) => {
+    // Pause any active music stream
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    setIsPlaying(false);
+    setCurrentMovie(movie);
+
+    if (!fromSync) {
+      toast.success(`Now playing: ${movie.title}`);
+      broadcast('play_movie', { movie });
+    }
+  }, [broadcast]);
+
+  const closeMovie = useCallback((fromSync: boolean = false) => {
+    setCurrentMovie(null);
+    if (!fromSync) {
+      broadcast('close_movie', {});
+    }
+  }, [broadcast]);
+
   const playNext = useCallback((fromSync: boolean = false) => {
     const { queue, currentIndex, isShuffle, repeatMode, currentSong } = stateRef.current;
     if (queue.length === 0) return;
@@ -268,20 +313,17 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     let nextIndex = currentIndex + 1;
     
     if (isShuffle) {
-      // Shuffle within the same language if possible
       const sameLangSongs = queue.filter(s => s.language === currentSong?.language);
       
       if (sameLangSongs.length > 1) {
         const randomSong = sameLangSongs[Math.floor(Math.random() * sameLangSongs.length)];
         nextIndex = queue.findIndex(s => s.id === randomSong.id);
-        // Ensure we don't play the same song twice if there are options
         if (nextIndex === currentIndex && sameLangSongs.length > 1) {
            const otherSongs = sameLangSongs.filter(s => s.id !== currentSong?.id);
            const fallbackSong = otherSongs[Math.floor(Math.random() * otherSongs.length)];
            nextIndex = queue.findIndex(s => s.id === fallbackSong.id);
         }
       } else {
-        // Fallback to normal shuffle if no other songs in same language
         nextIndex = Math.floor(Math.random() * queue.length);
         if (nextIndex === currentIndex && queue.length > 1) nextIndex = (nextIndex + 1) % queue.length;
       }
@@ -331,7 +373,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [broadcast]);
 
   const seek = useCallback((time: number, fromSync: boolean = false) => {
-    // Disable timeline seeking for live radio streams
     const isRadio = stateRef.current.currentSong?.type === 'radio' || stateRef.current.currentSong?.album?.id === 'radio';
     if (isRadio) return;
 
@@ -361,10 +402,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toggleMute = () => setIsMuted(prev => !prev);
 
-  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext });
+  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext, playMovie, closeMovie });
   useEffect(() => {
-    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext };
-  }, [playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext]);
+    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext, playMovie, closeMovie };
+  }, [playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext, playMovie, closeMovie]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -391,21 +432,32 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     channel
       .on('broadcast', { event: 'sync' }, ({ payload }) => {
         const { type, data } = payload;
-        const { playSong: play, pauseSong: pause, resumeSong: resume, seek: sk, broadcast: bc, playNext: next, playPrevious: prev, toggleShuffle: shuf, toggleRepeat: rep } = functionsRef.current;
+        const { playSong: play, pauseSong: pause, resumeSong: resume, seek: sk, broadcast: bc, playNext: next, playPrevious: prev, toggleShuffle: shuf, toggleRepeat: rep, playMovie: pm, closeMovie: cm } = functionsRef.current;
         switch (type) {
           case 'request_state':
-            if (stateRef.current.currentSong) bc('play', { song: stateRef.current.currentSong, playing: stateRef.current.isPlaying, time: audioRef.current?.currentTime || 0, queue: stateRef.current.queue });
+            if (stateRef.current.currentMovie) {
+              bc('play_movie', { movie: stateRef.current.currentMovie });
+            } else if (stateRef.current.currentSong) {
+              bc('play', { song: stateRef.current.currentSong, playing: stateRef.current.isPlaying, time: audioRef.current?.currentTime || 0, queue: stateRef.current.queue });
+            }
             break;
           case 'play':
             if (data.song) {
               const isRadioSong = data.song.type === 'radio' || data.song.album?.id === 'radio';
               play(data.song, data.queue, true).then(() => { 
-                // ONLY update currentTime if this is not a live FM radio station!
                 if (data.time && !isRadioSong && audioRef.current) {
                   audioRef.current.currentTime = data.time; 
                 }
               });
             }
+            break;
+          case 'play_movie':
+            if (data.movie) {
+              pm(data.movie, true);
+            }
+            break;
+          case 'close_movie':
+            cm(true);
             break;
           case 'pause': pause(true); break;
           case 'resume': resume(true); break;
@@ -463,7 +515,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation, isStationLiked,
       recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat,
-      queue
+      queue,
+      // Movie Sync Extensions
+      currentMovie, playMovie, closeMovie
     }}>
       {children}
     </MusicContext.Provider>
