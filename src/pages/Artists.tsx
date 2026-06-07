@@ -13,10 +13,10 @@ import { Input } from '@/components/ui/input';
 import { getHighResImage } from '@/lib/image-utils';
 
 const TAMIL_LEGENDS = [
-  { name: 'A.R. Rahman', id: '456269' },
-  { name: 'Ilaiyaraaja', id: '456561' },
-  { name: 'Anirudh Ravichander', id: '459320' },
   { name: 'Yuvan Shankar Raja', id: '456863' },
+  { name: 'A.R. Rahman', id: '456269' },
+  { name: 'Anirudh Ravichander', id: '459320' },
+  { name: 'Ilaiyaraaja', id: '456561' },
   { name: 'Harris Jayaraj', id: '456862' },
   { name: 'S.P. Balasubrahmanyam', id: '456042' },
   { name: 'G.V. Prakash Kumar', id: '457145' },
