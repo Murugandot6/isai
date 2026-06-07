@@ -100,11 +100,21 @@ export const normalizeSong = (song: any): Song => {
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
+      // Try the standard trending endpoint
       const res = await fetch(`${BASE_URL}/trending?language=${encodeURIComponent(languages)}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      const songs = (data.data || []) as any[];
-      return songs.map(normalizeSong);
+      
+      // The API might return data directly or nested in data.data
+      const songs = (Array.isArray(data.data) ? data.data : (data.data?.songs || [])) as any[];
+      
+      if (songs.length > 0) {
+        return songs.map(normalizeSong);
+      }
+
+      // Fallback: Search for top hits in the requested languages if trending is empty
+      const fallbackQuery = languages.split(',')[0] + " top hits";
+      return await musicApi.searchSongs(fallbackQuery);
     } catch (error) {
       console.error("Trending fetch error:", error);
       return await musicApi.searchSongs('latest hits');
@@ -115,7 +125,9 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      const results = (data.data?.results || []) as any[];
+      
+      // Search results are usually in data.data.results
+      const results = (data.data?.results || data.data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Search fetch error:", error);
@@ -127,7 +139,7 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      return (data.data?.results || []) as Album[];
+      return (data.data?.results || data.data || []) as Album[];
     } catch (error) {
       console.error("Album search error:", error);
       return [];
@@ -138,7 +150,7 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      return (data.data?.results || []) as any[];
+      return (data.data?.results || data.data || []) as any[];
     } catch (error) {
       console.error("Artist search error:", error);
       return [];
@@ -149,7 +161,7 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/albums?id=${id}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      const album = data.data;
+      const album = data.data || data;
       if (album && album.songs) {
         album.songs = album.songs.map(normalizeSong);
       }
@@ -164,7 +176,7 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/playlists?id=${id}&limit=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      const playlist = data.data;
+      const playlist = data.data || data;
       if (playlist && playlist.songs) {
         playlist.songs = playlist.songs.map(normalizeSong);
       }
@@ -179,8 +191,11 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/songs?ids=${id}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      if (data.data && data.data.length > 0) {
-        return normalizeSong(data.data[0]);
+      const songData = data.data || data;
+      if (Array.isArray(songData) && songData.length > 0) {
+        return normalizeSong(songData[0]);
+      } else if (songData && !Array.isArray(songData)) {
+        return normalizeSong(songData);
       }
       return null;
     } catch (error) {
@@ -193,7 +208,7 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/songs?ids=${ids.join(',')}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      const results = (data.data || []) as any[];
+      const results = (data.data || data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Bulk details fetch error:", error);
@@ -205,7 +220,7 @@ export const musicApi = {
       const res = await fetch(`${BASE_URL}/artists/${id}?page=${page}`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      const artistData = data.data;
+      const artistData = data.data || data;
       if (artistData && artistData.topSongs) {
         artistData.topSongs = artistData.topSongs.map(normalizeSong);
       }
