@@ -2,8 +2,8 @@
 
 // Base URL for the JioSaavn API worker
 const API_BASE = 'https://jiosaavn-api.imurugan.workers.dev/api';
-// Using corsproxy.io as it's generally more reliable and faster for raw data
-const PROXY = 'https://corsproxy.io/?';
+// Using a robust proxy setup
+const PROXY = 'https://api.allorigins.win/raw?url=';
 
 export interface Image {
   quality: string;
@@ -153,33 +153,43 @@ export const normalizeSong = (song: any): Song => {
 const fetchWithProxy = async (endpoint: string) => {
   const targetUrl = `${API_BASE}${endpoint}`;
   
-  // Try direct fetch first as it's the most efficient
+  // Try direct fetch first
   try {
-    const res = await fetch(targetUrl, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(targetUrl);
     if (res.ok) {
       const json = await res.json();
       return json.data || json;
     }
   } catch (e) {
-    console.warn("Direct fetch failed or timed out, trying proxy...");
+    console.warn("Direct fetch failed, trying proxy...");
   }
 
   // Fallback to proxy
   try {
     const proxyUrl = `${PROXY}${encodeURIComponent(targetUrl)}`;
-    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+    const res = await fetch(proxyUrl);
     if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
     const json = await res.json();
     return json.data || json;
   } catch (e) {
-    console.error("All fetch attempts failed:", e);
-    throw e;
+    // If all-origins fails, try a secondary proxy
+    try {
+      const secondaryProxy = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+      const res = await fetch(secondaryProxy);
+      if (!res.ok) throw new Error(`Secondary proxy error: ${res.status}`);
+      const json = await res.json();
+      return json.data || json;
+    } catch (e2) {
+      console.error("All fetch attempts failed:", e2);
+      throw e2;
+    }
   }
 };
 
 export const musicApi = {
   getTrending: async (languages: string = 'tamil,hindi') => {
     try {
+      // Use trending query as per docs
       const data = await fetchWithProxy(`/search/songs?query=trending&language=${encodeURIComponent(languages)}&limit=20`);
       const results = (data.results || data || []) as any[];
       return results.map(normalizeSong);
@@ -214,7 +224,12 @@ export const musicApi = {
   },
   getAlbumDetails: async (id: string) => {
     try {
-      const data = await fetchWithProxy(`/albums/${id}`);
+      // Try query param first as it's more stable for details
+      let data = await fetchWithProxy(`/albums?id=${id}`);
+      if (!data || !data.songs) {
+        // Fallback to path param as per user docs
+        data = await fetchWithProxy(`/albums/${id}`);
+      }
       if (data && data.songs) {
         data.songs = data.songs.map(normalizeSong);
       }
@@ -225,7 +240,12 @@ export const musicApi = {
   },
   getPlaylistDetails: async (id: string) => {
     try {
-      const data = await fetchWithProxy(`/playlists/${id}`);
+      // Try query param first
+      let data = await fetchWithProxy(`/playlists?id=${id}`);
+      if (!data || !data.songs) {
+        // Fallback to path param
+        data = await fetchWithProxy(`/playlists/${id}`);
+      }
       if (data && data.songs) {
         data.songs = data.songs.map(normalizeSong);
       }
@@ -236,8 +256,13 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      const data = await fetchWithProxy(`/songs/${id}`);
-      const songData = Array.isArray(data) ? data[0] : data;
+      // Try query param
+      let data = await fetchWithProxy(`/songs?id=${id}`);
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        // Fallback to path param
+        data = await fetchWithProxy(`/songs/${id}`);
+      }
+      const songData = Array.isArray(data) ? data[0] : (data.results ? data.results[0] : data);
       return songData ? normalizeSong(songData) : null;
     } catch (e) {
       return null;
