@@ -1,8 +1,8 @@
 "use client";
 
-// Using allorigins as a more reliable proxy for raw API data
+// Using allorigins as a fallback proxy for raw API data if direct fetch fails
 const PROXY = 'https://api.allorigins.win/raw?url=';
-const API_BASE = 'https://jiosaavn.rajputhemant.dev/api';
+const API_BASE = 'https://jiosaavn-api.imurugan.workers.dev/api';
 
 export interface Image {
   quality: string;
@@ -112,11 +112,21 @@ export const normalizeSong = (song: any): Song => {
 };
 
 const fetchWithProxy = async (endpoint: string) => {
-  // Construct the full target URL first
   const targetUrl = `${API_BASE}${endpoint}`;
-  // Encode the entire target URL to pass it safely through the proxy
-  const url = `${PROXY}${encodeURIComponent(targetUrl)}`;
   
+  try {
+    // Try direct fetch first (much faster, no proxy overhead, native CORS support on Cloudflare Workers)
+    const res = await fetch(targetUrl);
+    if (res.ok) {
+      const json = await res.json();
+      return json.data || json;
+    }
+  } catch (e) {
+    console.warn("Direct fetch failed, falling back to proxy:", e);
+  }
+
+  // Fallback to proxy if direct fetch fails
+  const url = `${PROXY}${encodeURIComponent(targetUrl)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   const json = await res.json();
