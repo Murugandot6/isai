@@ -52,7 +52,8 @@ const mapTMDbToMovie = (item: any): Movie => {
     rating: item.vote_average ? Math.round(item.vote_average * 10) / 10 : 0,
     year: item.release_date ? item.release_date.split('-')[0] : 'N/A',
     genre: genres || 'Drama',
-    language: item.original_language ? item.original_language.toUpperCase() : 'EN'
+    language: item.original_language ? item.original_language.toUpperCase() : 'EN',
+    imdbId: item.imdb_id || undefined
   };
 };
 
@@ -90,6 +91,18 @@ export const tmdbApi = {
     } catch (error) {
       console.error(error);
       return [];
+    }
+  },
+
+  getMovieImdbId: async (movieId: string): Promise<string | null> => {
+    try {
+      const res = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&append_to_response=external_ids`);
+      if (!res.ok) throw new Error("Failed to fetch movie details");
+      const data = await res.json();
+      return data.imdb_id || data.external_ids?.imdb_id || null;
+    } catch (error) {
+      console.error("Error fetching IMDB ID:", error);
+      return null;
     }
   },
 

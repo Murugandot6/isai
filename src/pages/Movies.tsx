@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic, Movie } from '@/context/MusicContext';
 import { tmdbApi, CastMember } from '@/services/tmdbApi';
+import { stremioApi, StremioStream } from '@/services/stremio';
+import { StreamPlayer } from '@/components/StreamPlayer';
 import { Play, Film, Star, Search, Tv, X, Users, Info, Loader2, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +17,11 @@ const Movies = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [server, setServer] = useState<'vidsrc' | 'vidsrc_xyz'>('vidsrc');
+  
+  // Stream & Cast States
+  const [imdbId, setImdbId] = useState<string | null>(null);
+  const [stremioStreams, setStremioStreams] = useState<StremioStream[]>([]);
+  const [loadingStreams, setLoadingStreams] = useState(false);
   const [cast, setCast] = useState<CastMember[]>([]);
   const [loadingCast, setLoadingCast] = useState(false);
 
@@ -34,24 +40,45 @@ const Movies = () => {
     loadMovies();
   }, []);
 
-  // Fetch cast when currentMovie changes
+  // Fetch IMDB ID, Stremio Streams, and Cast when currentMovie changes
   useEffect(() => {
-    const fetchCast = async () => {
+    const fetchMovieDetails = async () => {
       if (!currentMovie) {
+        setImdbId(null);
+        setStremioStreams([]);
         setCast([]);
         return;
       }
+
       setLoadingCast(true);
+      setLoadingStreams(true);
+
       try {
-        const credits = await tmdbApi.getMovieCredits(currentMovie.id);
+        // 1. Fetch IMDB ID and Cast concurrently
+        const [fetchedImdbId, credits] = await Promise.all([
+          tmdbApi.getMovieImdbId(currentMovie.id),
+          tmdbApi.getMovieCredits(currentMovie.id)
+        ]);
+
+        setImdbId(fetchedImdbId);
         setCast(credits);
+
+        // 2. Fetch Stremio streams if IMDB ID is available
+        if (fetchedImdbId) {
+          const streams = await stremioApi.getStreams(fetchedImdbId);
+          setStremioStreams(streams);
+        } else {
+          setStremioStreams([]);
+        }
       } catch (error) {
-        console.error("Failed to load cast", error);
+        console.error("Failed to load movie details:", error);
       } finally {
         setLoadingCast(false);
+        setLoadingStreams(false);
       }
     };
-    fetchCast();
+
+    fetchMovieDetails();
   }, [currentMovie]);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -68,13 +95,6 @@ const Movies = () => {
     const results = await tmdbApi.searchMovies(searchQuery);
     setMovies(results);
     setLoading(false);
-  };
-
-  const getEmbedUrl = (movieId: string) => {
-    if (server === 'vidsrc') {
-      return `https://vidsrc.to/embed/movie/${movieId}`;
-    }
-    return `https://vidsrc.xyz/embed/movie/${movieId}`;
   };
 
   return (
@@ -128,22 +148,6 @@ const Movies = () => {
                   </Badge>
                 )}
 
-                {/* Server Switcher */}
-                <div className="flex bg-white/10 rounded-lg p-0.5 text-xs">
-                  <button 
-                    onClick={() => setServer('vidsrc')}
-                    className={`px-3 py-1.5 rounded-md font-bold transition-all ${server === 'vidsrc' ? 'bg-primary text-white' : 'text-white/60 hover:text-white'}`}
-                  >
-                    Server 1
-                  </button>
-                  <button 
-                    onClick={() => setServer('vidsrc_xyz')}
-                    className={`px-3 py-1.5 rounded-md font-bold transition-all ${server === 'vidsrc_xyz' ? 'bg-primary text-white' : 'text-white/60 hover:text-white'}`}
-                  >
-                    Server 2
-                  </button>
-                </div>
-
                 <button 
                   onClick={() => closeMovie()}
                   className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
@@ -153,14 +157,13 @@ const Movies = () => {
               </div>
             </div>
 
-            {/* Video Iframe Container */}
-            <div className="relative bg-black flex items-center justify-center aspect-video w-full max-h-[70vh]">
-              <iframe 
-                src={getEmbedUrl(currentMovie.id)}
-                className="w-full h-full border-none"
-                allowFullScreen
-                scrolling="no"
-                allow="autoplay; encrypted-media"
+            {/* Premium Stream Player Component */}
+            <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+              <StreamPlayer 
+                movie={currentMovie}
+                imdbId={imdbId}
+                stremioStreams={stremioStreams}
+                loadingStreams={loadingStreams}
               />
             </div>
 
@@ -172,7 +175,7 @@ const Movies = () => {
                   <div className="flex gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20 text-sm text-primary-foreground">
                     <Users size={20} className="text-primary shrink-0" />
                     <p className="leading-relaxed">
-                      <strong>Social Sync Active:</strong> The movie has been opened for everyone in the room! Due to browser security rules on external video players, please click the play button on your screen to start watching together.
+                      <strong>Social Sync Active:</strong> The movie has been opened for everyone in the room! If you are using a Direct Torrent Stream, playback controls are fully synchronized. If using an Embed Server, please click play on your screen to start watching together.
                     </p>
                   </div>
                 )}
