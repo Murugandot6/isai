@@ -77,11 +77,23 @@ export const normalizeSong = (song: any): Song => {
     }
   }
 
+  // Ensure image is always an array
+  let images = song.image;
+  if (images && !Array.isArray(images)) {
+    images = [{ quality: '500x500', link: typeof images === 'string' ? images : (images.link || images.url) }];
+  }
+
+  // Ensure downloadUrl is always an array
+  let downloadUrls = song.downloadUrl;
+  if (downloadUrls && !Array.isArray(downloadUrls)) {
+    downloadUrls = [{ quality: '320kbps', link: typeof downloadUrls === 'string' ? downloadUrls : (downloadUrls.link || downloadUrls.url) }];
+  }
+
   return {
     ...song,
     primaryArtists: primaryArtists || 'Unknown Artist',
-    image: Array.isArray(song.image) ? song.image : [],
-    downloadUrl: Array.isArray(song.downloadUrl) ? song.downloadUrl : []
+    image: Array.isArray(images) ? images : [],
+    downloadUrl: Array.isArray(downloadUrls) ? downloadUrls : []
   };
 };
 
@@ -149,7 +161,6 @@ export const musicApi = {
   },
   getPlaylistDetails: async (id: string) => {
     try {
-      // Increased limit to 100 to fetch more songs from the playlist
       const res = await fetch(`${BASE_URL}/playlists?id=${id}&limit=100`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();

@@ -65,7 +65,6 @@ interface MusicContextType {
   repeatMode: 'none' | 'one' | 'all';
   toggleRepeat: (fromSync?: boolean) => void;
   queue: Song[];
-  // Movie Sync Extensions
   currentMovie: Movie | null;
   playMovie: (movie: Movie, fromSync?: boolean) => void;
   closeMovie: (fromSync?: boolean) => void;
@@ -94,7 +93,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
 
-  // Movie State
   const [currentMovie, setCurrentMovie] = useState<Movie | null>(null);
   const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
   const [recentlyWatched, setRecentlyWatched] = useState<Movie[]>([]);
@@ -109,7 +107,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
 
-  // Load initial data from localStorage
   useEffect(() => {
     const savedLiked = localStorage.getItem('isai_liked_songs');
     const savedStations = localStorage.getItem('isai_liked_stations');
@@ -126,7 +123,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedRecentMovies) setRecentlyWatched(JSON.parse(savedRecentMovies));
   }, []);
 
-  // Save to localStorage on changes
   useEffect(() => {
     localStorage.setItem('isai_liked_stations', JSON.stringify(likedStations));
     localStorage.setItem('isai_recent_songs', JSON.stringify(recentlyPlayed));
@@ -138,13 +134,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const toggleLike = async (song: Song) => {
     const isCurrentlyLiked = likedSongs.some(s => s.id === song.id);
     let newLikedSongs;
-
     if (isCurrentlyLiked) {
       newLikedSongs = likedSongs.filter(s => s.id !== song.id);
     } else {
       newLikedSongs = [song, ...likedSongs];
     }
-
     setLikedSongs(newLikedSongs);
     localStorage.setItem('isai_liked_songs', JSON.stringify(newLikedSongs));
   };
@@ -161,10 +155,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const isMovieLiked = (movieId: string) => likedMovies.some(m => m.id === movieId);
 
-  // Audio logic...
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
+      audioRef.current.crossOrigin = "anonymous";
+      audioRef.current.preload = "auto";
     }
     const audio = audioRef.current;
     audio.volume = isMuted ? 0 : volume;
@@ -193,7 +188,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
-    if (!audioRef.current) audioRef.current = new Audio();
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.crossOrigin = "anonymous";
+    }
+    
+    const audio = audioRef.current;
     const toastId = fromSync ? null : toast.loading("Loading stream...");
     
     try {
@@ -204,46 +204,45 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO') || song.album?.id === 'radio';
       
       let fullSong = song;
+      // If it's not a radio and doesn't have download URLs, fetch them
       if (!isRadio && (!song.downloadUrl || song.downloadUrl.length === 0)) {
         const details = await musicApi.getSongDetails(song.id);
         if (details) fullSong = details;
       }
       
       fullSong = normalizeSong(fullSong);
-
       const downloadUrls = fullSong.downloadUrl || [];
+
       if (downloadUrls.length === 0 && !isRadio) {
         if (toastId) toast.error("No stream links found.", { id: toastId });
         return;
       }
 
-      const audio = audioRef.current;
       audio.pause();
-
-      const links = isRadio ? [{ link: (song as any).downloadUrl?.[0]?.link || (song as any).url }] : [...downloadUrls].reverse();
+      
+      // Prepare links: Radio uses url_resolved, Songs use downloadUrl array
+      const links = isRadio 
+        ? [{ link: (song as any).downloadUrl?.[0]?.link || (song as any).url_resolved || (song as any).url }] 
+        : [...downloadUrls].reverse(); // Try highest quality first
       
       let success = false;
       for (const linkObj of links) {
+        const rawUrl = linkObj.link || (linkObj as any).url;
+        if (!rawUrl) continue;
+        
         try {
-          const rawUrl = linkObj.link || (linkObj as any).url;
-          if (!rawUrl) continue;
-          
           const streamUrl = rawUrl.replace('http://', 'https://');
           audio.src = streamUrl;
           audio.load();
           
-          await new Promise((resolve, reject) => {
-            const onCanPlay = () => { resolve(true); audio.removeEventListener('canplay', onCanPlay); };
-            const onError = () => { reject(new Error("Link broken")); audio.removeEventListener('error', onError); };
-            audio.addEventListener('canplay', onCanPlay);
-            audio.addEventListener('error', onError);
-            setTimeout(() => reject(new Error("Timeout")), 10000);
-          });
-          
+          // Direct play attempt
           await audio.play();
           success = true;
           break;
-        } catch (e) { continue; }
+        } catch (e) {
+          console.warn("Failed to play link, trying next...", e);
+          continue;
+        }
       }
 
       if (!success) throw new Error("All stream links failed");
@@ -270,7 +269,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch (error) {
       console.error('Playback Error:', error);
-      if (toastId) toast.error("Failed to play this station.", { id: toastId });
+      if (toastId) toast.error("Failed to play this track.", { id: toastId });
       setIsPlaying(false);
     }
   }, [broadcast]);
@@ -304,7 +303,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     if (isShuffle) {
       const sameLangSongs = queue.filter(s => s.language === currentSong?.language);
-      
       if (sameLangSongs.length > 1) {
         const randomSong = sameLangSongs[Math.floor(Math.random() * sameLangSongs.length)];
         nextIndex = queue.findIndex(s => s.id === randomSong.id);
@@ -500,7 +498,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation, isStationLiked,
       recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat,
       queue,
-      // Movie Sync Extensions
       currentMovie, playMovie, closeMovie,
       likedMovies, toggleLikeMovie, isMovieLiked, recentlyWatched
     }}>
