@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Playlist, Song } from '@/services/musicApi';
+import { musicApi, Playlist } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, ListMusic, Music, Loader2, Clock } from 'lucide-react';
@@ -26,23 +26,15 @@ const PlaylistDetails = () => {
         const data = await musicApi.getPlaylistDetails(id);
         
         if (data && data.songs && data.songs.length > 0) {
-          // Playlists often contain songs with generic album covers.
-          // We enrich them to get the actual song-specific high-quality imagery.
           try {
-            const songIds = data.songs.map(s => s.id);
-            // Fetch in chunks if there are many songs to avoid URL length issues
-            const chunkSize = 20;
-            let allEnriched: Song[] = [];
+            // Perform a robust bulk fetch for individual song details to get unique covers
+            const songIds = data.songs.map(s => s.id.toString());
+            const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
             
-            for (let i = 0; i < songIds.length; i += chunkSize) {
-              const chunk = songIds.slice(i, i + chunkSize);
-              const chunkDetails = await musicApi.getSongsDetailsBulk(chunk);
-              allEnriched = [...allEnriched, ...chunkDetails];
-            }
-            
-            if (allEnriched.length > 0) {
+            if (fullSongs && fullSongs.length > 0) {
+              // Map back using string comparison to avoid type issues
               const enrichedSongs = data.songs.map(originalSong => {
-                const fullDetail = allEnriched.find(fs => fs.id === originalSong.id);
+                const fullDetail = fullSongs.find(fs => fs.id.toString() === originalSong.id.toString());
                 return fullDetail ? { ...fullDetail } : originalSong;
               });
               data.songs = enrichedSongs;
@@ -83,15 +75,7 @@ const PlaylistDetails = () => {
     );
   }
 
-  const getSongCount = () => {
-    const p = playlist as any;
-    if (p.songCount && parseInt(p.songCount) > 0) return p.songCount;
-    if (p.song_count && parseInt(p.song_count) > 0) return p.song_count;
-    if (p.more_info?.song_count && parseInt(p.more_info.song_count) > 0) return p.more_info.song_count;
-    return (playlist.songs ? playlist.songs.length : 0).toString();
-  };
-
-  const songCount = getSongCount();
+  const songCount = playlist.songs ? playlist.songs.length : 0;
 
   return (
     <MainLayout>

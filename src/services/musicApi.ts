@@ -103,10 +103,12 @@ export const getContainerCount = (item: any): string => {
 
 /**
  * Normalizes song data from the API to maintain compatibility with the UI.
+ * Aggressively searches for high-quality images and handles various artist object formats.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
 
+  // Handle various artist formats (array of objects, single object, or string)
   let primaryArtists = song.primaryArtists;
   if (Array.isArray(primaryArtists)) {
     primaryArtists = primaryArtists.map((a: any) => a.name).join(', ');
@@ -118,18 +120,32 @@ export const normalizeSong = (song: any): Song => {
       : song.artists.primary;
   }
 
-  // Find images in various possible fields
-  let images = song.image || song.images || [];
-  if (!Array.isArray(images)) {
-    images = [{ quality: '500x500', link: typeof images === 'string' ? images : (images.link || images.url) }];
-  } else if (images.length === 0 && song.album?.image) {
-    const albumImg = song.album.image;
-    images = Array.isArray(albumImg) ? albumImg : [{ quality: '500x500', link: albumImg }];
-  } else {
-    images = images.map((img: any) => ({
+  // Extract images from all possible fields (image, images, or album.image)
+  let rawImages = song.image || song.images || [];
+  let images: Image[] = [];
+
+  if (Array.isArray(rawImages)) {
+    images = rawImages.map((img: any) => ({
       quality: img.quality || '500x500',
       link: img.link || img.url || (typeof img === 'string' ? img : '')
     }));
+  } else if (typeof rawImages === 'string') {
+    images = [{ quality: '500x500', link: rawImages }];
+  } else if (typeof rawImages === 'object' && rawImages !== null) {
+    images = [{ quality: '500x500', link: rawImages.link || rawImages.url || '' }];
+  }
+
+  // If song image is empty, fallback to album image
+  if (images.length === 0 && song.album?.image) {
+    const albumImg = song.album.image;
+    if (Array.isArray(albumImg)) {
+      images = albumImg.map((img: any) => ({
+        quality: img.quality || '500x500',
+        link: img.link || img.url || (typeof img === 'string' ? img : '')
+      }));
+    } else {
+      images = [{ quality: '500x500', link: typeof albumImg === 'string' ? albumImg : (albumImg.link || albumImg.url) }];
+    }
   }
 
   let downloadUrls = song.downloadUrl || song.download_url || [];
@@ -144,6 +160,7 @@ export const normalizeSong = (song: any): Song => {
 
   return {
     ...song,
+    id: song.id?.toString() || '',
     name: song.name || song.title || 'Unknown Track',
     primaryArtists: primaryArtists || 'Unknown Artist',
     image: images,
@@ -264,15 +281,23 @@ export const musicApi = {
     let data = null;
     
     try {
+      // Use standard ids parameter
       data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Bulk fetch failed, attempting individual song detail fallback");
+    }
     
-    if (!data || (Array.isArray(data) && data.length === 0)) {
+    // Fallback logic if the bulk endpoint doesn't return what we expect
+    if (!data || !data.results || (Array.isArray(data.results) && data.results.length === 0)) {
       try {
         const results = await Promise.allSettled(ids.map(id => fetchWithProxy(`/songs/${id}`)));
-        data = results
+        const songs = results
           .filter(r => r.status === 'fulfilled')
-          .map(r => (r as PromiseFulfilledResult<any>).value);
+          .map(r => {
+            const val = (r as PromiseFulfilledResult<any>).value;
+            return Array.isArray(val) ? val[0] : val;
+          });
+        data = { results: songs };
       } catch (e) {}
     }
     

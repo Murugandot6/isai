@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Album, Song } from '@/services/musicApi';
+import { musicApi, Album } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Disc, Calendar, Music, Loader2 } from 'lucide-react';
@@ -23,27 +23,24 @@ const AlbumDetails = () => {
       if (!id) return;
       setLoading(true);
       try {
-        // 1. Fetch the basic album details
         const data = await musicApi.getAlbumDetails(id);
         
         if (data && data.songs && data.songs.length > 0) {
-          // 2. The album endpoint often returns the album cover for all songs.
-          // We fetch the specific song details in bulk to get the "real" individual images.
           try {
-            const songIds = data.songs.map(s => s.id);
+            // Perform a robust bulk fetch for individual song details to get unique covers
+            const songIds = data.songs.map(s => s.id.toString());
             const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
             
             if (fullSongs && fullSongs.length > 0) {
-              // 3. Map the enriched data back to the album's song list
+              // Map back using string comparison to avoid type issues
               const enrichedSongs = data.songs.map(originalSong => {
-                const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
-                // If we found full details, use them (they contain the correct individual images)
+                const fullDetail = fullSongs.find(fs => fs.id.toString() === originalSong.id.toString());
                 return fullDetail ? { ...fullDetail } : originalSong;
               });
               data.songs = enrichedSongs;
             }
           } catch (bulkError) {
-            console.warn("Failed to fetch bulk song details, using original album songs:", bulkError);
+            console.warn("Failed to fetch bulk song details:", bulkError);
           }
         }
         
@@ -78,10 +75,7 @@ const AlbumDetails = () => {
     );
   }
 
-  // Fallback to songs array length if songCount is 0 or missing
-  const songCount = album.songCount && parseInt(album.songCount) > 0 
-    ? album.songCount 
-    : (album.songs ? album.songs.length : 0);
+  const songCount = album.songs ? album.songs.length : 0;
 
   return (
     <MainLayout>
