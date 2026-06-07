@@ -29,7 +29,6 @@ const AlbumDetails = () => {
         if (data && data.songs && data.songs.length > 0) {
           // 2. The album endpoint often returns the album cover for all songs.
           // We fetch the specific song details in bulk to get the "real" individual images.
-          // We wrap this in a separate try/catch so that if it fails, the album still loads!
           try {
             const songIds = data.songs.map(s => s.id);
             const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
@@ -48,8 +47,7 @@ const AlbumDetails = () => {
           }
         }
         
-        // 4. Set the state with the enriched data
-        setAlbum(data ? { ...data } : null);
+        setAlbum(data);
       } catch (error) {
         console.error("Failed to fetch album details", error);
       } finally {
@@ -80,6 +78,11 @@ const AlbumDetails = () => {
     );
   }
 
+  // Fallback to songs array length if songCount is 0 or missing
+  const songCount = album.songCount && parseInt(album.songCount) > 0 
+    ? album.songCount 
+    : (album.songs ? album.songs.length : 0);
+
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
@@ -109,7 +112,7 @@ const AlbumDetails = () => {
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-muted-foreground font-medium text-xs md:text-sm">
               <div className="flex items-center gap-1.5">
                 <Disc size={16} />
-                <span>{album.songCount || (album.songs ? album.songs.length : 0)} Songs</span>
+                <span>{songCount} Songs</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
