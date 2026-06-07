@@ -4,7 +4,7 @@
 export interface Song {
   id: string | number;
   name: string;
-  album: string;
+  album: any;
   year?: string;
   releaseDate?: string;
   duration?: string;
@@ -15,6 +15,8 @@ export interface Song {
   image: string | any[];
   downloadUrl?: any[];
   url?: string;
+  language: string;
+  type?: string;
   [key: string]: any;
 }
 
@@ -29,6 +31,34 @@ export interface Album {
   songCount?: string | number;
   [key: string]: any;
 }
+
+export interface Playlist {
+  id: string | number;
+  name: string;
+  image: string | any[];
+  songs?: Song[];
+  language?: string;
+  year?: string;
+  [key: string]: any;
+}
+
+// Helper to ensure song objects have a consistent structure across different API responses
+export const normalizeSong = (song: any): Song => {
+  if (!song) return song;
+
+  return {
+    ...song,
+    id: song.id?.toString() || '',
+    name: song.name || song.title || 'Unknown Track',
+    album: typeof song.album === 'string' ? { name: song.album, id: '' } : (song.album || { name: 'Unknown Album', id: '' }),
+    primaryArtists: song.primaryArtists || song.singers || song.artist || 'Unknown Artist',
+    image: song.image || [],
+    downloadUrl: song.downloadUrl || [],
+    language: song.language || 'tamil',
+    year: song.year || '',
+    duration: song.duration || '0'
+  };
+};
 
 // Robust helper to get the song count from any album/playlist object
 export const getContainerCount = (item: any): number => {
@@ -57,30 +87,104 @@ export const getContainerCount = (item: any): number => {
   return 0;
 };
 
-// API Mock/Service layer
 const BASE_URL = 'https://saavn.dev/api';
 
 export const musicApi = {
+  getTrending: async (languages: string = 'tamil'): Promise<Song[]> => {
+    try {
+      const response = await fetch(`${BASE_URL}/search/songs?query=trending&language=${languages}&limit=20`);
+      const res = await response.json();
+      return (res.data?.results || []).map(normalizeSong);
+    } catch (e) {
+      console.error("Trending fetch error", e);
+      return [];
+    }
+  },
+
+  searchSongs: async (query: string, page: number = 1, limit: number = 20): Promise<Song[]> => {
+    const response = await fetch(`${BASE_URL}/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+    const res = await response.json();
+    return (res.data?.results || []).map(normalizeSong);
+  },
+
+  searchAlbums: async (query: string, page: number = 1, limit: number = 20): Promise<Album[]> => {
+    const response = await fetch(`${BASE_URL}/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+    const res = await response.json();
+    return res.data?.results || [];
+  },
+
+  searchArtists: async (query: string): Promise<any[]> => {
+    const response = await fetch(`${BASE_URL}/search/artists?query=${encodeURIComponent(query)}`);
+    const res = await response.json();
+    return res.data?.results || [];
+  },
+
   getAlbumDetails: async (id: string): Promise<Album> => {
     const response = await fetch(`${BASE_URL}/albums?id=${id}`);
     const res = await response.json();
-    // Some API wrappers return data in a 'data' property
     const albumData = res.data || res;
     
-    // Ensure songs array is present if the API uses 'list' or other names
     if (!albumData.songs && Array.isArray(albumData.list)) {
       albumData.songs = albumData.list;
+    }
+    
+    if (albumData.songs) {
+      albumData.songs = albumData.songs.map(normalizeSong);
     }
     
     return albumData;
   },
 
-  getSongsDetailsBulk: async (ids: string[]): Promise<Song[]> => {
-    if (!ids.length) return [];
-    const response = await fetch(`${BASE_URL}/songs?ids=${ids.join(',')}`);
-    const res = await response.json();
-    return res.data || res || [];
+  getPlaylistDetails: async (id: string): Promise<Playlist | null> => {
+    try {
+      const response = await fetch(`${BASE_URL}/playlists?id=${id}`);
+      const res = await response.json();
+      return res.data || null;
+    } catch (e) {
+      return null;
+    }
   },
 
-  // Add other methods as needed...
+  getArtistDetails: async (id: string): Promise<any> => {
+    try {
+      const response = await fetch(`${BASE_URL}/artists?id=${id}`);
+      const res = await response.json();
+      return res.data || null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  getArtistSongs: async (id: string, page: number = 0): Promise<Song[]> => {
+    try {
+      const response = await fetch(`${BASE_URL}/artists/${id}/songs?page=${page}`);
+      const res = await response.json();
+      return (res.data?.songs || []).map(normalizeSong);
+    } catch (e) {
+      return [];
+    }
+  },
+
+  getSongDetails: async (id: string | number): Promise<Song | null> => {
+    try {
+      const response = await fetch(`${BASE_URL}/songs?ids=${id}`);
+      const res = await response.json();
+      const songData = (res.data && res.data[0]) || (Array.isArray(res) && res[0]);
+      return songData ? normalizeSong(songData) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  getSongsDetailsBulk: async (ids: string[]): Promise<Song[]> => {
+    if (!ids.length) return [];
+    try {
+      const response = await fetch(`${BASE_URL}/songs?ids=${ids.join(',')}`);
+      const res = await response.json();
+      const songs = res.data || res || [];
+      return Array.isArray(songs) ? songs.map(normalizeSong) : [];
+    } catch (e) {
+      return [];
+    }
+  }
 };
