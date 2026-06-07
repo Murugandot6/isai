@@ -2,17 +2,26 @@
 
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Song } from '@/services/musicApi';
+import { musicApi, Song, Playlist } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings, TrendingUp, Sparkles } from 'lucide-react';
+import { Search, Bell, Settings, TrendingUp, Sparkles, ListMusic, Play } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
+import { getHighResImage } from '@/lib/image-utils';
+
+const FEATURED_PLAYLIST_IDS = [
+  'R2ISZzIDGJc_', // Semma Mass Tamil
+  '1170578779',   // Tamil 1990s
+  '1170578783',   // Tamil 2000s
+  '1133105280',   // Tamil Hit Songs
+];
 
 const Index = () => {
   const [featuredSongs, setFeaturedSongs] = useState<Song[]>([]);
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
+  const [featuredPlaylists, setFeaturedPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { playSong, selectedLanguages } = useMusic();
@@ -22,12 +31,17 @@ const Index = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const trendingData = await musicApi.getTrending(selectedLanguages.join(','));
+        const [trendingData, playlistsData] = await Promise.all([
+          musicApi.getTrending(selectedLanguages.join(',')),
+          Promise.all(FEATURED_PLAYLIST_IDS.map(id => musicApi.getPlaylistDetails(id)))
+        ]);
+
         const primaryLang = selectedLanguages[0] || 'tamil';
         const featuredData = await musicApi.searchSongs(`${primaryLang} hits`);
         
         setTrendingSongs(trendingData);
         setFeaturedSongs(featuredData);
+        setFeaturedPlaylists(playlistsData.filter(p => p !== null) as Playlist[]);
       } catch (error) {
         console.error('Failed to fetch content', error);
       } finally {
@@ -90,6 +104,45 @@ const Index = () => {
             <button className="bg-primary text-white px-10 py-4 rounded-full font-bold text-sm hover:scale-105 transition-all w-fit shadow-xl shadow-primary/30">Listen Now</button>
           </div>
         </div>
+
+        {/* Featured Playlists Section */}
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="bg-purple-500/20 p-2 rounded-xl">
+              <ListMusic className="text-purple-500" size={20} />
+            </div>
+            <h3 className="text-2xl font-black tracking-tight">Featured Playlists</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-48 w-full rounded-3xl" />
+              ))
+            ) : (
+              featuredPlaylists.map((playlist) => (
+                <div 
+                  key={playlist.id}
+                  onClick={() => playlist.songs && playlist.songs.length > 0 && playSong(playlist.songs[0], playlist.songs)}
+                  className="group relative aspect-[16/9] rounded-3xl overflow-hidden cursor-pointer shadow-lg transition-all hover:-translate-y-1"
+                >
+                  <img 
+                    src={getHighResImage(playlist.image)} 
+                    alt={playlist.name} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 flex flex-col justify-end">
+                    <h4 className="text-white font-black text-xl mb-1" dangerouslySetInnerHTML={{ __html: playlist.name }}></h4>
+                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{playlist.songCount} Tracks</p>
+                    <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Play size={16} fill="white" className="text-white" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
 
         <section className="mb-16">
           <div className="flex items-center justify-between mb-8">

@@ -46,6 +46,21 @@ export interface Album {
   songs?: Song[];
 }
 
+export interface Playlist {
+  id: string;
+  name: string;
+  description: string;
+  year: string;
+  type: string;
+  playCount: string;
+  language: string;
+  explicitContent: boolean;
+  songCount: string;
+  url: string;
+  image: Image[];
+  songs?: Song[];
+}
+
 /**
  * Normalizes song data from different API endpoints to a consistent format.
  */
@@ -129,6 +144,21 @@ export const musicApi = {
       return album as Album;
     } catch (error) {
       console.error("Album details fetch error:", error);
+      return null;
+    }
+  },
+  getPlaylistDetails: async (id: string) => {
+    try {
+      const res = await fetch(`${BASE_URL}/playlists?id=${id}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      const playlist = data.data;
+      if (playlist && playlist.songs) {
+        playlist.songs = playlist.songs.map(normalizeSong);
+      }
+      return playlist as Playlist;
+    } catch (error) {
+      console.error("Playlist details fetch error:", error);
       return null;
     }
   },
