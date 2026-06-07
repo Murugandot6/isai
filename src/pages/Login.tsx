@@ -41,7 +41,19 @@ const Login = () => {
         .eq('code', formattedCode)
         .maybeSingle();
 
-      if (inviteError || !inviteData) {
+      if (inviteError) {
+        console.error("Supabase error checking invite code:", inviteError);
+        // If the table doesn't exist yet, guide the user to run the SQL setup
+        if (inviteError.code === 'P0001' || inviteError.message?.includes('relation "invite_codes" does not exist')) {
+          toast.error("Database setup incomplete! Please run the SQL script in your Supabase SQL Editor to create the 'invite_codes' table.");
+        } else {
+          toast.error(`Database error: ${inviteError.message}`);
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (!inviteData) {
         toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
         setLoading(false);
         return;
