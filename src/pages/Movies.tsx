@@ -103,7 +103,7 @@ const Movies = () => {
               </div>
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">CINEMA</Badge>
             </div>
-            <h1 className="text-4xl font-black tracking-tight">isai Cinema</h1>
+            <h1 className="text-4xl font-black tracking-tight">anbae Cinema</h1>
             <p className="text-muted-foreground font-medium">Watch blockbusters together in real-time sync.</p>
           </div>
           
@@ -333,7 +333,7 @@ const Movies = () => {
                   />
                   
                   <MovieRow 
-                    title="Popular on isai" 
+                    title="Popular on anbae" 
                     movies={popularMovies} 
                     onPlay={playMovie} 
                   />

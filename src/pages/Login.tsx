@@ -91,7 +91,7 @@ const Login = () => {
           <div className="inline-flex items-center justify-center p-3 bg-primary rounded-2xl mb-4 shadow-lg shadow-primary/20">
             <Music className="text-primary-foreground" size={32} />
           </div>
-          <h1 className="text-3xl font-black tracking-tight italic mb-2">isai</h1>
+          <h1 className="text-3xl font-black tracking-tight italic mb-2">anbae</h1>
           <p className="text-muted-foreground font-medium">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </p>

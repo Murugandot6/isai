@@ -49,7 +49,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             <div className="bg-primary p-1.5 rounded-lg">
               <Music className="text-primary-foreground" size={16} />
             </div>
-            <span className="text-base font-black tracking-tight italic">isai</span>
+            <span className="text-base font-black tracking-tight italic">anbae</span>
           </div>
           <div className="hidden lg:block" /> 
           <div className="flex items-center gap-2 md:gap-3">
