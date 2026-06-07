@@ -29,26 +29,23 @@ const Search = () => {
     setLoading(true);
     try {
       const [songs, albums] = await Promise.all([
-        musicApi.searchSongs(searchQuery, 1, 50), // Fetch more to allow for filtering
+        musicApi.searchSongs(searchQuery, 1, 50),
         musicApi.searchAlbums(searchQuery, 1, 50)
       ]);
       
-      // Filter results by selected languages
-      const filteredSongs = songs.filter(s => 
-        selectedLanguages.includes(s.language.toLowerCase())
-      );
-      const filteredAlbums = albums.filter(a => 
-        selectedLanguages.includes(a.language.toLowerCase())
-      );
-
-      setSongResults(filteredSongs);
-      setAlbumResults(filteredAlbums);
+      // We show all results for explicit searches to ensure the user finds what they typed,
+      // but we can still sort them to prioritize selected languages if we wanted.
+      // For now, let's just show everything so results aren't "hidden".
+      setSongResults(songs);
+      setAlbumResults(albums);
     } catch (error) {
       console.error('Search failed', error);
+      setSongResults([]);
+      setAlbumResults([]);
     } finally {
       setLoading(false);
     }
-  }, [selectedLanguages]);
+  }, []);
 
   useEffect(() => {
     if (urlQuery) {
@@ -142,10 +139,10 @@ const Search = () => {
               <SearchIcon size={40} className="text-muted-foreground/30" />
             </div>
             <h3 className="text-lg md:text-xl font-bold mb-2">
-              {urlQuery ? `No results for "${urlQuery}" in your selected languages` : "Start Exploring"}
+              {urlQuery ? `No results found for "${urlQuery}"` : "Start Exploring"}
             </h3>
             <p className="text-xs md:text-sm text-muted-foreground max-w-xs">
-              {urlQuery ? "Try searching for something else or check your language filters in the header." : "Search for your favorite tracks and listen to them instantly for free."}
+              {urlQuery ? "Try searching for a different song, artist, or movie." : "Search for your favorite tracks and listen to them instantly for free."}
             </p>
           </div>
         )}
