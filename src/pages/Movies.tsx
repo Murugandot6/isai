@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic, Movie } from '@/context/MusicContext';
-import { tmdbApi } from '@/services/tmdbApi';
-import { Play, Film, Star, Search, Tv, X, Users, Info, Loader2 } from 'lucide-react';
+import { tmdbApi, CastMember } from '@/services/tmdbApi';
+import { Play, Film, Star, Search, Tv, X, Users, Info, Loader2, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ const Movies = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [server, setServer] = useState<'vidsrc' | 'vidsrc_xyz'>('vidsrc');
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [loadingCast, setLoadingCast] = useState(false);
 
   useEffect(() => {
     const loadMovies = async () => {
@@ -31,6 +33,26 @@ const Movies = () => {
     };
     loadMovies();
   }, []);
+
+  // Fetch cast when currentMovie changes
+  useEffect(() => {
+    const fetchCast = async () => {
+      if (!currentMovie) {
+        setCast([]);
+        return;
+      }
+      setLoadingCast(true);
+      try {
+        const credits = await tmdbApi.getMovieCredits(currentMovie.id);
+        setCast(credits);
+      } catch (error) {
+        console.error("Failed to load cast", error);
+      } finally {
+        setLoadingCast(false);
+      }
+    };
+    fetchCast();
+  }, [currentMovie]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,9 +106,9 @@ const Movies = () => {
 
         {/* Theater Mode Player Overlay */}
         {currentMovie && (
-          <div className="fixed inset-0 bg-black/95 z-50 flex flex-col animate-in fade-in duration-300">
+          <div className="fixed inset-0 bg-black/95 z-50 flex flex-col animate-in fade-in duration-300 overflow-y-auto">
             {/* Player Header */}
-            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10 bg-black">
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10 bg-black sticky top-0 z-10">
               <div className="flex items-center gap-3">
                 <Tv className="text-primary" size={24} />
                 <div>
@@ -132,7 +154,7 @@ const Movies = () => {
             </div>
 
             {/* Video Iframe Container */}
-            <div className="flex-1 relative bg-black flex items-center justify-center">
+            <div className="relative bg-black flex items-center justify-center aspect-video w-full max-h-[70vh]">
               <iframe 
                 src={getEmbedUrl(currentMovie.id)}
                 className="w-full h-full border-none"
@@ -142,16 +164,72 @@ const Movies = () => {
               />
             </div>
 
-            {/* Player Footer / Info */}
-            <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/10 text-white">
-              <div className="max-w-4xl mx-auto flex gap-4 items-start">
-                <Info size={20} className="text-primary shrink-0 mt-1" />
-                <div>
-                  <p className="text-sm text-zinc-300 leading-relaxed">{currentMovie.overview}</p>
-                  <div className="flex gap-4 mt-3 text-xs text-zinc-500 font-bold">
-                    <span>RATING: {currentMovie.rating} ★</span>
-                    <span>LANGUAGE: {currentMovie.language.toUpperCase()}</span>
+            {/* Player Footer / Info & Cast */}
+            <div className="p-6 md:p-8 bg-zinc-950 border-t border-white/10 text-white flex-1">
+              <div className="max-w-5xl mx-auto space-y-8">
+                {/* Sync Notice */}
+                {roomCode && (
+                  <div className="flex gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20 text-sm text-primary-foreground">
+                    <Users size={20} className="text-primary shrink-0" />
+                    <p className="leading-relaxed">
+                      <strong>Social Sync Active:</strong> The movie has been opened for everyone in the room! Due to browser security rules on external video players, please click the play button on your screen to start watching together.
+                    </p>
                   </div>
+                )}
+
+                {/* Overview */}
+                <div className="flex gap-4 items-start">
+                  <Info size={20} className="text-primary shrink-0 mt-1" />
+                  <div>
+                    <p className="text-base text-zinc-300 leading-relaxed">{currentMovie.overview}</p>
+                    <div className="flex gap-4 mt-3 text-xs text-zinc-500 font-bold">
+                      <span>RATING: {currentMovie.rating} ★</span>
+                      <span>LANGUAGE: {currentMovie.language.toUpperCase()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cast / Actors Section */}
+                <div className="border-t border-white/5 pt-8">
+                  <h3 className="text-lg font-black mb-6 flex items-center gap-2">
+                    <User size={18} className="text-primary" />
+                    Cast & Actors
+                  </h3>
+                  
+                  {loadingCast ? (
+                    <div className="flex gap-4 overflow-x-auto pb-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="w-24 shrink-0 space-y-2">
+                          <Skeleton className="w-24 h-24 rounded-full bg-white/5" />
+                          <Skeleton className="h-3 w-20 bg-white/5" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : cast.length > 0 ? (
+                    <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10">
+                      {cast.map((actor) => (
+                        <div key={actor.id} className="w-24 shrink-0 text-center group">
+                          <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-zinc-800 mb-3 border-2 border-transparent group-hover:border-primary transition-all">
+                            {actor.profile_path ? (
+                              <img 
+                                src={actor.profile_path} 
+                                alt={actor.name} 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-zinc-500">
+                                <User size={24} />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs font-bold truncate text-zinc-200">{actor.name}</p>
+                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">{actor.character}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-500">No cast information available.</p>
+                  )}
                 </div>
               </div>
             </div>

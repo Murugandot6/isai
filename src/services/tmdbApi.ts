@@ -27,6 +27,13 @@ const GENRE_MAP: Record<number, string> = {
   37: 'Western'
 };
 
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
 const mapTMDbToMovie = (item: any): Movie => {
   const genres = item.genre_ids 
     ? item.genre_ids.map((id: number) => GENRE_MAP[id] || '').filter(Boolean).slice(0, 2).join(' / ')
@@ -82,6 +89,23 @@ export const tmdbApi = {
       return (data.results || []).map(mapTMDbToMovie);
     } catch (error) {
       console.error(error);
+      return [];
+    }
+  },
+
+  getMovieCredits: async (movieId: string): Promise<CastMember[]> => {
+    try {
+      const res = await fetch(`${BASE_URL}/movie/${movieId}/credits?api_key=${API_KEY}`);
+      if (!res.ok) throw new Error("Failed to fetch movie credits");
+      const data = await res.json();
+      return (data.cast || []).slice(0, 10).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        character: c.character,
+        profile_path: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null
+      }));
+    } catch (error) {
+      console.error("Error fetching credits:", error);
       return [];
     }
   }
