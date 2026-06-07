@@ -6,7 +6,7 @@ import { musicApi, Song, Playlist, Album } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { AlbumCard } from '@/components/AlbumCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings, TrendingUp, Sparkles, ListMusic, Play, Disc, Calendar, Heart } from 'lucide-react';
+import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -87,8 +87,10 @@ const Index = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-black mb-2 tracking-tight">Vanakkam,</h1>
-            <p className="text-muted-foreground font-medium">Your ultimate Tamil music destination.</p>
+            <h1 className="text-4xl font-black mb-2 tracking-tight flex items-center gap-2">
+              isai
+            </h1>
+            <p className="text-muted-foreground font-medium">Bringing people together through music.</p>
           </div>
           <div className="flex items-center gap-4">
             <form onSubmit={handleSearch} className="relative w-full md:w-64">
@@ -117,11 +119,13 @@ const Index = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-end p-8 md:p-12">
             <div className="flex items-center gap-2 mb-4">
-              <span className="bg-primary text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full">Trending</span>
-              <Badge variant="outline" className="text-white border-white/20 text-[10px] font-bold uppercase">Tamil Superhits</Badge>
+              <span className="bg-primary text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full flex items-center gap-1.5">
+                <Users size={12} /> Live Sync
+              </span>
+              <Badge variant="outline" className="text-white border-white/20 text-[10px] font-bold uppercase">Listen together, anywhere, anytime</Badge>
             </div>
-            <h2 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter">Semma Mass Tamil Hits</h2>
-            <p className="text-white/70 max-w-md text-sm leading-relaxed mb-8">The biggest chart-busters and viral melodies from Kollywood, updated daily.</p>
+            <h2 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter">Listen together, anywhere, anytime</h2>
+            <p className="text-white/70 max-w-md text-sm leading-relaxed mb-8">Synchronize your music stream in real-time with friends. Seamless social auditory experiences await.</p>
             <button className="bg-primary text-white px-10 py-4 rounded-full font-bold text-sm hover:scale-105 transition-all w-fit shadow-xl shadow-primary/30 flex items-center gap-2">
               <Play size={18} fill="currentColor" />
               Listen Now
