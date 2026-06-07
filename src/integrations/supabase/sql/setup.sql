@@ -17,5 +17,5 @@ CREATE POLICY "Allow public read access to invite codes"
 
 -- Insert a default invite code for testing
 INSERT INTO invite_codes (code) 
-VALUES ('11X13Y')
+VALUES ('0460')
 ON CONFLICT (code) DO NOTHING;
