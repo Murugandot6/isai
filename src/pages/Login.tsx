@@ -31,32 +31,35 @@ const Login = () => {
 
     setLoading(true);
 
-    const formattedCode = inviteCode.trim().toUpperCase();
+    // Only validate invite code during sign-up
+    if (isSignUp) {
+      const formattedCode = inviteCode.trim().toUpperCase();
 
-    try {
-      // Dynamically validate the invite code against the Supabase 'invite_codes' table
-      const { data: inviteData, error: inviteError } = await supabase
-        .from('invite_codes')
-        .select('code')
-        .eq('code', formattedCode)
-        .maybeSingle();
+      try {
+        // Dynamically validate the invite code against the Supabase 'invite_codes' table
+        const { data: inviteData, error: inviteError } = await supabase
+          .from('invite_codes')
+          .select('code')
+          .eq('code', formattedCode)
+          .maybeSingle();
 
-      if (inviteError) {
-        console.error("Supabase error checking invite code:", inviteError);
+        if (inviteError) {
+          console.error("Supabase error checking invite code:", inviteError);
+          toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
+          setLoading(false);
+          return;
+        }
+
+        if (!inviteData) {
+          toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
         toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
         setLoading(false);
         return;
       }
-
-      if (!inviteData) {
-        toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
-        setLoading(false);
-        return;
-      }
-    } catch (error) {
-      toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
-      setLoading(false);
-      return;
     }
 
     try {
@@ -147,20 +150,22 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Invite Code Field */}
-          <div className="space-y-2">
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                type="text"
-                placeholder="Invite Code"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 font-bold tracking-wider"
-                required
-              />
+          {/* Invite Code Field - Only shown during Sign Up */}
+          {isSignUp && (
+            <div className="space-y-2">
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input
+                  type="text"
+                  placeholder="Invite Code"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 font-bold tracking-wider"
+                  required
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <Button 
             type="submit" 
