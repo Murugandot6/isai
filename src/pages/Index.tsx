@@ -81,6 +81,13 @@ const Index = () => {
     }
   };
 
+  const getCount = (item: any) => {
+    if (item.songCount && parseInt(item.songCount) > 0) return item.songCount;
+    if (item.song_count && parseInt(item.song_count) > 0) return item.song_count;
+    if (item.more_info?.song_count && parseInt(item.more_info.song_count) > 0) return item.more_info.song_count;
+    return (item.songs ? item.songs.length : 0).toString();
+  };
+
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
@@ -162,7 +169,7 @@ const Index = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 md:p-6 flex flex-col justify-end">
                     <h4 className="text-white font-black text-base md:text-xl mb-0.5 md:mb-1 truncate" dangerouslySetInnerHTML={{ __html: playlist.name }}></h4>
                     <p className="text-white/60 text-[9px] md:text-[10px] font-bold uppercase tracking-widest">
-                      {(playlist.songCount && parseInt(playlist.songCount) > 0) ? playlist.songCount : (playlist.songs ? playlist.songs.length : 0)} Tracks
+                      {getCount(playlist)} Tracks
                     </p>
                   </div>
                 </div>

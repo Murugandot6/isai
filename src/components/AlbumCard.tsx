@@ -14,11 +14,24 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
 
   const imageUrl = getHighResImage(album.image);
   
-  // Resilient song count detection for search results
-  const rawCount = (album as any).songCount || (album as any).song_count || (album as any).songs_count || (album as any).total_songs || "0";
-  const songCount = parseInt(rawCount) > 0 
-    ? rawCount 
-    : (album.songs ? album.songs.length : 0);
+  // Resilient song count detection for various API versions/endpoints
+  const getSongCount = () => {
+    const a = album as any;
+    // Check direct fields
+    if (a.songCount && parseInt(a.songCount) > 0) return a.songCount;
+    if (a.song_count && parseInt(a.song_count) > 0) return a.song_count;
+    
+    // Check nested more_info (common in search results)
+    if (a.more_info?.song_count && parseInt(a.more_info.song_count) > 0) return a.more_info.song_count;
+    if (a.more_info?.total_songs && parseInt(a.more_info.total_songs) > 0) return a.more_info.total_songs;
+    
+    // Fallback to songs array length
+    if (album.songs && album.songs.length > 0) return album.songs.length.toString();
+    
+    return "0";
+  };
+
+  const songCount = getSongCount();
 
   return (
     <div 

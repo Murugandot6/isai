@@ -26,13 +26,23 @@ const PlaylistDetails = () => {
         const data = await musicApi.getPlaylistDetails(id);
         
         if (data && data.songs && data.songs.length > 0) {
+          // Playlists often contain songs with generic album covers.
+          // We enrich them to get the actual song-specific high-quality imagery.
           try {
             const songIds = data.songs.map(s => s.id);
-            const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
+            // Fetch in chunks if there are many songs to avoid URL length issues
+            const chunkSize = 20;
+            let allEnriched: Song[] = [];
             
-            if (fullSongs && fullSongs.length > 0) {
+            for (let i = 0; i < songIds.length; i += chunkSize) {
+              const chunk = songIds.slice(i, i + chunkSize);
+              const chunkDetails = await musicApi.getSongsDetailsBulk(chunk);
+              allEnriched = [...allEnriched, ...chunkDetails];
+            }
+            
+            if (allEnriched.length > 0) {
               const enrichedSongs = data.songs.map(originalSong => {
-                const fullDetail = fullSongs.find(fs => fs.id === originalSong.id);
+                const fullDetail = allEnriched.find(fs => fs.id === originalSong.id);
                 return fullDetail ? { ...fullDetail } : originalSong;
               });
               data.songs = enrichedSongs;
@@ -73,7 +83,15 @@ const PlaylistDetails = () => {
     );
   }
 
-  const songCount = (playlist as any).songCount || (playlist as any).song_count || (playlist.songs ? playlist.songs.length : 0);
+  const getSongCount = () => {
+    const p = playlist as any;
+    if (p.songCount && parseInt(p.songCount) > 0) return p.songCount;
+    if (p.song_count && parseInt(p.song_count) > 0) return p.song_count;
+    if (p.more_info?.song_count && parseInt(p.more_info.song_count) > 0) return p.more_info.song_count;
+    return (playlist.songs ? playlist.songs.length : 0).toString();
+  };
+
+  const songCount = getSongCount();
 
   return (
     <MainLayout>
@@ -119,7 +137,7 @@ const PlaylistDetails = () => {
                 className="rounded-full px-8 md:px-10 h-11 md:h-14 font-bold gap-2 md:gap-3 shadow-xl shadow-primary/20 text-sm md:text-lg w-full md:w-auto"
               >
                 <Play className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" />
-                Play Playlist
+                Play All Songs
               </Button>
             </div>
           </div>
@@ -130,7 +148,7 @@ const PlaylistDetails = () => {
             <div className="bg-primary/10 p-2 rounded-lg">
               <Music size={18} className="text-primary" />
             </div>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight">Tracks</h2>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight">Tracks ({songCount})</h2>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
