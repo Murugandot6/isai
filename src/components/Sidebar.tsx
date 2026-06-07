@@ -26,7 +26,7 @@ export const Sidebar = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="hidden lg:flex flex-col w-64 border-r border-border h-screen sticky top-0 bg-card/20 backdrop-blur-sm p-6">
+    <div className="hidden lg:flex flex-col w-64 border-r border-border h-screen sticky top-0 bg-card/20 backdrop-blur-sm p-6 overflow-y-auto">
       <div className="flex items-center gap-2 mb-10 px-2">
         <div className="bg-primary p-2 rounded-xl">
           <Music className="text-primary-foreground" size={24} />
@@ -72,7 +72,7 @@ export const Sidebar = () => {
         ))}
       </nav>
 
-      <nav className="space-y-1">
+      <nav className="space-y-1 mb-8">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Account</p>
         {user ? (
           <button
@@ -98,10 +98,22 @@ export const Sidebar = () => {
         )}
       </nav>
 
-      <div className="mt-auto bg-gradient-to-br from-primary/10 to-transparent p-4 rounded-2xl border border-primary/10">
-        <p className="text-xs font-bold mb-1">Upgrade to Pro</p>
-        <p className="text-[10px] text-muted-foreground mb-3 leading-relaxed">Unlock high-quality audio and offline listening.</p>
-        <button className="w-full bg-primary text-primary-foreground text-[10px] font-bold py-2 rounded-lg hover:opacity-90">GO PREMIUM</button>
+      {/* Footer & Disclaimer */}
+      <div className="mt-auto pt-6 border-t border-border/50 text-center space-y-3">
+        <p className="text-[11px] text-muted-foreground font-medium">
+          Crafted with love by{" "}
+          <a 
+            href="https://www.instagram.com/11x13y/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-primary hover:underline font-bold"
+          >
+            11x13y
+          </a>
+        </p>
+        <p className="text-[9px] text-muted-foreground/60 leading-relaxed">
+          Disclaimer: We do not own or host any of the music, radio, or movie content streamed on this platform. All streams are fetched from public APIs.
+        </p>
       </div>
     </div>
   );

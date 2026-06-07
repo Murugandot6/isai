@@ -1,12 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { MusicPlayer } from './MusicPlayer';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
-import { Music, User, LogIn, Settings } from 'lucide-react';
+import { Music, User, LogIn, Settings, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -42,48 +58,39 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             
             <div className="h-6 w-[1px] bg-border/50 mx-1 hidden sm:block" />
 
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-accent/5 border-border hover:bg-accent/10 transition-all overflow-hidden">
-                    {user.user_metadata?.avatar_url ? (
-                      <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={16} className="text-muted-foreground" />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-2xl bg-card border-border shadow-2xl">
-                  <DropdownMenuLabel className="font-bold text-xs uppercase tracking-widest text-muted-foreground">My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-border/50" />
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-bold truncate">{user.user_metadata?.username || user.email}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                  <DropdownMenuSeparator className="bg-border/50" />
-                  <DropdownMenuItem 
-                    onClick={() => navigate('/profile')}
-                    className="rounded-lg m-1 cursor-pointer focus:bg-primary/10 focus:text-primary font-medium gap-2"
-                  >
-                    <Settings size={16} />
-                    Profile Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => signOut()}
-                    className="rounded-lg m-1 cursor-pointer focus:bg-destructive/10 focus:text-destructive font-medium"
-                  >
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/login">
-                <Button variant="default" size="sm" className="rounded-full font-bold gap-2 px-3 md:px-4 h-8 md:h-9 shadow-lg shadow-primary/20 text-xs md:text-sm">
-                  <LogIn size={14} />
-                  <span className="hidden sm:inline">Login</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-accent/5 border-border hover:bg-accent/10 transition-all overflow-hidden">
+                  {user.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={16} className="text-muted-foreground" />
+                  )}
                 </Button>
-              </Link>
-            )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl bg-card border-border shadow-2xl">
+                <DropdownMenuLabel className="font-bold text-xs uppercase tracking-widest text-muted-foreground">My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border/50" />
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-bold truncate">{user.user_metadata?.username || user.email}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                </div>
+                <DropdownMenuSeparator className="bg-border/50" />
+                <DropdownMenuItem 
+                  onClick={() => navigate('/profile')}
+                  className="rounded-lg m-1 cursor-pointer focus:bg-primary/10 focus:text-primary font-medium gap-2"
+                >
+                  <Settings size={16} />
+                  Profile Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => signOut()}
+                  className="rounded-lg m-1 cursor-pointer focus:bg-destructive/10 focus:text-destructive font-medium"
+                >
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

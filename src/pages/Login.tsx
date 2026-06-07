@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Music, Mail, Lock, User, ArrowRight, Loader2, Info } from 'lucide-react';
+import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+
+const VALID_INVITE_CODES = ['11X13Y', 'ISAI2025', 'VIP-MEMBER', 'STREAM-SYNC'];
 
 const Login = () => {
   const { session } = useAuth();
@@ -18,6 +20,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
 
   useEffect(() => {
     if (session) {
@@ -27,6 +30,14 @@ const Login = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate Invite Code
+    const formattedCode = inviteCode.trim().toUpperCase();
+    if (!VALID_INVITE_CODES.includes(formattedCode)) {
+      toast.error("Invalid Invite Code! Please contact the administrator.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -117,6 +128,21 @@ const Login = () => {
             </div>
           </div>
 
+          {/* Invite Code Field */}
+          <div className="space-y-2">
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <Input
+                type="text"
+                placeholder="Invite Code (e.g. 11X13Y)"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 font-bold tracking-wider"
+                required
+              />
+            </div>
+          </div>
+
           <Button 
             type="submit" 
             disabled={loading}
@@ -133,14 +159,12 @@ const Login = () => {
           </Button>
         </form>
 
-        {isSignUp && (
-          <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
-            <Info size={16} className="text-primary shrink-0 mt-0.5" />
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              If you don't receive the email within a minute, please check your <strong>Spam</strong> folder.
-            </p>
-          </div>
-        )}
+        <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
+          <Info size={16} className="text-primary shrink-0 mt-0.5" />
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            An invite code is required to access this platform. Try using <strong>11X13Y</strong> or <strong>ISAI2025</strong>.
+          </p>
+        </div>
 
         <div className="text-center pt-4">
           <button
