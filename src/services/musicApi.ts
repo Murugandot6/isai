@@ -1,8 +1,8 @@
 "use client";
 
-// Using a CORS proxy to bypass browser restrictions
+// Using a CORS proxy to ensure stability across different environments
 const PROXY = 'https://corsproxy.io/?';
-const API_BASE = 'https://saavn.dev/api';
+const API_BASE = 'https://jiosaavn.rajputhemant.dev/api';
 const BASE_URL = `${PROXY}${encodeURIComponent(API_BASE)}`;
 
 export interface Image {
@@ -65,19 +65,25 @@ export interface Playlist {
 }
 
 /**
- * Normalizes song data from different API endpoints to a consistent format.
+ * Normalizes song data from the new API to maintain compatibility with the UI.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
 
+  // Handle primary artists (can be string, array of objects, or nested in 'artists')
   let primaryArtists = song.primaryArtists;
   if (Array.isArray(primaryArtists)) {
     primaryArtists = primaryArtists.map((a: any) => a.name).join(', ');
   } else if (typeof primaryArtists === 'object' && primaryArtists !== null) {
     primaryArtists = primaryArtists.name || 'Unknown Artist';
+  } else if (!primaryArtists && song.artists?.primary) {
+    primaryArtists = Array.isArray(song.artists.primary) 
+      ? song.artists.primary.map((a: any) => a.name).join(', ')
+      : song.artists.primary;
   }
 
-  let images = song.image;
+  // Normalize images
+  let images = song.image || song.images;
   if (images && !Array.isArray(images)) {
     images = [{ quality: '500x500', link: typeof images === 'string' ? images : (images.link || images.url) }];
   } else if (Array.isArray(images)) {
@@ -87,7 +93,8 @@ export const normalizeSong = (song: any): Song => {
     }));
   }
 
-  let downloadUrls = song.downloadUrl;
+  // Normalize download URLs (handle both camelCase and snake_case)
+  let downloadUrls = song.downloadUrl || song.download_url;
   if (downloadUrls && !Array.isArray(downloadUrls)) {
     downloadUrls = [{ quality: '320kbps', link: typeof downloadUrls === 'string' ? downloadUrls : (downloadUrls.link || downloadUrls.url) }];
   } else if (Array.isArray(downloadUrls)) {
@@ -99,9 +106,12 @@ export const normalizeSong = (song: any): Song => {
 
   return {
     ...song,
+    name: song.name || song.title || 'Unknown Track',
     primaryArtists: primaryArtists || 'Unknown Artist',
     image: images || [],
-    downloadUrl: downloadUrls || []
+    downloadUrl: downloadUrls || [],
+    language: song.language || 'unknown',
+    album: song.album || { id: 'unknown', name: 'Unknown Album', url: '' }
   };
 };
 
@@ -109,14 +119,17 @@ const fetchWithProxy = async (endpoint: string) => {
   const url = `${PROXY}${encodeURIComponent(`${API_BASE}${endpoint}`)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-  return await res.json();
+  const json = await res.json();
+  // Most Saavn APIs wrap data in a 'data' field
+  return json.data || json;
 };
 
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
+      // Using search as a reliable way to get trending content across different API versions
       const data = await fetchWithProxy(`/search/songs?query=trending&language=${encodeURIComponent(languages)}&limit=20`);
-      const results = (data.data?.results || []) as any[];
+      const results = (data.results || data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Trending fetch error:", error);
@@ -126,7 +139,7 @@ export const musicApi = {
   searchSongs: async (query: string, page: number = 1, limit: number = 20) => {
     try {
       const data = await fetchWithProxy(`/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
-      const results = (data.data?.results || []) as any[];
+      const results = (data.results || data || []) as any[];
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Search fetch error:", error);
@@ -136,7 +149,7 @@ export const musicApi = {
   searchAlbums: async (query: string, page: number = 1, limit: number = 20) => {
     try {
       const data = await fetchWithProxy(`/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
-      return (data.data?.results || []) as Album[];
+      return (data.results || data || []) as Album[];
     } catch (error) {
       console.error("Album search error:", error);
       return [];
@@ -145,7 +158,7 @@ export const musicApi = {
   searchArtists: async (query: string, page: number = 1, limit: number = 20) => {
     try {
       const data = await fetchWithProxy(`/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
-      return (data.data?.results || []) as any[];
+      return (data.results || data || []) as any[];
     } catch (error) {
       console.error("Artist search error:", error);
       return [];
@@ -154,11 +167,10 @@ export const musicApi = {
   getAlbumDetails: async (id: string) => {
     try {
       const data = await fetchWithProxy(`/albums?id=${id}`);
-      const album = data.data;
-      if (album && album.songs) {
-        album.songs = album.songs.map(normalizeSong);
+      if (data && data.songs) {
+        data.songs = data.songs.map(normalizeSong);
       }
-      return album as Album;
+      return data as Album;
     } catch (error) {
       console.error("Album details fetch error:", error);
       return null;
@@ -167,11 +179,10 @@ export const musicApi = {
   getPlaylistDetails: async (id: string) => {
     try {
       const data = await fetchWithProxy(`/playlists?id=${id}`);
-      const playlist = data.data;
-      if (playlist && playlist.songs) {
-        playlist.songs = playlist.songs.map(normalizeSong);
+      if (data && data.songs) {
+        data.songs = data.songs.map(normalizeSong);
       }
-      return playlist as Playlist;
+      return data as Playlist;
     } catch (error) {
       console.error("Playlist details fetch error:", error);
       return null;
@@ -179,11 +190,9 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      const data = await fetchWithProxy(`/songs?ids=${id}`);
-      if (data.data && data.data.length > 0) {
-        return normalizeSong(data.data[0]);
-      }
-      return null;
+      const data = await fetchWithProxy(`/songs?id=${id}`);
+      const songData = Array.isArray(data) ? data[0] : data;
+      return songData ? normalizeSong(songData) : null;
     } catch (error) {
       console.error("Details fetch error:", error);
       return null;
@@ -191,8 +200,8 @@ export const musicApi = {
   },
   getSongsDetailsBulk: async (ids: string[]) => {
     try {
-      const data = await fetchWithProxy(`/songs?ids=${ids.join(',')}`);
-      const results = (data.data || []) as any[];
+      const data = await fetchWithProxy(`/songs?id=${ids.join(',')}`);
+      const results = (Array.isArray(data) ? data : [data]) as any[];
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Bulk details fetch error:", error);
@@ -202,11 +211,10 @@ export const musicApi = {
   getArtistDetails: async (id: string, page: number = 0) => {
     try {
       const data = await fetchWithProxy(`/artists?id=${id}&page=${page}`);
-      const artistData = data.data;
-      if (artistData && artistData.topSongs) {
-        artistData.topSongs = artistData.topSongs.map(normalizeSong);
+      if (data && data.topSongs) {
+        data.topSongs = data.topSongs.map(normalizeSong);
       }
-      return artistData;
+      return data;
     } catch (error) {
       console.error("Artist details fetch error:", error);
       return null;
