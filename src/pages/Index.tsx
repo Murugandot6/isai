@@ -18,6 +18,7 @@ const FEATURED_PLAYLIST_IDS = [
   '1133105280',   // Tamil Hit Songs
   '1134651042',   // Tamil: India Superhits Top 50
   '1074590003',   // Tamil BGM
+  '804092154',    // Sad Love - Tamil
 ];
 
 const DECADE_PLAYLIST_IDS = [
