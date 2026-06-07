@@ -66,12 +66,12 @@ export interface Playlist {
 
 /**
  * Normalizes song data from the API to maintain compatibility with the UI.
- * Handles variations in field names and structures.
+ * Ensures downloadUrl and image arrays are always present and correctly formatted.
  */
 export const normalizeSong = (song: any): Song => {
   if (!song) return song;
 
-  // Handle primary artists (can be string, array of objects, or nested in 'artists')
+  // Handle primary artists
   let primaryArtists = song.primaryArtists;
   if (Array.isArray(primaryArtists)) {
     primaryArtists = primaryArtists.map((a: any) => a.name).join(', ');
@@ -83,22 +83,22 @@ export const normalizeSong = (song: any): Song => {
       : song.artists.primary;
   }
 
-  // Normalize images
-  let images = song.image || song.images;
-  if (images && !Array.isArray(images)) {
+  // Normalize images - ensure they have a 'link' property
+  let images = song.image || song.images || [];
+  if (!Array.isArray(images)) {
     images = [{ quality: '500x500', link: typeof images === 'string' ? images : (images.link || images.url) }];
-  } else if (Array.isArray(images)) {
+  } else {
     images = images.map((img: any) => ({
       quality: img.quality || '500x500',
       link: img.link || img.url || (typeof img === 'string' ? img : '')
     }));
   }
 
-  // Normalize download URLs
-  let downloadUrls = song.downloadUrl || song.download_url;
-  if (downloadUrls && !Array.isArray(downloadUrls)) {
+  // Normalize download URLs - ensure they have a 'link' property
+  let downloadUrls = song.downloadUrl || song.download_url || [];
+  if (!Array.isArray(downloadUrls)) {
     downloadUrls = [{ quality: '320kbps', link: typeof downloadUrls === 'string' ? downloadUrls : (downloadUrls.link || downloadUrls.url) }];
-  } else if (Array.isArray(downloadUrls)) {
+  } else {
     downloadUrls = downloadUrls.map((dl: any) => ({
       quality: dl.quality || '320kbps',
       link: dl.link || dl.url || (typeof dl === 'string' ? dl : '')
@@ -109,8 +109,8 @@ export const normalizeSong = (song: any): Song => {
     ...song,
     name: song.name || song.title || 'Unknown Track',
     primaryArtists: primaryArtists || 'Unknown Artist',
-    image: images || [],
-    downloadUrl: downloadUrls || [],
+    image: images,
+    downloadUrl: downloadUrls,
     language: song.language || 'unknown',
     album: song.album || { id: 'unknown', name: 'Unknown Album', url: '' }
   };
@@ -121,14 +121,12 @@ const fetchWithProxy = async (endpoint: string) => {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   const json = await res.json();
-  // The API wraps data in a 'data' field
   return json.data || json;
 };
 
 export const musicApi = {
   getTrending: async (languages: string = 'hindi,english') => {
     try {
-      // Using search/songs with 'trending' query as recommended for curated lists
       const data = await fetchWithProxy(`/search/songs?query=trending&language=${encodeURIComponent(languages)}&limit=20`);
       const results = (data.results || data || []) as any[];
       return results.map(normalizeSong);
@@ -191,8 +189,8 @@ export const musicApi = {
   },
   getSongDetails: async (id: string) => {
     try {
-      // Using the /songs?id= format which supports single or multiple IDs
-      const data = await fetchWithProxy(`/songs?id=${id}`);
+      // Using path parameter as per documentation for single song
+      const data = await fetchWithProxy(`/songs/${id}`);
       const songData = Array.isArray(data) ? data[0] : data;
       return songData ? normalizeSong(songData) : null;
     } catch (error) {

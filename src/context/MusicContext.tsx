@@ -158,7 +158,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
-      audioRef.current.crossOrigin = "anonymous";
+      // Removing strict crossOrigin to avoid issues with streams that don't support it
       audioRef.current.preload = "auto";
     }
     const audio = audioRef.current;
@@ -190,7 +190,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
-      audioRef.current.crossOrigin = "anonymous";
     }
     
     const audio = audioRef.current;
@@ -204,8 +203,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO') || song.album?.id === 'radio';
       
       let fullSong = song;
-      // If it's not a radio and doesn't have download URLs, fetch them
-      if (!isRadio && (!song.downloadUrl || song.downloadUrl.length === 0)) {
+      // Always fetch fresh details to get the latest download URLs
+      if (!isRadio) {
         const details = await musicApi.getSongDetails(song.id);
         if (details) fullSong = details;
       }
