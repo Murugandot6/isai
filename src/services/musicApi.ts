@@ -218,7 +218,7 @@ export const musicApi = {
   },
   getArtistDetails: async (id: string) => {
     try {
-      const data = await fetchWithProxy(`/artists?id=${id}`);
+      const data = await fetchWithProxy(`/artists/${id}`);
       if (data) {
         const songsList = data.topSongs || data.songs || [];
         data.topSongs = songsList.map(normalizeSong);
@@ -236,6 +236,15 @@ export const musicApi = {
       return results.map(normalizeSong);
     } catch (error) {
       console.error("Artist songs fetch error:", error);
+      return [];
+    }
+  },
+  getArtistAlbums: async (id: string, page: number = 0) => {
+    try {
+      const data = await fetchWithProxy(`/artists/${id}/albums?page=${page}`);
+      return (data.results || data.albums || data || []) as Album[];
+    } catch (error) {
+      console.error("Artist albums fetch error:", error);
       return [];
     }
   }

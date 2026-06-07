@@ -85,13 +85,13 @@ const Artists = () => {
   const fetchArtistSongs = useCallback(async (artistId: string, pageNum: number) => {
     setLoading(true);
     try {
-      const data = await musicApi.getArtistDetails(artistId, pageNum);
-      if (!data) {
+      // Correctly call getArtistSongs instead of getArtistDetails
+      const songs = await musicApi.getArtistSongs(artistId, pageNum);
+      if (!songs || songs.length === 0) {
         setHasMore(false);
         return;
       }
 
-      const songs = data.topSongs || [];
       const filteredResults = songs.filter((song: Song) => 
         selectedLanguages.includes(song.language.toLowerCase()) || song.language.toLowerCase() === 'tamil'
       );
