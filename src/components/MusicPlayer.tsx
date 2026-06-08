@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMusic } from '@/context/MusicContext';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Shuffle, Repeat1, ListMusic, ChevronDown, Heart } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { getHighResImage } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Sheet,
   SheetContent,
@@ -29,18 +30,32 @@ export const MusicPlayer = () => {
   } = useMusic();
 
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
+  const isMobile = useIsMobile();
+
+  // Automatically close expanded mobile player if screen size changes to desktop
+  useEffect(() => {
+    if (!isMobile) {
+      setIsMobileExpanded(false);
+    }
+  }, [isMobile]);
 
   if (!currentSong) return null;
 
   const imageUrl = getHighResImage(currentSong.image);
   const liked = isLiked(currentSong.id);
 
+  const handleMiniPlayerClick = () => {
+    if (isMobile) {
+      setIsMobileExpanded(true);
+    }
+  };
+
   return (
     <>
       {/* Mini Player (Desktop & Mobile) */}
       <div 
         className={cn(
-          "fixed bottom-[56px] lg:bottom-0 left-0 right-0 bg-background/95 backdrop-blur-2xl border-t border-border p-2 px-4 lg:p-4 lg:px-6 z-40 flex flex-col md:flex-row items-center gap-2 md:gap-4 transition-all duration-300",
+          "fixed bottom-[56px] lg:bottom-0 left-0 right-0 bg-background/95 backdrop-blur-2xl border-t border-border p-3 px-4 lg:p-4 lg:px-6 z-40 flex items-center justify-between gap-4 transition-all duration-300",
           isMobileExpanded ? "opacity-0 pointer-events-none translate-y-10" : "opacity-100 translate-y-0"
         )}
       >
@@ -53,10 +68,10 @@ export const MusicPlayer = () => {
         </div>
 
         {/* Current Song Info */}
-        <div className="flex items-center gap-3 w-full md:w-1/3">
+        <div className="flex items-center gap-3 flex-1 md:flex-initial md:w-1/3 min-w-0">
           <div 
             className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer md:cursor-default"
-            onClick={() => setIsMobileExpanded(true)}
+            onClick={handleMiniPlayerClick}
           >
             <img src={imageUrl} alt={currentSong.name} className="w-10 h-10 md:w-14 md:h-14 rounded-lg shadow-lg object-cover bg-accent/10 shrink-0" />
             <div className="overflow-hidden min-w-0 flex-1">
@@ -66,24 +81,39 @@ export const MusicPlayer = () => {
           </div>
           
           {/* Mobile Quick Controls */}
-          <div className="flex items-center gap-3 md:hidden">
+          <div className="flex items-center gap-2 md:hidden shrink-0">
             <button 
-              onClick={() => toggleLike(currentSong)}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleLike(currentSong);
+              }}
               className={cn("p-2 transition-colors", liked ? "text-primary" : "text-muted-foreground")}
             >
               <Heart size={18} fill={liked ? "currentColor" : "none"} />
             </button>
-            <button onClick={togglePlay} className="bg-primary text-primary-foreground p-2 rounded-full shadow-md">
-              {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePlay();
+              }} 
+              className="bg-primary text-primary-foreground p-2 rounded-full shadow-md"
+            >
+              {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
             </button>
-            <button onClick={() => playNext()} className="text-muted-foreground p-1">
-              <SkipForward size={18} fill="currentColor" />
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                playNext();
+              }} 
+              className="text-muted-foreground p-2"
+            >
+              <SkipForward size={16} fill="currentColor" />
             </button>
           </div>
         </div>
 
         {/* Controls & Progress (Desktop) */}
-        <div className="hidden md:flex flex-col items-center gap-2 w-full md:w-1/3">
+        <div className="hidden md:flex flex-col items-center gap-2 flex-1 md:w-1/3">
           <div className="flex items-center gap-6">
             <button 
               onClick={() => toggleShuffle()}
@@ -101,7 +131,7 @@ export const MusicPlayer = () => {
               onClick={togglePlay}
               className="bg-primary text-primary-foreground p-3 rounded-full hover:scale-105 transition-transform shadow-lg shadow-primary/20"
             >
-              {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+              {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-0.5" />}
             </button>
             <button 
               onClick={() => playNext()}
@@ -131,7 +161,7 @@ export const MusicPlayer = () => {
         </div>
 
         {/* Volume & Queue (Desktop) */}
-        <div className="hidden md:flex items-center justify-end gap-4 w-1/3">
+        <div className="hidden md:flex items-center justify-end gap-4 md:w-1/3">
           <div className="flex items-center gap-2">
             <button onClick={toggleMute} className="text-muted-foreground hover:text-foreground transition-colors">
               {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
@@ -198,7 +228,7 @@ export const MusicPlayer = () => {
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <button 
             onClick={() => setIsMobileExpanded(false)}
             className="p-2 rounded-full bg-accent/10 text-foreground hover:bg-accent/20 transition-colors"
@@ -251,8 +281,8 @@ export const MusicPlayer = () => {
         </div>
 
         {/* Album Art */}
-        <div className="flex-1 flex items-center justify-center my-4">
-          <div className="relative aspect-square w-full max-w-[320px] rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border border-border/50">
+        <div className="flex-1 flex items-center justify-center my-4 min-h-0">
+          <div className="relative aspect-square w-full max-w-[280px] rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border border-border/50">
             <img 
               src={imageUrl} 
               alt={currentSong.name} 
@@ -262,26 +292,26 @@ export const MusicPlayer = () => {
         </div>
 
         {/* Song Details */}
-        <div className="space-y-2 mb-8">
+        <div className="space-y-2 mb-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h2 className="text-2xl font-black tracking-tight text-foreground truncate" dangerouslySetInnerHTML={{ __html: currentSong.name }}></h2>
-              <p className="text-sm text-muted-foreground truncate mt-1" dangerouslySetInnerHTML={{ __html: currentSong.primaryArtists }}></p>
+              <h2 className="text-xl font-black tracking-tight text-foreground truncate" dangerouslySetInnerHTML={{ __html: currentSong.name }}></h2>
+              <p className="text-xs text-muted-foreground truncate mt-1" dangerouslySetInnerHTML={{ __html: currentSong.primaryArtists }}></p>
             </div>
             <button 
               onClick={() => toggleLike(currentSong)}
               className={cn(
-                "p-3 rounded-full bg-accent/5 border border-border/50 transition-all",
+                "p-2.5 rounded-full bg-accent/5 border border-border/50 transition-all",
                 liked ? "text-primary bg-primary/10 border-primary/20" : "text-muted-foreground"
               )}
             >
-              <Heart size={22} fill={liked ? "currentColor" : "none"} />
+              <Heart size={20} fill={liked ? "currentColor" : "none"} />
             </button>
           </div>
         </div>
 
         {/* Progress Slider */}
-        <div className="space-y-2 mb-8">
+        <div className="space-y-2 mb-6">
           <Slider 
             value={[currentTime]} 
             max={duration || 100} 
@@ -289,54 +319,54 @@ export const MusicPlayer = () => {
             onValueChange={([val]) => seek(val)}
             className="w-full cursor-pointer py-2"
           />
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+          <div className="flex items-center justify-between text-[10px] font-bold text-muted-foreground">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
 
         {/* Playback Controls */}
-        <div className="flex items-center justify-between gap-4 mb-8 px-4">
+        <div className="flex items-center justify-between gap-2 mb-6 px-2">
           <button 
             onClick={() => toggleShuffle()}
-            className={cn("p-3 rounded-full transition-colors", isShuffle ? "text-primary bg-primary/10" : "text-muted-foreground")}
+            className={cn("p-2.5 rounded-full transition-colors", isShuffle ? "text-primary bg-primary/10" : "text-muted-foreground")}
           >
-            <Shuffle size={22} />
+            <Shuffle size={20} />
           </button>
           
           <button 
             onClick={() => playPrevious()}
-            className="p-3 rounded-full text-foreground hover:bg-accent/10 transition-colors"
+            className="p-2.5 rounded-full text-foreground hover:bg-accent/10 transition-colors"
           >
-            <SkipBack size={28} fill="currentColor" />
+            <SkipBack size={24} fill="currentColor" />
           </button>
           
           <button 
             onClick={togglePlay}
-            className="bg-primary text-primary-foreground p-6 rounded-full shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
+            className="bg-primary text-primary-foreground p-5 rounded-full shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-transform"
           >
-            {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+            {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
           </button>
           
           <button 
             onClick={() => playNext()}
-            className="p-3 rounded-full text-foreground hover:bg-accent/10 transition-colors"
+            className="p-2.5 rounded-full text-foreground hover:bg-accent/10 transition-colors"
           >
-            <SkipForward size={28} fill="currentColor" />
+            <SkipForward size={24} fill="currentColor" />
           </button>
           
           <button 
             onClick={() => toggleRepeat()}
-            className={cn("p-3 rounded-full transition-colors", repeatMode !== 'none' ? "text-primary bg-primary/10" : "text-muted-foreground")}
+            className={cn("p-2.5 rounded-full transition-colors", repeatMode !== 'none' ? "text-primary bg-primary/10" : "text-muted-foreground")}
           >
-            {repeatMode === 'one' ? <Repeat1 size={22} /> : <Repeat size={22} />}
+            {repeatMode === 'one' ? <Repeat1 size={20} /> : <Repeat size={20} />}
           </button>
         </div>
 
         {/* Volume Slider */}
-        <div className="flex items-center gap-4 px-4 mb-6">
+        <div className="flex items-center gap-4 px-2 mb-4">
           <button onClick={toggleMute} className="text-muted-foreground">
-            {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
           <Slider 
             value={[isMuted ? 0 : volume * 100]} 
