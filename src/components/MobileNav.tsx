@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Home, Film, Radio, Library, Coffee } from 'lucide-react';
+import { Home, Film, Radio, Library } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,6 @@ export const MobileNav = () => {
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
     { icon: Film, label: 'Movies', path: '/movies' },
-    { icon: Coffee, label: 'Lofi', path: '/lofi' },
     { icon: Radio, label: 'FM', path: '/radio' },
     { icon: Library, label: 'Library', path: '/library' },
   ];
