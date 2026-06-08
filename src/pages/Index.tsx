@@ -434,33 +434,6 @@ const Index = () => {
             )}
           </div>
         </section>
-
-        {/* Trending Songs */}
-        <section className="mb-10 md:mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-red-500/20 p-2 rounded-xl">
-                <TrendingUp className="text-red-500" size={18} />
-              </div>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight">Trending Now</h3>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {loading ? (
-              Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-square w-full rounded-2xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              ))
-            ) : (
-              trendingSongs.slice(0, 15).map((song) => (
-                <SongCard key={song.id} song={song} allSongs={trendingSongs} />
-              ))
-            )}
-          </div>
-        </section>
       </div>
     </MainLayout>
   );
