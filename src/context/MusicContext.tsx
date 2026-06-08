@@ -216,11 +216,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCurrentMovie(null);
       }
 
-      const isRadio = song.type === 'radio' || song.id.includes('ISAI-RADIO') || song.album?.id === 'radio';
+      const isRadio = song.type === 'radio' || song.id?.toString().includes('ISAI-RADIO') || song.album?.id === 'radio';
       
       let fullSong = song;
+      // Fetch fresh details to get latest download URLs
       if (!isRadio) {
-        const details = await musicApi.getSongDetails(song.id);
+        const details = await musicApi.getSongDetails(song.id.toString());
         if (details) fullSong = details;
       }
       
@@ -234,13 +235,14 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       audio.pause();
       
+      // Select the best quality URL (usually the last in the array like 320kbps)
       const links = isRadio 
-        ? [{ link: (song as any).downloadUrl?.[0]?.link || (song as any).url_resolved || (song as any).url }] 
+        ? [{ url: (song as any).downloadUrl?.[0]?.url || (song as any).url_resolved || (song as any).url }] 
         : [...downloadUrls].reverse();
       
       let success = false;
       for (const linkObj of links) {
-        const rawUrl = linkObj.link || (linkObj as any).url;
+        const rawUrl = linkObj.url || (linkObj as any).link;
         if (!rawUrl) continue;
         
         try {
@@ -265,10 +267,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (newQueue) {
         setQueue(newQueue.map(normalizeSong));
-        const idx = newQueue.findIndex(s => s.id === song.id);
+        const idx = newQueue.findIndex(s => s.id.toString() === song.id.toString());
         setCurrentIndex(idx);
       } else if (stateRef.current.queue.length > 0) {
-        const idx = stateRef.current.queue.findIndex(s => s.id === song.id);
+        const idx = stateRef.current.queue.findIndex(s => s.id.toString() === song.id.toString());
         setCurrentIndex(idx);
       } else {
         setQueue([fullSong]);
@@ -276,7 +278,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       if (!fromSync) {
-        setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id !== fullSong.id)].slice(0, 30));
+        setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id.toString() !== fullSong.id.toString())].slice(0, 30));
         broadcast('play', { song: fullSong, playing: true, time: 0, queue: newQueue || stateRef.current.queue });
       }
     } catch (error) {
@@ -317,7 +319,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const sameLangSongs = queue.filter(s => s.language === currentSong?.language);
       if (sameLangSongs.length > 1) {
         const randomSong = sameLangSongs[Math.floor(Math.random() * sameLangSongs.length)];
-        nextIndex = queue.findIndex(s => s.id === randomSong.id);
+        nextIndex = queue.findIndex(s => s.id.toString() === randomSong.id.toString());
       } else {
         nextIndex = Math.floor(Math.random() * queue.length);
       }
@@ -484,7 +486,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addToPlaylist = (playlistId: string, song: Song) => {
     setPlaylists(prev => prev.map(p => {
       if (p.id === playlistId) {
-        if (p.songs.some(s => s.id === song.id)) { toast.info("Song already in playlist"); return p; }
+        if (p.songs.some(s => s.id.toString() === song.id.toString())) { toast.info("Song already in playlist"); return p; }
         toast.success(`Added to ${p.name}`);
         return { ...p, songs: [song, ...p.songs] };
       }
@@ -492,7 +494,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   };
   const removeFromPlaylist = (playlistId: string, songId: string) => {
-    setPlaylists(prev => prev.map(p => p.id === playlistId ? { ...p, songs: p.songs.filter(s => s.id !== songId) } : p));
+    setPlaylists(prev => prev.map(p => p.id === playlistId ? { ...p, songs: p.songs.filter(s => s.id.toString() !== songId.toString()) } : p));
   };
   const toggleLanguage = (lang: string) => setSelectedLanguages(prev => prev.includes(lang) ? prev.length > 1 ? prev.filter(l => l !== lang) : prev : [...prev, lang]);
   
