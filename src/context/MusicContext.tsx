@@ -229,6 +229,22 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const pauseSong = (fromSync: boolean = false) => {
+    if (audioRef.current && isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      if (!fromSync) broadcast('pause', {});
+    }
+  };
+
+  const resumeSong = (fromSync: boolean = false) => {
+    if (audioRef.current && !isPlaying && currentSong) {
+      audioRef.current.play().catch(() => {});
+      setIsPlaying(true);
+      if (!fromSync) broadcast('resume', {});
+    }
+  };
+
   const playNext = (fromSync: boolean = false) => {
     if (queue.length === 0) return;
     let nextIdx = currentIndex + 1;
@@ -251,6 +267,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     playSong(queue[prevIdx]);
     if (!fromSync) broadcast('prev', {});
+  };
+
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
   };
 
   const seek = (time: number, fromSync: boolean = false) => {
@@ -297,7 +317,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   return (
     <MusicContext.Provider value={{
-      currentSong, isPlaying, playSong, pauseSong: () => {}, resumeSong: () => {}, togglePlay, playNext, playPrevious,
+      currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious,
       addToNext: (s) => setQueue(prev => [...prev.slice(0, currentIndex + 1), s, ...prev.slice(currentIndex + 1)]),
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation: () => {}, isStationLiked: () => false,
