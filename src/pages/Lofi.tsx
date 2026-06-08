@@ -47,13 +47,13 @@ const LOFI_TRACKS = [
   { id: 'track-4', title: 'Cozy Fireplace', artist: 'Aesthetic Beats', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
 ];
 
-// Ambient Sounds Config
+// Ambient Sounds Config with CORS-friendly Mixkit URLs
 const AMBIENT_SOUNDS = [
-  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://www.soundjay.com/nature/sounds/rain-07.mp3' },
-  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://www.soundjay.com/nature/sounds/fire-1.mp3' },
+  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://assets.mixkit.co/active_storage/sfx/2433/2433-84.wav' },
+  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://assets.mixkit.co/active_storage/sfx/2432/2432-84.wav' },
   { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav' },
-  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://www.soundjay.com/mechanical/sounds/computer-keyboard-1.mp3' },
-  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://www.soundjay.com/nature/sounds/forest-wind-1.mp3' },
+  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://assets.mixkit.co/active_storage/sfx/1548/1548-84.wav' },
+  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://assets.mixkit.co/active_storage/sfx/2434/2434-84.wav' },
 ];
 
 const Lofi = () => {
@@ -145,11 +145,15 @@ const Lofi = () => {
     const audio = ambientRefs.current[id];
     if (audio) {
       audio.volume = value;
-      if (value > 0 && audio.paused) {
+      if (value > 0) {
         // Pause main music player to avoid chaos
         pauseSong();
-        audio.play().catch(() => {});
-      } else if (value === 0 && !audio.paused) {
+        if (audio.paused) {
+          audio.play().catch((err) => {
+            console.error(`Failed to play ambient sound ${id}:`, err);
+          });
+        }
+      } else {
         audio.pause();
       }
     }
