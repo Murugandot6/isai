@@ -96,13 +96,8 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-zinc-950">
-      {/* Fallback Background Image & Video Container */}
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center z-0"
-        style={{ 
-          backgroundImage: `url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200')`,
-        }}
-      >
+      {/* Fallback Background Gradient & Video Container */}
+      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-950 via-purple-950/30 to-zinc-950 z-0">
         <video
           ref={videoRef}
           autoPlay
