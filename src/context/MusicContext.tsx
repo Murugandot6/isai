@@ -154,14 +154,14 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [volume, isMuted]);
 
   const broadcast = useCallback((type: string, data: any) => {
-    if (roomCode && channelRef.current && isChannelReady.current) {
+    if (isHost && roomCode && channelRef.current && isChannelReady.current) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'sync',
         payload: { type, data, timestamp: Date.now() }
       });
     }
-  }, [roomCode]);
+  }, [roomCode, isHost]);
 
   const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
     if (!audioRef.current) audioRef.current = new Audio();
@@ -229,23 +229,23 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const pauseSong = (fromSync: boolean = false) => {
+  const pauseSong = useCallback((fromSync: boolean = false) => {
     if (audioRef.current && isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
       if (!fromSync) broadcast('pause', {});
     }
-  };
+  }, [isPlaying, broadcast]);
 
-  const resumeSong = (fromSync: boolean = false) => {
+  const resumeSong = useCallback((fromSync: boolean = false) => {
     if (audioRef.current && !isPlaying && currentSong) {
       audioRef.current.play().catch(() => {});
       setIsPlaying(true);
       if (!fromSync) broadcast('resume', {});
     }
-  };
+  }, [isPlaying, currentSong, broadcast]);
 
-  const playNext = (fromSync: boolean = false) => {
+  const playNext = useCallback((fromSync: boolean = false) => {
     if (queue.length === 0) return;
     let nextIdx = currentIndex + 1;
     if (isShuffle) {
@@ -256,9 +256,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     playSong(queue[nextIdx]);
     if (!fromSync) broadcast('next', {});
-  };
+  }, [queue, currentIndex, isShuffle, repeatMode, playSong, broadcast]);
 
-  const playPrevious = (fromSync: boolean = false) => {
+  const playPrevious = useCallback((fromSync: boolean = false) => {
     if (queue.length === 0) return;
     let prevIdx = currentIndex - 1;
     if (prevIdx < 0) {
@@ -267,19 +267,19 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     playSong(queue[prevIdx]);
     if (!fromSync) broadcast('prev', {});
-  };
+  }, [queue, currentIndex, repeatMode, playSong, broadcast]);
 
   const toggleMute = () => {
     setIsMuted(prev => !prev);
   };
 
-  const seek = (time: number, fromSync: boolean = false) => {
+  const seek = useCallback((time: number, fromSync: boolean = false) => {
     if (audioRef.current && isFinite(time)) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
       if (!fromSync) broadcast('seek', { time });
     }
-  };
+  }, [broadcast]);
 
   const toggleLanguage = (lang: string) => {
     setSelectedLanguages(prev => 
@@ -294,7 +294,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setLikedSongs(prev => isLiked(song.id) ? prev.filter(s => s.id !== song.id) : [song, ...prev]);
   };
 
-  const playMovie = (movie: Movie, fromSync: boolean = false) => {
+  const playMovie = useCallback((movie: Movie, fromSync: boolean = false) => {
     if (audioRef.current) audioRef.current.pause();
     setIsPlaying(false);
     setCurrentMovie(movie);
@@ -302,18 +302,108 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setRecentlyWatched(prev => [movie, ...prev.filter(m => m.id !== movie.id)].slice(0, 20));
       broadcast('play_movie', { movie });
     }
-  };
+  }, [broadcast]);
 
-  const closeMovie = (fromSync: boolean = false) => {
+  const closeMovie = useCallback((fromSync: boolean = false) => {
     setCurrentMovie(null);
     if (!fromSync) broadcast('close_movie', {});
-  };
+  }, [broadcast]);
 
   const toggleLikeMovie = (movie: Movie) => {
     setLikedMovies(prev => prev.some(m => m.id === movie.id) ? prev.filter(m => m.id !== movie.id) : [movie, ...prev]);
   };
 
   const isMovieLiked = (movieId: string) => likedMovies.some(m => m.id === movieId);
+
+  // Supabase Realtime Broadcast Subscription
+  useEffect(() => {
+    if (!roomCode) {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      isChannelReady.current = false;
+      return;
+    }
+
+    const channel = supabase.channel(`room:${roomCode}`, {
+      config: {
+        broadcast: { self: false }
+      }
+    });
+
+    channel
+      .on('broadcast', { event: 'sync' }, ({ payload }) => {
+        const { type, data } = payload;
+        
+        if (isHost) return; // Host ignores incoming sync events to prevent loops
+
+        switch (type) {
+          case 'play':
+            if (data.song) {
+              playSong(data.song, data.queue, true);
+              if (data.time) {
+                setTimeout(() => seek(data.time, true), 500);
+              }
+            }
+            break;
+          case 'pause':
+            pauseSong(true);
+            break;
+          case 'resume':
+            resumeSong(true);
+            break;
+          case 'seek':
+            if (data.time !== undefined) {
+              seek(data.time, true);
+            }
+            break;
+          case 'play_movie':
+            if (data.movie) {
+              playMovie(data.movie, true);
+            }
+            break;
+          case 'close_movie':
+            closeMovie(true);
+            break;
+          case 'next':
+            playNext(true);
+            break;
+          case 'prev':
+            playPrevious(true);
+            break;
+        }
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          isChannelReady.current = true;
+          toast.success(`Connected to room: ${roomCode}`);
+          
+          // If host, broadcast current state immediately so new joiners sync up
+          if (isHost && currentSong) {
+            channel.send({
+              type: 'broadcast',
+              event: 'sync',
+              payload: {
+                type: 'play',
+                data: {
+                  song: currentSong,
+                  time: audioRef.current?.currentTime || 0,
+                  queue
+                }
+              }
+            });
+          }
+        }
+      });
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      isChannelReady.current = false;
+    };
+  }, [roomCode, isHost, playSong, seek, pauseSong, resumeSong, playMovie, closeMovie, playNext, playPrevious]);
 
   return (
     <MusicContext.Provider value={{
