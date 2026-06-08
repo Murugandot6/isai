@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song } from '@/services/musicApi';
-import { Mic2, Star, ArrowLeft, Play, Loader2, Globe, ChevronRight, Search } from 'lucide-react';
+import { Mic2, Star, ArrowLeft, Play, Loader2, Globe, ChevronRight, Search, ChevronDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
@@ -11,19 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { getHighResImage } from '@/lib/image-utils';
-
-const TAMIL_LEGENDS = [
-  { name: 'Anirudh Ravichander', id: '455663' },
-  { name: 'A.R. Rahman', id: '456269' },
-  { name: 'Dhanush', id: '455662' },
-  { name: 'Harris Jayaraj', id: '455243' },
-  { name: 'Yuvan Shankar Raja', id: '456091' },
-  { name: 'Vijay', id: '456196' },
-  { name: 'Suriya', id: '469191' },
-  { name: 'Sivakarthikeyan', id: '660015' },
-  { name: 'Silambarasan TR', id: '476818' },
-  { name: 'Vidyasagar', id: '455496' },
-];
 
 const Artists = () => {
   const { playSong, selectedLanguages } = useMusic();
@@ -34,25 +21,46 @@ const Artists = () => {
   const [focusedLanguage, setFocusedLanguage] = useState<string | null>(null);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searching, setSearching] = useState(false);
   const [page, setPage] = useState(0);
+  const [artistPage, setArtistPage] = useState(0);
+  const [hasMoreArtists, setHasMoreArtists] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const observer = useRef<IntersectionObserver | null>(null);
 
-  useEffect(() => {
-    const fetchArtists = async () => {
+  const fetchTopArtists = async (pageNum: number) => {
+    if (pageNum === 0) {
       setLoading(true);
-      try {
-        const details = await Promise.all(
-          TAMIL_LEGENDS.map(a => musicApi.getArtistDetails(a.id))
-        );
-        setArtistsList(details.filter(d => d !== null));
-      } finally {
-        setLoading(false);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const results = await musicApi.searchArtists("top tamil", pageNum, 24);
+      if (results.length === 0) {
+        setHasMoreArtists(false);
+      } else {
+        setArtistsList(prev => pageNum === 0 ? results : [...prev, ...results]);
+        if (results.length < 24) {
+          setHasMoreArtists(false);
+        }
       }
-    };
-    fetchArtists();
-  }, []);
+    } catch (error) {
+      console.error("Failed to fetch top artists:", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTopArtists(artistPage);
+  }, [artistPage]);
+
+  const handleLoadMoreArtists = () => {
+    setArtistPage(prev => prev + 1);
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +93,6 @@ const Artists = () => {
   const fetchArtistSongs = useCallback(async (artistId: string, pageNum: number) => {
     setLoading(true);
     try {
-      // Correctly call getArtistSongs instead of getArtistDetails
       const songs = await musicApi.getArtistSongs(artistId, pageNum);
       if (!songs || songs.length === 0) {
         setHasMore(false);
@@ -286,36 +293,57 @@ const Artists = () => {
           </section>
         ) : null}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
-          {loading && artistsList.length === 0 ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-3">
-                <Skeleton className="w-full aspect-square rounded-full" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-            ))
-          ) : (
-            artistsList.map((artist) => (
-              <div 
-                key={artist.id} 
-                onClick={() => handleArtistClick(artist)}
-                className="group flex flex-col items-center text-center cursor-pointer"
-              >
-                <div className="relative w-full aspect-square rounded-full overflow-hidden mb-2.5 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
-                  <img 
-                    src={getHighResImage(artist.image)} 
-                    alt={artist.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-                  <div className="absolute bottom-2 right-2 bg-primary p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Star size={10} fill="white" className="text-white" />
-                  </div>
+        <div className="space-y-12">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
+            {loading && artistsList.length === 0 ? (
+              Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-3">
+                  <Skeleton className="w-full aspect-square rounded-full" />
+                  <Skeleton className="h-4 w-20" />
                 </div>
-                <h3 className="font-bold text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-1">{artist.name}</h3>
-                <p className="text-[8px] md:text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Legend</p>
-              </div>
-            ))
+              ))
+            ) : (
+              artistsList.map((artist) => (
+                <div 
+                  key={artist.id} 
+                  onClick={() => handleArtistClick(artist)}
+                  className="group flex flex-col items-center text-center cursor-pointer"
+                >
+                  <div className="relative w-full aspect-square rounded-full overflow-hidden mb-2.5 md:mb-4 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10">
+                    <img 
+                      src={getHighResImage(artist.image)} 
+                      alt={artist.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
+                    <div className="absolute bottom-2 right-2 bg-primary p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Star size={10} fill="white" className="text-white" />
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-1">{artist.name}</h3>
+                  <p className="text-[8px] md:text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Legend</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          {hasMoreArtists && artistsList.length > 0 && (
+            <div className="flex justify-center pt-4">
+              <Button 
+                onClick={handleLoadMoreArtists} 
+                disabled={loadingMore}
+                className="rounded-2xl px-8 h-12 font-bold gap-2 shadow-xl shadow-primary/10 text-sm"
+              >
+                {loadingMore ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <>
+                    <ChevronDown size={18} />
+                    Load More Artists
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
       </div>

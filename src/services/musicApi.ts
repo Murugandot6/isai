@@ -81,8 +81,8 @@ export const musicApi = {
     return res.data?.results || [];
   },
 
-  searchArtists: async (query: string): Promise<any[]> => {
-    const response = await fetch(`${BASE_URL}/api/search/artists?query=${encodeURIComponent(query)}`);
+  searchArtists: async (query: string, page: number = 0, limit: number = 24): Promise<any[]> => {
+    const response = await fetch(`${BASE_URL}/api/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
     const res = await response.json();
     return res.data?.results || [];
   },
