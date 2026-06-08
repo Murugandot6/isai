@@ -14,7 +14,6 @@ import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
 
 const FEATURED_PLAYLIST_IDS = [
-  'R2ISZzIDGJc_', // Semma Mass Tamil
   '1133105280',   // Tamil Hit Songs
   '1134651042',   // Tamil: India Superhits Top 50
   '1074590003',   // Tamil BGM
@@ -31,13 +30,16 @@ const DECADE_PLAYLIST_IDS = [
 ];
 
 const MOVIE_ALBUM_IDS = [
+  '75742902',     // Raga of Revenge (From "DC")
   '41106332',     // Varisu
-  '58371017',     // Devara Part 1
-  '49222302',     // Ordinary Person (Leo)
+  '72970173',     // Pavazha Malli (From "Think Indie")
   '1251943',      // Maari
+  '49222302',     // Ordinary Person (From "Leo")
   '1017243',      // 3
+  '58371017',     // Devara Part 1 - Tamil
+  '71227719',     // Raavana Mavandaa (From "Jana Nayagan")
+  '75100562',     // Karuppa Kooda Va (From "Karuppu")
   '1656877',      // Thangamagan
-  '1106479',      // Ethir Neechal
 ];
 
 const Index = () => {
@@ -182,9 +184,9 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {loading ? (
-              Array.from({ length: 7 }).map((_, i) => (
+              Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="space-y-3">
                   <Skeleton className="aspect-square w-full rounded-2xl" />
                   <Skeleton className="h-4 w-3/4" />
