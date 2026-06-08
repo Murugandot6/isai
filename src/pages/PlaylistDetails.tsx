@@ -24,26 +24,6 @@ const PlaylistDetails = () => {
       setLoading(true);
       try {
         const data = await musicApi.getPlaylistDetails(id);
-        
-        if (data && data.songs && data.songs.length > 0) {
-          try {
-            // Perform a robust bulk fetch for individual song details to get unique covers
-            const songIds = data.songs.map(s => s.id.toString());
-            const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
-            
-            if (fullSongs && fullSongs.length > 0) {
-              // Map back using string comparison to avoid type issues
-              const enrichedSongs = data.songs.map(originalSong => {
-                const fullDetail = fullSongs.find(fs => fs.id.toString() === originalSong.id.toString());
-                return fullDetail ? { ...fullDetail } : originalSong;
-              });
-              data.songs = enrichedSongs;
-            }
-          } catch (bulkError) {
-            console.warn("Failed to fetch bulk song details:", bulkError);
-          }
-        }
-        
         setPlaylist(data);
       } catch (error) {
         console.error("Failed to fetch playlist details", error);
@@ -75,7 +55,8 @@ const PlaylistDetails = () => {
     );
   }
 
-  const songCount = playlist.songs ? playlist.songs.length : 0;
+  const songs = playlist.songs || [];
+  const songCount = songs.length;
 
   return (
     <MainLayout>
@@ -117,7 +98,7 @@ const PlaylistDetails = () => {
             </div>
             <div className="mt-6 md:mt-8">
               <Button 
-                onClick={() => playlist.songs && playlist.songs.length > 0 && playSong(playlist.songs[0], playlist.songs)}
+                onClick={() => songs.length > 0 && playSong(songs[0], songs)}
                 className="rounded-full px-8 md:px-10 h-11 md:h-14 font-bold gap-2 md:gap-3 shadow-xl shadow-primary/20 text-sm md:text-lg w-full md:w-auto"
               >
                 <Play className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" />
@@ -136,8 +117,8 @@ const PlaylistDetails = () => {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {playlist.songs?.map((song) => (
-              <SongCard key={song.id} song={song} allSongs={playlist.songs} />
+            {songs.map((song) => (
+              <SongCard key={song.id} song={song} allSongs={songs} />
             ))}
           </div>
         </div>

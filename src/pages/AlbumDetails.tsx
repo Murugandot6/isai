@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Album, getContainerCount } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Calendar, Music, Loader2, ListMusic } from 'lucide-react';
+import { ArrowLeft, Play, Music, Loader2, ListMusic, Calendar } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
 import { useMusic } from '@/context/MusicContext';
@@ -24,28 +24,6 @@ const AlbumDetails = () => {
       setLoading(true);
       try {
         const data = await musicApi.getAlbumDetails(id);
-        
-        // Ensure we have a list of songs even if the API uses different property names
-        const songsList = data.songs || data.list || [];
-        
-        if (songsList.length > 0) {
-          try {
-            const songIds = songsList.map((s: any) => s.id.toString());
-            const fullSongs = await musicApi.getSongsDetailsBulk(songIds);
-            
-            if (fullSongs && fullSongs.length > 0) {
-              data.songs = fullSongs;
-            } else {
-              data.songs = songsList;
-            }
-          } catch (bulkError) {
-            console.warn("Failed to fetch bulk song details:", bulkError);
-            data.songs = songsList;
-          }
-        } else {
-          data.songs = [];
-        }
-        
         setAlbum(data);
       } catch (error) {
         console.error("Failed to fetch album details", error);
@@ -77,7 +55,9 @@ const AlbumDetails = () => {
     );
   }
 
-  const trackCount = getContainerCount(album);
+  // Ensure we check all possible places for songs in the response
+  const songs = album.songs || [];
+  const trackCount = songs.length || getContainerCount(album);
 
   return (
     <MainLayout>
@@ -98,7 +78,7 @@ const AlbumDetails = () => {
           <div className="text-center md:text-left flex-1 min-w-0">
             <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
               <Badge variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[9px] font-bold">
-                {album.type ? album.type.toUpperCase() : 'ALBUM'}
+                ALBUM
               </Badge>
               <Badge variant="outline" className="text-[9px] font-bold uppercase">
                 {album.language || 'unknown'}
@@ -117,7 +97,7 @@ const AlbumDetails = () => {
             </div>
             <div className="mt-6 md:mt-8">
               <Button 
-                onClick={() => album.songs && album.songs.length > 0 && playSong(album.songs[0], album.songs)}
+                onClick={() => songs.length > 0 && playSong(songs[0], songs)}
                 className="rounded-full px-8 md:px-10 h-11 md:h-14 font-bold gap-2 md:gap-3 shadow-xl shadow-primary/20 text-sm md:text-lg w-full md:w-auto"
               >
                 <Play className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" />
@@ -136,9 +116,9 @@ const AlbumDetails = () => {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {album.songs && album.songs.length > 0 ? (
-              album.songs.map((song) => (
-                <SongCard key={song.id} song={song} allSongs={album.songs} />
+            {songs.length > 0 ? (
+              songs.map((song) => (
+                <SongCard key={song.id} song={song} allSongs={songs} />
               ))
             ) : (
               <div className="col-span-full text-center py-10 text-muted-foreground text-sm">No songs found in this album.</div>
