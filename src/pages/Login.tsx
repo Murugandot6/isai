@@ -15,8 +15,7 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoError, setVideoError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLIFrameElement | HTMLVideoElement | null>(null);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,16 +31,19 @@ const Login = () => {
   // Robust autoplay trigger for mobile & desktop
   useEffect(() => {
     const playVideo = async () => {
-      if (videoRef.current) {
+      const video = videoRef.current as HTMLVideoElement;
+      if (video && typeof video.play === 'function') {
         try {
-          videoRef.current.muted = true;
-          await videoRef.current.play();
+          video.muted = true;
+          await video.play();
           console.log("Video background playing successfully.");
         } catch (err) {
           console.warn("Autoplay failed or was prevented. Retrying on user interaction...", err);
           // Fallback: try playing again on first document click/touch
           const forcePlay = () => {
-            videoRef.current?.play().catch(e => console.error("Force play failed:", e));
+            if (video && typeof video.play === 'function') {
+              video.play().catch(e => console.error("Force play failed:", e));
+            }
             document.removeEventListener('click', forcePlay);
             document.removeEventListener('touchstart', forcePlay);
           };
@@ -112,11 +114,11 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-zinc-950">
-      {/* Fallback Background Gradient & Video Container */}
-      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-950 via-purple-950/40 to-zinc-950 z-0">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-black">
+      {/* Fallback Pure Black Background & Video Container */}
+      <div className="absolute inset-0 w-full h-full bg-black z-0">
         <video
-          ref={videoRef}
+          ref={videoRef as React.RefObject<HTMLVideoElement>}
           autoPlay
           loop
           muted
@@ -124,18 +126,14 @@ const Login = () => {
           preload="auto"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectFit: 'cover' }}
-          onError={(e) => {
-            console.error("Video loading error:", e);
-            setVideoError("Failed to load video background");
-          }}
         >
           <source src="/anbae.mp4" type="video/mp4" />
           <source src="anbae.mp4" type="video/mp4" />
         </video>
       </div>
 
-      {/* Dark Overlay for Contrast (slightly lighter to let video shine through) */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10" />
+      {/* Dark Overlay for Contrast */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] z-10" />
 
       {/* Login Card */}
       <div className="relative w-full max-w-md space-y-6 md:space-y-8 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
