@@ -2,33 +2,54 @@
 
 import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { musicApi, Playlist } from '@/services/musicApi';
 import { getHighResImage } from '@/lib/image-utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 const Featured = () => {
   const navigate = useNavigate();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  const fetchFeaturedPlaylists = async (pageNum: number) => {
+    if (pageNum === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const results = await musicApi.searchPlaylists("top tamil", pageNum, 40);
+      if (results.length === 0) {
+        setHasMore(false);
+      } else {
+        setPlaylists(prev => pageNum === 0 ? results : [...prev, ...results]);
+        // If we got fewer results than the limit, we've reached the end
+        if (results.length < 40) {
+          setHasMore(false);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch featured playlists:", error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchFeaturedPlaylists = async () => {
-      setLoading(true);
-      try {
-        // Fetching the "top tamil" playlists dynamically from the API
-        const results = await musicApi.searchPlaylists("top tamil");
-        setPlaylists(results);
-      } catch (error) {
-        console.error("Failed to fetch featured playlists:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchFeaturedPlaylists(page);
+  }, [page]);
 
-    fetchFeaturedPlaylists();
-  }, []);
+  const handleLoadMore = () => {
+    setPage(prev => prev + 1);
+  };
 
   return (
     <MainLayout>
@@ -43,7 +64,7 @@ const Featured = () => {
           </div>
         </div>
 
-        {loading ? (
+        {loading && playlists.length === 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="space-y-4">
@@ -53,28 +74,49 @@ const Featured = () => {
             ))}
           </div>
         ) : playlists.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 animate-in fade-in duration-500">
-            {playlists.map((playlist) => {
-              const songCount = playlist.songCount || "0";
-              return (
-                <div 
-                  key={playlist.id}
-                  onClick={() => navigate(`/playlist/${playlist.id}`)}
-                  className="group relative aspect-square rounded-3xl overflow-hidden cursor-pointer shadow-xl transition-all hover:-translate-y-2"
-                >
-                  <img 
-                    src={getHighResImage(playlist.image)} 
-                    alt={playlist.name} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6 md:p-8 flex flex-col justify-end">
-                    <h3 className="text-white font-black text-xl md:text-2xl mb-1 md:mb-2 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h3>
-                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{songCount} Tracks</p>
+          <div className="space-y-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 animate-in fade-in duration-500">
+              {playlists.map((playlist, index) => {
+                const songCount = playlist.songCount || "0";
+                return (
+                  <div 
+                    key={`${playlist.id}-${index}`}
+                    onClick={() => navigate(`/playlist/${playlist.id}`)}
+                    className="group relative aspect-square rounded-3xl overflow-hidden cursor-pointer shadow-xl transition-all hover:-translate-y-2"
+                  >
+                    <img 
+                      src={getHighResImage(playlist.image)} 
+                      alt={playlist.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-6 md:p-8 flex flex-col justify-end">
+                      <h3 className="text-white font-black text-xl md:text-2xl mb-1 md:mb-2 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h3>
+                      <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{songCount} Tracks</p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <Button 
+                  onClick={handleLoadMore} 
+                  disabled={loadingMore}
+                  className="rounded-2xl px-8 h-12 font-bold gap-2 shadow-xl shadow-primary/10 text-sm"
+                >
+                  {loadingMore ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <>
+                      <ChevronDown size={18} />
+                      Load More Playlists
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-20 text-muted-foreground">

@@ -87,8 +87,8 @@ export const musicApi = {
     return res.data?.results || [];
   },
 
-  searchPlaylists: async (query: string): Promise<Playlist[]> => {
-    const response = await fetch(`${BASE_URL}/api/search/playlists?query=${encodeURIComponent(query)}`);
+  searchPlaylists: async (query: string, page: number = 0, limit: number = 40): Promise<Playlist[]> => {
+    const response = await fetch(`${BASE_URL}/api/search/playlists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
     const res = await response.json();
     return res.data?.results || [];
   },
