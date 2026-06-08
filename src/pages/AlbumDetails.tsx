@@ -55,9 +55,9 @@ const AlbumDetails = () => {
     );
   }
 
-  // Ensure we check all possible places for songs in the response
   const songs = album.songs || [];
-  const trackCount = songs.length || getContainerCount(album);
+  // Calculate track count: use songs array length, or the API's songCount field, or the helper function
+  const trackCount = songs.length || Number(album.songCount) || getContainerCount(album);
 
   return (
     <MainLayout>
