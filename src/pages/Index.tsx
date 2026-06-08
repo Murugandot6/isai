@@ -6,12 +6,13 @@ import { musicApi, Song, Playlist, Album, getContainerCount } from '@/services/m
 import { SongCard } from '@/components/SongCard';
 import { AlbumCard } from '@/components/AlbumCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users } from 'lucide-react';
+import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users, Music } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
+import { FEATURED_PLAYLISTS } from '@/data/featuredPlaylists';
 
 const FEATURED_PLAYLIST_IDS = [
   '1133105280',   // Tamil Hit Songs
@@ -135,13 +136,58 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Featured Playlists */}
+        {/* Curated Featured Playlists (Local Dataset) */}
+        <section className="mb-10 md:mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/20 p-2 rounded-xl">
+                <Sparkles className="text-primary" size={18} />
+              </div>
+              <h3 className="text-xl md:text-2xl font-black tracking-tight">Curated Playlists</h3>
+            </div>
+            <button 
+              onClick={() => navigate('/featured')} 
+              className="text-xs font-bold text-primary hover:underline"
+            >
+              See All
+            </button>
+          </div>
+          
+          <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
+            {FEATURED_PLAYLISTS.slice(0, 12).map((playlist) => {
+              const songCount = playlist.more_info?.song_count || "0";
+              return (
+                <div 
+                  key={playlist.id}
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
+                  className="group relative w-[200px] md:w-[240px] shrink-0 aspect-square rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-lg transition-all hover:-translate-y-1"
+                >
+                  <img 
+                    src={playlist.image} 
+                    alt={playlist.title} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 md:p-6 flex flex-col justify-end">
+                    <h4 className="text-white font-black text-sm md:text-base mb-1 truncate" dangerouslySetInnerHTML={{ __html: playlist.title }}></h4>
+                    <div className="flex items-center gap-1.5 text-white/60 text-[10px] font-bold uppercase tracking-wider">
+                      <Music size={10} />
+                      <span>{songCount} Tracks</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Featured Playlists (API) */}
         <section className="mb-10 md:mb-16">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-purple-500/20 p-2 rounded-xl">
               <Sparkles className="text-purple-500" size={18} />
             </div>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight">Featured Playlists</h3>
+            <h3 className="text-xl md:text-2xl font-black tracking-tight">Editor's Picks</h3>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
