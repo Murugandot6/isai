@@ -1,7 +1,7 @@
 "use client";
 
-import React from 'react';
-import { Song } from '@/services/musicApi';
+import React, { useState, useEffect } from 'react';
+import { Song, musicApi } from '@/services/musicApi';
 import { Play, Pause, Globe, Heart, MoreHorizontal, Plus, Share2, ListMusic, ListPlus } from 'lucide-react';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
@@ -22,36 +22,49 @@ import { toast } from 'sonner';
 
 export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?: string }> = ({ song, allSongs, fallbackImage }) => {
   const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked, playlists, addToPlaylist, addToNext } = useMusic();
+  const [detailedSong, setDetailedSong] = useState<Song | null>(null);
   
   if (!song) return null;
 
-  const isCurrent = currentSong?.id === song.id;
-  const liked = isLiked(song.id);
+  // Fetch individual song details in the background to get the correct song-specific single/promo artwork
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDetails = async () => {
+      try {
+        const data = await musicApi.getSongDetails(song.id);
+        if (data && isMounted) {
+          setDetailedSong(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch song details for card", err);
+      }
+    };
+    fetchDetails();
+    return () => {
+      isMounted = false;
+    };
+  }, [song.id]);
+
+  const displaySong = detailedSong || song;
+  const isCurrent = currentSong?.id === displaySong.id;
+  const liked = isLiked(displaySong.id);
   
-  const imageUrl = getHighResImage(song.image, fallbackImage);
+  // Use the detailed song's image if available, otherwise fallback
+  const imageUrl = getHighResImage(displaySong.image, fallbackImage);
 
   const handleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.action-button')) return;
     
-    // Debug log to inspect song image metadata
-    console.log(`🎵 Song Clicked: "${song.name}"`, {
-      songId: song.id,
-      rawImagePayload: song.image,
-      resolvedImageUrl: imageUrl,
-      fallbackImageProvided: fallbackImage,
-      entireSongObject: song
-    });
-    
     if (isCurrent) {
       togglePlay();
     } else {
-      playSong(song, allSongs);
+      playSong(displaySong, allSongs);
     }
   };
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(window.location.origin + `/#/search?q=${encodeURIComponent(song.name || '')}`);
+    navigator.clipboard.writeText(window.location.origin + `/#/search?q=${encodeURIComponent(displaySong.name || '')}`);
     toast.success("Link copied to clipboard!");
   };
 
@@ -63,7 +76,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?:
       <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-accent/10 shadow-lg">
         <img 
           src={imageUrl} 
-          alt={song.name || 'Song'} 
+          alt={displaySong.name || 'Song'} 
           className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
         />
@@ -71,7 +84,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?:
         <div className="absolute top-2 left-2 z-10">
           <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] font-bold uppercase border-none text-white flex items-center gap-1 py-0.5">
             <Globe size={10} />
-            {song.language || 'unknown'}
+            {displaySong.language || 'unknown'}
           </Badge>
         </div>
 
@@ -79,7 +92,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?:
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              toggleLike(song);
+              toggleLike(displaySong);
             }}
             className={cn(
               "action-button p-2 rounded-full transition-all duration-300 backdrop-blur-md",
@@ -109,7 +122,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?:
               <DropdownMenuItem 
                 onClick={(e) => {
                   e.stopPropagation();
-                  addToNext(song);
+                  addToNext(displaySong);
                 }} 
                 className="gap-2 rounded-lg m-1 cursor-pointer"
               >
@@ -129,7 +142,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?:
                         key={p.id} 
                         onClick={(e) => {
                           e.stopPropagation();
-                          addToPlaylist(p.id, song);
+                          addToPlaylist(p.id, displaySong);
                         }}
                         className="gap-2 rounded-lg m-1 cursor-pointer"
                       >
@@ -157,8 +170,8 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?:
           </div>
         </div>
       </div>
-      <h3 className="font-semibold text-sm truncate mb-0.5" dangerouslySetInnerHTML={{ __html: song.name || 'Unknown Track' }}></h3>
-      <p className="text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: song.primaryArtists || 'Unknown Artist' }}></p>
+      <h3 className="font-semibold text-sm truncate mb-0.5" dangerouslySetInnerHTML={{ __html: displaySong.name || 'Unknown Track' }}></h3>
+      <p className="text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: displaySong.primaryArtists || 'Unknown Artist' }}></p>
     </div>
   );
 };
