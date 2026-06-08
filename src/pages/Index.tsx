@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
 import { FEATURED_PLAYLISTS } from '@/data/featuredPlaylists';
+import { TRENDING_TODAY_DATA } from '@/data/trendingToday';
 
 const DECADE_PLAYLISTS_CONFIG = [
   { id: "1170578779", title: "Tamil 1990s" },
@@ -46,9 +47,9 @@ const Index = () => {
   const [movieAlbums, setMovieAlbums] = useState<Album[]>([]);
   
   // Year-wise Latest Releases States
+  const [releases2026, setReleases2026] = useState<Album[]>([]);
   const [releases2025, setReleases2025] = useState<Album[]>([]);
   const [releases2024, setReleases2024] = useState<Album[]>([]);
-  const [releases2023, setReleases2023] = useState<Album[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,13 +92,13 @@ const Index = () => {
         setMovieAlbums(albumsData.filter(a => a !== null) as Album[]);
         
         // Fetch year-wise releases safely
+        const r2026 = await musicApi.searchAlbums(`${primaryLang} 2026`).catch(() => []);
         const r2025 = await musicApi.searchAlbums(`${primaryLang} 2025`).catch(() => []);
         const r2024 = await musicApi.searchAlbums(`${primaryLang} 2024`).catch(() => []);
-        const r2023 = await musicApi.searchAlbums(`${primaryLang} 2023`).catch(() => []);
         
+        setReleases2026((r2026 || []).slice(0, 10));
         setReleases2025((r2025 || []).slice(0, 10));
         setReleases2024((r2024 || []).slice(0, 10));
-        setReleases2023((r2023 || []).slice(0, 10));
       } catch (error) {
         console.error('Failed to fetch content', error);
       } finally {
@@ -111,6 +112,32 @@ const Index = () => {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
+  // Helper to play a Trending Today item
+  const handlePlayTrendingItem = async (item: typeof TRENDING_TODAY_DATA[0]) => {
+    if (item.type === 'song') {
+      const songObj: Song = {
+        id: item.id,
+        name: item.title,
+        type: 'song',
+        album: { id: item.more_info.album_id || '', name: item.more_info.album || '', url: '' },
+        year: item.year,
+        releaseDate: item.more_info.release_date || '',
+        duration: item.more_info.duration || '0',
+        label: '',
+        primaryArtists: item.subtitle,
+        featuredArtists: '',
+        singers: item.subtitle,
+        image: [{ quality: '500x500', url: item.image }],
+        downloadUrl: [],
+        language: item.language,
+        url: ''
+      };
+      playSong(songObj);
+    } else {
+      navigate(`/album/${item.id}`);
     }
   };
 
@@ -166,6 +193,49 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Trending Today Section */}
+        <section className="mb-10 md:mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/20 p-2 rounded-xl">
+                <TrendingUp className="text-primary" size={18} />
+              </div>
+              <h3 className="text-xl md:text-2xl font-black tracking-tight">Trending Today</h3>
+            </div>
+          </div>
+          
+          <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
+            {TRENDING_TODAY_DATA.map((item) => (
+              <div 
+                key={item.id}
+                onClick={() => handlePlayTrendingItem(item)}
+                className="group relative w-[160px] md:w-[180px] shrink-0 bg-card/50 hover:bg-accent/10 p-3 rounded-2xl transition-all duration-300 cursor-pointer border border-transparent hover:border-accent/20 hover:-translate-y-1"
+              >
+                <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-accent/10 shadow-lg">
+                  <img 
+                    src={item.image} 
+                    alt={item.title} 
+                    className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-2 left-2 z-10">
+                    <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] font-bold uppercase border-none text-white py-0.5">
+                      {item.type}
+                    </Badge>
+                  </div>
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                      <Play size={20} fill="currentColor" />
+                    </div>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-xs md:text-sm truncate mb-0.5" dangerouslySetInnerHTML={{ __html: item.title }}></h4>
+                <p className="text-[10px] md:text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: item.subtitle }}></p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Curated Featured Playlists (Local Dataset) */}
         <section className="mb-10 md:mb-16">
           <div className="flex items-center justify-between mb-6">
@@ -220,11 +290,37 @@ const Index = () => {
             <h3 className="text-xl md:text-2xl font-black tracking-tight">Latest Releases</h3>
           </div>
 
+          {/* 2026 Releases */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-primary text-white font-bold text-xs px-2.5 py-0.5 rounded-md">2026</Badge>
+              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Newest Hits</span>
+            </div>
+            <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="w-[180px] shrink-0 space-y-3">
+                    <Skeleton className="aspect-square w-full rounded-2xl" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ))
+              ) : releases2026.length > 0 ? (
+                releases2026.map((album) => (
+                  <div key={album.id} className="w-[180px] shrink-0">
+                    <AlbumCard album={album} />
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground italic">No releases found for 2026.</p>
+              )}
+            </div>
+          </div>
+
           {/* 2025 Releases */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-white font-bold text-xs px-2.5 py-0.5 rounded-md">2025</Badge>
-              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Newest Hits</span>
+              <Badge variant="secondary" className="bg-accent/20 text-foreground font-bold text-xs px-2.5 py-0.5 rounded-md">2025</Badge>
+              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Chartbusters</span>
             </div>
             <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
               {loading ? (
@@ -250,7 +346,7 @@ const Index = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-accent/20 text-foreground font-bold text-xs px-2.5 py-0.5 rounded-md">2024</Badge>
-              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Chartbusters</span>
+              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Modern Classics</span>
             </div>
             <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
               {loading ? (
@@ -268,32 +364,6 @@ const Index = () => {
                 ))
               ) : (
                 <p className="text-xs text-muted-foreground italic">No releases found for 2024.</p>
-              )}
-            </div>
-          </div>
-
-          {/* 2023 Releases */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-accent/20 text-foreground font-bold text-xs px-2.5 py-0.5 rounded-md">2023</Badge>
-              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Modern Classics</span>
-            </div>
-            <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="w-[180px] shrink-0 space-y-3">
-                    <Skeleton className="aspect-square w-full rounded-2xl" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ))
-              ) : releases2023.length > 0 ? (
-                releases2023.map((album) => (
-                  <div key={album.id} className="w-[180px] shrink-0">
-                    <AlbumCard album={album} />
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground italic">No releases found for 2023.</p>
               )}
             </div>
           </div>
