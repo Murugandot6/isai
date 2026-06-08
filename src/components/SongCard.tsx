@@ -33,6 +33,15 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?:
   const handleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.action-button')) return;
     
+    // Debug log to inspect song image metadata
+    console.log(`🎵 Song Clicked: "${song.name}"`, {
+      songId: song.id,
+      rawImagePayload: song.image,
+      resolvedImageUrl: imageUrl,
+      fallbackImageProvided: fallbackImage,
+      entireSongObject: song
+    });
+    
     if (isCurrent) {
       togglePlay();
     } else {
