@@ -12,7 +12,10 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
   if (!album) return null;
 
   const imageUrl = getHighResImage(album.image);
-  const trackCount = getContainerCount(album);
+  
+  // Calculate track count using the same robust logic as AlbumDetails
+  const songs = album.songs || [];
+  const trackCount = songs.length || Number(album.songCount) || getContainerCount(album);
 
   return (
     <div 
