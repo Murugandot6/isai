@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -15,6 +15,7 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +27,15 @@ const Login = () => {
       navigate('/');
     }
   }, [session, navigate]);
+
+  // Force play video on mobile/desktop load
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(err => {
+        console.log("Autoplay prevented, waiting for user interaction:", err);
+      });
+    }
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,30 +95,40 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden">
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0"
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-zinc-950">
+      {/* Fallback Background Image & Video Container */}
+      <div 
+        className="absolute inset-0 w-full h-full bg-cover bg-center z-0"
+        style={{ 
+          backgroundImage: `url('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200')`,
+        }}
       >
-        <source src="/anbae.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectFit: 'cover' }}
+        >
+          <source src="/anbae.mp4" type="video/mp4" />
+          <source src="anbae.mp4" type="video/mp4" />
+        </video>
+      </div>
 
       {/* Dark Overlay for Contrast */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-[3px] z-10" />
 
       {/* Login Card */}
-      <div className="relative w-full max-w-md space-y-8 bg-card/80 backdrop-blur-xl p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
+      <div className="relative w-full max-w-md space-y-6 md:space-y-8 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
         <div className="text-center">
           <div className="inline-flex items-center justify-center p-3 bg-primary rounded-2xl mb-4 shadow-lg shadow-primary/20">
             <Music className="text-primary-foreground" size={32} />
           </div>
           <h1 className="text-3xl font-black tracking-tight italic mb-2">anbae</h1>
-          <p className="text-muted-foreground font-medium">
+          <p className="text-muted-foreground font-medium text-sm">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </p>
         </div>
@@ -215,7 +235,7 @@ const Login = () => {
           </div>
         )}
 
-        <div className="text-center pt-4">
+        <div className="text-center pt-2">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-sm font-bold text-primary hover:underline underline-offset-4 transition-all"
