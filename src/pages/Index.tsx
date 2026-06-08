@@ -28,23 +28,9 @@ const DECADE_PLAYLISTS_CONFIG = [
   { id: "1134651042", title: "Tamil: India Superhits Top 50" }
 ];
 
-const MOVIE_ALBUM_IDS = [
-  '75742902',     // Raga of Revenge (From "DC")
-  '41106332',     // Varisu
-  '72970173',     // Pavazha Malli (From "Think Indie")
-  '1251943',      // Maari
-  '49222302',     // Ordinary Person (From "Leo")
-  '1017243',      // 3
-  '58371017',     // Devara Part 1 - Tamil
-  '71227719',     // Raavana Mavandaa (From "Jana Nayagan")
-  '75100562',     // Karuppa Kooda Va (From "Karuppu")
-  '1656877',      // Thangamagan
-];
-
 const Index = () => {
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [decadePlaylists, setDecadePlaylists] = useState<Playlist[]>([]);
-  const [movieAlbums, setMovieAlbums] = useState<Album[]>([]);
   
   // Year-wise Latest Releases States
   const [releases2026, setReleases2026] = useState<Album[]>([]);
@@ -79,17 +65,6 @@ const Index = () => {
           )
         );
         setDecadePlaylists(decadesData.filter(p => p !== null) as Playlist[]);
-
-        // Fetch movie albums safely
-        const albumsData = await Promise.all(
-          MOVIE_ALBUM_IDS.map(id => 
-            musicApi.getAlbumDetails(id).catch((err) => {
-              console.error(`Failed to fetch movie album ${id}:`, err);
-              return null;
-            })
-          )
-        );
-        setMovieAlbums(albumsData.filter(a => a !== null) as Album[]);
         
         // Fetch year-wise releases safely
         const r2026 = await musicApi.searchAlbums(`${primaryLang} 2026`).catch(() => []);
@@ -366,33 +341,6 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground italic">No releases found for 2024.</p>
               )}
             </div>
-          </div>
-        </section>
-
-        {/* Movie Albums */}
-        <section className="mb-10 md:mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-500/20 p-2 rounded-xl">
-                <Disc size={18} className="text-blue-500" />
-              </div>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight">Tamil Movie Hits</h3>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="aspect-square w-full rounded-2xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              ))
-            ) : (
-              movieAlbums.map((album) => (
-                <AlbumCard key={album.id} album={album} />
-              ))
-            )}
           </div>
         </section>
 
