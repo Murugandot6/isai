@@ -106,7 +106,7 @@ export const musicApi = {
 
   getAlbumDetails: async (id: string): Promise<Album | null> => {
     try {
-      const response = await fetch(`${BASE_URL}/api/albums/${id}`);
+      const response = await fetch(`${BASE_URL}/api/albums?id=${id}`);
       const res = await response.json();
       return res.data || null;
     } catch (e) {
