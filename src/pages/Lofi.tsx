@@ -3,16 +3,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic } from '@/context/MusicContext';
+import { Song, musicApi } from '@/services/musicApi';
 import { 
   Play, Pause, RotateCcw, Volume2, VolumeX, Coffee, Flame, 
   CloudRain, Keyboard, Trees, Music4, Sparkles, BookOpen, 
-  CheckSquare, Trash2, ChevronRight, Moon, Sun, Compass
+  CheckSquare, Trash2, Compass, Disc, Sliders, ArrowRightLeft,
+  ListMusic, HelpCircle
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { getHighResImage } from '@/lib/image-utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 
 // Cozy Backgrounds
@@ -39,15 +50,7 @@ const BACKGROUNDS = [
   }
 ];
 
-// Lofi Tracks
-const LOFI_TRACKS = [
-  { id: 'track-1', title: 'Morning Coffee', artist: 'Lofi Dreams', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-  { id: 'track-2', title: 'Rainy Day Study', artist: 'Chillhop Cafe', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
-  { id: 'track-3', title: 'Late Night Vibes', artist: 'Sleepy Head', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
-  { id: 'track-4', title: 'Cozy Fireplace', artist: 'Aesthetic Beats', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' },
-];
-
-// Ambient Sounds Config with CORS-friendly Mixkit URLs
+// Ambient Sounds Config
 const AMBIENT_SOUNDS = [
   { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://assets.mixkit.co/active_storage/sfx/2433/2433-84.wav' },
   { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://assets.mixkit.co/active_storage/sfx/2432/2432-84.wav' },
@@ -57,16 +60,27 @@ const AMBIENT_SOUNDS = [
 ];
 
 const Lofi = () => {
-  const { pauseSong } = useMusic(); // To pause main player when lofi starts
+  const { pauseSong, likedSongs, recentlyPlayed } = useMusic();
   
   // Background State
   const [currentBg, setCurrentBg] = useState(BACKGROUNDS[0]);
 
-  // Lofi Music Player State
-  const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
-  const [isLofiPlaying, setIsLofiPlaying] = useState(false);
-  const [lofiVolume, setLofiVolume] = useState(0.5);
-  const lofiAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Deck A States
+  const [songA, setSongA] = useState<Song | null>(null);
+  const [isPlayingA, setIsPlayingA] = useState(false);
+  const [volumeA, setVolumeA] = useState(0.5);
+  const [speedA, setSpeedA] = useState(0.85); // Slowed default
+  const audioRefA = useRef<HTMLAudioElement | null>(null);
+
+  // Deck B States
+  const [songB, setSongB] = useState<Song | null>(null);
+  const [isPlayingB, setIsPlayingB] = useState(false);
+  const [volumeB, setVolumeB] = useState(0.5);
+  const [speedB, setSpeedB] = useState(0.85); // Slowed default
+  const audioRefB = useRef<HTMLAudioElement | null>(null);
+
+  // Crossfader State (0 = All Deck A, 1 = All Deck B, 0.5 = Equal)
+  const [crossfader, setCrossfader] = useState(0.5);
 
   // Ambient Sounds State
   const [ambientVolumes, setAmbientVolumes] = useState<Record<string, number>>({
@@ -87,40 +101,14 @@ const Lofi = () => {
   // Notepad State
   const [notes, setNotes] = useState('');
 
-  // Initialize Lofi Audio
+  // Initialize Decks
   useEffect(() => {
-    lofiAudioRef.current = new Audio(LOFI_TRACKS[currentTrackIdx].url);
-    lofiAudioRef.current.loop = true;
-    
-    return () => {
-      if (lofiAudioRef.current) {
-        lofiAudioRef.current.pause();
-      }
-    };
-  }, []);
+    audioRefA.current = new Audio();
+    audioRefA.current.loop = true;
+    audioRefB.current = new Audio();
+    audioRefB.current.loop = true;
 
-  // Handle Track Change
-  useEffect(() => {
-    if (lofiAudioRef.current) {
-      const wasPlaying = isLofiPlaying;
-      lofiAudioRef.current.pause();
-      lofiAudioRef.current.src = LOFI_TRACKS[currentTrackIdx].url;
-      lofiAudioRef.current.volume = lofiVolume;
-      if (wasPlaying) {
-        lofiAudioRef.current.play().catch(() => {});
-      }
-    }
-  }, [currentTrackIdx]);
-
-  // Handle Lofi Volume Change
-  useEffect(() => {
-    if (lofiAudioRef.current) {
-      lofiAudioRef.current.volume = lofiVolume;
-    }
-  }, [lofiVolume]);
-
-  // Initialize Ambient Audios
-  useEffect(() => {
+    // Load ambient sounds
     AMBIENT_SOUNDS.forEach(sound => {
       const audio = new Audio(sound.url);
       audio.loop = true;
@@ -133,11 +121,108 @@ const Lofi = () => {
     if (savedNotes) setNotes(savedNotes);
 
     return () => {
+      if (audioRefA.current) audioRefA.current.pause();
+      if (audioRefB.current) audioRefB.current.pause();
       Object.values(ambientRefs.current).forEach(audio => {
         if (audio) audio.pause();
       });
     };
   }, []);
+
+  // Apply Volumes based on Crossfader
+  useEffect(() => {
+    if (audioRefA.current) {
+      // As crossfader goes to 1, Deck A volume goes to 0
+      const factorA = Math.cos((crossfader * Math.PI) / 2);
+      audioRefA.current.volume = volumeA * factorA;
+    }
+    if (audioRefB.current) {
+      // As crossfader goes to 0, Deck B volume goes to 0
+      const factorB = Math.sin((crossfader * Math.PI) / 2);
+      audioRefB.current.volume = volumeB * factorB;
+    }
+  }, [volumeA, volumeB, crossfader]);
+
+  // Apply Playback Speeds (Slowed & Reverb effect)
+  useEffect(() => {
+    if (audioRefA.current) audioRefA.current.playbackRate = speedA;
+  }, [speedA]);
+
+  useEffect(() => {
+    if (audioRefB.current) audioRefB.current.playbackRate = speedB;
+  }, [speedB]);
+
+  // Load Song into Deck A
+  const loadSongA = async (song: Song) => {
+    if (!audioRefA.current) return;
+    const toastId = toast.loading(`Loading ${song.name} into Deck A...`);
+    try {
+      pauseSong(); // Pause main app player
+      const details = await musicApi.getSongDetails(song.id);
+      const streams = details?.downloadUrl || song.downloadUrl || [];
+      const stream = streams.find(s => s.quality === '320kbps') || streams[streams.length - 1];
+      const url = stream?.url || (song as any).url;
+
+      if (!url) throw new Error("No stream URL");
+
+      audioRefA.current.src = url.replace('http://', 'https://');
+      audioRefA.current.load();
+      setSongA(song);
+      setIsPlayingA(false);
+      toast.success(`Loaded into Deck A!`, { id: toastId });
+    } catch (e) {
+      toast.error("Failed to load song", { id: toastId });
+    }
+  };
+
+  // Load Song into Deck B
+  const loadSongB = async (song: Song) => {
+    if (!audioRefB.current) return;
+    const toastId = toast.loading(`Loading ${song.name} into Deck B...`);
+    try {
+      pauseSong(); // Pause main app player
+      const details = await musicApi.getSongDetails(song.id);
+      const streams = details?.downloadUrl || song.downloadUrl || [];
+      const stream = streams.find(s => s.quality === '320kbps') || streams[streams.length - 1];
+      const url = stream?.url || (song as any).url;
+
+      if (!url) throw new Error("No stream URL");
+
+      audioRefB.current.src = url.replace('http://', 'https://');
+      audioRefB.current.load();
+      setSongB(song);
+      setIsPlayingB(false);
+      toast.success(`Loaded into Deck B!`, { id: toastId });
+    } catch (e) {
+      toast.error("Failed to load song", { id: toastId });
+    }
+  };
+
+  // Toggle Play Deck A
+  const togglePlayA = () => {
+    if (!audioRefA.current || !songA) return;
+    if (isPlayingA) {
+      audioRefA.current.pause();
+      setIsPlayingA(false);
+    } else {
+      pauseSong();
+      audioRefA.current.play().catch(() => {});
+      setIsPlayingA(true);
+    }
+  };
+
+  // Toggle Play Deck B
+  const togglePlayB = () => {
+    if (!audioRefB.current || !songB) return;
+    if (isPlayingB) {
+      audioRefB.current.pause();
+      setIsPlayingB(false);
+    } else {
+      pauseSong();
+      audioRefB.current.play().catch(() => {});
+      setIsPlayingB(true);
+    }
+  };
 
   // Handle Ambient Volume Changes
   const handleAmbientVolumeChange = (id: string, value: number) => {
@@ -146,43 +231,14 @@ const Lofi = () => {
     if (audio) {
       audio.volume = value;
       if (value > 0) {
-        // Pause main music player to avoid chaos
         pauseSong();
         if (audio.paused) {
-          audio.play().catch((err) => {
-            console.error(`Failed to play ambient sound ${id}:`, err);
-          });
+          audio.play().catch(() => {});
         }
       } else {
         audio.pause();
       }
     }
-  };
-
-  // Toggle Lofi Music Play/Pause
-  const toggleLofiPlay = () => {
-    if (!lofiAudioRef.current) return;
-
-    if (isLofiPlaying) {
-      lofiAudioRef.current.pause();
-      setIsLofiPlaying(false);
-    } else {
-      // Pause main app music player
-      pauseSong();
-      lofiAudioRef.current.play().catch(() => {});
-      setIsLofiPlaying(true);
-      toast.info(`Playing: ${LOFI_TRACKS[currentTrackIdx].title}`);
-    }
-  };
-
-  // Next Track
-  const nextTrack = () => {
-    setCurrentTrackIdx(prev => (prev + 1) % LOFI_TRACKS.length);
-  };
-
-  // Prev Track
-  const prevTrack = () => {
-    setCurrentTrackIdx(prev => (prev - 1 + LOFI_TRACKS.length) % LOFI_TRACKS.length);
   };
 
   // Pomodoro Timer Logic
@@ -193,7 +249,6 @@ const Lofi = () => {
           if (prev <= 1) {
             clearInterval(timerIntervalRef.current!);
             setIsTimerRunning(false);
-            // Switch modes
             if (timerMode === 'focus') {
               toast.success("Focus session complete! Take a break.");
               setTimerMode('break');
@@ -210,16 +265,12 @@ const Lofi = () => {
     } else {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     }
-
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
   }, [isTimerRunning, timerMode]);
 
-  const toggleTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
-  };
-
+  const toggleTimer = () => setIsTimerRunning(!isTimerRunning);
   const resetTimer = () => {
     setIsTimerRunning(false);
     setTimeLeft(timerMode === 'focus' ? 25 * 60 : 5 * 60);
@@ -231,7 +282,6 @@ const Lofi = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Save Notes
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setNotes(val);
@@ -244,12 +294,16 @@ const Lofi = () => {
     toast.success("Notes cleared!");
   };
 
+  // Combine Liked and Recent songs for selection
+  const availableSongs = [...likedSongs, ...recentlyPlayed].filter(
+    (v, i, a) => a.findIndex(t => t.id === v.id) === i
+  );
+
   return (
     <MainLayout>
-      {/* Cozy Background Wrapper */}
       <div 
         className="relative min-h-[calc(100vh-80px)] w-full p-4 md:p-10 transition-all duration-1000 ease-in-out bg-cover bg-center"
-        style={{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.9)), url(${currentBg.url})` }}
+        style={{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url(${currentBg.url})` }}
       >
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header */}
@@ -257,12 +311,12 @@ const Lofi = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-primary/20 p-2 rounded-xl">
-                  <Music4 className="text-primary" size={20} />
+                  <Sliders className="text-primary animate-pulse" size={20} />
                 </div>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold">FOCUS SPACE</Badge>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold">LOFI DJ MIXER</Badge>
               </div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">Lofi Focus Beats</h1>
-              <p className="text-xs md:text-sm text-white/60 font-medium">Customize your ambient environment for study, work, or relaxation.</p>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">Personal Lofi Mixer</h1>
+              <p className="text-xs md:text-sm text-white/60 font-medium">Load your favorite songs, slow them down, and mix them with cozy ambient sounds.</p>
             </div>
 
             {/* Background Switcher */}
@@ -282,74 +336,230 @@ const Lofi = () => {
           {/* Main Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             
-            {/* Left Column: Lofi Player & Ambient Mixer */}
+            {/* Left Column: Dual DJ Decks & Crossfader */}
             <div className="lg:col-span-2 space-y-6 md:space-y-8">
               
-              {/* Lofi Music Player Card */}
-              <Card className="bg-black/40 backdrop-blur-xl border-white/10 p-6 rounded-3xl text-white">
-                <div className="flex items-center justify-between mb-6">
+              {/* DJ Mixer Console */}
+              <Card className="bg-black/60 backdrop-blur-2xl border-white/10 p-6 rounded-3xl text-white shadow-2xl">
+                <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
                   <h3 className="font-black text-lg flex items-center gap-2">
-                    <Sparkles className="text-primary" size={18} />
-                    Lofi Radio
+                    <Disc className="text-primary animate-spin" style={{ animationDuration: '4s' }} size={20} />
+                    Dual-Deck Console
                   </h3>
-                  <Badge className="bg-primary/20 text-primary border-none text-[10px] font-bold">HQ STREAM</Badge>
+                  <div className="flex items-center gap-1.5 text-xs text-white/40">
+                    <HelpCircle size={14} />
+                    <span>Slow down speed for Slowed & Reverb vibe</span>
+                  </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  {/* Cozy Vinyl/Disc Art */}
-                  <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full bg-zinc-900 border-4 border-white/10 flex items-center justify-center shadow-2xl shrink-0 overflow-hidden">
-                    <div className={`absolute inset-0 bg-gradient-to-tr from-primary/20 to-purple-500/20 animate-spin duration-10000 ${isLofiPlaying ? 'running' : 'paused'}`} />
-                    <Music4 size={32} className="text-primary relative z-10" />
+                {/* Decks Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
+                  
+                  {/* DECK A */}
+                  <div className="space-y-5 p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-blue-500/20 text-blue-400 border-none font-bold">DECK A</Badge>
+                      
+                      {/* Song Selector A */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs font-bold gap-1.5">
+                            <ListMusic size={14} />
+                            {songA ? 'Change Song' : 'Load Song'}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64 bg-zinc-950 border-white/10 text-white max-h-60 overflow-y-auto rounded-xl">
+                          <DropdownMenuLabel className="text-xs text-white/40">Your Library</DropdownMenuLabel>
+                          <DropdownMenuSeparator className="bg-white/5" />
+                          {availableSongs.length > 0 ? (
+                            availableSongs.map(song => (
+                              <DropdownMenuItem 
+                                key={song.id} 
+                                onClick={() => loadSongA(song)}
+                                className="text-xs font-bold cursor-pointer hover:bg-primary/20 rounded-lg m-1"
+                              >
+                                <span dangerouslySetInnerHTML={{ __html: song.name }} className="truncate" />
+                              </DropdownMenuItem>
+                            ))
+                          ) : (
+                            <div className="p-3 text-center text-xs text-white/40">No songs in library. Heart some songs first!</div>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Deck A Visualizer / Disc */}
+                    <div className="flex flex-col items-center text-center py-4">
+                      <div className={`relative w-24 h-24 rounded-full bg-zinc-900 border-4 border-blue-500/30 flex items-center justify-center shadow-2xl transition-transform duration-1000 ${isPlayingA ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }}>
+                        {songA ? (
+                          <img src={getHighResImage(songA.image)} alt="" className="absolute inset-0 w-full h-full object-cover rounded-full opacity-60" />
+                        ) : null}
+                        <div className="w-6 h-6 rounded-full bg-black border-2 border-white/20 z-10" />
+                      </div>
+
+                      <div className="mt-4 min-h-[48px] max-w-[200px]">
+                        <h4 className="font-black text-sm truncate" dangerouslySetInnerHTML={{ __html: songA?.name || 'Empty Deck' }}></h4>
+                        <p className="text-[10px] text-white/40 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: songA?.primaryArtists || 'Select a song above' }}></p>
+                      </div>
+                    </div>
+
+                    {/* Deck A Controls */}
+                    <div className="space-y-4 border-t border-white/5 pt-4">
+                      <div className="flex items-center justify-center">
+                        <Button 
+                          onClick={togglePlayA}
+                          disabled={!songA}
+                          className={`rounded-full w-12 h-12 flex items-center justify-center shadow-lg ${isPlayingA ? 'bg-blue-600 hover:bg-blue-700' : 'bg-white/10 hover:bg-white/20'} text-white`}
+                        >
+                          {isPlayingA ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+                        </Button>
+                      </div>
+
+                      {/* Speed / Pitch Slider */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-white/60">
+                          <span>Slowed & Reverb Speed</span>
+                          <span className="text-blue-400 font-mono">{speedA.toFixed(2)}x</span>
+                        </div>
+                        <Slider 
+                          value={[speedA * 100]} 
+                          min={70} 
+                          max={120} 
+                          step={1}
+                          onValueChange={([val]) => setSpeedA(val / 100)}
+                          className="cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Volume Slider */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-white/60">
+                          <span>Deck Volume</span>
+                          <span className="font-mono">{Math.round(volumeA * 100)}%</span>
+                        </div>
+                        <Slider 
+                          value={[volumeA * 100]} 
+                          max={100} 
+                          step={1}
+                          onValueChange={([val]) => setVolumeA(val / 100)}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Track Info & Controls */}
-                  <div className="flex-1 text-center md:text-left space-y-4 w-full">
-                    <div>
-                      <h4 className="text-xl font-black tracking-tight">{LOFI_TRACKS[currentTrackIdx].title}</h4>
-                      <p className="text-xs text-white/60 font-medium mt-0.5">{LOFI_TRACKS[currentTrackIdx].artist}</p>
+                  {/* DECK B */}
+                  <div className="space-y-5 p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-purple-500/20 text-purple-400 border-none font-bold">DECK B</Badge>
+                      
+                      {/* Song Selector B */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs font-bold gap-1.5">
+                            <ListMusic size={14} />
+                            {songB ? 'Change Song' : 'Load Song'}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64 bg-zinc-950 border-white/10 text-white max-h-60 overflow-y-auto rounded-xl">
+                          <DropdownMenuLabel className="text-xs text-white/40">Your Library</DropdownMenuLabel>
+                          <DropdownMenuSeparator className="bg-white/5" />
+                          {availableSongs.length > 0 ? (
+                            availableSongs.map(song => (
+                              <DropdownMenuItem 
+                                key={song.id} 
+                                onClick={() => loadSongB(song)}
+                                className="text-xs font-bold cursor-pointer hover:bg-primary/20 rounded-lg m-1"
+                              >
+                                <span dangerouslySetInnerHTML={{ __html: song.name }} className="truncate" />
+                              </DropdownMenuItem>
+                            ))
+                          ) : (
+                            <div className="p-3 text-center text-xs text-white/40">No songs in library. Heart some songs first!</div>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
-                    {/* Controls */}
-                    <div className="flex items-center justify-center md:justify-start gap-4">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={prevTrack}
-                        className="text-white/60 hover:text-white hover:bg-white/5 rounded-full"
-                      >
-                        <RotateCcw size={18} className="transform -scale-x-100" />
-                      </Button>
+                    {/* Deck B Visualizer / Disc */}
+                    <div className="flex flex-col items-center text-center py-4">
+                      <div className={`relative w-24 h-24 rounded-full bg-zinc-900 border-4 border-purple-500/30 flex items-center justify-center shadow-2xl transition-transform duration-1000 ${isPlayingB ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }}>
+                        {songB ? (
+                          <img src={getHighResImage(songB.image)} alt="" className="absolute inset-0 w-full h-full object-cover rounded-full opacity-60" />
+                        ) : null}
+                        <div className="w-6 h-6 rounded-full bg-black border-2 border-white/20 z-10" />
+                      </div>
 
-                      <Button 
-                        onClick={toggleLofiPlay}
-                        className="bg-primary text-white hover:bg-primary/90 rounded-full w-12 h-12 flex items-center justify-center shadow-lg shadow-primary/20"
-                      >
-                        {isLofiPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
-                      </Button>
-
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={nextTrack}
-                        className="text-white/60 hover:text-white hover:bg-white/5 rounded-full"
-                      >
-                        <RotateCcw size={18} />
-                      </Button>
+                      <div className="mt-4 min-h-[48px] max-w-[200px]">
+                        <h4 className="font-black text-sm truncate" dangerouslySetInnerHTML={{ __html: songB?.name || 'Empty Deck' }}></h4>
+                        <p className="text-[10px] text-white/40 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: songB?.primaryArtists || 'Select a song above' }}></p>
+                      </div>
                     </div>
 
-                    {/* Volume Slider */}
-                    <div className="flex items-center gap-3 max-w-xs mx-auto md:mx-0">
-                      <VolumeX size={16} className="text-white/40" />
-                      <Slider 
-                        value={[lofiVolume * 100]} 
-                        max={100} 
-                        step={1}
-                        onValueChange={([val]) => setLofiVolume(val / 100)}
-                        className="flex-1 cursor-pointer"
-                      />
-                      <Volume2 size={16} className="text-white/60" />
+                    {/* Deck B Controls */}
+                    <div className="space-y-4 border-t border-white/5 pt-4">
+                      <div className="flex items-center justify-center">
+                        <Button 
+                          onClick={togglePlayB}
+                          disabled={!songB}
+                          className={`rounded-full w-12 h-12 flex items-center justify-center shadow-lg ${isPlayingB ? 'bg-purple-600 hover:bg-purple-700' : 'bg-white/10 hover:bg-white/20'} text-white`}
+                        >
+                          {isPlayingB ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+                        </Button>
+                      </div>
+
+                      {/* Speed / Pitch Slider */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-white/60">
+                          <span>Slowed & Reverb Speed</span>
+                          <span className="text-purple-400 font-mono">{speedB.toFixed(2)}x</span>
+                        </div>
+                        <Slider 
+                          value={[speedB * 100]} 
+                          min={70} 
+                          max={120} 
+                          step={1}
+                          onValueChange={([val]) => setSpeedB(val / 100)}
+                          className="cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Volume Slider */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-white/60">
+                          <span>Deck Volume</span>
+                          <span className="font-mono">{Math.round(volumeB * 100)}%</span>
+                        </div>
+                        <Slider 
+                          value={[volumeB * 100]} 
+                          max={100} 
+                          step={1}
+                          onValueChange={([val]) => setVolumeB(val / 100)}
+                          className="cursor-pointer"
+                        />
+                      </div>
                     </div>
                   </div>
+
+                </div>
+
+                {/* Crossfader Console */}
+                <div className="mt-8 border-t border-white/5 pt-6 max-w-md mx-auto space-y-3">
+                  <div className="flex items-center justify-between text-xs font-bold text-white/60">
+                    <span className="text-blue-400">Deck A</span>
+                    <span className="flex items-center gap-1 text-white/40">
+                      <ArrowRightLeft size={12} />
+                      Crossfader
+                    </span>
+                    <span className="text-purple-400">Deck B</span>
+                  </div>
+                  <Slider 
+                    value={[crossfader * 100]} 
+                    max={100} 
+                    step={1}
+                    onValueChange={([val]) => setCrossfader(val / 100)}
+                    className="cursor-pointer"
+                  />
                 </div>
               </Card>
 
