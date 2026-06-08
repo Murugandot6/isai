@@ -50,13 +50,13 @@ const BACKGROUNDS = [
   }
 ];
 
-// Ambient Sounds Config with 100% hotlink-friendly GitHub Raw CDN streams
+// Ambient Sounds Config with 100% reliable, globally unblocked jsDelivr CDN streams
 const AMBIENT_SOUNDS = [
-  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://raw.githubusercontent.com/rafaelreis-hotmart/Ambient-Sounds-Tribute/main/sounds/rain.mp3' },
-  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://raw.githubusercontent.com/rafaelreis-hotmart/Ambient-Sounds-Tribute/main/sounds/fire.mp3' },
-  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://raw.githubusercontent.com/rafaelreis-hotmart/Ambient-Sounds-Tribute/main/sounds/cafe.mp3' },
-  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://raw.githubusercontent.com/rafaelreis-hotmart/Ambient-Sounds-Tribute/main/sounds/keyboard.mp3' },
-  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://raw.githubusercontent.com/rafaelreis-hotmart/Ambient-Sounds-Tribute/main/sounds/forest.mp3' },
+  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://cdn.jsdelivr.net/gh/rafaelreis-hotmart/Ambient-Sounds-Tribute@main/sounds/rain.mp3' },
+  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://cdn.jsdelivr.net/gh/rafaelreis-hotmart/Ambient-Sounds-Tribute@main/sounds/fire.mp3' },
+  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://cdn.jsdelivr.net/gh/rafaelreis-hotmart/Ambient-Sounds-Tribute@main/sounds/cafe.mp3' },
+  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://cdn.jsdelivr.net/gh/rafaelreis-hotmart/Ambient-Sounds-Tribute@main/sounds/keyboard.mp3' },
+  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://cdn.jsdelivr.net/gh/rafaelreis-hotmart/Ambient-Sounds-Tribute@main/sounds/forest.mp3' },
 ];
 
 const Lofi = () => {
