@@ -8,16 +8,18 @@ import { musicApi, Playlist } from '@/services/musicApi';
 import { getHighResImage } from '@/lib/image-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useMusic } from '@/context/MusicContext';
 
 const Featured = () => {
   const navigate = useNavigate();
+  const { selectedLanguages } = useMusic();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchFeaturedPlaylists = async (pageNum: number) => {
+  const fetchFeaturedPlaylists = async (pageNum: number, langs: string[]) => {
     if (pageNum === 0) {
       setLoading(true);
     } else {
@@ -25,13 +27,37 @@ const Featured = () => {
     }
 
     try {
-      const results = await musicApi.searchPlaylists("top tamil", pageNum, 40);
-      if (results.length === 0) {
+      const activeLangs = langs.length > 0 ? langs : ['tamil'];
+      // Fetch playlists for each selected language in parallel
+      const limitPerLang = Math.max(15, Math.floor(40 / activeLangs.length));
+      
+      const promises = activeLangs.map(lang => 
+        musicApi.searchPlaylists(`top ${lang}`, pageNum, limitPerLang).catch(err => {
+          console.error(`Failed to fetch playlists for ${lang}:`, err);
+          return [] as Playlist[];
+        })
+      );
+
+      const resultsArray = await Promise.all(promises);
+      
+      // Interleave results from different languages for a diverse mix
+      const combined: Playlist[] = [];
+      const maxLength = Math.max(...resultsArray.map(r => r.length));
+      
+      for (let i = 0; i < maxLength; i++) {
+        for (let j = 0; j < resultsArray.length; j++) {
+          if (resultsArray[j][i]) {
+            combined.push(resultsArray[j][i]);
+          }
+        }
+      }
+
+      if (combined.length === 0) {
         setHasMore(false);
       } else {
-        setPlaylists(prev => pageNum === 0 ? results : [...prev, ...results]);
-        // If we got fewer results than the limit, we've reached the end
-        if (results.length < 40) {
+        setPlaylists(prev => pageNum === 0 ? combined : [...prev, ...combined]);
+        // If we got significantly fewer results than requested, we've reached the end
+        if (combined.length < (limitPerLang * activeLangs.length) / 2) {
           setHasMore(false);
         }
       }
@@ -43,8 +69,19 @@ const Featured = () => {
     }
   };
 
+  // Reset and fetch when selected languages change
   useEffect(() => {
-    fetchFeaturedPlaylists(page);
+    setPage(0);
+    setPlaylists([]);
+    setHasMore(true);
+    fetchFeaturedPlaylists(0, selectedLanguages);
+  }, [selectedLanguages]);
+
+  // Fetch next page when page changes
+  useEffect(() => {
+    if (page > 0) {
+      fetchFeaturedPlaylists(page, selectedLanguages);
+    }
   }, [page]);
 
   const handleLoadMore = () => {
@@ -60,7 +97,9 @@ const Featured = () => {
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight">Featured Playlists</h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-medium">Explore the best of Tamil music collections.</p>
+            <p className="text-xs md:text-sm text-muted-foreground font-medium">
+              Explore curated collections in <span className="text-primary font-bold uppercase">{selectedLanguages.join(', ')}</span>.
+            </p>
           </div>
         </div>
 
@@ -120,7 +159,7 @@ const Featured = () => {
           </div>
         ) : (
           <div className="text-center py-20 text-muted-foreground">
-            No featured playlists found.
+            No featured playlists found for your selected languages.
           </div>
         )}
       </div>

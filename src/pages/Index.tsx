@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
-import { FEATURED_PLAYLISTS } from '@/data/featuredPlaylists';
 import { TRENDING_TODAY_DATA } from '@/data/trendingToday';
 
 const DECADE_PLAYLISTS_CONFIG = [
@@ -31,6 +30,7 @@ const DECADE_PLAYLISTS_CONFIG = [
 const Index = () => {
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [decadePlaylists, setDecadePlaylists] = useState<Playlist[]>([]);
+  const [curatedPlaylists, setCuratedPlaylists] = useState<Playlist[]>([]);
   
   // Year-wise Latest Releases States
   const [releases2026, setReleases2026] = useState<Album[]>([]);
@@ -66,6 +66,24 @@ const Index = () => {
         );
         setDecadePlaylists(decadesData.filter(p => p !== null) as Playlist[]);
         
+        // Fetch curated playlists dynamically based on selected languages
+        const activeLangs = selectedLanguages.length > 0 ? selectedLanguages : ['tamil'];
+        const limitPerLang = Math.max(4, Math.floor(12 / activeLangs.length));
+        const curatedPromises = activeLangs.map(lang => 
+          musicApi.searchPlaylists(`top ${lang}`, 0, limitPerLang).catch(() => [] as Playlist[])
+        );
+        const curatedResults = await Promise.all(curatedPromises);
+        const combinedCurated: Playlist[] = [];
+        const maxCuratedLength = Math.max(...curatedResults.map(r => r.length));
+        for (let i = 0; i < maxCuratedLength; i++) {
+          for (let j = 0; j < curatedResults.length; j++) {
+            if (curatedResults[j][i]) {
+              combinedCurated.push(curatedResults[j][i]);
+            }
+          }
+        }
+        setCuratedPlaylists(combinedCurated.slice(0, 12));
+
         // Fetch year-wise releases safely
         const r2026 = await musicApi.searchAlbums(`${primaryLang} 2026`).catch(() => []);
         const r2025 = await musicApi.searchAlbums(`${primaryLang} 2025`).catch(() => []);
@@ -211,7 +229,7 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Curated Featured Playlists (Local Dataset) */}
+        {/* Curated Featured Playlists (Dynamic Language-Filtered Dataset) */}
         <section className="mb-10 md:mb-16">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -229,30 +247,38 @@ const Index = () => {
           </div>
           
           <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-            {FEATURED_PLAYLISTS.slice(0, 12).map((playlist) => {
-              const songCount = playlist.more_info?.song_count || "0";
-              return (
-                <div 
-                  key={playlist.id}
-                  onClick={() => navigate(`/playlist/${playlist.id}`)}
-                  className="group relative w-[200px] md:w-[240px] shrink-0 aspect-square rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-lg transition-all hover:-translate-y-1"
-                >
-                  <img 
-                    src={playlist.image} 
-                    alt={playlist.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 md:p-6 flex flex-col justify-end">
-                    <h4 className="text-white font-black text-sm md:text-base mb-1 truncate" dangerouslySetInnerHTML={{ __html: playlist.title }}></h4>
-                    <div className="flex items-center gap-1.5 text-white/60 text-[10px] font-bold uppercase tracking-wider">
-                      <Music size={10} />
-                      <span>{songCount} Tracks</span>
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="w-[200px] md:w-[240px] shrink-0 aspect-square rounded-2xl md:rounded-3xl" />
+              ))
+            ) : curatedPlaylists.length > 0 ? (
+              curatedPlaylists.map((playlist, index) => {
+                const songCount = playlist.songCount || "0";
+                return (
+                  <div 
+                    key={`${playlist.id}-${index}`}
+                    onClick={() => navigate(`/playlist/${playlist.id}`)}
+                    className="group relative w-[200px] md:w-[240px] shrink-0 aspect-square rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-lg transition-all hover:-translate-y-1"
+                  >
+                    <img 
+                      src={getHighResImage(playlist.image)} 
+                      alt={playlist.name} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 md:p-6 flex flex-col justify-end">
+                      <h4 className="text-white font-black text-sm md:text-base mb-1 truncate" dangerouslySetInnerHTML={{ __html: playlist.name }}></h4>
+                      <div className="flex items-center gap-1.5 text-white/60 text-[10px] font-bold uppercase tracking-wider">
+                        <Music size={10} />
+                        <span>{songCount} Tracks</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div className="text-xs text-muted-foreground italic py-4">No curated playlists found for your selected languages.</div>
+            )}
           </div>
         </section>
 
