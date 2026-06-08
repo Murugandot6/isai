@@ -50,13 +50,13 @@ const BACKGROUNDS = [
   }
 ];
 
-// Ambient Sounds Config
+// Ambient Sounds Config with highly reliable public MP3 streams
 const AMBIENT_SOUNDS = [
-  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://assets.mixkit.co/active_storage/sfx/2433/2433-84.wav' },
-  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://assets.mixkit.co/active_storage/sfx/2432/2432-84.wav' },
-  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav' },
-  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://assets.mixkit.co/active_storage/sfx/1548/1548-84.wav' },
-  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://assets.mixkit.co/active_storage/sfx/2434/2434-84.wav' },
+  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://www.soundjay.com/nature/sounds/rain-07.mp3' },
+  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://www.soundjay.com/nature/sounds/fire-1.mp3' },
+  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://www.soundjay.com/misc/sounds/coffee-shop-1.mp3' },
+  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://www.soundjay.com/mechanical/sounds/computer-keyboard-1.mp3' },
+  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://www.soundjay.com/nature/sounds/forest-wind-1.mp3' },
 ];
 
 const Lofi = () => {
@@ -108,14 +108,6 @@ const Lofi = () => {
     audioRefB.current = new Audio();
     audioRefB.current.loop = true;
 
-    // Load ambient sounds
-    AMBIENT_SOUNDS.forEach(sound => {
-      const audio = new Audio(sound.url);
-      audio.loop = true;
-      audio.volume = 0;
-      ambientRefs.current[sound.id] = audio;
-    });
-
     // Load saved notes
     const savedNotes = localStorage.getItem('anbae_lofi_notes');
     if (savedNotes) setNotes(savedNotes);
@@ -132,12 +124,10 @@ const Lofi = () => {
   // Apply Volumes based on Crossfader
   useEffect(() => {
     if (audioRefA.current) {
-      // As crossfader goes to 1, Deck A volume goes to 0
       const factorA = Math.cos((crossfader * Math.PI) / 2);
       audioRefA.current.volume = volumeA * factorA;
     }
     if (audioRefB.current) {
-      // As crossfader goes to 0, Deck B volume goes to 0
       const factorB = Math.sin((crossfader * Math.PI) / 2);
       audioRefB.current.volume = volumeB * factorB;
     }
@@ -224,16 +214,31 @@ const Lofi = () => {
     }
   };
 
-  // Handle Ambient Volume Changes
+  // Handle Ambient Volume Changes (On-Demand Initialization)
   const handleAmbientVolumeChange = (id: string, value: number) => {
     setAmbientVolumes(prev => ({ ...prev, [id]: value }));
+    
+    // Initialize audio element on-demand if it doesn't exist yet
+    if (!ambientRefs.current[id]) {
+      const soundConfig = AMBIENT_SOUNDS.find(s => s.id === id);
+      if (soundConfig) {
+        const audio = new Audio();
+        audio.src = soundConfig.url;
+        audio.loop = true;
+        audio.crossOrigin = "anonymous"; // Prevent CORS issues
+        ambientRefs.current[id] = audio;
+      }
+    }
+
     const audio = ambientRefs.current[id];
     if (audio) {
       audio.volume = value;
       if (value > 0) {
-        pauseSong();
+        pauseSong(); // Pause main app player
         if (audio.paused) {
-          audio.play().catch(() => {});
+          audio.play().catch((err) => {
+            console.error(`Failed to play ambient sound ${id}:`, err);
+          });
         }
       } else {
         audio.pause();
