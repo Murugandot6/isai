@@ -36,12 +36,10 @@ const Login = () => {
         try {
           video.muted = true;
           await video.play();
-          console.log("Video background playing successfully.");
         } catch (err) {
-          console.warn("Autoplay failed or was prevented. Retrying on user interaction...", err);
           // Fallback: try playing again on first document click/touch
           const forcePlay = () => {
-            video?.play().catch(e => console.error("Force play failed:", e));
+            video?.play().catch(() => {});
             document.removeEventListener('click', forcePlay);
             document.removeEventListener('touchstart', forcePlay);
           };
