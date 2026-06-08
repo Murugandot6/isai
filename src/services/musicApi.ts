@@ -122,5 +122,44 @@ export const musicApi = {
     } catch (e) {
       return null;
     }
+  },
+
+  // Trending songs endpoint
+  getTrending: async (languages: string = 'tamil'): Promise<Song[]> => {
+    try {
+      const langList = languages.split(',').filter(Boolean);
+      const primaryLang = langList[0] || 'tamil';
+      // Fetch trending songs by searching for popular hits in the selected language
+      const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(primaryLang + ' hits')}&limit=30`);
+      const res = await response.json();
+      return res.data?.results || [];
+    } catch (e) {
+      console.error("Error in getTrending:", e);
+      return [];
+    }
+  },
+
+  // Artist details endpoint
+  getArtistDetails: async (id: string): Promise<any | null> => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/artists/${id}`);
+      const res = await response.json();
+      return res.data || null;
+    } catch (e) {
+      console.error("Error in getArtistDetails:", e);
+      return null;
+    }
+  },
+
+  // Artist songs endpoint
+  getArtistSongs: async (id: string, page: number = 0): Promise<Song[]> => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${page}`);
+      const res = await response.json();
+      return res.data?.songs || res.data?.results || [];
+    } catch (e) {
+      console.error("Error in getArtistSongs:", e);
+      return [];
+    }
   }
 };
