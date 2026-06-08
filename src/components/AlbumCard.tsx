@@ -1,8 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Album, getContainerCount } from '@/services/musicApi';
-import { Play, Calendar, Music } from 'lucide-react';
+import { Album } from '@/services/musicApi';
+import { Play, Calendar } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,10 +12,6 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
   if (!album) return null;
 
   const imageUrl = getHighResImage(album.image);
-  
-  // Calculate track count using the same robust logic as AlbumDetails
-  const songs = album.songs || [];
-  const trackCount = songs.length || Number(album.songCount) || getContainerCount(album);
 
   return (
     <div 
@@ -29,14 +25,6 @@ export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
           className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
         />
-        
-        {/* Track count badge inside the image */}
-        <div className="absolute top-2 right-2 z-10 transition-transform duration-300 group-hover:scale-110">
-          <div className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg border border-white/10">
-            <Music size={10} />
-            <span>{trackCount}</span>
-          </div>
-        </div>
         
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
