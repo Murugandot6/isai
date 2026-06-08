@@ -45,6 +45,21 @@ export interface Playlist {
 
 const BASE_URL = 'https://jiosaavn-api.imurugan.workers.dev';
 
+// Helper to get the song count from any album/playlist object consistently
+export const getContainerCount = (item: any): number => {
+  if (!item) return 0;
+  
+  if (Array.isArray(item.songs) && item.songs.length > 0) {
+    return item.songs.length;
+  }
+  
+  if (item.songCount !== undefined) {
+    return parseInt(String(item.songCount)) || 0;
+  }
+  
+  return 0;
+};
+
 export const musicApi = {
   // Global search for all types
   searchAll: async (query: string) => {
