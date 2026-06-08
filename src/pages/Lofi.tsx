@@ -26,37 +26,37 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 
-// Beautiful Cozy Backgrounds from Pixabay
+// Cozy Backgrounds
 const BACKGROUNDS = [
   {
     id: 'cozy-room',
     name: 'Cozy Room',
-    url: 'https://cdn.pixabay.com/photo/2017/08/02/01/01/living-room-2569325_1280.jpg',
+    url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=1600',
   },
   {
     id: 'rainy-window',
     name: 'Rainy Window',
-    url: 'https://cdn.pixabay.com/photo/2015/07/14/06/11/drop-of-water-844269_1280.jpg',
+    url: 'https://images.unsplash.com/photo-1428908728789-d2de25dbd4e2?q=80&w=1600',
   },
   {
     id: 'cafe',
     name: 'Cozy Cafe',
-    url: 'https://cdn.pixabay.com/photo/2015/07/13/14/40/coffee-shop-843244_1280.jpg',
+    url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=1600',
   },
   {
     id: 'starry-night',
     name: 'Starry Night',
-    url: 'https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_1280.jpg',
+    url: 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1600',
   }
 ];
 
-// High-Quality, CORS-friendly Ambient Sounds from Pixabay CDN
+// Ambient Sounds Config with highly reliable public MP3 streams
 const AMBIENT_SOUNDS = [
-  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://cdn.pixabay.com/audio/2022/07/04/audio_1170a2a104.mp3' },
-  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://cdn.pixabay.com/audio/2021/09/06/audio_5f72d13f25.mp3' },
-  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://cdn.pixabay.com/audio/2022/02/22/audio_7e4e303d12.mp3' },
-  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://cdn.pixabay.com/audio/2022/03/15/audio_208509e15e.mp3' },
-  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69fa.mp3' },
+  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://assets.mixkit.co/active_storage/sfx/2433/2433-84.wav' },
+  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://assets.mixkit.co/active_storage/sfx/2432/2432-84.wav' },
+  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav' },
+  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://assets.mixkit.co/active_storage/sfx/1548/1548-84.wav' },
+  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://assets.mixkit.co/active_storage/sfx/2434/2434-84.wav' },
 ];
 
 const Lofi = () => {
@@ -90,7 +90,15 @@ const Lofi = () => {
     keyboard: 0,
     forest: 0,
   });
-  const ambientRefs = useRef<Record<string, HTMLAudioElement | null>>({});
+
+  // Refs for DOM Audio Elements
+  const ambientRefs = {
+    rain: useRef<HTMLAudioElement | null>(null),
+    fire: useRef<HTMLAudioElement | null>(null),
+    cafe: useRef<HTMLAudioElement | null>(null),
+    keyboard: useRef<HTMLAudioElement | null>(null),
+    forest: useRef<HTMLAudioElement | null>(null),
+  };
 
   // Pomodoro Timer State
   const [timerMode, setTimerMode] = useState<'focus' | 'break'>('focus');
@@ -115,8 +123,9 @@ const Lofi = () => {
     return () => {
       if (audioRefA.current) audioRefA.current.pause();
       if (audioRefB.current) audioRefB.current.pause();
-      Object.values(ambientRefs.current).forEach(audio => {
-        if (audio) audio.pause();
+      // Pause all ambient sounds on unmount
+      Object.values(ambientRefs).forEach(ref => {
+        if (ref.current) ref.current.pause();
       });
     };
   }, []);
@@ -214,23 +223,11 @@ const Lofi = () => {
     }
   };
 
-  // Handle Ambient Volume Changes (On-Demand Initialization)
-  const handleAmbientVolumeChange = (id: string, value: number) => {
+  // Handle Ambient Volume Changes
+  const handleAmbientVolumeChange = (id: 'rain' | 'fire' | 'cafe' | 'keyboard' | 'forest', value: number) => {
     setAmbientVolumes(prev => ({ ...prev, [id]: value }));
     
-    // Initialize audio element on-demand if it doesn't exist yet
-    if (!ambientRefs.current[id]) {
-      const soundConfig = AMBIENT_SOUNDS.find(s => s.id === id);
-      if (soundConfig) {
-        const audio = new Audio();
-        audio.src = soundConfig.url;
-        audio.loop = true;
-        audio.crossOrigin = "anonymous"; // Prevent CORS issues
-        ambientRefs.current[id] = audio;
-      }
-    }
-
-    const audio = ambientRefs.current[id];
+    const audio = ambientRefs[id].current;
     if (audio) {
       audio.volume = value;
       if (value > 0) {
@@ -306,6 +303,19 @@ const Lofi = () => {
 
   return (
     <MainLayout>
+      {/* Hidden DOM Audio Elements for Ambient Sounds to guarantee browser playback */}
+      {AMBIENT_SOUNDS.map(sound => (
+        <audio 
+          key={sound.id}
+          ref={ambientRefs[sound.id as 'rain' | 'fire' | 'cafe' | 'keyboard' | 'forest']}
+          src={sound.url}
+          loop
+          preload="auto"
+          crossOrigin="anonymous"
+          className="hidden"
+        />
+      ))}
+
       <div 
         className="relative min-h-[calc(100vh-80px)] w-full p-4 md:p-10 transition-all duration-1000 ease-in-out bg-cover bg-center"
         style={{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.95)), url(${currentBg.url})` }}
@@ -593,7 +603,7 @@ const Lofi = () => {
                             value={[vol * 100]} 
                             max={100} 
                             step={1}
-                            onValueChange={([val]) => handleAmbientVolumeChange(sound.id, val / 100)}
+                            onValueChange={([val]) => handleAmbientVolumeChange(sound.id as any, val / 100)}
                             className="cursor-pointer"
                           />
                         </div>
