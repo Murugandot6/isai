@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Playlist } from '@/services/musicApi';
@@ -18,6 +18,10 @@ const PlaylistDetails = () => {
   const [loading, setLoading] = useState(true);
   const { playSong } = useMusic();
 
+  // Lazy loading states
+  const [visibleSongsCount, setVisibleSongsCount] = useState(20);
+  const observer = useRef<IntersectionObserver | null>(null);
+
   useEffect(() => {
     const fetchPlaylist = async () => {
       if (!id) return;
@@ -25,6 +29,7 @@ const PlaylistDetails = () => {
       try {
         const data = await musicApi.getPlaylistDetails(id);
         setPlaylist(data);
+        setVisibleSongsCount(20); // Reset visible count on playlist change
       } catch (error) {
         console.error("Failed to fetch playlist details", error);
       } finally {
@@ -34,7 +39,26 @@ const PlaylistDetails = () => {
     fetchPlaylist();
   }, [id]);
 
-  if (loading) {
+  const songs = playlist?.songs || [];
+  const songCount = songs.length;
+  const visibleSongs = songs.slice(0, visibleSongsCount);
+  const hasMoreSongs = visibleSongsCount < songCount;
+
+  // Intersection Observer callback for infinite scroll
+  const lastSongElementRef = useCallback((node: HTMLDivElement) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMoreSongs) {
+        setVisibleSongsCount(prev => Math.min(prev + 20, songCount));
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, hasMoreSongs, songCount]);
+
+  if (loading && !playlist) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -54,9 +78,6 @@ const PlaylistDetails = () => {
       </MainLayout>
     );
   }
-
-  const songs = playlist.songs || [];
-  const songCount = songs.length;
 
   return (
     <MainLayout>
@@ -117,10 +138,24 @@ const PlaylistDetails = () => {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {songs.map((song) => (
-              <SongCard key={song.id} song={song} allSongs={songs} />
-            ))}
+            {visibleSongs.map((song, index) => {
+              const isLastElement = index === visibleSongs.length - 1;
+              return (
+                <div 
+                  key={`${song.id}-${index}`} 
+                  ref={isLastElement ? lastSongElementRef : null}
+                >
+                  <SongCard song={song} allSongs={songs} />
+                </div>
+              );
+            })}
           </div>
+
+          {hasMoreSongs && (
+            <div className="flex justify-center py-8">
+              <Loader2 className="animate-spin text-primary" size={24} />
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

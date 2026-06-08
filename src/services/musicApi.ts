@@ -117,18 +117,18 @@ export const musicApi = {
   getPlaylistDetails: async (id: string): Promise<Playlist | null> => {
     try {
       // Try query parameter first as it is standard for imurugan/saavn API
-      let response = await fetch(`${BASE_URL}/api/playlists?id=${id}&limit=150`);
+      let response = await fetch(`${BASE_URL}/api/playlists?id=${id}&limit=500`);
       let res = await response.json();
       if (res.data) return res.data;
 
       // Fallback to path parameter
-      response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=150`);
+      response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=500`);
       res = await response.json();
       return res.data || null;
     } catch (e) {
       try {
         // Fallback to path parameter on error
-        const response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=150`);
+        const response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=500`);
         const res = await response.json();
         return res.data || null;
       } catch (err) {
