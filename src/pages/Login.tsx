@@ -15,7 +15,7 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const videoRef = useRef<HTMLIFrameElement | HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,8 +31,8 @@ const Login = () => {
   // Robust autoplay trigger for mobile & desktop
   useEffect(() => {
     const playVideo = async () => {
-      const video = videoRef.current as HTMLVideoElement;
-      if (video && typeof video.play === 'function') {
+      const video = videoRef.current;
+      if (video) {
         try {
           video.muted = true;
           await video.play();
@@ -41,9 +41,7 @@ const Login = () => {
           console.warn("Autoplay failed or was prevented. Retrying on user interaction...", err);
           // Fallback: try playing again on first document click/touch
           const forcePlay = () => {
-            if (video && typeof video.play === 'function') {
-              video.play().catch(e => console.error("Force play failed:", e));
-            }
+            video?.play().catch(e => console.error("Force play failed:", e));
             document.removeEventListener('click', forcePlay);
             document.removeEventListener('touchstart', forcePlay);
           };
@@ -116,9 +114,9 @@ const Login = () => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-black">
       {/* Fallback Pure Black Background & Video Container */}
-      <div className="absolute inset-0 w-full h-full bg-black z-0">
+      <div className="absolute inset-0 w-full h-full bg-black z-0 overflow-hidden">
         <video
-          ref={videoRef as React.RefObject<HTMLVideoElement>}
+          ref={videoRef}
           autoPlay
           loop
           muted
