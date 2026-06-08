@@ -57,20 +57,40 @@ const Index = () => {
       try {
         const primaryLang = selectedLanguages[0] || 'tamil';
         
-        const [trendingData, decadesData, albumsData, r2025, r2024, r2023] = await Promise.all([
-          musicApi.getTrending(selectedLanguages.join(',')),
-          Promise.all(DECADE_PLAYLIST_IDS.map(id => musicApi.getPlaylistDetails(id))),
-          Promise.all(MOVIE_ALBUM_IDS.map(id => musicApi.getAlbumDetails(id))),
-          musicApi.searchAlbums(`${primaryLang} 2025`),
-          musicApi.searchAlbums(`${primaryLang} 2024`),
-          musicApi.searchAlbums(`${primaryLang} 2023`)
-        ]);
-        
+        // Fetch trending songs safely
+        const trendingData = await musicApi.getTrending(selectedLanguages.join(',')).catch((err) => {
+          console.error('Failed to fetch trending songs:', err);
+          return [] as Song[];
+        });
         setTrendingSongs(trendingData);
+
+        // Fetch decade playlists safely (individually caught so one failure doesn't block others)
+        const decadesData = await Promise.all(
+          DECADE_PLAYLIST_IDS.map(id => 
+            musicApi.getPlaylistDetails(id).catch((err) => {
+              console.error(`Failed to fetch decade playlist ${id}:`, err);
+              return null;
+            })
+          )
+        );
         setDecadePlaylists(decadesData.filter(p => p !== null) as Playlist[]);
+
+        // Fetch movie albums safely
+        const albumsData = await Promise.all(
+          MOVIE_ALBUM_IDS.map(id => 
+            musicApi.getAlbumDetails(id).catch((err) => {
+              console.error(`Failed to fetch movie album ${id}:`, err);
+              return null;
+            })
+          )
+        );
         setMovieAlbums(albumsData.filter(a => a !== null) as Album[]);
         
-        // Filter and set year-wise releases
+        // Fetch year-wise releases safely
+        const r2025 = await musicApi.searchAlbums(`${primaryLang} 2025`).catch(() => []);
+        const r2024 = await musicApi.searchAlbums(`${primaryLang} 2024`).catch(() => []);
+        const r2023 = await musicApi.searchAlbums(`${primaryLang} 2023`).catch(() => []);
+        
         setReleases2025((r2025 || []).slice(0, 10));
         setReleases2024((r2024 || []).slice(0, 10));
         setReleases2023((r2023 || []).slice(0, 10));
