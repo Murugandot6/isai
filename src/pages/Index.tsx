@@ -14,13 +14,17 @@ import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
 import { FEATURED_PLAYLISTS } from '@/data/featuredPlaylists';
 
-const DECADE_PLAYLIST_IDS = [
-  '1170578788',   // Tamil 2010s
-  '1170578783',   // Tamil 2000s
-  '1170578779',   // Tamil 1990s
-  '901538755',    // Tamil 1980s
-  '901538753',    // Tamil 1970s
-  '901538752',    // Tamil 1960s
+const DECADE_PLAYLISTS_CONFIG = [
+  { id: "1170578779", title: "Tamil 1990s" },
+  { id: "1170578783", title: "Tamil 2000s" },
+  { id: "901538755", title: "Tamil 1980s" },
+  { id: "1170578788", title: "Tamil 2010s" },
+  { id: "1074590003", title: "Tamil BGM" },
+  { id: "1133105280", title: "Tamil Hit Songs" },
+  { id: "804092154", title: "Sad Love - Tamil" },
+  { id: "901538752", title: "Tamil 1960s" },
+  { id: "901538753", title: "Tamil 1970s" },
+  { id: "1134651042", title: "Tamil: India Superhits Top 50" }
 ];
 
 const MOVIE_ALBUM_IDS = [
@@ -66,9 +70,9 @@ const Index = () => {
 
         // Fetch decade playlists safely (individually caught so one failure doesn't block others)
         const decadesData = await Promise.all(
-          DECADE_PLAYLIST_IDS.map(id => 
-            musicApi.getPlaylistDetails(id).catch((err) => {
-              console.error(`Failed to fetch decade playlist ${id}:`, err);
+          DECADE_PLAYLISTS_CONFIG.map(config => 
+            musicApi.getPlaylistDetails(config.id).catch((err) => {
+              console.error(`Failed to fetch decade playlist ${config.id}:`, err);
               return null;
             })
           )
@@ -331,28 +335,32 @@ const Index = () => {
             <h3 className="text-xl md:text-2xl font-black tracking-tight">Tamil Through the Decades</h3>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-24 md:h-32 w-full rounded-2xl" />
               ))
             ) : (
-              decadePlaylists.map((playlist) => (
-                <div 
-                  key={playlist.id}
-                  onClick={() => navigate(`/playlist/${playlist.id}`)}
-                  className="group relative h-24 md:h-32 rounded-2xl overflow-hidden cursor-pointer shadow-md transition-all hover:scale-105"
-                >
-                  <img 
-                    src={getHighResImage(playlist.image)} 
-                    alt={playlist.name} 
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-                  />
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-3 text-center">
-                    <h4 className="text-white font-black text-xs md:text-sm uppercase tracking-widest" dangerouslySetInnerHTML={{ __html: playlist.name }}></h4>
+              decadePlaylists.map((playlist) => {
+                const config = DECADE_PLAYLISTS_CONFIG.find(c => c.id === playlist.id);
+                const title = config ? config.title : playlist.name;
+                return (
+                  <div 
+                    key={playlist.id}
+                    onClick={() => navigate(`/playlist/${playlist.id}`)}
+                    className="group relative h-24 md:h-32 rounded-2xl overflow-hidden cursor-pointer shadow-md transition-all hover:scale-105"
+                  >
+                    <img 
+                      src={getHighResImage(playlist.image)} 
+                      alt={title} 
+                      className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                    />
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-3 text-center">
+                      <h4 className="text-white font-black text-xs md:text-sm uppercase tracking-widest" dangerouslySetInnerHTML={{ __html: title }}></h4>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </section>
