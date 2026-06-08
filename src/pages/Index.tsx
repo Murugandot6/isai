@@ -6,7 +6,7 @@ import { musicApi, Song, Playlist, Album } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { AlbumCard } from '@/components/AlbumCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users, Flame } from 'lucide-react';
+import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users, Flame, Music } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
