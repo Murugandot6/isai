@@ -6,7 +6,7 @@ import { musicApi, Song, Playlist, Album } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { AlbumCard } from '@/components/AlbumCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users, Flame, Music } from 'lucide-react';
+import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users, Flame, Music, Mic2, ListMusic, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -162,7 +162,7 @@ const Index = () => {
 
         {/* Hero Banner */}
         <div 
-          className="relative h-[280px] sm:h-[360px] md:h-[420px] rounded-3xl overflow-hidden mb-10 md:mb-16 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
+          className="relative h-[280px] sm:h-[360px] md:h-[420px] rounded-3xl overflow-hidden mb-8 md:mb-12 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
           onClick={() => trendingSongs.length > 0 && playSong(trendingSongs[0], trendingSongs)}
         >
           <img 
@@ -185,6 +185,43 @@ const Index = () => {
             </button>
           </div>
         </div>
+
+        {/* Quick Browse Section (Highly visible on Mobile) */}
+        <section className="mb-10 md:mb-16">
+          <div className="grid grid-cols-2 gap-4">
+            <div 
+              onClick={() => navigate('/artists')}
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-900 p-5 flex flex-col justify-between aspect-[16/10] cursor-pointer group hover:shadow-lg hover:shadow-purple-500/10 transition-all"
+            >
+              <div className="absolute right-[-10px] bottom-[-10px] opacity-20 group-hover:scale-110 transition-transform duration-300">
+                <Mic2 size={100} className="text-white" />
+              </div>
+              <div className="bg-white/10 p-2 rounded-xl w-fit">
+                <Mic2 className="text-white" size={20} />
+              </div>
+              <div>
+                <h3 className="text-white font-black text-base md:text-lg tracking-tight">Artists</h3>
+                <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider">Tamil Legends & Stars</p>
+              </div>
+            </div>
+
+            <div 
+              onClick={() => navigate('/featured')}
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-600 to-rose-900 p-5 flex flex-col justify-between aspect-[16/10] cursor-pointer group hover:shadow-lg hover:shadow-pink-500/10 transition-all"
+            >
+              <div className="absolute right-[-10px] bottom-[-10px] opacity-20 group-hover:scale-110 transition-transform duration-300">
+                <ListMusic size={100} className="text-white" />
+              </div>
+              <div className="bg-white/10 p-2 rounded-xl w-fit">
+                <Sparkles className="text-white" size={20} />
+              </div>
+              <div>
+                <h3 className="text-white font-black text-base md:text-lg tracking-tight">Playlists</h3>
+                <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider">Curated Collections</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Trending Today Section */}
         <section className="mb-10 md:mb-16">
