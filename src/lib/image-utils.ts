@@ -4,8 +4,8 @@
  * Extracts the highest quality image URL from the API response array.
  * Structure: [{ quality: "500x500", url: "..." }]
  */
-export const getHighResImage = (image: any) => {
-  const fallback = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=500';
+export const getHighResImage = (image: any, customFallback?: string) => {
+  const fallback = customFallback || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=500';
   
   if (!image) return fallback;
 

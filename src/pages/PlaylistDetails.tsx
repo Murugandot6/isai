@@ -43,6 +43,7 @@ const PlaylistDetails = () => {
   const songCount = songs.length;
   const visibleSongs = songs.slice(0, visibleSongsCount);
   const hasMoreSongs = visibleSongsCount < songCount;
+  const playlistCoverUrl = playlist ? getHighResImage(playlist.image) : undefined;
 
   // Intersection Observer callback for infinite scroll
   const lastSongElementRef = useCallback((node: HTMLDivElement) => {
@@ -93,7 +94,7 @@ const PlaylistDetails = () => {
 
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 mb-10 md:mb-12">
           <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-3xl overflow-hidden shadow-2xl bg-accent/10 shrink-0">
-            <img src={getHighResImage(playlist.image)} alt={playlist.name} className="w-full h-full object-cover" />
+            <img src={playlistCoverUrl} alt={playlist.name} className="w-full h-full object-cover" />
           </div>
           <div className="text-center md:text-left flex-1 min-w-0">
             <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
@@ -145,7 +146,7 @@ const PlaylistDetails = () => {
                   key={`${song.id}-${index}`} 
                   ref={isLastElement ? lastSongElementRef : null}
                 >
-                  <SongCard song={song} allSongs={songs} />
+                  <SongCard song={song} allSongs={songs} fallbackImage={playlistCoverUrl} />
                 </div>
               );
             })}

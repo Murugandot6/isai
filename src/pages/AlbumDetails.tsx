@@ -58,6 +58,7 @@ const AlbumDetails = () => {
   const songs = album.songs || [];
   // Calculate track count: use songs array length, or the API's songCount field, or the helper function
   const trackCount = songs.length || Number(album.songCount) || getContainerCount(album);
+  const albumCoverUrl = getHighResImage(album.image);
 
   return (
     <MainLayout>
@@ -73,7 +74,7 @@ const AlbumDetails = () => {
 
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 mb-10 md:mb-12">
           <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-3xl overflow-hidden shadow-2xl bg-accent/10 shrink-0">
-            <img src={getHighResImage(album.image)} alt={album.name} className="w-full h-full object-cover" />
+            <img src={albumCoverUrl} alt={album.name} className="w-full h-full object-cover" />
           </div>
           <div className="text-center md:text-left flex-1 min-w-0">
             <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
@@ -118,7 +119,7 @@ const AlbumDetails = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {songs.length > 0 ? (
               songs.map((song) => (
-                <SongCard key={song.id} song={song} allSongs={songs} />
+                <SongCard key={song.id} song={song} allSongs={songs} fallbackImage={albumCoverUrl} />
               ))
             ) : (
               <div className="col-span-full text-center py-10 text-muted-foreground text-sm">No songs found in this album.</div>

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 
-export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, allSongs }) => {
+export const SongCard: React.FC<{ song: Song, allSongs?: Song[], fallbackImage?: string }> = ({ song, allSongs, fallbackImage }) => {
   const { currentSong, isPlaying, playSong, togglePlay, toggleLike, isLiked, playlists, addToPlaylist, addToNext } = useMusic();
   
   if (!song) return null;
@@ -28,7 +28,7 @@ export const SongCard: React.FC<{ song: Song, allSongs?: Song[] }> = ({ song, al
   const isCurrent = currentSong?.id === song.id;
   const liked = isLiked(song.id);
   
-  const imageUrl = getHighResImage(song.image);
+  const imageUrl = getHighResImage(song.image, fallbackImage);
 
   const handleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.action-button')) return;
