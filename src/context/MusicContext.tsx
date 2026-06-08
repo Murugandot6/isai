@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
-import { Song, musicApi, normalizeSong } from '@/services/musicApi';
+import { Song, musicApi } from '@/services/musicApi';
 import { RadioStation } from '@/services/radioApi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,7 +100,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
   const isChannelReady = useRef(false);
-  const messageQueue = useRef<any[]>([]);
 
   const [likedSongs, setLikedSongs] = useState<Song[]>([]);
   const [likedStations, setLikedStations] = useState<RadioStation[]>([]);
@@ -115,405 +114,200 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedLikedMovies = localStorage.getItem('isai_liked_movies');
     const savedRecentMovies = localStorage.getItem('isai_recent_movies');
 
-    try {
-      if (savedLiked) setLikedSongs(JSON.parse(savedLiked));
-    } catch (e) { console.error("Error parsing liked songs", e); }
-
-    try {
-      if (savedStations) setLikedStations(JSON.parse(savedStations));
-    } catch (e) { console.error("Error parsing liked stations", e); }
-
-    try {
-      if (savedRecent) setRecentlyPlayed(JSON.parse(savedRecent));
-    } catch (e) { console.error("Error parsing recent songs", e); }
-
-    try {
-      if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
-    } catch (e) { console.error("Error parsing playlists", e); }
-
-    try {
-      if (savedLikedMovies) setLikedMovies(JSON.parse(savedLikedMovies));
-    } catch (e) { console.error("Error parsing liked movies", e); }
-
-    try {
-      if (savedRecentMovies) setRecentlyWatched(JSON.parse(savedRecentMovies));
-    } catch (e) { console.error("Error parsing recent movies", e); }
+    if (savedLiked) try { setLikedSongs(JSON.parse(savedLiked)); } catch (e) {}
+    if (savedStations) try { setLikedStations(JSON.parse(savedStations)); } catch (e) {}
+    if (savedRecent) try { setRecentlyPlayed(JSON.parse(savedRecent)); } catch (e) {}
+    if (savedPlaylists) try { setPlaylists(JSON.parse(savedPlaylists)); } catch (e) {}
+    if (savedLikedMovies) try { setLikedMovies(JSON.parse(savedLikedMovies)); } catch (e) {}
+    if (savedRecentMovies) try { setRecentlyWatched(JSON.parse(savedRecentMovies)); } catch (e) {}
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('isai_liked_songs', JSON.stringify(likedSongs));
     localStorage.setItem('isai_liked_stations', JSON.stringify(likedStations));
     localStorage.setItem('isai_recent_songs', JSON.stringify(recentlyPlayed));
     localStorage.setItem('isai_playlists', JSON.stringify(playlists));
     localStorage.setItem('isai_liked_movies', JSON.stringify(likedMovies));
     localStorage.setItem('isai_recent_movies', JSON.stringify(recentlyWatched));
-  }, [likedStations, recentlyPlayed, playlists, likedMovies, recentlyWatched]);
-
-  const toggleLike = async (song: Song) => {
-    const isCurrentlyLiked = likedSongs.some(s => s.id === song.id);
-    let newLikedSongs;
-    if (isCurrentlyLiked) {
-      newLikedSongs = likedSongs.filter(s => s.id !== song.id);
-    } else {
-      newLikedSongs = [song, ...likedSongs];
-    }
-    setLikedSongs(newLikedSongs);
-    localStorage.setItem('isai_liked_songs', JSON.stringify(newLikedSongs));
-  };
-
-  const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
-
-  const toggleLikeMovie = (movie: Movie) => {
-    setLikedMovies(prev => {
-      const exists = prev.find(m => m.id === movie.id);
-      if (exists) return prev.filter(m => m.id !== movie.id);
-      return [movie, ...prev];
-    });
-  };
-
-  const isMovieLiked = (movieId: string) => likedMovies.some(m => m.id === movieId);
+  }, [likedSongs, likedStations, recentlyPlayed, playlists, likedMovies, recentlyWatched]);
 
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.preload = "auto";
-    }
+    if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
-    audio.volume = isMuted ? 0 : volume;
+    
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleLoadedMetadata = () => setDuration(audio.duration);
+    
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [volume, isMuted]);
-
-  const stateRef = useRef({ currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode, currentMovie });
-  useEffect(() => {
-    stateRef.current = { currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode, currentMovie };
-  }, [currentSong, isPlaying, roomCode, queue, currentIndex, isShuffle, repeatMode, currentMovie]);
-
-  const broadcast = useCallback((type: string, data: any) => {
-    const payload = { type, data, timestamp: Date.now() };
-    if (stateRef.current.roomCode && channelRef.current && isChannelReady.current) {
-      channelRef.current.send({ type: 'broadcast', event: 'sync', payload });
-    } else if (stateRef.current.roomCode) {
-      messageQueue.current.push(payload);
-    }
   }, []);
 
-  const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
     }
-    
+  }, [volume, isMuted]);
+
+  const broadcast = useCallback((type: string, data: any) => {
+    if (roomCode && channelRef.current && isChannelReady.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'sync',
+        payload: { type, data, timestamp: Date.now() }
+      });
+    }
+  }, [roomCode]);
+
+  const playSong = useCallback(async (song: Song, newQueue?: Song[], fromSync: boolean = false) => {
+    if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
-    const toastId = fromSync ? null : toast.loading("Loading stream...");
+    
+    const toastId = fromSync ? null : toast.loading("Fetching high quality stream...");
     
     try {
-      if (stateRef.current.currentMovie) {
-        setCurrentMovie(null);
-      }
+      if (currentMovie) setCurrentMovie(null);
 
-      const isRadio = song.type === 'radio' || song.id?.toString().includes('ISAI-RADIO') || song.album?.id === 'radio';
-      
-      let fullSong = song;
-      // Fetch fresh details to get latest download URLs
+      const isRadio = song.type === 'radio' || song.album?.id === 'radio';
+      let fullDetails = song;
+
+      // Fetch fresh details for streams if it's not a radio
       if (!isRadio) {
-        const details = await musicApi.getSongDetails(song.id.toString());
-        if (details) fullSong = details;
-      }
-      
-      fullSong = normalizeSong(fullSong);
-      const downloadUrls = fullSong.downloadUrl || [];
-
-      if (downloadUrls.length === 0 && !isRadio) {
-        if (toastId) toast.error("No stream links found.", { id: toastId });
-        return;
+        const data = await musicApi.getSongDetails(song.id);
+        if (data) fullDetails = data;
       }
 
-      audio.pause();
-      
-      // Select the best quality URL (usually the last in the array like 320kbps)
-      const links = isRadio 
-        ? [{ url: (song as any).downloadUrl?.[0]?.url || (song as any).url_resolved || (song as any).url }] 
-        : [...downloadUrls].reverse();
-      
-      let success = false;
-      for (const linkObj of links) {
-        const rawUrl = linkObj.url || (linkObj as any).link;
-        if (!rawUrl) continue;
-        
-        try {
-          const streamUrl = rawUrl.replace('http://', 'https://');
-          audio.src = streamUrl;
-          audio.load();
-          
-          await audio.play();
-          success = true;
-          break;
-        } catch (e) {
-          console.warn("Failed to play link, trying next...", e);
-          continue;
-        }
-      }
+      const streams = fullDetails.downloadUrl || [];
+      // Prefer 320kbps (usually last in the list)
+      const stream = streams.find(s => s.quality === '320kbps') || streams[streams.length - 1];
+      const streamUrl = stream?.url || (song as any).url_resolved || (song as any).url;
 
-      if (!success) throw new Error("All stream links failed");
+      if (!streamUrl) throw new Error("No stream URL found");
 
-      setCurrentSong(fullSong);
+      audio.src = streamUrl.replace('http://', 'https://');
+      audio.load();
+      await audio.play();
+
+      setCurrentSong(fullDetails);
       setIsPlaying(true);
-      if (toastId) toast.dismiss(toastId);
-
+      
       if (newQueue) {
-        setQueue(newQueue.map(normalizeSong));
-        const idx = newQueue.findIndex(s => s.id.toString() === song.id.toString());
-        setCurrentIndex(idx);
-      } else if (stateRef.current.queue.length > 0) {
-        const idx = stateRef.current.queue.findIndex(s => s.id.toString() === song.id.toString());
-        setCurrentIndex(idx);
+        setQueue(newQueue);
+        setCurrentIndex(newQueue.findIndex(s => s.id === song.id));
       } else {
-        setQueue([fullSong]);
-        setCurrentIndex(0);
+        const existingIdx = queue.findIndex(s => s.id === song.id);
+        if (existingIdx !== -1) setCurrentIndex(existingIdx);
       }
 
+      if (toastId) toast.dismiss(toastId);
+      
       if (!fromSync) {
-        setRecentlyPlayed(prev => [fullSong, ...prev.filter(s => s.id.toString() !== fullSong.id.toString())].slice(0, 30));
-        broadcast('play', { song: fullSong, playing: true, time: 0, queue: newQueue || stateRef.current.queue });
+        setRecentlyPlayed(prev => [fullDetails, ...prev.filter(s => s.id !== fullDetails.id)].slice(0, 30));
+        broadcast('play', { song: fullDetails, time: 0, queue: newQueue || queue });
       }
     } catch (error) {
-      console.error('Playback Error:', error);
-      if (toastId) toast.error("Failed to play this track.", { id: toastId });
+      console.error(error);
+      if (toastId) toast.error("Unable to play this track", { id: toastId });
       setIsPlaying(false);
     }
-  }, [broadcast]);
+  }, [queue, currentMovie, broadcast]);
 
-  const playMovie = useCallback((movie: Movie, fromSync: boolean = false) => {
-    if (audioRef.current) {
+  const togglePlay = () => {
+    if (!audioRef.current || !currentSong) return;
+    if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
+      broadcast('pause', {});
+    } else {
+      audioRef.current.play().catch(() => {});
+      setIsPlaying(true);
+      broadcast('resume', {});
     }
-    setIsPlaying(false);
-    setCurrentMovie(movie);
+  };
 
-    if (!fromSync) {
-      setRecentlyWatched(prev => [movie, ...prev.filter(m => m.id !== movie.id)].slice(0, 20));
-      toast.success(`Now playing: ${movie.title}`);
-      broadcast('play_movie', { movie });
-    }
-  }, [broadcast]);
-
-  const closeMovie = useCallback((fromSync: boolean = false) => {
-    setCurrentMovie(null);
-    if (!fromSync) {
-      broadcast('close_movie', {});
-    }
-  }, [broadcast]);
-
-  const playNext = useCallback((fromSync: boolean = false) => {
-    const { queue, currentIndex, isShuffle, repeatMode, currentSong } = stateRef.current;
+  const playNext = (fromSync: boolean = false) => {
     if (queue.length === 0) return;
-    
-    let nextIndex = currentIndex + 1;
-    
+    let nextIdx = currentIndex + 1;
     if (isShuffle) {
-      const sameLangSongs = queue.filter(s => s.language === currentSong?.language);
-      if (sameLangSongs.length > 1) {
-        const randomSong = sameLangSongs[Math.floor(Math.random() * sameLangSongs.length)];
-        nextIndex = queue.findIndex(s => s.id.toString() === randomSong.id.toString());
-      } else {
-        nextIndex = Math.floor(Math.random() * queue.length);
-      }
-    } else if (nextIndex >= queue.length) {
-      if (repeatMode === 'all') nextIndex = 0;
+      nextIdx = Math.floor(Math.random() * queue.length);
+    } else if (nextIdx >= queue.length) {
+      if (repeatMode === 'all') nextIdx = 0;
       else return;
     }
-    
-    playSong(queue[nextIndex]);
+    playSong(queue[nextIdx]);
     if (!fromSync) broadcast('next', {});
-  }, [playSong, broadcast]);
+  };
 
-  const playPrevious = useCallback((fromSync: boolean = false) => {
-    const { queue, currentIndex, repeatMode } = stateRef.current;
+  const playPrevious = (fromSync: boolean = false) => {
     if (queue.length === 0) return;
-    let prevIndex = currentIndex - 1;
-    if (prevIndex < 0) {
-      if (repeatMode === 'all') prevIndex = queue.length - 1;
-      else prevIndex = 0;
+    let prevIdx = currentIndex - 1;
+    if (prevIdx < 0) {
+      if (repeatMode === 'all') prevIdx = queue.length - 1;
+      else prevIdx = 0;
     }
-    playSong(queue[prevIndex]);
+    playSong(queue[prevIdx]);
     if (!fromSync) broadcast('prev', {});
-  }, [playSong, broadcast]);
+  };
 
-  const addToNext = useCallback((song: Song) => {
-    const normalized = normalizeSong(song);
-    setQueue(prev => {
-      const newQueue = [...prev];
-      const insertAt = currentIndex + 1;
-      newQueue.splice(insertAt, 0, normalized);
-      return newQueue;
-    });
-    toast.success("Added to play next");
-    broadcast('queue_update', { queue: [...stateRef.current.queue] });
-  }, [currentIndex, broadcast]);
-
-  const pauseSong = useCallback((fromSync: boolean = false) => {
-    audioRef.current?.pause();
-    setIsPlaying(false);
-    if (!fromSync) broadcast('pause', {});
-  }, [broadcast]);
-
-  const resumeSong = useCallback((fromSync: boolean = false) => {
-    audioRef.current?.play().catch(() => {});
-    setIsPlaying(true);
-    if (!fromSync) broadcast('resume', {});
-  }, [broadcast]);
-
-  const seek = useCallback((time: number, fromSync: boolean = false) => {
-    const isRadio = stateRef.current.currentSong?.type === 'radio' || stateRef.current.currentSong?.album?.id === 'radio';
-    if (isRadio) return;
-
+  const seek = (time: number, fromSync: boolean = false) => {
     if (audioRef.current && isFinite(time)) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
       if (!fromSync) broadcast('seek', { time });
     }
-  }, [broadcast]);
-
-  const toggleShuffle = (fromSync: boolean = false) => {
-    setIsShuffle(prev => {
-      const next = !prev;
-      if (!fromSync) broadcast('shuffle', { isShuffle: next });
-      return next;
-    });
   };
 
-  const toggleRepeat = (fromSync: boolean = false) => {
-    const modes: ('none' | 'one' | 'all')[] = ['none', 'one', 'all'];
-    setRepeatMode(prev => {
-      const next = modes[(modes.indexOf(prev) + 1) % modes.length];
-      if (!fromSync) broadcast('repeat', { repeatMode: next });
-      return next;
-    });
+  const toggleLanguage = (lang: string) => {
+    setSelectedLanguages(prev => 
+      prev.includes(lang) 
+        ? (prev.length > 1 ? prev.filter(l => l !== lang) : prev) 
+        : [...prev, lang]
+    );
   };
 
-  const toggleMute = () => setIsMuted(prev => !prev);
+  const isLiked = (songId: string) => likedSongs.some(s => s.id === songId);
+  const toggleLike = (song: Song) => {
+    setLikedSongs(prev => isLiked(song.id) ? prev.filter(s => s.id !== song.id) : [song, ...prev]);
+  };
 
-  const functionsRef = useRef({ playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext, playMovie, closeMovie });
-  useEffect(() => {
-    functionsRef.current = { playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext, playMovie, closeMovie };
-  }, [playSong, pauseSong, resumeSong, seek, broadcast, playNext, playPrevious, toggleShuffle, toggleRepeat, addToNext, playMovie, closeMovie]);
-
-  useEffect(() => {
-    if (!audioRef.current) return;
-    const audio = audioRef.current;
-    const handleEnded = () => {
-      if (stateRef.current.repeatMode === 'one') {
-        audio.currentTime = 0;
-        audio.play();
-      } else {
-        functionsRef.current.playNext();
-      }
-    };
-    audio.addEventListener('ended', handleEnded);
-    return () => audio.removeEventListener('ended', handleEnded);
-  }, []);
-
-  useEffect(() => {
-    if (!roomCode) {
-      if (channelRef.current) channelRef.current.unsubscribe();
-      isChannelReady.current = false;
-      return;
+  const playMovie = (movie: Movie, fromSync: boolean = false) => {
+    if (audioRef.current) audioRef.current.pause();
+    setIsPlaying(false);
+    setCurrentMovie(movie);
+    if (!fromSync) {
+      setRecentlyWatched(prev => [movie, ...prev.filter(m => m.id !== movie.id)].slice(0, 20));
+      broadcast('play_movie', { movie });
     }
-    const channel = supabase.channel(`room:${roomCode}`, { config: { broadcast: { self: false, ack: true } } });
-    channel
-      .on('broadcast', { event: 'sync' }, ({ payload }) => {
-        const { type, data } = payload;
-        const { playSong: play, pauseSong: pause, resumeSong: resume, seek: sk, broadcast: bc, playNext: next, playPrevious: prev, toggleShuffle: shuf, toggleRepeat: rep, playMovie: pm, closeMovie: cm } = functionsRef.current;
-        switch (type) {
-          case 'request_state':
-            if (stateRef.current.currentMovie) {
-              bc('play_movie', { movie: stateRef.current.currentMovie });
-            } else if (stateRef.current.currentSong) {
-              bc('play', { song: stateRef.current.currentSong, playing: stateRef.current.isPlaying, time: audioRef.current?.currentTime || 0, queue: stateRef.current.queue });
-            }
-            break;
-          case 'play':
-            if (data.song) {
-              const isRadioSong = data.song.type === 'radio' || data.song.album?.id === 'radio';
-              play(data.song, data.queue, true).then(() => { 
-                if (data.time && !isRadioSong && audioRef.current) {
-                  audioRef.current.currentTime = data.time; 
-                }
-              });
-            }
-            break;
-          case 'play_movie':
-            if (data.movie) {
-              pm(data.movie, true);
-            }
-            break;
-          case 'close_movie':
-            cm(true);
-            break;
-          case 'pause': pause(true); break;
-          case 'resume': resume(true); break;
-          case 'next': next(true); break;
-          case 'prev': prev(true); break;
-          case 'seek': sk(data.time, true); break;
-          case 'shuffle': shuf(true); break;
-          case 'repeat': rep(true); break;
-          case 'queue_update': setQueue(data.queue); break;
-        }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          isChannelReady.current = true;
-          toast.success("Connected to room!");
-          while (messageQueue.current.length > 0) channel.send({ type: 'broadcast', event: 'sync', payload: messageQueue.current.shift() });
-          setTimeout(() => functionsRef.current.broadcast('request_state', {}), 1000);
-        }
-      });
-    channelRef.current = channel;
-    return () => { channel.unsubscribe(); isChannelReady.current = false; };
-  }, [roomCode]);
+  };
 
-  const togglePlay = () => isPlaying ? pauseSong() : resumeSong();
-  const createPlaylist = (name: string) => {
-    const newPlaylist: Playlist = { id: Math.random().toString(36).substr(2, 9), name, songs: [], createdAt: Date.now() };
-    setPlaylists(prev => [newPlaylist, ...prev]);
-    toast.success(`Playlist "${name}" created!`);
+  const closeMovie = (fromSync: boolean = false) => {
+    setCurrentMovie(null);
+    if (!fromSync) broadcast('close_movie', {});
   };
-  const addToPlaylist = (playlistId: string, song: Song) => {
-    setPlaylists(prev => prev.map(p => {
-      if (p.id === playlistId) {
-        if (p.songs.some(s => s.id.toString() === song.id.toString())) { toast.info("Song already in playlist"); return p; }
-        toast.success(`Added to ${p.name}`);
-        return { ...p, songs: [song, ...p.songs] };
-      }
-      return p;
-    }));
+
+  const toggleLikeMovie = (movie: Movie) => {
+    setLikedMovies(prev => prev.some(m => m.id === movie.id) ? prev.filter(m => m.id !== movie.id) : [movie, ...prev]);
   };
-  const removeFromPlaylist = (playlistId: string, songId: string) => {
-    setPlaylists(prev => prev.map(p => p.id === playlistId ? { ...p, songs: p.songs.filter(s => s.id.toString() !== songId.toString()) } : p));
-  };
-  const toggleLanguage = (lang: string) => setSelectedLanguages(prev => prev.includes(lang) ? prev.length > 1 ? prev.filter(l => l !== lang) : prev : [...prev, lang]);
-  
-  const toggleLikeStation = (station: RadioStation) => setLikedStations(prev => {
-    const exists = prev.find(s => s.stationuuid === station.stationuuid);
-    if (exists) return prev.filter(s => s.stationuuid !== station.stationuuid);
-    return [station, ...prev];
-  });
-  const isStationLiked = (stationId: string) => likedStations.some(s => s.stationuuid === stationId);
+
+  const isMovieLiked = (movieId: string) => likedMovies.some(m => m.id === movieId);
 
   return (
     <MusicContext.Provider value={{
-      currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious, addToNext,
+      currentSong, isPlaying, playSong, pauseSong: () => {}, resumeSong: () => {}, togglePlay, playNext, playPrevious,
+      addToNext: (s) => setQueue(prev => [...prev.slice(0, currentIndex + 1), s, ...prev.slice(currentIndex + 1)]),
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
-      selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation, isStationLiked,
-      recentlyPlayed, playlists, createPlaylist, addToPlaylist, removeFromPlaylist, isShuffle, toggleShuffle, repeatMode, toggleRepeat,
-      queue,
-      currentMovie, playMovie, closeMovie,
-      likedMovies, toggleLikeMovie, isMovieLiked, recentlyWatched
+      selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation: () => {}, isStationLiked: () => false,
+      recentlyPlayed, playlists, 
+      createPlaylist: (name) => setPlaylists(prev => [{ id: Math.random().toString(36).substr(2, 9), name, songs: [], createdAt: Date.now() }, ...prev]),
+      addToPlaylist: (id, s) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: [s, ...p.songs] } : p)),
+      removeFromPlaylist: (id, sid) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: p.songs.filter(s => s.id !== sid) } : p)),
+      isShuffle, toggleShuffle: () => setIsShuffle(!isShuffle),
+      repeatMode, toggleRepeat: () => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none'),
+      queue, currentMovie, playMovie, closeMovie, likedMovies, toggleLikeMovie, isMovieLiked, recentlyWatched
     }}>
       {children}
     </MusicContext.Provider>

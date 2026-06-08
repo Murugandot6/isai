@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Extracts the highest quality image URL from the API response.
+ * Extracts the highest quality image URL from the API response array.
  * Structure: [{ quality: "500x500", url: "..." }]
  */
 export const getHighResImage = (image: any) => {
@@ -9,17 +9,13 @@ export const getHighResImage = (image: any) => {
   
   if (!image) return fallback;
 
-  // If it's already a string
   if (typeof image === 'string') {
     return image.replace('http://', 'https://');
   }
 
-  // If it's the new array structure
   if (Array.isArray(image) && image.length > 0) {
-    // Try to find the 500x500 version as recommended
+    // API provides 50x50, 150x150, 500x500
     const highRes = image.find(i => i.quality === '500x500') || image[image.length - 1];
-    
-    // The new API uses 'url'
     const imageUrl = highRes.url || highRes.link;
     
     if (imageUrl && typeof imageUrl === 'string') {
