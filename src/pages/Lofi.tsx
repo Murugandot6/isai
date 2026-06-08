@@ -26,37 +26,37 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 
-// Cozy Backgrounds
+// Beautiful Cozy Backgrounds from Pixabay
 const BACKGROUNDS = [
   {
     id: 'cozy-room',
     name: 'Cozy Room',
-    url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=1600',
+    url: 'https://cdn.pixabay.com/photo/2017/08/02/01/01/living-room-2569325_1280.jpg',
   },
   {
     id: 'rainy-window',
     name: 'Rainy Window',
-    url: 'https://images.unsplash.com/photo-1428908728789-d2de25dbd4e2?q=80&w=1600',
+    url: 'https://cdn.pixabay.com/photo/2015/07/14/06/11/drop-of-water-844269_1280.jpg',
   },
   {
     id: 'cafe',
     name: 'Cozy Cafe',
-    url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=1600',
+    url: 'https://cdn.pixabay.com/photo/2015/07/13/14/40/coffee-shop-843244_1280.jpg',
   },
   {
     id: 'starry-night',
     name: 'Starry Night',
-    url: 'https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1600',
+    url: 'https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_1280.jpg',
   }
 ];
 
-// Ambient Sounds Config with highly reliable public MP3 streams
+// High-Quality, CORS-friendly Ambient Sounds from Pixabay CDN
 const AMBIENT_SOUNDS = [
-  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://www.soundjay.com/nature/sounds/rain-07.mp3' },
-  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://www.soundjay.com/nature/sounds/fire-1.mp3' },
-  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://www.soundjay.com/misc/sounds/coffee-shop-1.mp3' },
-  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://www.soundjay.com/mechanical/sounds/computer-keyboard-1.mp3' },
-  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://www.soundjay.com/nature/sounds/forest-wind-1.mp3' },
+  { id: 'rain', name: 'Rainfall', icon: CloudRain, url: 'https://cdn.pixabay.com/audio/2022/07/04/audio_1170a2a104.mp3' },
+  { id: 'fire', name: 'Campfire', icon: Flame, url: 'https://cdn.pixabay.com/audio/2021/09/06/audio_5f72d13f25.mp3' },
+  { id: 'cafe', name: 'Cafe Chatter', icon: Coffee, url: 'https://cdn.pixabay.com/audio/2022/02/22/audio_7e4e303d12.mp3' },
+  { id: 'keyboard', name: 'Keyboard', icon: Keyboard, url: 'https://cdn.pixabay.com/audio/2022/03/15/audio_208509e15e.mp3' },
+  { id: 'forest', name: 'Forest Wind', icon: Trees, url: 'https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69fa.mp3' },
 ];
 
 const Lofi = () => {
