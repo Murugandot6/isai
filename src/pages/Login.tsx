@@ -85,8 +85,24 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <div className="w-full max-w-md space-y-8 bg-card p-8 rounded-3xl border border-border shadow-2xl animate-in fade-in zoom-in duration-500">
+    <div className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      >
+        <source src="/anbae.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+
+      {/* Dark Overlay for Contrast */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10" />
+
+      {/* Login Card */}
+      <div className="relative w-full max-w-md space-y-8 bg-card/80 backdrop-blur-xl p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
         <div className="text-center">
           <div className="inline-flex items-center justify-center p-3 bg-primary rounded-2xl mb-4 shadow-lg shadow-primary/20">
             <Music className="text-primary-foreground" size={32} />
@@ -107,7 +123,7 @@ const Login = () => {
                   placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                  className="pl-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
                   required
                 />
               </div>
@@ -122,7 +138,7 @@ const Login = () => {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                className="pl-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
                 required
               />
             </div>
@@ -136,7 +152,7 @@ const Login = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
+                className="pl-10 pr-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
                 required
               />
               <button
@@ -158,7 +174,7 @@ const Login = () => {
                   placeholder="Invite Code"
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
-                  className="pl-10 bg-accent/5 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 font-bold tracking-wider"
+                  className="pl-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 font-bold tracking-wider"
                   required
                 />
               </div>
