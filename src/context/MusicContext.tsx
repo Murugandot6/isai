@@ -26,6 +26,16 @@ export interface Movie {
   language: string;
 }
 
+export interface SongMemory {
+  id: string;
+  songId: string;
+  songName: string;
+  artistName: string;
+  imageUrl: string;
+  text: string;
+  createdAt: number;
+}
+
 interface MusicContextType {
   currentSong: Song | null;
   isPlaying: boolean;
@@ -72,6 +82,10 @@ interface MusicContextType {
   toggleLikeMovie: (movie: Movie) => void;
   isMovieLiked: (movieId: string) => boolean;
   recentlyWatched: Movie[];
+  // Music Journal
+  memories: SongMemory[];
+  addMemory: (song: Song, text: string) => void;
+  deleteMemory: (memoryId: string) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -105,6 +119,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [likedStations, setLikedStations] = useState<RadioStation[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [memories, setMemories] = useState<SongMemory[]>([]);
 
   useEffect(() => {
     const savedLiked = localStorage.getItem('isai_liked_songs');
@@ -113,6 +128,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedPlaylists = localStorage.getItem('isai_playlists');
     const savedLikedMovies = localStorage.getItem('isai_liked_movies');
     const savedRecentMovies = localStorage.getItem('isai_recent_movies');
+    const savedMemories = localStorage.getItem('isai_memories');
 
     if (savedLiked) try { setLikedSongs(JSON.parse(savedLiked)); } catch (e) {}
     if (savedStations) try { setLikedStations(JSON.parse(savedStations)); } catch (e) {}
@@ -120,6 +136,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (savedPlaylists) try { setPlaylists(JSON.parse(savedPlaylists)); } catch (e) {}
     if (savedLikedMovies) try { setLikedMovies(JSON.parse(savedLikedMovies)); } catch (e) {}
     if (savedRecentMovies) try { setRecentlyWatched(JSON.parse(savedRecentMovies)); } catch (e) {}
+    if (savedMemories) try { setMemories(JSON.parse(savedMemories)); } catch (e) {}
   }, []);
 
   useEffect(() => {
@@ -129,7 +146,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('isai_playlists', JSON.stringify(playlists));
     localStorage.setItem('isai_liked_movies', JSON.stringify(likedMovies));
     localStorage.setItem('isai_recent_movies', JSON.stringify(recentlyWatched));
-  }, [likedSongs, likedStations, recentlyPlayed, playlists, likedMovies, recentlyWatched]);
+    localStorage.setItem('isai_memories', JSON.stringify(memories));
+  }, [likedSongs, likedStations, recentlyPlayed, playlists, likedMovies, recentlyWatched, memories]);
 
   useEffect(() => {
     if (!audioRef.current) audioRef.current = new Audio();
@@ -315,6 +333,26 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const isMovieLiked = (movieId: string) => likedMovies.some(m => m.id === movieId);
 
+  // Music Journal Actions
+  const addMemory = (song: Song, text: string) => {
+    const newMemory: SongMemory = {
+      id: Math.random().toString(36).substring(2, 9),
+      songId: song.id,
+      songName: song.name,
+      artistName: song.primaryArtists,
+      imageUrl: song.image?.[0]?.url || song.image?.[0]?.link || '',
+      text,
+      createdAt: Date.now()
+    };
+    setMemories(prev => [newMemory, ...prev]);
+    toast.success("Memory saved to your Music Journal!");
+  };
+
+  const deleteMemory = (memoryId: string) => {
+    setMemories(prev => prev.filter(m => m.id !== memoryId));
+    toast.success("Memory removed from your Journal");
+  };
+
   // Supabase Realtime Broadcast Subscription
   useEffect(() => {
     if (!roomCode) {
@@ -417,7 +455,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       removeFromPlaylist: (id, sid) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: p.songs.filter(s => s.id !== sid) } : p)),
       isShuffle, toggleShuffle: () => setIsShuffle(!isShuffle),
       repeatMode, toggleRepeat: () => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none'),
-      queue, currentMovie, playMovie, closeMovie, likedMovies, toggleLikeMovie, isMovieLiked, recentlyWatched
+      queue, currentMovie, playMovie, closeMovie, likedMovies, toggleLikeMovie, isMovieLiked, recentlyWatched,
+      memories, addMemory, deleteMemory
     }}>
       {children}
     </MusicContext.Provider>
