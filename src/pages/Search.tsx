@@ -49,7 +49,7 @@ const Search = () => {
       if (type === 'music') {
         const [songs, albums] = await Promise.all([
           musicApi.searchSongs(searchQuery, 1, 50),
-          musicApi.searchAlbums(searchQuery, 1, 50)
+          musicApi.searchAlbums(searchQuery)
         ]);
         setSongResults(songs);
         setAlbumResults(albums);

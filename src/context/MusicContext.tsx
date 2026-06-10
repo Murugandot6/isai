@@ -24,6 +24,7 @@ export interface Movie {
   year: string;
   genre: string;
   language: string;
+  imdbId?: string;
 }
 
 export interface SongMemory {
@@ -340,7 +341,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       songId: song.id,
       songName: song.name,
       artistName: song.primaryArtists,
-      imageUrl: song.image?.[0]?.url || song.image?.[0]?.link || '',
+      imageUrl: song.image?.[0]?.url || (song.image?.[0] as any)?.link || '',
       text,
       createdAt: Date.now()
     };
