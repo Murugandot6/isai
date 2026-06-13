@@ -95,10 +95,14 @@ const Artists = () => {
         return;
       }
 
-      // Strictly filter songs by chosen language settings only
+      // Safe and robust filtering on the songs list
       const filtered = results.filter((song: Song) => {
-        if (!song.language) return false;
-        return selectedLanguages.includes(song.language.toLowerCase());
+        // If track language metadata is missing or unspecified, include it so the user can actually listen to the tracks
+        if (!song.language) return true;
+        const songLang = song.language.toLowerCase().trim();
+        if (songLang === 'unknown' || songLang === '') return true;
+        
+        return selectedLanguages.includes(songLang);
       });
 
       setArtistSongs(prev => pageNum === 0 ? filtered : [...prev, ...filtered]);
