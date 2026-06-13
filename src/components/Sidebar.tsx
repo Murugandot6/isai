@@ -12,10 +12,12 @@ export const Sidebar = () => {
   const { user, signOut } = useAuth();
 
   const path = location.pathname;
+  const searchParams = new URLSearchParams(location.search);
+  const searchType = searchParams.get('type');
 
-  // Determine current active section/station context
-  const isMoviesContext = path.startsWith('/movies');
-  const isRadioContext = path.startsWith('/radio');
+  // Determine current active section/station context (including search type queries)
+  const isMoviesContext = path.startsWith('/movies') || (path === '/search' && searchType === 'movies');
+  const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
   const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
 
   return (
@@ -62,7 +64,7 @@ export const Sidebar = () => {
             to="/search?type=movies"
             className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-              path === '/search'
+              path === '/search' && searchType === 'movies'
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
@@ -117,7 +119,7 @@ export const Sidebar = () => {
             to="/search?type=fm"
             className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-              path === '/search'
+              path === '/search' && searchType === 'fm'
                 ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
@@ -173,7 +175,7 @@ export const Sidebar = () => {
               to="/search?type=music"
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                path === '/search' 
+                path === '/search' && (searchType === 'music' || !searchType)
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}

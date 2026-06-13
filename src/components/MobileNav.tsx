@@ -8,9 +8,11 @@ import { cn } from '@/lib/utils';
 export const MobileNav = () => {
   const location = useLocation();
   const path = location.pathname;
+  const searchParams = new URLSearchParams(location.search);
+  const searchType = searchParams.get('type');
 
-  const isMoviesContext = path.startsWith('/movies');
-  const isRadioContext = path.startsWith('/radio');
+  const isMoviesContext = path.startsWith('/movies') || (path === '/search' && searchType === 'movies');
+  const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
   const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
 
   // Choose the dynamic, context-specific items
@@ -47,7 +49,7 @@ export const MobileNav = () => {
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-t border-border z-50 px-4 py-3 flex items-center justify-between pb-safe">
       {navItems.map((item) => {
-        const isActive = path === item.path;
+        const isActive = path === item.path || (path === '/search' && item.path.startsWith('/search') && searchType === (item.path.includes('movies') ? 'movies' : item.path.includes('fm') ? 'fm' : 'music'));
         return (
           <Link 
             key={item.path} 
