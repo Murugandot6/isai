@@ -38,7 +38,7 @@ const AlbumDetails = () => {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="animate-spin text-primary" size={48} />
+          <Loader2 className="animate-spin text-purple-400" size={48} />
         </div>
       </MainLayout>
     );
@@ -56,37 +56,36 @@ const AlbumDetails = () => {
   }
 
   const songs = album.songs || [];
-  // Calculate track count: use songs array length, or the API's songCount field, or the helper function
   const trackCount = songs.length || Number(album.songCount) || getContainerCount(album);
   const albumCoverUrl = getHighResImage(album.image);
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-tr from-black via-zinc-950 to-neutral-950 text-white p-4 md:p-10 max-w-7xl mx-auto">
         <Button 
           variant="ghost" 
           onClick={() => navigate(-1)}
-          className="mb-6 md:mb-8 gap-1.5 hover:bg-accent/10 rounded-xl h-9 px-3 text-xs md:text-sm"
+          className="mb-6 md:mb-8 gap-1.5 hover:bg-white/10 text-zinc-300 hover:text-white rounded-xl h-9 px-3 text-xs md:text-sm"
         >
           <ArrowLeft size={16} />
           Back
         </Button>
 
         <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 mb-10 md:mb-12">
-          <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-3xl overflow-hidden shadow-2xl bg-accent/10 shrink-0">
+          <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-3xl overflow-hidden shadow-2xl bg-white/5 shrink-0">
             <img src={albumCoverUrl} alt={album.name} className="w-full h-full object-cover" />
           </div>
           <div className="text-center md:text-left flex-1 min-w-0">
             <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[9px] font-bold">
+              <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-none uppercase text-[9px] font-bold">
                 ALBUM
               </Badge>
-              <Badge variant="outline" className="text-[9px] font-bold uppercase">
+              <Badge variant="outline" className="text-[9px] font-bold uppercase text-zinc-400 border-white/10">
                 {album.language || 'unknown'}
               </Badge>
             </div>
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight" dangerouslySetInnerHTML={{ __html: album.name }}></h1>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-muted-foreground font-medium text-xs md:text-sm">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-zinc-400 font-medium text-xs md:text-sm">
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
                 <span>{album.year || 'N/A'}</span>
@@ -99,7 +98,7 @@ const AlbumDetails = () => {
             <div className="mt-6 md:mt-8">
               <Button 
                 onClick={() => songs.length > 0 && playSong(songs[0], songs)}
-                className="rounded-full px-8 md:px-10 h-11 md:h-14 font-bold gap-2 md:gap-3 shadow-xl shadow-primary/20 text-sm md:text-lg w-full md:w-auto"
+                className="rounded-full px-8 md:px-10 h-11 md:h-14 font-bold gap-2 md:gap-3 shadow-xl shadow-purple-500/20 text-sm md:text-lg w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white"
               >
                 <Play className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" />
                 Play Album
@@ -110,8 +109,8 @@ const AlbumDetails = () => {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2.5 mb-6 md:mb-8">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <Music size={18} className="text-primary" />
+            <div className="bg-purple-500/10 p-2 rounded-lg border border-purple-500/20">
+              <Music size={18} className="text-purple-400" />
             </div>
             <h2 className="text-xl md:text-2xl font-black tracking-tight">Tracklist</h2>
           </div>
@@ -122,7 +121,7 @@ const AlbumDetails = () => {
                 <SongCard key={song.id} song={song} allSongs={songs} fallbackImage={albumCoverUrl} />
               ))
             ) : (
-              <div className="col-span-full text-center py-10 text-muted-foreground text-sm">No songs found in this album.</div>
+              <div className="col-span-full text-center py-10 text-zinc-500 text-sm">No songs found in this album.</div>
             )}
           </div>
         </div>

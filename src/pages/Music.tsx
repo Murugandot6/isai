@@ -15,6 +15,8 @@ import {
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { ListenTogether } from '@/components/ListenTogether';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 const MusicPage = () => {
   const navigate = useNavigate();
@@ -89,13 +91,6 @@ const MusicPage = () => {
     }
   };
 
-  const handleAssistClick = () => {
-    toast.info("anbae Assist: Dynamic play queue activated!");
-    if (trendingSongs.length > 0) {
-      playSong(trendingSongs[Math.floor(Math.random() * trendingSongs.length)], trendingSongs);
-    }
-  };
-
   // Slice a small set of Editor's Pick playlists from FEATURED_PLAYLISTS
   const editorsPicks = useMemo(() => {
     return FEATURED_PLAYLISTS.slice(0, 5);
@@ -125,7 +120,7 @@ const MusicPage = () => {
 
         {/* HEADER MENU AND CONTROLS BAR (Fully transparent overlaying the hero background) */}
         <div className="flex items-center justify-between p-6 md:px-12 z-20 gap-4 bg-transparent">
-          {/* Left Top Group controls (Power, Theme, Sound) */}
+          {/* Left Top Group controls (Power, Theme, Language Selector) */}
           <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-md">
             <button 
               onClick={() => navigate('/')}
@@ -144,13 +139,9 @@ const MusicPage = () => {
             >
               <Sun size={18} />
             </button>
-            <button 
-              onClick={toggleMute}
-              className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all"
-              title="Mute Sound"
-            >
-              {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-            </button>
+            
+            {/* Replaced Volume button with LanguageSelector */}
+            <LanguageSelector />
           </div>
 
           {/* Curated Top Menus */}
@@ -183,14 +174,10 @@ const MusicPage = () => {
             </button>
           </div>
 
-          {/* Assist Pill Button */}
-          <button 
-            onClick={handleAssistClick}
-            className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-full shadow-lg text-[10px] tracking-widest uppercase font-black hover:scale-105 active:scale-95 transition-all shrink-0"
-          >
-            <Sparkles size={14} fill="black" />
-            <span>ASSIST</span>
-          </button>
+          {/* Replaced ASSIST with Listen Together */}
+          <div className="shrink-0 scale-95 md:scale-100">
+            <ListenTogether />
+          </div>
         </div>
 
         {/* MAIN SPOTLIGHT BANNER HERO (Seamless Black Blended Look) */}

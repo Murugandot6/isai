@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { getHighResImage } from '@/lib/image-utils';
 
-// Helper to get deterministic popularity and song count for visual aesthetics and sorting
 const getArtistStats = (name: string) => {
   const lowercase = name.toLowerCase();
   
@@ -29,13 +28,12 @@ const getArtistStats = (name: string) => {
   if (lowercase.includes("hiphop")) return { popularity: 88, songCount: "150+" };
   if (lowercase.includes("g. v.") || lowercase.includes("g.v.") || lowercase.includes("gvp")) return { popularity: 90, songCount: "320+" };
   
-  // Deterministic fallback based on character codes
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const popularity = 65 + Math.abs(hash % 24); // 65% to 89%
-  const songCountVal = 40 + Math.abs(hash % 310); // 40 to 350 songs
+  const popularity = 65 + Math.abs(hash % 24);
+  const songCountVal = 40 + Math.abs(hash % 310);
   
   return {
     popularity,
@@ -175,7 +173,6 @@ const Artists = () => {
     }, {});
   }, [artistSongs]);
 
-  // Dynamic Popularity Sorter for Search and Grid List
   const arrangedArtistsList = useMemo(() => {
     return [...artistsList].sort((a, b) => {
       return getArtistStats(b.name).popularity - getArtistStats(a.name).popularity;
@@ -191,12 +188,12 @@ const Artists = () => {
   if (selectedArtist) {
     return (
       <MainLayout>
-        <div className="p-4 md:p-10 max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-tr from-black via-zinc-950 to-neutral-950 text-white p-4 md:p-10 max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6 md:mb-8">
             <Button 
               variant="ghost" 
               onClick={focusedLanguage ? handleBackToOverview : () => setSelectedArtist(null)}
-              className="gap-1.5 hover:bg-accent/10 rounded-xl h-9 px-3 text-xs md:text-sm"
+              className="gap-1.5 hover:bg-white/10 text-zinc-300 hover:text-white rounded-xl h-9 px-3 text-xs md:text-sm"
             >
               <ArrowLeft size={16} />
               <span>{focusedLanguage ? 'Back' : 'Artists'}</span>
@@ -204,7 +201,7 @@ const Artists = () => {
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mb-10 md:mb-12">
-            <div className="w-28 h-28 md:w-48 md:h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 bg-accent/10 shrink-0">
+            <div className="w-28 h-28 md:w-48 md:h-48 rounded-full overflow-hidden shadow-2xl border-4 border-purple-500/20 bg-white/5 shrink-0">
               <img src={getHighResImage(selectedArtist.image)} alt={selectedArtist.name} className="w-full h-full object-cover" />
             </div>
             <div className="text-center md:text-left flex-1 min-w-0">
@@ -212,14 +209,14 @@ const Artists = () => {
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <Button 
                   onClick={() => artistSongs.length > 0 && playSong(artistSongs[0], artistSongs)}
-                  className="rounded-full px-6 md:px-8 h-10 md:h-12 font-bold gap-2 shadow-xl shadow-primary/20 text-xs md:text-sm w-full md:w-auto"
+                  className="rounded-full px-6 md:px-8 h-10 md:h-12 font-bold gap-2 shadow-xl shadow-purple-500/20 text-xs md:text-sm w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   <Play className="w-3.5 h-3.5 md:w-4 md:h-4" fill="currentColor" />
                   Play All
                 </Button>
                 <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
                   {selectedLanguages.map(lang => (
-                    <Badge key={lang} variant="secondary" className="bg-primary/10 text-primary border-none uppercase text-[8px] md:text-[9px] font-bold">
+                    <Badge key={lang} variant="secondary" className="bg-purple-500/10 text-purple-400 border-none uppercase text-[8px] md:text-[9px] font-bold">
                       {lang}
                     </Badge>
                   ))}
@@ -232,8 +229,8 @@ const Artists = () => {
             {focusedLanguage ? (
               <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-2.5 mb-6 md:mb-8">
-                  <div className="bg-primary/10 p-2 rounded-lg">
-                    <Globe className="text-primary w-4 h-4 md:w-[18px] md:h-[18px]" />
+                  <div className="bg-purple-500/10 p-2 rounded-lg border border-purple-500/20">
+                    <Globe className="text-purple-400 w-4 h-4 md:w-[18px] md:h-[18px]" />
                   </div>
                   <h2 className="text-xl md:text-3xl font-black tracking-tight">{focusedLanguage} Tracks</h2>
                 </div>
@@ -250,14 +247,14 @@ const Artists = () => {
                 <section key={language} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex items-center justify-between mb-4 md:mb-6">
                     <div className="flex items-center gap-2.5">
-                      <div className="bg-accent/10 p-2 rounded-lg">
-                        <Globe className="text-muted-foreground w-3.5 h-3.5 md:w-4 md:h-4" />
+                      <div className="bg-white/5 p-2 rounded-lg">
+                        <Globe className="text-zinc-400 w-3.5 h-3.5 md:w-4 md:h-4" />
                       </div>
                       <h2 className="text-lg md:text-2xl font-black tracking-tight">{language}</h2>
                     </div>
                     <Button 
                       variant="link" 
-                      className="text-primary font-bold gap-1 hover:no-underline group h-auto p-0 text-xs md:text-sm"
+                      className="text-purple-400 font-bold gap-1 hover:no-underline group h-auto p-0 text-xs md:text-sm"
                       onClick={() => setFocusedLanguage(language)}
                     >
                       View All
@@ -276,7 +273,7 @@ const Artists = () => {
 
           {loading && (
             <div className="flex justify-center py-12">
-              <Loader2 className="animate-spin text-primary" size={32} />
+              <Loader2 className="animate-spin text-purple-400" size={32} />
             </div>
           )}
         </div>
@@ -286,27 +283,27 @@ const Artists = () => {
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-tr from-black via-zinc-950 to-neutral-950 text-white p-4 md:p-10 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="bg-primary/20 p-2 rounded-xl">
-              <Mic2 className="text-primary w-5 h-5 md:w-6 md:h-6" />
+            <div className="bg-purple-500/20 p-2 rounded-xl border border-purple-500/30">
+              <Mic2 className="text-purple-400 w-5 h-5 md:w-6 md:h-6" />
             </div>
             <div>
               <h1 className="text-2xl md:text-4xl font-black tracking-tight">Tamil Legends & Stars</h1>
-              <p className="text-xs md:text-sm text-muted-foreground font-medium">The icons arranged by popularity and song library counts.</p>
+              <p className="text-xs md:text-sm text-zinc-400 font-medium">The icons arranged by popularity and song library counts.</p>
             </div>
           </div>
 
           <form onSubmit={handleSearch} className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for any artist..." 
-              className="pl-9 bg-accent/5 border-none h-10 rounded-xl focus-visible:ring-primary/20 text-sm"
+              className="pl-9 bg-white/5 border-none h-10 rounded-xl focus-visible:ring-purple-500/20 text-sm text-white"
             />
-            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-primary" size={14} />}
+            {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-purple-400" size={14} />}
           </form>
         </div>
 
@@ -314,7 +311,7 @@ const Artists = () => {
           <section className="mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-black tracking-tight">Search Results</h2>
-              <Button variant="ghost" size="sm" onClick={() => setSearchResults([])} className="text-[10px] font-bold">CLEAR</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSearchResults([])} className="text-[10px] font-bold text-zinc-400">CLEAR</Button>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
               {arrangedSearchResults.map((artist) => {
@@ -323,21 +320,21 @@ const Artists = () => {
                   <div 
                     key={artist.id} 
                     onClick={() => handleArtistClick(artist)}
-                    className="group flex flex-col items-center text-center cursor-pointer bg-card/25 border border-border/20 p-4 rounded-3xl hover:border-primary/20 hover:bg-accent/5 transition-all"
+                    className="group flex flex-col items-center text-center cursor-pointer bg-white/5 border border-white/5 p-4 rounded-3xl hover:border-purple-500/20 hover:bg-white/10 transition-all"
                   >
-                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10 mx-auto">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 shadow-xl border-4 border-transparent group-hover:border-purple-500/30 transition-all duration-300 bg-white/5 mx-auto">
                       <img 
                         src={getHighResImage(artist.image)} 
                         alt={artist.name} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>
-                    <h3 className="font-bold text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-1">{artist.name}</h3>
+                    <h3 className="font-bold text-xs md:text-sm group-hover:text-purple-400 transition-colors line-clamp-1">{artist.name}</h3>
                     <div className="flex flex-col items-center mt-2 gap-1 w-full">
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px] font-bold py-0.5 px-2 rounded-full">
+                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-none text-[9px] font-bold py-0.5 px-2 rounded-full">
                         ★ {stats.popularity}% Popular
                       </Badge>
-                      <span className="text-[10px] text-muted-foreground font-bold">{stats.songCount} Songs</span>
+                      <span className="text-[10px] text-zinc-500 font-bold">{stats.songCount} Songs</span>
                     </div>
                   </div>
                 );
@@ -351,8 +348,8 @@ const Artists = () => {
             {loading && arrangedArtistsList.length === 0 ? (
               Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="flex flex-col items-center gap-3">
-                  <Skeleton className="w-full aspect-square rounded-full" />
-                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="w-full aspect-square rounded-full bg-white/5" />
+                  <Skeleton className="h-4 w-20 bg-white/5" />
                 </div>
               ))
             ) : (
@@ -362,25 +359,25 @@ const Artists = () => {
                   <div 
                     key={artist.id} 
                     onClick={() => handleArtistClick(artist)}
-                    className="group flex flex-col items-center text-center cursor-pointer bg-card/25 border border-border/20 p-4 rounded-3xl hover:border-primary/20 hover:bg-accent/5 transition-all"
+                    className="group flex flex-col items-center text-center cursor-pointer bg-white/5 border border-white/5 p-4 rounded-3xl hover:border-purple-500/20 hover:bg-white/10 transition-all"
                   >
-                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 shadow-xl border-4 border-transparent group-hover:border-primary/30 transition-all duration-300 bg-accent/10 mx-auto">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 shadow-xl border-4 border-transparent group-hover:border-purple-500/30 transition-all duration-300 bg-white/5 mx-auto">
                       <img 
                         src={getHighResImage(artist.image)} 
                         alt={artist.name} 
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-                      <div className="absolute bottom-1 right-1 bg-primary p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-1 right-1 bg-purple-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                         <Star size={8} fill="white" className="text-white" />
                       </div>
                     </div>
-                    <h3 className="font-bold text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-1">{artist.name}</h3>
+                    <h3 className="font-bold text-xs md:text-sm group-hover:text-purple-400 transition-colors line-clamp-1">{artist.name}</h3>
                     <div className="flex flex-col items-center mt-2 gap-1 w-full">
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px] font-bold py-0.5 px-2 rounded-full">
+                      <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-none text-[9px] font-bold py-0.5 px-2 rounded-full">
                         ★ {stats.popularity}% Popular
                       </Badge>
-                      <span className="text-[10px] text-muted-foreground font-bold">{stats.songCount} Songs</span>
+                      <span className="text-[10px] text-zinc-500 font-bold">{stats.songCount} Songs</span>
                     </div>
                   </div>
                 );
@@ -393,7 +390,7 @@ const Artists = () => {
               <Button 
                 onClick={handleLoadMoreArtists} 
                 disabled={loadingMore}
-                className="rounded-2xl px-8 h-12 font-bold gap-2 shadow-xl shadow-primary/10 text-sm"
+                className="rounded-2xl px-8 h-12 font-bold gap-2 shadow-xl shadow-purple-500/10 text-sm bg-purple-600 hover:bg-purple-700 text-white"
               >
                 {loadingMore ? (
                   <Loader2 className="animate-spin" size={18} />

@@ -30,33 +30,33 @@ const Favourites = () => {
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-10 max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-tr from-black via-zinc-950 to-neutral-950 text-white p-4 md:p-10 max-w-7xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 mb-8 md:mb-12">
-          <div className="bg-primary/20 p-2.5 md:p-3 rounded-2xl">
-            <Heart className="text-primary fill-primary w-6 h-6 md:w-8 md:h-8" />
+          <div className="bg-purple-500/20 p-2.5 md:p-3 rounded-2xl border border-purple-500/30">
+            <Heart className="text-purple-400 fill-purple-400 w-6 h-6 md:w-8 md:h-8" />
           </div>
           <div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight">Favourites</h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-medium">Everything you've loved in one place.</p>
+            <p className="text-xs md:text-sm text-zinc-400 font-medium">Everything you've loved in one place.</p>
           </div>
         </div>
 
         <Tabs defaultValue="songs" className="w-full">
-          <TabsList className="bg-accent/5 p-1 rounded-2xl mb-6 md:mb-8 w-fit flex flex-wrap gap-1">
-            <TabsTrigger value="songs" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsList className="bg-white/5 p-1 rounded-2xl mb-6 md:mb-8 w-fit flex flex-wrap gap-1">
+            <TabsTrigger value="songs" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white text-zinc-400">
               <Music size={14} />
               Songs
-              {likedSongs.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full">{likedSongs.length}</span>}
+              {likedSongs.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full text-white">{likedSongs.length}</span>}
             </TabsTrigger>
-            <TabsTrigger value="movies" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="movies" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white text-zinc-400">
               <Film size={14} />
               Movies
-              {likedMovies.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full">{likedMovies.length}</span>}
+              {likedMovies.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full text-white">{likedMovies.length}</span>}
             </TabsTrigger>
-            <TabsTrigger value="stations" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="stations" className="rounded-xl px-4 py-2 font-bold gap-1.5 text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white text-zinc-400">
               <Radio size={14} />
               FM Stations
-              {likedStations.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full">{likedStations.length}</span>}
+              {likedStations.length > 0 && <span className="ml-1 text-[9px] bg-white/20 px-1.5 rounded-full text-white">{likedStations.length}</span>}
             </TabsTrigger>
           </TabsList>
 
@@ -68,10 +68,10 @@ const Favourites = () => {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
-                <Music className="text-muted-foreground/30 mb-4 w-9 h-9 md:w-12 md:h-12" />
+              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-white/10 rounded-3xl">
+                <Music className="text-zinc-600 mb-4 w-9 h-9 md:w-12 md:h-12" />
                 <h3 className="text-lg font-bold mb-1">No liked songs yet</h3>
-                <p className="text-xs text-muted-foreground max-w-xs">Tap the heart icon on any song to save it here.</p>
+                <p className="text-xs text-zinc-400 max-w-xs">Tap the heart icon on any song to save it here.</p>
               </div>
             )}
           </TabsContent>
@@ -83,13 +83,13 @@ const Favourites = () => {
                   <div 
                     key={movie.id}
                     onClick={() => playMovie(movie)}
-                    className="group relative bg-card/40 border border-border/50 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-500 hover:-translate-y-1.5 cursor-pointer"
+                    className="group relative bg-zinc-900/40 border border-white/5 rounded-3xl overflow-hidden hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-1.5 cursor-pointer"
                   >
                     <div className="relative aspect-[16/10] overflow-hidden">
                       <img src={movie.backdrop} alt={movie.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-xl">
+                        <div className="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-xl">
                           <Play size={16} fill="currentColor" className="ml-0.5" />
                         </div>
                       </div>
@@ -99,17 +99,17 @@ const Favourites = () => {
                       </div>
                     </div>
                     <div className="p-3 md:p-4">
-                      <h3 className="font-bold text-xs md:text-sm truncate group-hover:text-primary transition-colors">{movie.title}</h3>
-                      <p className="text-[9px] md:text-[10px] text-muted-foreground font-bold mt-1">{movie.year} • {movie.genre}</p>
+                      <h3 className="font-bold text-xs md:text-sm truncate group-hover:text-purple-400 transition-colors">{movie.title}</h3>
+                      <p className="text-[9px] md:text-[10px] text-zinc-500 font-bold mt-1">{movie.year} • {movie.genre}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
-                <Film className="text-muted-foreground/30 mb-4 w-9 h-9 md:w-12 md:h-12" />
+              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-white/10 rounded-3xl">
+                <Film className="text-zinc-600 mb-4 w-9 h-9 md:w-12 md:h-12" />
                 <h3 className="text-lg font-bold mb-1">No liked movies yet</h3>
-                <p className="text-xs text-muted-foreground max-w-xs">Heart your favorite movies to see them here.</p>
+                <p className="text-xs text-zinc-400 max-w-xs">Heart your favorite movies to see them here.</p>
               </div>
             )}
           </TabsContent>
@@ -126,11 +126,11 @@ const Favourites = () => {
                       className={cn(
                         "flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-2xl border transition-all duration-300 cursor-pointer group",
                         isActive 
-                          ? "bg-primary/10 border-primary/30" 
-                          : "bg-card/50 border-transparent hover:border-accent/20 hover:bg-accent/5"
+                          ? "bg-purple-500/10 border-purple-500/30" 
+                          : "bg-white/5 border-transparent hover:border-white/10 hover:bg-white/10"
                       )}
                     >
-                      <div className="relative w-12 h-12 md:w-14 md:h-14 shrink-0 overflow-hidden rounded-xl bg-accent/10">
+                      <div className="relative w-12 h-12 md:w-14 md:h-14 shrink-0 overflow-hidden rounded-xl bg-white/5">
                         <img 
                           src={station.favicon || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=200'} 
                           alt={station.name} 
@@ -145,7 +145,7 @@ const Favourites = () => {
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-bold text-xs md:text-sm truncate">{station.name}</h3>
-                        <Badge variant="secondary" className="bg-accent/10 text-[8px] font-bold px-1.5 py-0 mt-1">
+                        <Badge variant="secondary" className="bg-white/10 text-[8px] font-bold px-1.5 py-0 mt-1 text-white">
                           {station.language.toUpperCase()}
                         </Badge>
                       </div>
@@ -154,10 +154,10 @@ const Favourites = () => {
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-accent/20 rounded-3xl">
-                <Radio className="text-muted-foreground/30 mb-4 w-9 h-9 md:w-12 md:h-12" />
+              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-white/10 rounded-3xl">
+                <Radio className="text-zinc-600 mb-4 w-9 h-9 md:w-12 md:h-12" />
                 <h3 className="text-lg font-bold mb-1">No liked stations yet</h3>
-                <p className="text-xs text-muted-foreground max-w-xs">Heart your favorite FM stations to see them here.</p>
+                <p className="text-xs text-zinc-400 max-w-xs">Heart your favorite FM stations to see them here.</p>
               </div>
             )}
           </TabsContent>

@@ -13,7 +13,7 @@ const Songs = () => {
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
+      <div className="min-h-screen bg-gradient-to-tr from-black via-zinc-950 to-neutral-950 text-white p-4 md:p-10 max-w-7xl mx-auto space-y-8">
         {/* Immersive Header with Back Button */}
         <div className="flex items-center gap-3 md:gap-4">
           <button 
@@ -23,12 +23,12 @@ const Songs = () => {
           >
             <ArrowLeft size={18} />
           </button>
-          <div className="bg-primary/20 p-2 rounded-xl">
-            <History className="text-primary w-5 h-5 md:w-6 md:h-6" />
+          <div className="bg-purple-500/20 p-2 rounded-xl border border-purple-500/30">
+            <History className="text-purple-400 w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div>
             <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">Recently Played</h1>
-            <p className="text-xs text-muted-foreground font-medium">Your soundtrack over the last few sessions.</p>
+            <p className="text-xs text-zinc-400 font-medium">Your soundtrack over the last few sessions.</p>
           </div>
         </div>
 
@@ -39,10 +39,10 @@ const Songs = () => {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center bg-accent/5 rounded-3xl border-2 border-dashed border-accent/10">
-            <Music className="text-muted-foreground/30 mb-4 w-9 h-9 md:w-12 md:h-12" />
+          <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center bg-white/5 rounded-3xl border-2 border-dashed border-white/10">
+            <Music className="text-zinc-600 mb-4 w-9 h-9 md:w-12 md:h-12" />
             <h3 className="text-lg md:text-xl font-bold mb-1">No history yet</h3>
-            <p className="text-xs text-muted-foreground max-w-xs">Start listening to music and we'll track your history here.</p>
+            <p className="text-xs text-zinc-400 max-w-xs">Start listening to music and we'll track your history here.</p>
           </div>
         )}
       </div>
