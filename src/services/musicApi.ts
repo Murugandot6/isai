@@ -210,11 +210,12 @@ export const musicApi = {
   getArtistSongs: async (id: string, page: number = 0, artistName?: string): Promise<Song[]> => {
     try {
       let songsList: any[] = [];
+      const activePage = page + 1; // Map local 0-based page to 1-based API index
       
       // Try to fetch via artist endpoint
       if (id && id !== 'unknown') {
         try {
-          const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${page}`);
+          const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${activePage}`);
           const res = await response.json();
           const songsData = res.data?.songs || res.data?.results || [];
           
@@ -230,7 +231,9 @@ export const musicApi = {
 
       // Safe fallback: if path endpoint returns no results, use search API by artistName to pull top-tier hits
       if (songsList.length === 0 && artistName) {
-        const searchResults = await musicApi.searchSongs(artistName, page + 1, 50);
+        // Clean double-spaces or spaces around dots for optimal query precision
+        const cleanedName = artistName.replace(/\s+/g, ' ').trim();
+        const searchResults = await musicApi.searchSongs(cleanedName, activePage, 50);
         songsList = searchResults;
       }
 
