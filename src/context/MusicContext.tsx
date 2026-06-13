@@ -186,8 +186,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
     
-    const toastId = fromSync ? null : toast.loading("Fetching high quality stream...");
-    
     try {
       if (currentMovie) setCurrentMovie(null);
 
@@ -234,8 +232,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setQueue(updatedQueue);
       setCurrentIndex(updatedQueue.findIndex(s => s.id === song.id));
-
-      if (toastId) toast.dismiss(toastId);
       
       if (!fromSync) {
         setRecentlyPlayed(prev => [fullDetails, ...prev.filter(s => s.id !== fullDetails.id)].slice(0, 30));
@@ -243,7 +239,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch (error) {
       console.error(error);
-      if (toastId) toast.error("Unable to play this track", { id: toastId });
       setIsPlaying(false);
     }
   }, [queue, currentMovie, broadcast, isShuffle]);
