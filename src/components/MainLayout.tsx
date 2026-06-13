@@ -40,10 +40,10 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   if (!user) return null;
 
-  // Check if we are on the Cinema (movies) page to enable fully immersive fullscreen
-  const isCinemaFullscreen = location.pathname === '/movies';
+  // Check if we are on Cinema or Music page to enable fully immersive fullscreen
+  const isImmersiveFullscreen = location.pathname === '/movies' || location.pathname === '/music';
 
-  if (isCinemaFullscreen) {
+  if (isImmersiveFullscreen) {
     return (
       <div className="min-h-screen bg-zinc-950 text-foreground overflow-x-hidden relative">
         {/* Render children completely unconstrained */}

@@ -5,7 +5,7 @@ import { MainLayout } from '@/components/MainLayout';
 import { musicApi, Song, Playlist, Album } from '@/services/musicApi';
 import { AlbumCard } from '@/components/AlbumCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Flame, Music as MusicIcon, Sparkles, Play, Pause, Disc, Calendar, Heart, Volume2, SkipBack, SkipForward, BookOpen } from 'lucide-react';
+import { Search, Flame, Music as MusicIcon, Sparkles, Play, Pause, Disc, Calendar, Heart, Volume2, SkipBack, SkipForward, BookOpen, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -93,12 +93,21 @@ const MusicPage = () => {
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+      <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-8">
         {/* Header Search Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-white">Music Dashboard</h1>
-            <p className="text-xs text-muted-foreground">Premium, minimalistic audio control center.</p>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/')}
+              className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+              title="Back to Hub"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-white">Music Dashboard</h1>
+              <p className="text-xs text-muted-foreground">Premium, minimalistic audio control center.</p>
+            </div>
           </div>
           <form onSubmit={handleSearch} className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
