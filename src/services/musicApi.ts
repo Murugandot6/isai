@@ -169,7 +169,14 @@ export const musicApi = {
     try {
       const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${page}`);
       const res = await response.json();
-      return res.data?.songs || res.data?.results || [];
+      const songsData = res.data?.songs || res.data?.results || [];
+      
+      // Sanitize object responses (such as JSONs with index keys "0", "1", "2") and transform them into standard arrays
+      if (songsData && !Array.isArray(songsData) && typeof songsData === 'object') {
+        return Object.values(songsData).filter((item: any) => item && typeof item === 'object' && item.id) as Song[];
+      }
+      
+      return (Array.isArray(songsData) ? songsData : []) as Song[];
     } catch (e) {
       console.error("Error in getArtistSongs:", e);
       return [];

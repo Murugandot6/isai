@@ -95,13 +95,10 @@ const Artists = () => {
         return;
       }
 
-      // Safe and robust filtering on the songs list
+      // Filter songs strictly matching selected languages (e.g., 'tamil' in lowercase)
       const filtered = results.filter((song: Song) => {
-        // If track language metadata is missing or unspecified, include it so the user can actually listen to the tracks
-        if (!song.language) return true;
+        if (!song.language) return false;
         const songLang = song.language.toLowerCase().trim();
-        if (songLang === 'unknown' || songLang === '') return true;
-        
         return selectedLanguages.includes(songLang);
       });
 
