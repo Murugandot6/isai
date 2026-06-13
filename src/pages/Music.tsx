@@ -10,7 +10,7 @@ import { FEATURED_PLAYLISTS } from '@/data/featuredPlaylists';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Play, Pause, Home, Music, Film, Radio, Disc, Search, Heart, 
-  Sparkles, Power, Volume2, VolumeX, Sparkle, ArrowRight, User, Star, Library, ChevronRight, Compass
+  Sparkles, Power, Sun, Volume2, VolumeX, Sparkle, ArrowRight, User, Star, Library, ChevronRight, Compass
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +25,7 @@ const MusicPage = () => {
   
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
+  const [glowingTheme, setGlowingTheme] = useState(true);
 
   // Artist-specific state lists
   const [rahmanSongs, setRahmanSongs] = useState<Song[]>([]);
@@ -97,7 +98,10 @@ const MusicPage = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen relative flex flex-col select-none text-white bg-gradient-to-tr from-black via-zinc-950 to-neutral-950">
+      <div className={cn(
+        "min-h-screen relative flex flex-col select-none text-white transition-all duration-700 ease-in-out",
+        glowingTheme ? "bg-gradient-to-tr from-black via-zinc-950 to-neutral-950" : "bg-black"
+      )}>
         
         {/* Absolute Background Hero Image overlapping top header seamlessly */}
         {spotlightSong && (
@@ -116,7 +120,7 @@ const MusicPage = () => {
 
         {/* HEADER MENU AND CONTROLS BAR (Fully transparent overlaying the hero background) */}
         <div className="flex items-center justify-between p-6 md:px-12 z-20 gap-4 bg-transparent">
-          {/* Left Top Group controls (Power, Language Selector) */}
+          {/* Left Top Group controls (Power, Theme, Language Selector) */}
           <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-md">
             <button 
               onClick={() => navigate('/')}
@@ -125,6 +129,18 @@ const MusicPage = () => {
             >
               <Home size={18} />
             </button>
+            <button 
+              onClick={() => setGlowingTheme(!glowingTheme)}
+              className={cn(
+                "p-2 rounded-xl transition-all",
+                glowingTheme ? "text-purple-400 bg-white/5" : "text-white/60 hover:text-white hover:bg-white/5"
+              )}
+              title="Toggle Ambient Glow"
+            >
+              <Sun size={18} />
+            </button>
+            
+            {/* Replaced Volume button with LanguageSelector */}
             <LanguageSelector />
           </div>
 
@@ -158,7 +174,7 @@ const MusicPage = () => {
             </button>
           </div>
 
-          {/* Curated Listen Together room switcher */}
+          {/* Replaced ASSIST with Listen Together */}
           <div className="shrink-0 scale-95 md:scale-100">
             <ListenTogether />
           </div>

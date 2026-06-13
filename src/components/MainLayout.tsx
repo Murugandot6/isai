@@ -32,7 +32,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="animate-spin text-primary" size={48} />
       </div>
     );
@@ -53,7 +53,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   if (isImmersiveFullscreen) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white overflow-x-hidden relative">
+      <div className="min-h-screen bg-zinc-950 text-foreground overflow-x-hidden relative">
         <main className="min-h-screen relative pb-16 lg:pb-0">
           {children}
         </main>
@@ -64,15 +64,15 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-950 text-white">
+    <div className="flex min-h-screen bg-background">
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Global Header with purely Dark Background */}
-        <header className="sticky top-0 z-40 w-full bg-zinc-950/80 backdrop-blur-md border-b border-white/5 px-3 md:px-6 py-2.5 md:py-4 flex items-center justify-between gap-4">
+        {/* Global Header */}
+        <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md border-b border-border/50 px-3 md:px-6 py-2.5 md:py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-1.5 lg:hidden shrink-0">
             <div className="bg-primary p-1.5 rounded-lg">
               <Music className="text-primary-foreground" size={14} />
             </div>
-            <span className="text-sm font-black tracking-tight italic text-white">anbae</span>
+            <span className="text-sm font-black tracking-tight italic">anbae</span>
           </div>
           
           {/* Dynamic Top Navigation Curations replacing the sidebar layout */}
@@ -86,7 +86,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               <Home size={18} />
             </button>
 
-            <div className="h-5 w-[1px] bg-white/10 mx-1 shrink-0" />
+            <div className="h-5 w-[1px] bg-border/50 mx-1 shrink-0" />
 
             {isMusicContext && (
               <div className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
@@ -199,29 +199,29 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             <LanguageSelector />
             <ListenTogether />
             
-            <div className="h-5 w-[1px] bg-white/10 mx-0.5 hidden sm:block" />
+            <div className="h-5 w-[1px] bg-border/50 mx-0.5 hidden sm:block" />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-white/5 border-white/10 hover:bg-white/10 transition-all overflow-hidden shrink-0">
+                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-accent/5 border-border hover:bg-accent/10 transition-all overflow-hidden shrink-0">
                   {user.user_metadata?.avatar_url ? (
                     <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <User size={14} className="text-zinc-400" />
+                    <User size={14} className="text-muted-foreground" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-2xl bg-zinc-900 border-white/10 text-white shadow-2xl">
-                <DropdownMenuLabel className="font-bold text-xs uppercase tracking-widest text-zinc-500">My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuContent align="end" className="w-56 rounded-2xl bg-card border-border shadow-2xl">
+                <DropdownMenuLabel className="font-bold text-xs uppercase tracking-widest text-muted-foreground">My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border/50" />
                 <div className="px-2 py-1.5">
                   <p className="text-sm font-bold truncate">{user.user_metadata?.username || user.email}</p>
-                  <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
                 </div>
-                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuSeparator className="bg-border/50" />
                 <DropdownMenuItem 
                   onClick={() => navigate('/profile')}
-                  className="rounded-lg m-1 cursor-pointer focus:bg-white/10 focus:text-white font-medium gap-2"
+                  className="rounded-lg m-1 cursor-pointer focus:bg-primary/10 focus:text-primary font-medium gap-2"
                 >
                   <Settings size={16} />
                   Profile Settings
@@ -238,7 +238,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         </header>
 
         {/* Main Content with extra padding for mobile player + nav */}
-        <main className="flex-1 relative pb-[160px] md:pb-32 bg-zinc-950 text-white">
+        <main className="flex-1 relative pb-[160px] md:pb-32">
           {children}
         </main>
       </div>
