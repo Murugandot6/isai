@@ -12,10 +12,46 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getHighResImage } from '@/lib/image-utils';
 
-const CURATED_ARTIST_NAMES = {
-  composers: ["A. R. Rahman", "Ilaiyaraaja", "Anirudh Ravichander", "Harris Jayaraj", "Yuvan Shankar Raja", "M. S. Viswanathan", "Vidyasagar", "Deva", "G. V. Prakash Kumar", "Santhosh Narayanan"],
-  maleSingers: ["S. P. Balasubrahmanyam", "K. J. Yesudas", "Sid Sriram", "Hariharan", "Shankar Mahadevan", "P. Unnikrishnan", "Karthik", "Haricharan", "Pradeep Kumar", "T. M. Soundararajan"],
-  femaleSingers: ["K. S. Chithra", "S. Janaki", "Shreya Ghoshal", "P. Susheela", "Swarnalatha", "Sujatha Mohan", "Chinmayi Sripada", "Shweta Mohan", "Shakthisree Gopalan", "Dhee"]
+type ArtistConfig = string | { name: string; id: string };
+
+const CURATED_ARTIST_NAMES: { composers: ArtistConfig[]; maleSingers: ArtistConfig[]; femaleSingers: ArtistConfig[] } = {
+  composers: [
+    "A. R. Rahman", 
+    "Ilaiyaraaja", 
+    "Anirudh Ravichander", 
+    "Harris Jayaraj", 
+    "Yuvan Shankar Raja", 
+    "M. S. Viswanathan", 
+    "Vidyasagar", 
+    "Deva", 
+    "G. V. Prakash Kumar", 
+    "Santhosh Narayanan"
+  ],
+  maleSingers: [
+    "S. P. Balasubrahmanyam", 
+    "K. J. Yesudas", 
+    "Sid Sriram", 
+    { name: "Hariharan", id: "Z2qyrGA65Yo_" }, 
+    "Hariharan", // Keep search name as fallback
+    "Shankar Mahadevan", 
+    "P. Unnikrishnan", 
+    "Karthik", 
+    "Haricharan", 
+    "Pradeep Kumar", 
+    "T. M. Soundararajan"
+  ],
+  femaleSingers: [
+    "K. S. Chithra", 
+    "S. Janaki", 
+    "Shreya Ghoshal", 
+    "P. Susheela", 
+    "Swarnalatha", 
+    "Sujatha Mohan", 
+    "Chinmayi Sripada", 
+    "Shweta Mohan", 
+    "Shakthisree Gopalan", 
+    "Dhee"
+  ]
 };
 
 interface ArtistData {
@@ -46,10 +82,36 @@ const Artists = () => {
   useEffect(() => {
     const fetchArtistsBatch = async () => {
       setLoadingArtists(true);
-      const fetchGroup = async (names: string[], role: string) => {
+      
+      const fetchGroup = async (configs: ArtistConfig[], role: string) => {
+        const uniqueCheck = new Set<string>();
         const results = await Promise.all(
-          names.map(async (name) => {
+          configs.map(async (config) => {
             try {
+              const isObject = typeof config === 'object';
+              const name = isObject ? config.name : config;
+              const explicitId = isObject ? config.id : undefined;
+
+              // Prevent duplicates when string/object fallback entries overlap
+              const lookupKey = explicitId || name;
+              if (uniqueCheck.has(lookupKey)) return null;
+              uniqueCheck.add(lookupKey);
+
+              if (explicitId) {
+                // Fetch direct details by ID
+                const details = await musicApi.getArtistDetails(explicitId);
+                if (details) {
+                  return {
+                    id: details.id || explicitId,
+                    name: details.name || name,
+                    image: details.image || '',
+                    role: role,
+                    popularity: Math.floor(Math.random() * 20) + 80
+                  };
+                }
+              }
+
+              // Fallback to name search
               const res = await musicApi.searchArtists(name, 0, 1);
               const artist = res[0];
               if (artist) {
