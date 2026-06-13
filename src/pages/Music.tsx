@@ -25,7 +25,7 @@ const MusicPage = () => {
   
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const [glowingTheme, setGlowingTheme] = useState(true);
+  const [glowingTheme, setGlowingTheme] = useState(false);
 
   // Artist-specific state lists
   const [rahmanSongs, setRahmanSongs] = useState<Song[]>([]);
