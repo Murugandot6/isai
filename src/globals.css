@@ -57,3 +57,14 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-muted/30 rounded-full hover:bg-muted/50 transition-colors;
 }
+
+/* Utility to hide scrollbars completely */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}

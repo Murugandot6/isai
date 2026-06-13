@@ -97,15 +97,8 @@ export const MovieRow: React.FC<MovieRowProps> = ({ title, movies, onPlay }) => 
         {/* Horizontal Card Row List (Scrollbar hidden) */}
         <div 
           ref={rowRef}
-          className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 px-1 scrollbar-none"
+          className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar"
         >
-          {/* Custom style to completely hide standard webkit scrollbar */}
-          <style>{`
-            div::-webkit-scrollbar {
-              display: none !important;
-            }
-          `}</style>
-          
           {movies.map((movie) => {
             const liked = isMovieLiked(movie.id);
             return (

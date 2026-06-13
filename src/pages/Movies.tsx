@@ -191,7 +191,7 @@ const Movies = () => {
                   </h3>
                   
                   {loadingCast ? (
-                    <div className="flex gap-4 overflow-x-auto pb-4">
+                    <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="w-20 shrink-0 space-y-2">
                           <Skeleton className="w-16 h-16 rounded-full bg-white/5" />
@@ -200,7 +200,7 @@ const Movies = () => {
                       ))}
                     </div>
                   ) : cast.length > 0 ? (
-                    <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-none">
+                    <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
                       {cast.map((actor) => (
                         <div key={actor.id} className="w-20 md:w-24 shrink-0 text-center group">
                           <div className="w-16 h-16 md:w-20 md:h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 mb-2.5 border-2 border-transparent group-hover:border-purple-500 transition-all">
