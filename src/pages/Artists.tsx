@@ -87,7 +87,6 @@ const Artists = () => {
     if (pageNum === 0) setLoadingSongs(true);
     
     try {
-      // Use the specific artist songs endpoint which is more reliable
       const results = await musicApi.getArtistSongs(artistId, pageNum);
       
       if (!results || results.length === 0) {
@@ -96,15 +95,13 @@ const Artists = () => {
         return;
       }
 
-      // Looser filter on the specific artist page to ensure content shows up
+      // Strictly filter songs by chosen language settings only
       const filtered = results.filter((song: Song) => {
-        if (!song.language) return true;
-        const lang = song.language.toLowerCase();
-        // Show if language matches OR if it's one of the main Indian languages usually associated with these artists
-        return selectedLanguages.includes(lang) || (pageNum === 0 && artistSongs.length < 5);
+        if (!song.language) return false;
+        return selectedLanguages.includes(song.language.toLowerCase());
       });
 
-      setArtistSongs(prev => pageNum === 0 ? results : [...prev, ...results]);
+      setArtistSongs(prev => pageNum === 0 ? filtered : [...prev, ...filtered]);
       
       if (results.length < 10) {
         setHasMore(false);
@@ -219,7 +216,7 @@ const Artists = () => {
 
             {!loadingSongs && artistSongs.length === 0 && (
               <div className="text-center py-20 text-zinc-500">
-                Loading tracks...
+                No songs found matching your preferred language settings ({selectedLanguages.join(', ')}).
               </div>
             )}
           </div>
