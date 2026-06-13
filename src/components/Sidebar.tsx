@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
-  { icon: Home, label: 'Home', path: '/' },
+  { icon: Home, label: 'Home Hub', path: '/' },
+  { icon: Music, label: 'Music Station', path: '/music' },
   { icon: Sparkles, label: 'Featured', path: '/featured' },
   { icon: Film, label: 'Movies', path: '/movies' },
   { icon: Radio, label: 'Live Radio', path: '/radio' },

@@ -7,7 +7,7 @@ import { tmdbApi, CastMember } from '@/services/tmdbApi';
 import { StreamPlayer } from '@/components/StreamPlayer';
 import { MovieHero } from '@/components/MovieHero';
 import { MovieRow } from '@/components/MovieRow';
-import { Play, Film, Star, Search, Tv, X, Users, Info, User } from 'lucide-react';
+import { Play, Film, Star, Search, Tv, X, Users, Info, User, Layers, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -93,22 +93,28 @@ const Movies = () => {
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-10 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="bg-primary/20 p-2 rounded-xl">
-                <Film className="text-primary" size={20} />
+      <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-12">
+        {/* Header - Vyla Glowing style */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/5">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-purple-500/20 p-2 rounded-xl border border-purple-500/30">
+                <Film className="text-purple-400" size={20} />
               </div>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold">CINEMA</Badge>
+              <Badge variant="outline" className="border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-purple-500/5 rounded-full">
+                Vyla Cinema Streamer
+              </Badge>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight">anbae Cinema</h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-medium">Watch blockbusters together in real-time sync.</p>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white">
+              anbae Cinema
+            </h1>
+            <p className="text-xs md:text-sm text-muted-foreground max-w-md font-semibold">
+              Ultra-high-definition multi-source movie database. Synchronize playback with room lobbies.
+            </p>
           </div>
           
-          <form onSubmit={handleSearch} className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+          <form onSubmit={handleSearch} className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
               value={searchQuery}
               onChange={(e) => {
@@ -118,23 +124,23 @@ const Movies = () => {
                   setSearchResults([]);
                 }
               }}
-              placeholder="Search movies or genres..." 
-              className="pl-9 bg-accent/5 border-none h-10 rounded-xl focus-visible:ring-primary/20 text-sm"
+              placeholder="Search cinematic hits, releases, directors..." 
+              className="pl-12 bg-accent/5 border-none h-12 rounded-2xl focus-visible:ring-purple-500/20 text-sm font-semibold"
             />
           </form>
         </div>
 
         {/* Theater Mode Player Overlay */}
         {currentMovie && (
-          <div className="fixed inset-0 bg-black/95 z-50 flex flex-col animate-in fade-in duration-300 overflow-y-auto">
-            {/* Player Header */}
-            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10 bg-black sticky top-0 z-10 gap-4">
+          <div className="fixed inset-0 bg-black/98 z-50 flex flex-col animate-in fade-in duration-300 overflow-y-auto">
+            {/* Player Header - Vyla styling */}
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10 gap-4">
               <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                <Tv className="text-primary shrink-0 w-5 h-5 md:w-6 md:h-6" />
+                <Tv className="text-purple-400 shrink-0 w-6 h-6" />
                 <div className="min-w-0">
-                  <h2 className="text-sm md:text-lg font-black text-white flex items-center gap-1.5 truncate">
+                  <h2 className="text-base md:text-xl font-black text-white flex items-center gap-2 truncate">
                     {currentMovie.title}
-                    <span className="text-[10px] md:text-xs text-muted-foreground font-normal shrink-0">({currentMovie.year})</span>
+                    <span className="text-xs text-muted-foreground font-normal shrink-0">({currentMovie.year})</span>
                   </h2>
                   <p className="text-[10px] md:text-xs text-muted-foreground truncate">{currentMovie.genre}</p>
                 </div>
@@ -142,56 +148,63 @@ const Movies = () => {
 
               <div className="flex items-center gap-2 md:gap-3 shrink-0">
                 {roomCode && (
-                  <Badge className="bg-green-500 text-white gap-1 py-0.5 px-2 md:px-3 rounded-full font-bold text-[9px] md:text-xs animate-pulse hidden sm:flex">
-                    <Users size={10} />
-                    Synced Room: {roomCode}
+                  <Badge className="bg-purple-500 text-white gap-1 py-1 px-3.5 rounded-full font-black text-[10px] tracking-wide uppercase animate-pulse hidden sm:flex">
+                    <Users size={12} />
+                    Sync Room: {roomCode}
                   </Badge>
                 )}
 
                 <button 
                   onClick={() => closeMovie()}
-                  className="p-1.5 md:p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
+                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
                 >
-                  <X className="w-4 h-4 md:w-5 md:h-5" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
             {/* Premium Stream Player Component */}
-            <div className="p-2 sm:p-6 md:p-8 max-w-5xl mx-auto w-full">
+            <div className="p-2 sm:p-6 md:p-10 max-w-5xl mx-auto w-full">
               <StreamPlayer movie={currentMovie} />
             </div>
 
             {/* Player Footer / Info & Cast */}
-            <div className="p-4 md:p-8 bg-zinc-950 border-t border-white/10 text-white flex-1">
-              <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+            <div className="p-6 md:p-12 bg-zinc-950 border-t border-white/5 text-white flex-1">
+              <div className="max-w-5xl mx-auto space-y-8">
                 {/* Sync Notice */}
                 {roomCode && (
-                  <div className="flex gap-2.5 p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-xs md:text-sm text-primary-foreground">
-                    <Users size={18} className="text-primary shrink-0 mt-0.5" />
+                  <div className="flex gap-3 p-4 rounded-3xl bg-purple-500/10 border border-purple-500/20 text-xs md:text-sm text-purple-200">
+                    <Users size={20} className="text-purple-400 shrink-0 mt-0.5" />
                     <p className="leading-relaxed">
-                      <strong>Social Sync Active:</strong> The movie has been opened for everyone in the room! Please click play on your screen to start watching together.
+                      <strong>Social Sync Active:</strong> Your movie page is fully broadcast-linked. When you trigger playback, other attendees inside room lobby <strong>{roomCode}</strong> will synchronize automatically!
                     </p>
                   </div>
                 )}
 
                 {/* Overview */}
-                <div className="flex gap-3 md:gap-4 items-start">
-                  <Info size={18} className="text-primary shrink-0 mt-1" />
-                  <div>
-                    <p className="text-xs md:text-base text-zinc-300 leading-relaxed">{currentMovie.overview}</p>
-                    <div className="flex gap-3 mt-2.5 text-[10px] md:text-xs text-zinc-500 font-bold">
-                      <span>RATING: {currentMovie.rating} ★</span>
-                      <span>LANGUAGE: {currentMovie.language.toUpperCase()}</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2 space-y-4">
+                    <h3 className="text-lg font-black text-white flex items-center gap-2">
+                      <Layers size={16} className="text-purple-400" />
+                      Synopsis
+                    </h3>
+                    <p className="text-xs md:text-sm text-zinc-300 leading-relaxed font-semibold">{currentMovie.overview}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3 text-xs">
+                    <h4 className="font-black text-white uppercase tracking-wider text-[10px]">Metadata Details</h4>
+                    <div className="space-y-2 font-semibold text-zinc-400">
+                      <div className="flex justify-between"><span className="text-zinc-500">Rating:</span> <span className="text-yellow-400">{currentMovie.rating} / 10 ★</span></div>
+                      <div className="flex justify-between"><span className="text-zinc-500">Language:</span> <span className="text-white">{currentMovie.language.toUpperCase()}</span></div>
+                      <div className="flex justify-between"><span className="text-zinc-500">Release Year:</span> <span className="text-white">{currentMovie.year}</span></div>
                     </div>
                   </div>
                 </div>
 
                 {/* Cast / Actors Section */}
-                <div className="border-t border-white/5 pt-6 md:pt-8">
-                  <h3 className="text-sm md:text-lg font-black mb-4 md:mb-6 flex items-center gap-2">
-                    <User size={16} className="text-primary" />
-                    Cast & Actors
+                <div className="border-t border-white/5 pt-8">
+                  <h3 className="text-base md:text-lg font-black mb-6 flex items-center gap-2">
+                    <User size={16} className="text-purple-400" />
+                    Cast & Starcast
                   </h3>
                   
                   {loadingCast ? (
@@ -204,10 +217,10 @@ const Movies = () => {
                       ))}
                     </div>
                   ) : cast.length > 0 ? (
-                    <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10">
+                    <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 scrollbar-none">
                       {cast.map((actor) => (
                         <div key={actor.id} className="w-20 md:w-24 shrink-0 text-center group">
-                          <div className="w-16 h-16 md:w-20 md:h-20 mx-auto rounded-full overflow-hidden bg-zinc-800 mb-2 md:mb-3 border-2 border-transparent group-hover:border-primary transition-all">
+                          <div className="w-16 h-16 md:w-20 md:h-20 mx-auto rounded-full overflow-hidden bg-zinc-900 mb-2.5 border-2 border-transparent group-hover:border-purple-500 transition-all">
                             {actor.profile_path ? (
                               <img 
                                 src={actor.profile_path} 
@@ -243,7 +256,7 @@ const Movies = () => {
                 {searchResults.map((movie) => (
                   <div 
                     key={movie.id}
-                    className="group relative bg-card/40 border border-border/50 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
+                    className="group relative bg-card/40 border border-border/50 rounded-[2rem] overflow-hidden hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
                   >
                     <div className="relative aspect-[16/10] overflow-hidden bg-accent/10">
                       <img 
@@ -259,7 +272,7 @@ const Movies = () => {
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <Button 
                           onClick={() => playMovie(movie)}
-                          className="rounded-full w-12 h-12 bg-primary text-white shadow-xl shadow-primary/30 hover:scale-110 transition-transform"
+                          className="rounded-full w-12 h-12 bg-purple-500 text-white shadow-xl shadow-purple-500/30 hover:scale-110 transition-transform"
                         >
                           <Play size={20} fill="currentColor" />
                         </Button>
@@ -274,18 +287,18 @@ const Movies = () => {
                     <div className="p-4 md:p-6 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1.5">
-                          <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[8px] font-bold uppercase">
+                          <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-none text-[8px] font-bold uppercase">
                             {movie.language}
                           </Badge>
                           <span className="text-[10px] text-muted-foreground font-bold">{movie.year}</span>
                         </div>
-                        <h3 className="text-base md:text-xl font-black tracking-tight mb-1 group-hover:text-primary transition-colors line-clamp-1">{movie.title}</h3>
+                        <h3 className="text-base md:text-xl font-black tracking-tight mb-1 group-hover:text-purple-400 transition-colors line-clamp-1">{movie.title}</h3>
                         <p className="text-[11px] md:text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-4">{movie.overview}</p>
                       </div>
 
                       <Button 
                         onClick={() => playMovie(movie)}
-                        className="w-full rounded-xl font-bold gap-1.5 h-10 bg-accent/10 hover:bg-primary hover:text-white text-foreground transition-all text-xs"
+                        className="w-full rounded-xl font-bold gap-1.5 h-10 bg-accent/10 hover:bg-purple-500 hover:text-white text-foreground transition-all text-xs"
                       >
                         <Play size={14} fill="currentColor" />
                         Watch Now
@@ -325,7 +338,7 @@ const Movies = () => {
                 )}
 
                 {/* Netflix-Style Horizontal Rows */}
-                <div className="space-y-4 md:space-y-6">
+                <div className="space-y-8">
                   <MovieRow 
                     title="Trending Now" 
                     movies={trendingMovies} 

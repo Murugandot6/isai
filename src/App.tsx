@@ -6,6 +6,7 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { MusicProvider } from "@/context/MusicContext";
 import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
+import MusicPage from "./pages/Music";
 import Search from "./pages/Search";
 import Radio from "./pages/Radio";
 import Library from "./pages/Library";
@@ -32,6 +33,7 @@ const App = () => (
           <HashRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/music" element={<MusicPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/search" element={<Search />} />

@@ -1,471 +1,118 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Song, Playlist, Album } from '@/services/musicApi';
-import { SongCard } from '@/components/SongCard';
-import { AlbumCard } from '@/components/AlbumCard';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Bell, Settings, TrendingUp, Sparkles, Play, Disc, Calendar, Users, Flame, Music, Mic2, ListMusic, ChevronRight } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { useMusic } from '@/context/MusicContext';
-import { getHighResImage } from '@/lib/image-utils';
-import { TRENDING_TODAY_DATA } from '@/data/trendingToday';
-import { toast } from 'sonner';
-
-const DECADE_PLAYLISTS_CONFIG = [
-  { id: "1170578779", title: "Tamil 1990s" },
-  { id: "1170578783", title: "Tamil 2000s" },
-  { id: "901538755", title: "Tamil 1980s" },
-  { id: "1170578788", title: "Tamil 2010s" },
-  { id: "1074590003", title: "Tamil BGM" },
-  { id: "1133105280", title: "Tamil Hit Songs" },
-  { id: "804092154", title: "Sad Love - Tamil" },
-  { id: "901538752", title: "Tamil 1960s" },
-  { id: "901538753", title: "Tamil 1970s" },
-  { id: "1134651042", title: "Tamil: India Superhits Top 50" }
-];
+import { Music, Film, Radio, ArrowRight, Sparkles, Tv, HelpCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
-  const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
-  const [decadePlaylists, setDecadePlaylists] = useState<Playlist[]>([]);
-  const [curatedPlaylists, setCuratedPlaylists] = useState<Playlist[]>([]);
-  
-  // Year-wise Latest Releases States
-  const [releases2026, setReleases2026] = useState<Album[]>([]);
-  const [releases2025, setReleases2025] = useState<Album[]>([]);
-  const [releases2024, setReleases2024] = useState<Album[]>([]);
-  
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const { playSong, selectedLanguages, isShuffle, toggleShuffle } = useMusic();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const primaryLang = selectedLanguages[0] || 'tamil';
-        
-        // Fetch trending songs for all selected languages
-        const trendingPromises = selectedLanguages.map(lang => 
-          musicApi.getTrending(lang).catch(() => [] as Song[])
-        );
-        const trendingResults = await Promise.all(trendingPromises);
-        const combinedTrending = trendingResults.flat();
-        setTrendingSongs(combinedTrending);
-
-        // Fetch decade playlists safely (individually caught so one failure doesn't block others)
-        const decadesData = await Promise.all(
-          DECADE_PLAYLISTS_CONFIG.map(config => 
-            musicApi.getPlaylistDetails(config.id).catch((err) => {
-              console.error(`Failed to fetch decade playlist ${config.id}:`, err);
-              return null;
-            })
-          )
-        );
-        setDecadePlaylists(decadesData.filter(p => p !== null) as Playlist[]);
-        
-        // Fetch curated playlists dynamically based on selected languages
-        const activeLangs = selectedLanguages.length > 0 ? selectedLanguages : ['tamil'];
-        const limitPerLang = Math.max(4, Math.floor(12 / activeLangs.length));
-        const curatedPromises = activeLangs.map(lang => 
-          musicApi.searchPlaylists(`top ${lang}`, 0, limitPerLang).catch(() => [] as Playlist[])
-        );
-        const curatedResults = await Promise.all(curatedPromises);
-        const combinedCurated: Playlist[] = [];
-        const maxCuratedLength = Math.max(...curatedResults.map(r => r.length));
-        for (let i = 0; i < maxCuratedLength; i++) {
-          for (let j = 0; j < curatedResults.length; j++) {
-            if (curatedResults[j][i]) {
-              combinedCurated.push(curatedResults[j][i]);
-            }
-          }
-        }
-        setCuratedPlaylists(combinedCurated.slice(0, 12));
-
-        // Fetch year-wise releases safely
-        const r2026 = await musicApi.searchAlbums(`${primaryLang} 2026`).catch(() => []);
-        const r2025 = await musicApi.searchAlbums(`${primaryLang} 2025`).catch(() => []);
-        const r2024 = await musicApi.searchAlbums(`${primaryLang} 2024`).catch(() => []);
-        
-        setReleases2026((r2026 || []).slice(0, 10));
-        setReleases2025((r2025 || []).slice(0, 10));
-        setReleases2024((r2024 || []).slice(0, 10));
-      } catch (error) {
-        console.error('Failed to fetch content', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [selectedLanguages]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+  const hubs = [
+    {
+      id: 'music',
+      title: 'Music Station',
+      description: 'Explore the full premium Spotify-like dashboard. High-fidelity streams, horizontal albums, custom playlists, and regional chartbusters.',
+      icon: Music,
+      path: '/music',
+      color: 'from-green-500/20 to-emerald-500/5',
+      borderColor: 'group-hover:border-green-500/50',
+      badge: 'Spotify Web Player',
+      accent: 'text-green-400 bg-green-500/10'
+    },
+    {
+      id: 'movies',
+      title: 'anbae Cinema',
+      description: 'Cinema streaming on demand. Highly stylized server switcher, synchronized listen-together watch party rooms, and cinematic poster layouts.',
+      icon: Film,
+      path: '/movies',
+      color: 'from-purple-500/20 to-indigo-500/5',
+      borderColor: 'group-hover:border-purple-500/50',
+      badge: 'Vyla Cinematic',
+      accent: 'text-purple-400 bg-purple-500/10'
+    },
+    {
+      id: 'radio',
+      title: 'World Radio',
+      description: 'Global Live FM broadcasts sorted by votes and popularity. Dynamic search and favoriting, streaming direct on any device.',
+      icon: Radio,
+      path: '/radio',
+      color: 'from-orange-500/20 to-amber-500/5',
+      borderColor: 'group-hover:border-orange-500/50',
+      badge: 'Live FM',
+      accent: 'text-orange-400 bg-orange-500/10'
     }
-  };
-
-  // Helper to play a Trending Today item
-  const handlePlayTrendingItem = async (item: typeof TRENDING_TODAY_DATA[0]) => {
-    if (item.type === 'song') {
-      const songObj: Song = {
-        id: item.id,
-        name: item.title,
-        type: 'song',
-        album: { id: item.more_info.album_id || '', name: item.more_info.album || '', url: '' },
-        year: item.year,
-        releaseDate: item.more_info.release_date || '',
-        duration: item.more_info.duration || '0',
-        label: '',
-        primaryArtists: item.subtitle,
-        featuredArtists: '',
-        singers: item.subtitle,
-        image: [{ quality: '500x500', url: item.image }],
-        downloadUrl: [],
-        language: item.language,
-        url: ''
-      };
-      playSong(songObj);
-    } else {
-      navigate(`/album/${item.id}`);
-    }
-  };
-
-  const handleListenNow = () => {
-    if (trendingSongs.length > 0) {
-      const randomIndex = Math.floor(Math.random() * trendingSongs.length);
-      const randomSong = trendingSongs[randomIndex];
-      
-      // Play the random song and pass the combined trending songs as the queue
-      playSong(randomSong, trendingSongs);
-      
-      // Enable shuffle if it's not already enabled
-      if (!isShuffle) {
-        toggleShuffle();
-      }
-      
-      toast.success(`Playing random song in your preferred languages!`);
-    } else {
-      toast.error("No songs available for your selected languages.");
-    }
-  };
+  ];
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-10 max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:mb-12">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black mb-1 tracking-tight flex items-center gap-2">
-              anbae
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-medium">Bringing people together through music.</p>
-          </div>
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <form onSubmit={handleSearch} className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-              <Input 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search songs, movies..." 
-                className="pl-9 bg-accent/5 border-none focus-visible:ring-primary/20 rounded-xl h-10 text-sm"
-              />
-            </form>
-            <button className="p-2.5 bg-accent/5 rounded-xl hover:bg-accent/10 transition-colors shrink-0"><Bell size={18} /></button>
-            <button className="p-2.5 bg-accent/5 rounded-xl hover:bg-accent/10 transition-colors shrink-0" onClick={() => navigate('/profile')}><Settings size={18} /></button>
-          </div>
+      <div className="p-4 md:p-10 max-w-6xl mx-auto flex flex-col justify-center min-h-[80vh]">
+        {/* Welcome Section */}
+        <div className="text-center mb-10 md:mb-16 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <Badge variant="outline" className="border-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-primary/5 rounded-full">
+            Welcome to your entertainment center
+          </Badge>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter leading-none text-white">
+            What are we experiencing <span className="text-primary italic">today</span>?
+          </h1>
+          <p className="text-muted-foreground text-xs md:text-sm max-w-xl mx-auto">
+            Please select one of the dedicated, highly stylized stations below. Music, cinema, and radio have been split into individual custom interfaces.
+          </p>
         </div>
 
-        {/* Hero Banner */}
-        <div 
-          className="relative h-[280px] sm:h-[360px] md:h-[420px] rounded-3xl overflow-hidden mb-8 md:mb-12 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
-          onClick={handleListenNow}
-        >
-          <img 
-            src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070&auto=format&fit=crop" 
-            alt="Music Hero" 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex flex-col justify-end p-6 md:p-12">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="bg-primary text-white text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <Users size={10} /> Live Sync
-              </span>
-              <Badge variant="outline" className="text-white border-white/20 text-[9px] font-bold uppercase py-0">Listen together, anywhere</Badge>
-            </div>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white mb-2 tracking-tighter leading-tight">Listen together, anywhere, anytime</h2>
-            <p className="text-white/70 max-w-md text-xs md:text-sm leading-relaxed mb-4 md:mb-6 line-clamp-2 sm:line-clamp-none">Synchronize your music stream in real-time with friends. Seamless social auditory experiences await.</p>
-            <button className="bg-primary text-white px-6 md:px-10 py-2.5 md:py-4 rounded-full font-bold text-xs md:text-sm hover:scale-105 transition-all w-fit shadow-xl shadow-primary/30 flex items-center gap-2">
-              <Play size={14} fill="currentColor" />
-              Listen Now
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Browse Section (Highly visible on Mobile) */}
-        <section className="mb-10 md:mb-16">
-          <div className="grid grid-cols-2 gap-4">
-            <div 
-              onClick={() => navigate('/artists')}
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-900 p-5 flex flex-col justify-between aspect-[16/10] cursor-pointer group hover:shadow-lg hover:shadow-purple-500/10 transition-all"
+        {/* Dynamic Navigation Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          {hubs.map((hub) => (
+            <div
+              key={hub.id}
+              onClick={() => navigate(hub.path)}
+              className={`group relative flex flex-col justify-between p-6 md:p-8 rounded-[2rem] bg-gradient-to-br ${hub.color} border border-border/40 cursor-pointer shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-primary/5 ${hub.borderColor}`}
             >
-              <div className="absolute right-[-10px] bottom-[-10px] opacity-20 group-hover:scale-110 transition-transform duration-300">
-                <Mic2 size={100} className="text-white" />
-              </div>
-              <div className="bg-white/10 p-2 rounded-xl w-fit">
-                <Mic2 className="text-white" size={20} />
-              </div>
-              <div>
-                <h3 className="text-white font-black text-base md:text-lg tracking-tight">Artists</h3>
-                <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider">Tamil Legends & Stars</p>
-              </div>
-            </div>
-
-            <div 
-              onClick={() => navigate('/featured')}
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-600 to-rose-900 p-5 flex flex-col justify-between aspect-[16/10] cursor-pointer group hover:shadow-lg hover:shadow-pink-500/10 transition-all"
-            >
-              <div className="absolute right-[-10px] bottom-[-10px] opacity-20 group-hover:scale-110 transition-transform duration-300">
-                <ListMusic size={100} className="text-white" />
-              </div>
-              <div className="bg-white/10 p-2 rounded-xl w-fit">
-                <Sparkles className="text-white" size={20} />
-              </div>
-              <div>
-                <h3 className="text-white font-black text-base md:text-lg tracking-tight">Playlists</h3>
-                <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider">Curated Collections</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Trending Today Section */}
-        <section className="mb-10 md:mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/20 p-2 rounded-xl">
-                <TrendingUp className="text-primary" size={18} />
-              </div>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight">Trending Today</h3>
-            </div>
-          </div>
-          
-          <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-            {TRENDING_TODAY_DATA.map((item) => (
-              <div 
-                key={item.id}
-                onClick={() => handlePlayTrendingItem(item)}
-                className="group relative w-[160px] md:w-[180px] shrink-0 bg-card/50 hover:bg-accent/10 p-3 rounded-2xl transition-all duration-300 cursor-pointer border border-transparent hover:border-accent/20 hover:-translate-y-1"
-              >
-                <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-accent/10 shadow-lg">
-                  <img 
-                    src={item.image} 
-                    alt={item.title} 
-                    className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-2 left-2 z-10">
-                    <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] font-bold uppercase border-none text-white py-0.5">
-                      {item.type}
-                    </Badge>
+              <div className="space-y-6">
+                {/* Header elements inside card */}
+                <div className="flex items-center justify-between">
+                  <div className={`p-3.5 rounded-2xl ${hub.accent}`}>
+                    <hub.icon size={28} />
                   </div>
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
-                      <Play size={20} fill="currentColor" />
-                    </div>
-                  </div>
+                  <Badge variant="secondary" className="bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5">
+                    {hub.badge}
+                  </Badge>
                 </div>
-                <h4 className="font-semibold text-xs md:text-sm truncate mb-0.5" dangerouslySetInnerHTML={{ __html: item.title }}></h4>
-                <p className="text-[10px] md:text-xs text-muted-foreground truncate" dangerouslySetInnerHTML={{ __html: item.subtitle }}></p>
+
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-black text-white group-hover:text-primary transition-colors flex items-center gap-2">
+                    {hub.title}
+                    <Sparkles size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+                  </h3>
+                  <p className="text-muted-foreground text-xs leading-relaxed font-medium">
+                    {hub.description}
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
 
-        {/* Curated Featured Playlists (Dynamic Language-Filtered Dataset) */}
-        <section className="mb-10 md:mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/20 p-2 rounded-xl">
-                <Sparkles className="text-primary" size={18} />
+              {/* Action element at bottom */}
+              <div className="flex items-center justify-between pt-6 mt-6 border-t border-white/5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
+                  Open Station
+                </span>
+                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-primary group-hover:text-white transition-all transform group-hover:scale-105 duration-300">
+                  <ArrowRight size={14} />
+                </div>
               </div>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight">Curated Playlists</h3>
             </div>
-            <button 
-              onClick={() => navigate('/featured')} 
-              className="text-xs font-bold text-primary hover:underline"
-            >
-              See All
-            </button>
-          </div>
-          
-          <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-            {loading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="w-[200px] md:w-[240px] shrink-0 aspect-square rounded-2xl md:rounded-3xl" />
-              ))
-            ) : curatedPlaylists.length > 0 ? (
-              curatedPlaylists.map((playlist, index) => {
-                const songCount = playlist.songCount || "0";
-                return (
-                  <div 
-                    key={`${playlist.id}-${index}`}
-                    onClick={() => navigate(`/playlist/${playlist.id}`)}
-                    className="group relative w-[200px] md:w-[240px] shrink-0 aspect-square rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-lg transition-all hover:-translate-y-1"
-                  >
-                    <img 
-                      src={getHighResImage(playlist.image)} 
-                      alt={playlist.name} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 md:p-6 flex flex-col justify-end">
-                      <h4 className="text-white font-black text-sm md:text-base mb-1 truncate" dangerouslySetInnerHTML={{ __html: playlist.name }}></h4>
-                      <div className="flex items-center gap-1.5 text-white/60 text-[10px] font-bold uppercase tracking-wider">
-                        <Music size={10} />
-                        <span>{songCount} Tracks</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-xs text-muted-foreground italic py-4">No curated playlists found for your selected languages.</div>
-            )}
-          </div>
-        </section>
+          ))}
+        </div>
 
-        {/* Latest Releases Section (Year-wise) */}
-        <section className="mb-10 md:mb-16 space-y-10">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="bg-primary/20 p-2 rounded-xl">
-              <Flame className="text-primary animate-pulse" size={18} />
-            </div>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight">Latest Releases</h3>
-          </div>
-
-          {/* 2026 Releases */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-white font-bold text-xs px-2.5 py-0.5 rounded-md">2026</Badge>
-              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Newest Hits</span>
-            </div>
-            <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="w-[180px] shrink-0 space-y-3">
-                    <Skeleton className="aspect-square w-full rounded-2xl" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ))
-              ) : releases2026.length > 0 ? (
-                releases2026.map((album) => (
-                  <div key={album.id} className="w-[180px] shrink-0">
-                    <AlbumCard album={album} />
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground italic">No releases found for 2026.</p>
-              )}
-            </div>
-          </div>
-
-          {/* 2025 Releases */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-accent/20 text-foreground font-bold text-xs px-2.5 py-0.5 rounded-md">2025</Badge>
-              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Chartbusters</span>
-            </div>
-            <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="w-[180px] shrink-0 space-y-3">
-                    <Skeleton className="aspect-square w-full rounded-2xl" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ))
-              ) : releases2025.length > 0 ? (
-                releases2025.map((album) => (
-                  <div key={album.id} className="w-[180px] shrink-0">
-                    <AlbumCard album={album} />
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground italic">No releases found for 2025.</p>
-              )}
-            </div>
-          </div>
-
-          {/* 2024 Releases */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-accent/20 text-foreground font-bold text-xs px-2.5 py-0.5 rounded-md">2024</Badge>
-              <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Modern Classics</span>
-            </div>
-            <div className="flex gap-5 overflow-x-auto pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="w-[180px] shrink-0 space-y-3">
-                    <Skeleton className="aspect-square w-full rounded-2xl" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ))
-              ) : releases2024.length > 0 ? (
-                releases2024.map((album) => (
-                  <div key={album.id} className="w-[180px] shrink-0">
-                    <AlbumCard album={album} />
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground italic">No releases found for 2024.</p>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Decades Section */}
-        <section className="mb-10 md:mb-16">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-orange-500/20 p-2 rounded-xl">
-              <Calendar className="text-orange-500" size={18} />
-            </div>
-            <h3 className="text-xl md:text-2xl font-black tracking-tight">Tamil Through the Decades</h3>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-            {loading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 md:h-32 w-full rounded-2xl" />
-              ))
-            ) : (
-              decadePlaylists.map((playlist) => {
-                const config = DECADE_PLAYLISTS_CONFIG.find(c => c.id === playlist.id);
-                const title = config ? config.title : playlist.name;
-                return (
-                  <div 
-                    key={playlist.id}
-                    onClick={() => navigate(`/playlist/${playlist.id}`)}
-                    className="group relative h-24 md:h-32 rounded-2xl overflow-hidden cursor-pointer shadow-md transition-all hover:scale-105"
-                  >
-                    <img 
-                      src={getHighResImage(playlist.image)} 
-                      alt={title} 
-                      className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-                    />
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-3 text-center">
-                      <h4 className="text-white font-black text-xs md:text-sm uppercase tracking-widest" dangerouslySetInnerHTML={{ __html: title }}></h4>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
+        {/* Global social sync notification */}
+        <div className="mt-12 p-4 rounded-2xl bg-accent/5 border border-border/50 flex items-center justify-center gap-2 text-center max-w-xl mx-auto animate-in fade-in duration-1000">
+          <Badge variant="outline" className="border-green-500/20 text-green-500 text-[8px] font-black uppercase tracking-widest bg-green-500/5 animate-pulse">
+            Active
+          </Badge>
+          <span className="text-[10px] md:text-xs text-muted-foreground font-semibold">
+            Social Sync broadcast system is fully active on all platforms.
+          </span>
+        </div>
       </div>
     </MainLayout>
   );
