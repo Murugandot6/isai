@@ -7,7 +7,7 @@ import { tmdbApi, CastMember } from '@/services/tmdbApi';
 import { StreamPlayer } from '@/components/StreamPlayer';
 import { MovieHero } from '@/components/MovieHero';
 import { MovieRow } from '@/components/MovieRow';
-import { Play, Film, Star, Search, Tv, X, Users, Info, User, Layers } from 'lucide-react';
+import { Play, Film, Star, Search, Tv, X, Users, Info, User, Layers, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,9 @@ const Movies = () => {
   const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
   const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([]);
   const [upcomingMovies, setUpcomingMovies] = useState<Movie[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Cast States
   const [cast, setCast] = useState<CastMember[]>([]);
@@ -84,36 +85,33 @@ const Movies = () => {
 
   return (
     <MainLayout>
-      <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-12">
-        {/* Header - Vyla Glowing style */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/5">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="bg-purple-500/20 p-2 rounded-xl border border-purple-500/30">
-                <Film className="text-purple-400" size={20} />
+      {/* Immersive Fullscreen Background and layout container */}
+      <div className="bg-zinc-950 min-h-screen text-white select-none">
+        
+        {/* Floating Minimalist Search Bar overlay if toggled */}
+        {isSearchOpen && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in duration-300">
+            <button 
+              onClick={() => setIsSearchOpen(false)}
+              className="absolute top-6 right-6 p-2 text-white hover:text-purple-400 transition-colors"
+            >
+              <X size={28} />
+            </button>
+            <form onSubmit={handleSearchSubmit} className="relative w-full max-w-xl text-center space-y-4">
+              <h2 className="text-2xl font-black uppercase tracking-widest text-purple-400">Search Movies</h2>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+                <Input 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Type any movie title, genres, directors..."
+                  className="pl-12 bg-zinc-900 border-2 border-transparent focus-visible:border-purple-600/30 h-14 rounded-2xl text-base font-semibold"
+                  autoFocus
+                />
               </div>
-              <Badge variant="outline" className="border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-purple-500/5 rounded-full">
-                Vyla Cinema Streamer
-              </Badge>
-            </div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white">
-              anbae Cinema
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground max-w-md font-semibold">
-              Ultra-high-definition multi-source movie database. Synchronize playback with room lobbies.
-            </p>
+            </form>
           </div>
-          
-          <form onSubmit={handleSearchSubmit} className="relative w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search cinematic hits, releases, directors..." 
-              className="pl-12 bg-accent/5 border-none h-12 rounded-2xl focus-visible:ring-purple-500/20 text-sm font-semibold"
-            />
-          </form>
-        </div>
+        )}
 
         {/* Theater Mode Player Overlay */}
         {currentMovie && (
@@ -234,25 +232,21 @@ const Movies = () => {
 
         {loading ? (
           <div className="space-y-10">
-            <Skeleton className="h-[320px] sm:h-[420px] md:h-[520px] w-full rounded-3xl" />
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-40 rounded-lg" />
-              <div className="flex gap-4 overflow-hidden">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-32 w-[200px] shrink-0 rounded-2xl" />
-                ))}
-              </div>
-            </div>
+            <Skeleton className="h-screen w-full" />
           </div>
         ) : (
-          <>
-            {/* Immersive Spotlight Hero Slider using trending movies */}
+          <div className="space-y-12">
+            {/* Spotlight Fullscreen Carousel Hero */}
             {trendingMovies.length > 0 && (
-              <MovieHero movies={trendingMovies.slice(0, 6)} onPlay={playMovie} />
+              <MovieHero 
+                movies={trendingMovies.slice(0, 8)} 
+                onPlay={playMovie} 
+                onSearchClick={() => setIsSearchOpen(true)}
+              />
             )}
 
-            {/* Netflix-Style Horizontal Rows with Vertical Posters */}
-            <div className="space-y-12">
+            {/* Immersive Scroll Rows */}
+            <div className="px-6 md:px-16 space-y-12 pb-24">
               <MovieRow 
                 title="Latest Releases" 
                 movies={trendingMovies} 
@@ -277,7 +271,7 @@ const Movies = () => {
                 onPlay={playMovie} 
               />
             </div>
-          </>
+          </div>
         )}
       </div>
     </MainLayout>

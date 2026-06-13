@@ -8,7 +8,7 @@ import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
 import { Music, User, LogIn, Settings, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ import {
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -38,6 +39,22 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   }
 
   if (!user) return null;
+
+  // Check if we are on the Cinema (movies) page to enable fully immersive fullscreen
+  const isCinemaFullscreen = location.pathname === '/movies';
+
+  if (isCinemaFullscreen) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-foreground overflow-x-hidden relative">
+        {/* Render children completely unconstrained */}
+        <main className="min-h-screen relative pb-16 lg:pb-0">
+          {children}
+        </main>
+        <MusicPlayer />
+        <MobileNav />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
