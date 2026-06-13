@@ -1,7 +1,7 @@
 "use client";
 
-import React from 'react';
-import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, Disc, History } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, Disc, History, ChevronRight, ChevronLeft, Menu } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,7 @@ export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const path = location.pathname;
   const searchParams = new URLSearchParams(location.search);
@@ -20,294 +21,370 @@ export const Sidebar = () => {
   const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
   const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
 
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
-    <div className="hidden lg:flex flex-col w-64 border-r border-border h-screen sticky top-0 bg-card/20 backdrop-blur-sm p-6 overflow-y-auto">
-      {/* Station Brand Header */}
-      <div className="flex items-center gap-2 mb-8 px-2">
-        <div className={cn(
-          "p-2 rounded-xl transition-colors duration-300",
-          isMoviesContext ? "bg-purple-600" : isRadioContext ? "bg-orange-500" : "bg-green-500"
-        )}>
-          {isMoviesContext ? <Film className="text-white" size={20} /> : isRadioContext ? <Radio className="text-white" size={20} /> : <Music className="text-white" size={20} />}
-        </div>
-        <span className="text-xl font-black tracking-tight italic">anbae</span>
+    <div className={cn(
+      "hidden lg:flex flex-col border-r border-border h-screen sticky top-0 bg-card/20 backdrop-blur-sm p-4 overflow-y-auto transition-all duration-300 shrink-0",
+      isCollapsed ? "w-20 items-center" : "w-64"
+    )}>
+      {/* Sidebar Toggle & Brand Header */}
+      <div className={cn(
+        "flex items-center mb-8 px-2 w-full",
+        isCollapsed ? "justify-center" : "justify-between"
+      )}>
+        {!isCollapsed && (
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "p-2 rounded-xl transition-colors duration-300",
+              isMoviesContext ? "bg-purple-600" : isRadioContext ? "bg-orange-500" : "bg-green-500"
+            )}>
+              {isMoviesContext ? <Film className="text-white" size={20} /> : isRadioContext ? <Radio className="text-white" size={20} /> : <Music className="text-white" size={20} />}
+            </div>
+            <span className="text-xl font-black tracking-tight italic">anbae</span>
+          </div>
+        )}
+        <button 
+          onClick={toggleSidebar}
+          className={cn(
+            "p-2 rounded-xl hover:bg-accent/10 text-muted-foreground hover:text-foreground transition-all",
+            isCollapsed && "bg-accent/5 border border-border/50"
+          )}
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
+        </button>
       </div>
 
       {/* Global back navigation button if not at home */}
       {path !== '/' && (
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold text-muted-foreground hover:bg-accent/10 hover:text-foreground transition-all mb-6 border border-border/50 bg-accent/5"
+          className={cn(
+            "flex items-center gap-2.5 rounded-xl text-xs font-bold text-muted-foreground hover:bg-accent/10 hover:text-foreground transition-all mb-6 border border-border/50 bg-accent/5",
+            isCollapsed ? "p-3 justify-center" : "px-4 py-3 w-full"
+          )}
+          title="Back to Gateway Hub"
         >
           <ArrowLeft size={14} />
-          Back to Gateway Hub
+          {!isCollapsed && <span>Back to Gateway</span>}
         </button>
       )}
 
       {/* RENDER MOVIES STATION NAVIGATION */}
       {isMoviesContext && (
-        <nav className="space-y-1 mb-8">
-          <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest px-4 mb-3">Cinema Station</p>
+        <nav className="space-y-1 mb-8 w-full">
+          {!isCollapsed && <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest px-4 mb-3">Cinema Station</p>}
           <Link
             to="/movies"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/movies' 
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="Cinema Home"
           >
             <Film size={20} />
-            Cinema Home
+            {!isCollapsed && <span>Cinema Home</span>}
           </Link>
           <Link
             to="/search?type=movies"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/search' && searchType === 'movies'
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="Search Movies"
           >
             <Search size={20} />
-            Search Movies
+            {!isCollapsed && <span>Search Movies</span>}
           </Link>
           <Link
             to="/library"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/library'
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="Continue Watching"
           >
             <History size={20} />
-            Continue Watching
+            {!isCollapsed && <span>Continue Watching</span>}
           </Link>
           <Link
             to="/favourites"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/favourites'
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="Liked Movies"
           >
             <Heart size={20} />
-            Liked Movies
+            {!isCollapsed && <span>Liked Movies</span>}
           </Link>
         </nav>
       )}
 
       {/* RENDER RADIO STATION NAVIGATION */}
       {isRadioContext && (
-        <nav className="space-y-1 mb-8">
-          <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest px-4 mb-3">Radio Station</p>
+        <nav className="space-y-1 mb-8 w-full">
+          {!isCollapsed && <p className="text-[10px] font-bold text-orange-400 uppercase tracking-widest px-4 mb-3">Radio Station</p>}
           <Link
             to="/radio"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/radio' 
                 ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="World FM Radio"
           >
             <Radio size={20} />
-            World FM Radio
+            {!isCollapsed && <span>World FM Radio</span>}
           </Link>
           <Link
             to="/search?type=fm"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/search' && searchType === 'fm'
                 ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="Search Radio"
           >
             <Search size={20} />
-            Search Radio
+            {!isCollapsed && <span>Search Radio</span>}
           </Link>
           <Link
             to="/favourites"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/favourites'
                 ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="Starred Stations"
           >
             <Heart size={20} />
-            Starred Stations
+            {!isCollapsed && <span>Starred Stations</span>}
           </Link>
         </nav>
       )}
 
       {/* RENDER MUSIC STATION NAVIGATION */}
       {isMusicContext && (
-        <>
-          <nav className="space-y-1 mb-6">
-            <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest px-4 mb-3">Music Menu</p>
+        <div className="w-full">
+          <nav className="space-y-1 mb-6 w-full">
+            {!isCollapsed && <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest px-4 mb-3">Music Menu</p>}
             <Link
               to="/music"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
                 path === '/music' 
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}
+              title="Music Home"
             >
               <Music size={20} />
-              Music Home
+              {!isCollapsed && <span>Music Home</span>}
             </Link>
             <Link
               to="/featured"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
                 path === '/featured' 
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}
+              title="Featured Lists"
             >
               <Sparkles size={20} />
-              Featured Lists
+              {!isCollapsed && <span>Featured Lists</span>}
             </Link>
             <Link
               to="/search?type=music"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
                 path === '/search' && (searchType === 'music' || !searchType)
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}
+              title="Search Tracks"
             >
               <Search size={20} />
-              Search Tracks
+              {!isCollapsed && <span>Search Tracks</span>}
             </Link>
             <Link
               to="/library"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
                 path === '/library' 
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}
+              title="Your Playlists"
             >
               <Library size={20} />
-              Your Playlists
+              {!isCollapsed && <span>Your Playlists</span>}
             </Link>
           </nav>
 
-          <nav className="space-y-1 mb-6">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Your Space</p>
+          <nav className="space-y-1 mb-6 w-full">
+            {!isCollapsed && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Your Space</p>}
             <Link
               to="/songs"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
                 path === '/songs' 
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}
+              title="Recent Songs"
             >
               <History size={20} />
-              Recent Songs
+              {!isCollapsed && <span>Recent Songs</span>}
             </Link>
             <Link
               to="/artists"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
                 path === '/artists' 
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}
+              title="Artists Page"
             >
               <Mic2 size={20} />
-              Artists Page
+              {!isCollapsed && <span>Artists Page</span>}
             </Link>
             <Link
               to="/favourites"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
                 path === '/favourites' 
                   ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
                   : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
               )}
+              title="Favourites"
             >
               <Heart size={20} />
-              Favourites
+              {!isCollapsed && <span>Favourites</span>}
             </Link>
           </nav>
-        </>
+        </div>
       )}
 
       {/* GUEST OR DEFAULT HOME CHOICE PORTAL SELECTION */}
       {path === '/' && (
-        <nav className="space-y-1 mb-8">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Gateway Stations</p>
+        <nav className="space-y-1 mb-8 w-full">
+          {!isCollapsed && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Gateway Stations</p>}
           <Link
             to="/music"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-green-500/10 hover:text-green-400 transition-all duration-200"
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-green-500/10 hover:text-green-400 transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3"
+            )}
+            title="Music Station"
           >
             <Music size={20} />
-            Music Station
+            {!isCollapsed && <span>Music Station</span>}
           </Link>
           <Link
             to="/movies"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-purple-600/10 hover:text-purple-400 transition-all duration-200"
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-purple-600/10 hover:text-purple-400 transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3"
+            )}
+            title="anbae Cinema"
           >
             <Film size={20} />
-            anbae Cinema
+            {!isCollapsed && <span>anbae Cinema</span>}
           </Link>
           <Link
             to="/radio"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-orange-500/10 hover:text-orange-400 transition-all duration-200"
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-orange-500/10 hover:text-orange-400 transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3"
+            )}
+            title="World FM Radio"
           >
             <Radio size={20} />
-            World FM Radio
+            {!isCollapsed && <span>World FM Radio</span>}
           </Link>
         </nav>
       )}
 
       {/* Global Account Settings */}
-      <nav className="space-y-1 mb-8 mt-auto">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Session</p>
+      <nav className="space-y-1 mb-8 mt-auto w-full">
+        {!isCollapsed && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Session</p>}
         {user ? (
           <button
             onClick={() => signOut()}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200",
+              isCollapsed ? "p-3 justify-center w-full" : "px-4 py-3 w-full"
+            )}
+            title="Logout"
           >
             <LogOut size={20} />
-            Logout
+            {!isCollapsed && <span>Logout</span>}
           </button>
         ) : (
           <Link
             to="/login"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
               path === '/login' 
                 ? "bg-primary text-white shadow-lg shadow-primary/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
+            title="Login / Sign Up"
           >
             <LogIn size={20} />
-            Login / Sign Up
+            {!isCollapsed && <span>Login / Sign Up</span>}
           </Link>
         )}
       </nav>
 
       {/* Footer & Disclaimer */}
-      <div className="pt-6 border-t border-border/50 text-center space-y-3 shrink-0">
-        <p className="text-[11px] text-muted-foreground font-medium">
-          Crafted with love by{" "}
-          <a 
-            href="https://www.instagram.com/11x13y/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-primary hover:underline font-bold"
-          >
-            11x13y
-          </a>
-        </p>
-      </div>
+      {!isCollapsed && (
+        <div className="pt-6 border-t border-border/50 text-center space-y-3 shrink-0 w-full">
+          <p className="text-[11px] text-muted-foreground font-medium">
+            Crafted with love by{" "}
+            <a 
+              href="https://www.instagram.com/11x13y/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-primary hover:underline font-bold"
+            >
+              11x13y
+            </a>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
