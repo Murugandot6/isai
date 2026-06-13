@@ -88,8 +88,23 @@ const MusicPage = () => {
         glowingTheme ? "bg-gradient-to-tr from-black via-zinc-950 to-neutral-950" : "bg-black"
       )}>
         
-        {/* HEADER MENU AND CONTROLS BAR (No left sidebar anymore) */}
-        <div className="flex items-center justify-between p-6 md:px-12 z-20 gap-4 border-b border-white/5 bg-black/40 backdrop-blur-xl">
+        {/* Absolute Background Hero Image overlapping top header seamlessly */}
+        {spotlightSong && (
+          <div className="absolute right-0 top-0 w-full lg:w-3/5 h-[600px] z-0 select-none pointer-events-none overflow-hidden rounded-l-[3rem]">
+            <img 
+              src={spotlightImage} 
+              alt={spotlightSong.name} 
+              className="w-full h-full object-cover object-center opacity-30 lg:opacity-60"
+            />
+            {/* Complex blended black gradients to smoothly blend standard image to black background */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
+        )}
+
+        {/* HEADER MENU AND CONTROLS BAR (Fully transparent overlaying the hero background) */}
+        <div className="flex items-center justify-between p-6 md:px-12 z-20 gap-4 bg-transparent">
           {/* Left Top Group controls (Power, Theme, Sound) */}
           <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-md">
             <button 
@@ -118,7 +133,7 @@ const MusicPage = () => {
             </button>
           </div>
 
-          {/* Curated Top Menus (Requested Corrections: Trending Playlists, Editor's Picks, Top Artists) */}
+          {/* Curated Top Menus */}
           <div className="hidden md:flex items-center gap-2 text-xs font-black tracking-widest uppercase">
             <button 
               onClick={() => navigate('/featured')}
@@ -160,21 +175,6 @@ const MusicPage = () => {
 
         {/* MAIN SPOTLIGHT BANNER HERO (Seamless Black Blended Look) */}
         <div className="flex-1 flex flex-col justify-center px-6 md:px-12 relative min-h-[420px] py-12">
-          {/* Big spotlight absolute background art blended beautifully with pure black */}
-          {spotlightSong && (
-            <div className="absolute right-0 top-0 bottom-0 w-full lg:w-3/5 z-0 select-none pointer-events-none overflow-hidden rounded-l-[3rem]">
-              <img 
-                src={spotlightImage} 
-                alt={spotlightSong.name} 
-                className="w-full h-full object-cover object-center opacity-30 lg:opacity-60"
-              />
-              {/* Complex blended black gradients to smoothly blend standard image to black background */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
-              <div className="absolute inset-0 bg-black/40" />
-            </div>
-          )}
-
           <div className="relative z-10 max-w-xl space-y-4 md:space-y-6 text-left">
             <span className="text-xs md:text-sm font-black uppercase tracking-[0.25em] text-purple-400 flex items-center gap-2">
               <span className="w-1.5 h-4 bg-purple-500 rounded-full" />
