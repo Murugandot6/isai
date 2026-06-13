@@ -94,29 +94,39 @@ export const musicApi = {
   },
 
   // Specific search endpoints
-  searchSongs: async (query: string, page: number = 0, limit: number = 20): Promise<Song[]> => {
-    const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
+  searchSongs: async (query: string, page: number = 1, limit: number = 20): Promise<Song[]> => {
+    // Standardize page to 1-based index as requested by the worker API endpoint
+    const activePage = page <= 0 ? 1 : page;
+    const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(query)}&page=${activePage}&limit=${limit}`);
     const res = await response.json();
-    const results = res.data?.results || [];
-    return (Array.isArray(results) ? results : []).map(mapApiSong);
+    const data = res.data;
+    if (!data) return [];
+    const results = data.results || (Array.isArray(data) ? data : []);
+    return results.map(mapApiSong);
   },
 
   searchAlbums: async (query: string): Promise<Album[]> => {
     const response = await fetch(`${BASE_URL}/api/search/albums?query=${encodeURIComponent(query)}`);
     const res = await response.json();
-    return res.data?.results || [];
+    const data = res.data;
+    if (!data) return [];
+    return data.results || (Array.isArray(data) ? data : []);
   },
 
   searchArtists: async (query: string, page: number = 0, limit: number = 24): Promise<any[]> => {
     const response = await fetch(`${BASE_URL}/api/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
     const res = await response.json();
-    return res.data?.results || [];
+    const data = res.data;
+    if (!data) return [];
+    return data.results || (Array.isArray(data) ? data : []);
   },
 
   searchPlaylists: async (query: string, page: number = 0, limit: number = 40): Promise<Playlist[]> => {
     const response = await fetch(`${BASE_URL}/api/search/playlists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
     const res = await response.json();
-    return res.data?.results || [];
+    const data = res.data;
+    if (!data) return [];
+    return data.results || (Array.isArray(data) ? data : []);
   },
 
   // Detail endpoints
@@ -174,8 +184,10 @@ export const musicApi = {
       const primaryLang = langList[0] || 'tamil';
       const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(primaryLang + ' hits')}&limit=150`);
       const res = await response.json();
-      const results = res.data?.results || [];
-      return (Array.isArray(results) ? results : []).map(mapApiSong);
+      const data = res.data;
+      if (!data) return [];
+      const results = data.results || (Array.isArray(data) ? data : []);
+      return results.map(mapApiSong);
     } catch (e) {
       console.error("Error in getTrending:", e);
       return [];
@@ -195,33 +207,31 @@ export const musicApi = {
   },
 
   // Artist songs endpoint
-  getArtistSongs: async (id: string, page: number = 0): Promise<Song[]> => {
+  getArtistSongs: async (id: string, page: number = 0, artistName?: string): Promise<Song[]> => {
     try {
-      const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${page}`);
-      const res = await response.json();
-      
-      // The API may return the list nested directly inside `res`, or nested in `res.data`, or in `res.data.songs`
-      let rawData = res;
-      if (res && typeof res === 'object') {
-        if (res.data !== undefined) {
-          rawData = res.data;
-        }
-      }
-
-      if (rawData && typeof rawData === 'object') {
-        if (rawData.songs !== undefined) {
-          rawData = rawData.songs;
-        } else if (rawData.results !== undefined) {
-          rawData = rawData.results;
-        }
-      }
-
-      // Convert indexed object responses (e.g. {"3": {...}}) to standard array
       let songsList: any[] = [];
-      if (Array.isArray(rawData)) {
-        songsList = rawData;
-      } else if (rawData && typeof rawData === 'object') {
-        songsList = Object.values(rawData).filter((item: any) => item && typeof item === 'object' && item.id);
+      
+      // Try to fetch via artist endpoint
+      if (id && id !== 'unknown') {
+        try {
+          const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${page}`);
+          const res = await response.json();
+          const songsData = res.data?.songs || res.data?.results || [];
+          
+          if (songsData && !Array.isArray(songsData) && typeof songsData === 'object') {
+            songsList = Object.values(songsData).filter((item: any) => item && typeof item === 'object' && item.id);
+          } else if (Array.isArray(songsData)) {
+            songsList = songsData;
+          }
+        } catch (err) {
+          console.warn("Artist songs path request failed, falling back to name search:", err);
+        }
+      }
+
+      // Safe fallback: if path endpoint returns no results, use search API by artistName to pull top-tier hits
+      if (songsList.length === 0 && artistName) {
+        const searchResults = await musicApi.searchSongs(artistName, page + 1, 50);
+        songsList = searchResults;
       }
 
       return songsList.map(mapApiSong);

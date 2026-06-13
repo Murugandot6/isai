@@ -83,11 +83,11 @@ const Artists = () => {
     fetchArtistsBatch();
   }, []);
 
-  const fetchArtistSongs = useCallback(async (artistId: string, pageNum: number) => {
+  const fetchArtistSongs = useCallback(async (artistId: string, pageNum: number, artistName?: string) => {
     if (pageNum === 0) setLoadingSongs(true);
     
     try {
-      const results = await musicApi.getArtistSongs(artistId, pageNum);
+      const results = await musicApi.getArtistSongs(artistId, pageNum, artistName);
       
       if (!results || results.length === 0) {
         setHasMore(false);
@@ -129,7 +129,7 @@ const Artists = () => {
 
   useEffect(() => {
     if (selectedArtist && page > 0) {
-      fetchArtistSongs(selectedArtist.id, page);
+      fetchArtistSongs(selectedArtist.id, page, selectedArtist.name);
     }
   }, [page, selectedArtist, fetchArtistSongs]);
 
@@ -138,7 +138,7 @@ const Artists = () => {
     setArtistSongs([]);
     setPage(0);
     setHasMore(true);
-    fetchArtistSongs(artist.id, 0);
+    fetchArtistSongs(artist.id, 0, artist.name);
   };
 
   const filterList = (list: ArtistData[]) => {
