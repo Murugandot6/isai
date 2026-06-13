@@ -214,26 +214,39 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setCurrentSong(fullDetails);
       setIsPlaying(true);
       
-      if (newQueue) {
-        setQueue(newQueue);
-        setCurrentIndex(newQueue.findIndex(s => s.id === song.id));
-      } else {
-        const existingIdx = queue.findIndex(s => s.id === song.id);
-        if (existingIdx !== -1) setCurrentIndex(existingIdx);
+      let updatedQueue = newQueue || queue;
+      
+      // If shuffle is active, and we don't have many songs of the same language in the queue,
+      // let's fetch trending songs of this language and append them to the queue!
+      if (isShuffle && !isRadio) {
+        const lang = fullDetails.language?.toLowerCase() || 'tamil';
+        try {
+          const extraSongs = await musicApi.getTrending(lang);
+          if (extraSongs && extraSongs.length > 0) {
+            const existingIds = new Set(updatedQueue.map(s => s.id));
+            const uniqueExtras = extraSongs.filter(s => !existingIds.has(s.id));
+            updatedQueue = [...updatedQueue, ...uniqueExtras];
+          }
+        } catch (err) {
+          console.error("Failed to fetch extra songs for shuffle in playSong:", err);
+        }
       }
+
+      setQueue(updatedQueue);
+      setCurrentIndex(updatedQueue.findIndex(s => s.id === song.id));
 
       if (toastId) toast.dismiss(toastId);
       
       if (!fromSync) {
         setRecentlyPlayed(prev => [fullDetails, ...prev.filter(s => s.id !== fullDetails.id)].slice(0, 30));
-        broadcast('play', { song: fullDetails, time: 0, queue: newQueue || queue });
+        broadcast('play', { song: fullDetails, time: 0, queue: updatedQueue });
       }
     } catch (error) {
       console.error(error);
       if (toastId) toast.error("Unable to play this track", { id: toastId });
       setIsPlaying(false);
     }
-  }, [queue, currentMovie, broadcast]);
+  }, [queue, currentMovie, broadcast, isShuffle]);
 
   const togglePlay = () => {
     if (!audioRef.current || !currentSong) return;
@@ -268,14 +281,29 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (queue.length === 0) return;
     let nextIdx = currentIndex + 1;
     if (isShuffle) {
-      nextIdx = Math.floor(Math.random() * queue.length);
+      // Filter queue to same language
+      const currentLang = currentSong?.language?.toLowerCase() || 'tamil';
+      const sameLangSongs = queue.filter(s => s.language?.toLowerCase() === currentLang);
+      
+      if (sameLangSongs.length > 1) {
+        const candidates = sameLangSongs.filter(s => s.id !== currentSong?.id);
+        const chosen = candidates.length > 0 
+          ? candidates[Math.floor(Math.random() * candidates.length)]
+          : sameLangSongs[Math.floor(Math.random() * sameLangSongs.length)];
+        nextIdx = queue.findIndex(s => s.id === chosen.id);
+      } else {
+        nextIdx = Math.floor(Math.random() * queue.length);
+      }
     } else if (nextIdx >= queue.length) {
       if (repeatMode === 'all') nextIdx = 0;
       else return;
     }
-    playSong(queue[nextIdx]);
+    
+    if (nextIdx !== -1 && queue[nextIdx]) {
+      playSong(queue[nextIdx]);
+    }
     if (!fromSync) broadcast('next', {});
-  }, [queue, currentIndex, isShuffle, repeatMode, playSong, broadcast]);
+  }, [queue, currentIndex, isShuffle, repeatMode, playSong, broadcast, currentSong]);
 
   const playPrevious = useCallback((fromSync: boolean = false) => {
     if (queue.length === 0) return;
@@ -353,6 +381,48 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setMemories(prev => prev.filter(m => m.id !== memoryId));
     toast.success("Memory removed from your Journal");
   };
+
+  const toggleShuffle = useCallback(async (fromSync: boolean = false) => {
+    const newShuffle = !isShuffle;
+    setIsShuffle(newShuffle);
+    
+    if (newShuffle && currentSong) {
+      const lang = currentSong.language?.toLowerCase() || 'tamil';
+      try {
+        const extraSongs = await musicApi.getTrending(lang);
+        if (extraSongs && extraSongs.length > 0) {
+          setQueue(prev => {
+            const existingIds = new Set(prev.map(s => s.id));
+            const uniqueExtras = extraSongs.filter(s => !existingIds.has(s.id));
+            return [...prev, ...uniqueExtras];
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch extra songs for shuffle:", err);
+      }
+    }
+    if (!fromSync) broadcast('shuffle', { isShuffle: newShuffle });
+  }, [isShuffle, currentSong, broadcast]);
+
+  // Automatic track progression when a song ends
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => {
+      if (repeatMode === 'one') {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else {
+        playNext();
+      }
+    };
+
+    audio.addEventListener('ended', handleEnded);
+    return () => {
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [playNext, repeatMode]);
 
   // Supabase Realtime Broadcast Subscription
   useEffect(() => {
@@ -454,7 +524,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createPlaylist: (name) => setPlaylists(prev => [{ id: Math.random().toString(36).substr(2, 9), name, songs: [], createdAt: Date.now() }, ...prev]),
       addToPlaylist: (id, s) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: [s, ...p.songs] } : p)),
       removeFromPlaylist: (id, sid) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: p.songs.filter(s => s.id !== sid) } : p)),
-      isShuffle, toggleShuffle: () => setIsShuffle(!isShuffle),
+      isShuffle, toggleShuffle,
       repeatMode, toggleRepeat: () => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none'),
       queue, currentMovie, playMovie, closeMovie, likedMovies, toggleLikeMovie, isMovieLiked, recentlyWatched,
       memories, addMemory, deleteMemory

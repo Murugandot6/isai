@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMusic } from '@/context/MusicContext';
 import { getHighResImage } from '@/lib/image-utils';
 import { TRENDING_TODAY_DATA } from '@/data/trendingToday';
+import { toast } from 'sonner';
 
 const DECADE_PLAYLISTS_CONFIG = [
   { id: "1170578779", title: "Tamil 1990s" },
@@ -39,7 +40,7 @@ const Index = () => {
   
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const { playSong, selectedLanguages } = useMusic();
+  const { playSong, selectedLanguages, isShuffle, toggleShuffle } = useMusic();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,12 +49,13 @@ const Index = () => {
       try {
         const primaryLang = selectedLanguages[0] || 'tamil';
         
-        // Fetch trending songs safely
-        const trendingData = await musicApi.getTrending(selectedLanguages.join(',')).catch((err) => {
-          console.error('Failed to fetch trending songs:', err);
-          return [] as Song[];
-        });
-        setTrendingSongs(trendingData);
+        // Fetch trending songs for all selected languages
+        const trendingPromises = selectedLanguages.map(lang => 
+          musicApi.getTrending(lang).catch(() => [] as Song[])
+        );
+        const trendingResults = await Promise.all(trendingPromises);
+        const combinedTrending = trendingResults.flat();
+        setTrendingSongs(combinedTrending);
 
         // Fetch decade playlists safely (individually caught so one failure doesn't block others)
         const decadesData = await Promise.all(
@@ -134,6 +136,25 @@ const Index = () => {
     }
   };
 
+  const handleListenNow = () => {
+    if (trendingSongs.length > 0) {
+      const randomIndex = Math.floor(Math.random() * trendingSongs.length);
+      const randomSong = trendingSongs[randomIndex];
+      
+      // Play the random song and pass the combined trending songs as the queue
+      playSong(randomSong, trendingSongs);
+      
+      // Enable shuffle if it's not already enabled
+      if (!isShuffle) {
+        toggleShuffle();
+      }
+      
+      toast.success(`Playing random song in your preferred languages!`);
+    } else {
+      toast.error("No songs available for your selected languages.");
+    }
+  };
+
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto">
@@ -163,7 +184,7 @@ const Index = () => {
         {/* Hero Banner */}
         <div 
           className="relative h-[280px] sm:h-[360px] md:h-[420px] rounded-3xl overflow-hidden mb-8 md:mb-12 group cursor-pointer shadow-2xl transition-all duration-500 hover:shadow-primary/10"
-          onClick={() => trendingSongs.length > 0 && playSong(trendingSongs[0], trendingSongs)}
+          onClick={handleListenNow}
         >
           <img 
             src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070&auto=format&fit=crop" 
