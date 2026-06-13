@@ -9,12 +9,14 @@ import { useMusic } from '@/context/MusicContext';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
 
 const Radio = () => {
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const { playSong, currentSong, isPlaying, selectedLanguages, toggleLikeStation, isStationLiked } = useMusic();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -49,9 +51,12 @@ const Radio = () => {
     playSong(radioSong as any);
   };
 
-  const filteredStations = stations.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?type=fm&q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   return (
     <MainLayout>
@@ -68,15 +73,15 @@ const Radio = () => {
             <p className="text-xs md:text-sm text-muted-foreground font-medium">Broadcasts from: <span className="text-primary font-bold uppercase">{selectedLanguages.join(', ')}</span></p>
           </div>
           
-          <div className="relative w-full md:w-64">
+          <form onSubmit={handleSearchSubmit} className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search stations..." 
+              placeholder="Search global stations..." 
               className="pl-9 bg-accent/5 border-none h-10 rounded-xl text-sm"
             />
-          </div>
+          </form>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
@@ -84,8 +89,8 @@ const Radio = () => {
             Array.from({ length: 12 }).map((_, i) => (
               <Skeleton key={i} className="h-20 md:h-24 w-full rounded-2xl" />
             ))
-          ) : filteredStations.length > 0 ? (
-            filteredStations.map((station) => {
+          ) : stations.length > 0 ? (
+            stations.map((station) => {
               const isActive = currentSong?.id === station.stationuuid;
               const liked = isStationLiked(station.stationuuid);
               return (

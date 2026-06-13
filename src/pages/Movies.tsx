@@ -7,22 +7,22 @@ import { tmdbApi, CastMember } from '@/services/tmdbApi';
 import { StreamPlayer } from '@/components/StreamPlayer';
 import { MovieHero } from '@/components/MovieHero';
 import { MovieRow } from '@/components/MovieRow';
-import { Play, Film, Star, Search, Tv, X, Users, Info, User, Layers, ShieldCheck } from 'lucide-react';
+import { Play, Film, Star, Search, Tv, X, Users, Info, User, Layers } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from 'react-router-dom';
 
 const Movies = () => {
   const { currentMovie, playMovie, closeMovie, roomCode } = useMusic();
+  const navigate = useNavigate();
   const [trendingMovies, setTrendingMovies] = useState<Movie[]>([]);
   const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
   const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([]);
   const [upcomingMovies, setUpcomingMovies] = useState<Movie[]>([]);
-  const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
   
   // Cast States
   const [cast, setCast] = useState<CastMember[]>([]);
@@ -75,17 +75,11 @@ const Movies = () => {
     fetchMovieDetails();
   }, [currentMovie]);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) {
-      setSearching(false);
-      setSearchResults([]);
-      return;
+    if (searchQuery.trim()) {
+      navigate(`/search?type=movies&q=${encodeURIComponent(searchQuery)}`);
     }
-
-    setSearching(true);
-    const results = await tmdbApi.searchMovies(searchQuery);
-    setSearchResults(results);
   };
 
   // Spotlight movie is the first trending movie
@@ -113,17 +107,11 @@ const Movies = () => {
             </p>
           </div>
           
-          <form onSubmit={handleSearch} className="relative w-full md:w-96">
+          <form onSubmit={handleSearchSubmit} className="relative w-full md:w-96">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (!e.target.value.trim()) {
-                  setSearching(false);
-                  setSearchResults([]);
-                }
-              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search cinematic hits, releases, directors..." 
               className="pl-12 bg-accent/5 border-none h-12 rounded-2xl focus-visible:ring-purple-500/20 text-sm font-semibold"
             />
@@ -247,124 +235,51 @@ const Movies = () => {
           </div>
         )}
 
-        {/* Search Results View */}
-        {searching ? (
-          <div className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-black text-white">Search Results</h2>
-            {searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {searchResults.map((movie) => (
-                  <div 
-                    key={movie.id}
-                    className="group relative bg-card/40 border border-border/50 rounded-[2rem] overflow-hidden hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
-                  >
-                    <div className="relative aspect-[16/10] overflow-hidden bg-accent/10">
-                      <img 
-                        src={movie.backdrop || movie.poster} 
-                        alt={movie.title} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = movie.poster;
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                      
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Button 
-                          onClick={() => playMovie(movie)}
-                          className="rounded-full w-12 h-12 bg-purple-500 text-white shadow-xl shadow-purple-500/30 hover:scale-110 transition-transform"
-                        >
-                          <Play size={20} fill="currentColor" />
-                        </Button>
-                      </div>
-
-                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg flex items-center gap-1 text-[10px] font-bold text-yellow-500">
-                        <Star size={10} fill="currentColor" />
-                        {movie.rating}
-                      </div>
-                    </div>
-
-                    <div className="p-4 md:p-6 flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-none text-[8px] font-bold uppercase">
-                            {movie.language}
-                          </Badge>
-                          <span className="text-[10px] text-muted-foreground font-bold">{movie.year}</span>
-                        </div>
-                        <h3 className="text-base md:text-xl font-black tracking-tight mb-1 group-hover:text-purple-400 transition-colors line-clamp-1">{movie.title}</h3>
-                        <p className="text-[11px] md:text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-4">{movie.overview}</p>
-                      </div>
-
-                      <Button 
-                        onClick={() => playMovie(movie)}
-                        className="w-full rounded-xl font-bold gap-1.5 h-10 bg-accent/10 hover:bg-purple-500 hover:text-white text-foreground transition-all text-xs"
-                      >
-                        <Play size={14} fill="currentColor" />
-                        Watch Now
-                      </Button>
-                    </div>
-                  </div>
+        {loading ? (
+          <div className="space-y-10">
+            <Skeleton className="h-[320px] sm:h-[420px] md:h-[520px] w-full rounded-3xl" />
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-40 rounded-lg" />
+              <div className="flex gap-4 overflow-hidden">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-32 w-[200px] shrink-0 rounded-2xl" />
                 ))}
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Film size={40} className="text-muted-foreground/30 mb-3" />
-                <h3 className="text-lg font-bold">No movies found</h3>
-                <p className="text-xs text-muted-foreground max-w-xs">Try searching for another title or check back later.</p>
-              </div>
-            )}
+            </div>
           </div>
         ) : (
-          /* Netflix-Style Cinematic Home View */
           <>
-            {loading ? (
-              <div className="space-y-10">
-                <Skeleton className="h-[320px] sm:h-[420px] md:h-[520px] w-full rounded-3xl" />
-                <div className="space-y-4">
-                  <Skeleton className="h-6 w-40 rounded-lg" />
-                  <div className="flex gap-4 overflow-hidden">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <Skeleton key={i} className="h-32 w-[200px] shrink-0 rounded-2xl" />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Immersive Spotlight Hero Banner */}
-                {spotlightMovie && (
-                  <MovieHero movie={spotlightMovie} onPlay={playMovie} />
-                )}
-
-                {/* Netflix-Style Horizontal Rows */}
-                <div className="space-y-8">
-                  <MovieRow 
-                    title="Trending Now" 
-                    movies={trendingMovies} 
-                    onPlay={playMovie} 
-                  />
-                  
-                  <MovieRow 
-                    title="Popular on anbae" 
-                    movies={popularMovies} 
-                    onPlay={playMovie} 
-                  />
-
-                  <MovieRow 
-                    title="Top Rated Masterpieces" 
-                    movies={topRatedMovies} 
-                    onPlay={playMovie} 
-                  />
-
-                  <MovieRow 
-                    title="Upcoming Blockbusters" 
-                    movies={upcomingMovies} 
-                    onPlay={playMovie} 
-                  />
-                </div>
-              </>
+            {/* Immersive Spotlight Hero Banner */}
+            {spotlightMovie && (
+              <MovieHero movie={spotlightMovie} onPlay={playMovie} />
             )}
+
+            {/* Netflix-Style Horizontal Rows */}
+            <div className="space-y-8">
+              <MovieRow 
+                title="Trending Now" 
+                movies={trendingMovies} 
+                onPlay={playMovie} 
+              />
+              
+              <MovieRow 
+                title="Popular on anbae" 
+                movies={popularMovies} 
+                onPlay={playMovie} 
+              />
+
+              <MovieRow 
+                title="Top Rated Masterpieces" 
+                movies={topRatedMovies} 
+                onPlay={playMovie} 
+              />
+
+              <MovieRow 
+                title="Upcoming Blockbusters" 
+                movies={upcomingMovies} 
+                onPlay={playMovie} 
+              />
+            </div>
           </>
         )}
       </div>
