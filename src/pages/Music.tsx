@@ -148,7 +148,6 @@ const MusicPage = () => {
             </button>
             <button 
               onClick={() => {
-                toast.success("Editor's Picks activated!");
                 if (trendingSongs.length > 0) {
                   playSong(trendingSongs[0], trendingSongs);
                 }

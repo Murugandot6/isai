@@ -228,7 +228,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const playRandom = useCallback(async () => {
     const randomLang = selectedLanguages[Math.floor(Math.random() * selectedLanguages.length)] || 'tamil';
-    toast.info(`Fetching random songs in ${randomLang}...`);
     
     try {
       const results = await musicApi.getTrending(randomLang);
@@ -237,7 +236,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         await playSong(randomSong, results);
       }
     } catch (err) {
-      toast.error("Failed to play random songs");
+      console.error("Failed to play random songs", err);
     }
   }, [selectedLanguages, playSong]);
 
@@ -466,7 +465,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           isChannelReady.current = true;
-          toast.success(`Connected to room: ${roomCode}`);
           
           if (isHost && currentSong) {
             channel.send({
