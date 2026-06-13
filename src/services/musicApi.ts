@@ -142,8 +142,8 @@ export const musicApi = {
     try {
       const langList = languages.split(',').filter(Boolean);
       const primaryLang = langList[0] || 'tamil';
-      // Fetch trending songs by searching for popular hits in the selected language
-      const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(primaryLang + ' hits')}&limit=30`);
+      // Fetch trending songs by searching for popular hits in the selected language with a high limit
+      const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(primaryLang + ' hits')}&limit=150`);
       const res = await response.json();
       return res.data?.results || [];
     } catch (e) {
