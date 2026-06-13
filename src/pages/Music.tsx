@@ -1,399 +1,391 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Song, Playlist, Album } from '@/services/musicApi';
-import { AlbumCard } from '@/components/AlbumCard';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Flame, Music as MusicIcon, Sparkles, Play, Pause, Disc, Calendar, Heart, Volume2, SkipBack, SkipForward, BookOpen, ArrowLeft, Compass, Radio } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { musicApi, Song } from '@/services/musicApi';
 import { useMusic } from '@/context/MusicContext';
+import { useAuth } from '@/context/AuthContext';
 import { getHighResImage } from '@/lib/image-utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Play, Pause, Home, Music, Film, Radio, Disc, Search, Heart, 
+  Sparkles, Power, Sun, Volume2, VolumeX, Sparkle, ArrowRight, HelpCircle 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const MusicPage = () => {
-  const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
-  const [curatedPlaylists, setCuratedPlaylists] = useState<Playlist[]>([]);
-  const [releases2026, setReleases2026] = useState<Album[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  const { 
-    currentSong, isPlaying, playSong, togglePlay, playNext, playPrevious, 
-    toggleLike, isLiked, currentTime, duration, seek 
-  } = useMusic();
   const navigate = useNavigate();
-  const { selectedLanguages } = useMusic();
+  const { signOut } = useAuth();
+  const { selectedLanguages, playSong, currentSong, isPlaying, togglePlay, isMuted, toggleMute, toggleLike, isLiked } = useMusic();
+  
+  const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<'all' | 'music' | 'podcasts' | 'audiobooks'>('all');
+  const [glowingTheme, setGlowingTheme] = useState(true);
 
+  // Fetch real trending songs based on languages
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMusic = async () => {
       setLoading(true);
       try {
-        const primaryLang = selectedLanguages[0] || 'tamil';
-        
-        // Fetch trending songs for all selected languages
         const trendingPromises = selectedLanguages.map(lang => 
           musicApi.getTrending(lang).catch(() => [] as Song[])
         );
-        const trendingResults = await Promise.all(trendingPromises);
-        const combinedTrending = trendingResults.flat();
-        setTrendingSongs(combinedTrending);
-
-        // Fetch curated playlists dynamically based on selected languages
-        const activeLangs = selectedLanguages.length > 0 ? selectedLanguages : ['tamil'];
-        const limitPerLang = Math.max(4, Math.floor(12 / activeLangs.length));
-        const curatedPromises = activeLangs.map(lang => 
-          musicApi.searchPlaylists(`top ${lang}`, 0, limitPerLang).catch(() => [] as Playlist[])
-        );
-        const curatedResults = await Promise.all(curatedPromises);
-        const combinedCurated: Playlist[] = [];
-        const maxCuratedLength = Math.max(...curatedResults.map(r => r.length));
-        for (let i = 0; i < maxCuratedLength; i++) {
-          for (let j = 0; j < curatedResults.length; j++) {
-            if (curatedResults[j][i]) {
-              combinedCurated.push(curatedResults[j][i]);
-            }
-          }
+        const results = await Promise.all(trendingPromises);
+        const combined = results.flat();
+        
+        // Ensure we have some Tamil/English hits if empty
+        if (combined.length === 0) {
+          const fallback = await musicApi.getTrending('tamil');
+          setTrendingSongs(fallback);
+        } else {
+          setTrendingSongs(combined);
         }
-        setCuratedPlaylists(combinedCurated.slice(0, 12));
-
-        // Fetch year-wise releases safely
-        const r2026 = await musicApi.searchAlbums(`${primaryLang} 2026`).catch(() => []);
-        setReleases2026((r2026 || []).slice(0, 10));
-      } catch (error) {
-        console.error('Failed to fetch content', error);
+      } catch (err) {
+        console.error("Failed to load trending music", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchMusic();
   }, [selectedLanguages]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm)}&type=music`);
+  // Spotlight is either current playing song or first trending song
+  const spotlightSong = useMemo(() => {
+    return currentSong || trendingSongs[0] || null;
+  }, [currentSong, trendingSongs]);
+
+  const spotlightImage = spotlightSong 
+    ? getHighResImage(spotlightSong.image) 
+    : 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=1200';
+
+  const handleSpotlightPlay = () => {
+    if (!spotlightSong) return;
+    if (currentSong?.id === spotlightSong.id) {
+      togglePlay();
+    } else {
+      playSong(spotlightSong, trendingSongs);
     }
   };
 
-  // Get featured spotlight song (first trending song or fallback)
-  const spotlightSong = trendingSongs[0] || null;
-  const spotlightImage = spotlightSong ? getHighResImage(spotlightSong.image) : 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1500';
-  const spotlightLiked = spotlightSong ? isLiked(spotlightSong.id) : false;
+  const handlePowerOff = () => {
+    signOut();
+    toast.success("Signed out successfully");
+  };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleAssistClick = () => {
+    toast.info("anbae Assist: Dynamic play queue activated!");
+    if (trendingSongs.length > 0) {
+      playSong(trendingSongs[Math.floor(Math.random() * trendingSongs.length)], trendingSongs);
+    }
   };
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-[#0a0814] text-white p-4 md:p-10 space-y-10">
+      <div className={cn(
+        "min-h-screen relative flex select-none text-white transition-all duration-700 ease-in-out",
+        glowingTheme ? "bg-gradient-to-tr from-[#140107] via-[#2a0311] to-[#120108]" : "bg-[#0b0104]"
+      )}>
         
-        {/* Header Search Bar with Material Styling */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#141125] p-6 rounded-[2rem] border border-white/5 shadow-xl">
-          <div className="flex items-center gap-4">
+        {/* Floating Custom Sidebar on Left */}
+        <div className="hidden lg:flex flex-col items-center justify-between w-24 py-8 bg-black/40 border-r border-white/5 h-screen sticky top-0 z-30 backdrop-blur-xl shrink-0">
+          {/* Logo */}
+          <button 
+            onClick={() => navigate('/')}
+            className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#9f1239] to-[#fda4af] p-0.5 flex items-center justify-center shadow-lg shadow-[#9f1239]/20 hover:scale-105 active:scale-95 transition-all"
+          >
+            <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
+              <Sparkle className="text-[#fda4af]" size={20} />
+            </div>
+          </button>
+
+          {/* Navigation Controls */}
+          <div className="flex flex-col gap-5 w-full px-4">
             <button 
               onClick={() => navigate('/')}
-              className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 hover:scale-105 active:scale-95"
-              title="Back to Hub"
+              className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg shadow-indigo-600/30 hover:scale-110 transition-transform duration-300"
+              title="Gateway Hub"
             >
-              <ArrowLeft size={20} />
+              <Home size={22} className="text-white group-hover:rotate-6 transition-transform" />
             </button>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2">
-                Music Station <Sparkles className="text-purple-400 animate-pulse" size={20} />
-              </h1>
-              <p className="text-xs text-purple-300/70 font-medium">Immersive, high-fidelity audio experience.</p>
-            </div>
+
+            <button 
+              onClick={() => navigate('/music')}
+              className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-500 shadow-lg shadow-blue-500/30 hover:scale-110 transition-transform duration-300"
+              title="Music Station"
+            >
+              <Music size={22} className="text-white group-hover:scale-110 transition-transform" />
+              <div className="absolute right-[-4px] top-1/2 -translate-y-1/2 w-1.5 h-6 bg-white rounded-l-full" />
+            </button>
+
+            <button 
+              onClick={() => navigate('/movies')}
+              className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 shadow-lg shadow-pink-500/30 hover:scale-110 transition-transform duration-300"
+              title="Cinema Station"
+            >
+              <Film size={22} className="text-white" />
+            </button>
+
+            <button 
+              onClick={() => navigate('/radio')}
+              className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 shadow-lg shadow-orange-500/30 hover:scale-110 transition-transform duration-300"
+              title="Radio Live"
+            >
+              <Radio size={22} className="text-white" />
+            </button>
+
+            <button 
+              onClick={() => navigate('/library')}
+              className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 shadow-lg shadow-teal-500/30 hover:scale-110 transition-transform duration-300"
+              title="Library & Playlists"
+            >
+              <Disc size={22} className="text-white" />
+            </button>
           </div>
-          
-          <form onSubmit={handleSearch} className="relative w-full md:w-96">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-300/50" size={18} />
-            <Input 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search songs, artists, albums..." 
-              className="pl-12 pr-4 bg-white/5 border-2 border-transparent focus-visible:border-purple-500/30 rounded-2xl h-12 text-sm text-white placeholder-purple-300/30 transition-all"
-            />
-          </form>
+
+          {/* Grid Layout Portal Icon */}
+          <button 
+            onClick={() => navigate('/featured')}
+            className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all border border-white/5"
+            title="Featured Playlists"
+          >
+            <div className="grid grid-cols-2 gap-1.5 w-5">
+              <div className="w-2 h-2 rounded bg-current" />
+              <div className="w-2 h-2 rounded bg-current" />
+              <div className="w-2 h-2 rounded bg-current" />
+              <div className="w-2 h-2 rounded bg-current" />
+            </div>
+          </button>
         </div>
 
-        {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* MAIN BODY WINDOW CONTAINER */}
+        <div className="flex-1 flex flex-col relative min-w-0">
           
-          {/* LEFT COLUMN: Spotlight & Top Albums (7/12 width) */}
-          <div className="lg:col-span-7 space-y-10 min-w-0">
-            
-            {/* Spotlight Banner with Ultra-Rounded Material Design */}
-            {loading ? (
-              <Skeleton className="h-[420px] w-full rounded-[2.5rem]" />
-            ) : spotlightSong ? (
-              <div className="relative h-[420px] rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-[#1e1a3a] to-[#0d0b18] border border-purple-500/20 shadow-2xl flex flex-col justify-end p-8 md:p-10 group">
-                {/* Background Image with smooth fade */}
-                <div className="absolute inset-0 z-0">
-                  <img 
-                    src={spotlightImage} 
-                    alt={spotlightSong.name} 
-                    className="w-full h-full object-cover opacity-30 group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0814] via-[#0a0814]/60 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#0a0814] via-transparent to-transparent" />
-                </div>
-
-                {/* Spotlight Content */}
-                <div className="relative z-10 space-y-5 max-w-xl">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
-                      Spotlight Track
-                    </Badge>
-                    <span className="text-xs text-purple-300/60 font-bold uppercase tracking-wider">
-                      {spotlightSong.language} • {spotlightSong.year || '2026'}
-                    </span>
-                  </div>
-
-                  <h2 
-                    className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-none drop-shadow-lg"
-                    dangerouslySetInnerHTML={{ __html: spotlightSong.name }}
-                  />
-                  
-                  <p 
-                    className="text-xs md:text-sm text-purple-200/70 font-medium line-clamp-2 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: `Featuring the brilliant vocals of ${spotlightSong.primaryArtists}. Experience high-fidelity premium streaming directly on your device.` }}
-                  />
-
-                  <div className="flex items-center gap-4 pt-2">
-                    <button 
-                      onClick={() => playSong(spotlightSong, trendingSongs)}
-                      className="bg-purple-500 text-white hover:bg-purple-600 px-8 py-4 rounded-full font-black text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-xl shadow-purple-500/25 flex items-center gap-2"
-                    >
-                      <Play size={16} fill="currentColor" />
-                      Play Now
-                    </button>
-                    
-                    <button 
-                      onClick={() => toggleLike(spotlightSong)}
-                      className={cn(
-                        "p-4 rounded-full border transition-all hover:scale-105 active:scale-95",
-                        spotlightLiked 
-                          ? "bg-purple-500/20 border-purple-500/40 text-purple-300" 
-                          : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
-                      )}
-                    >
-                      <Heart size={16} fill={spotlightLiked ? "currentColor" : "none"} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="h-[420px] rounded-[2.5rem] bg-[#141125] border border-white/5 flex items-center justify-center text-muted-foreground text-sm">
-                No spotlight track available.
-              </div>
-            )}
-
-            {/* Top Albums Row */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between px-2">
-                <h3 className="text-sm font-black text-purple-300 uppercase tracking-widest flex items-center gap-2">
-                  <Disc size={16} className="text-purple-400" />
-                  Top Albums
-                </h3>
-                <button onClick={() => navigate('/featured')} className="text-xs font-bold text-purple-400 hover:underline">See All</button>
-              </div>
-
-              <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar">
-                {loading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="w-[180px] shrink-0 space-y-3">
-                      <Skeleton className="aspect-square w-full rounded-[2rem]" />
-                      <Skeleton className="h-4 w-3/4" />
-                    </div>
-                  ))
-                ) : releases2026.length > 0 ? (
-                  releases2026.map((album) => (
-                    <div key={album.id} className="w-[160px] md:w-[180px] shrink-0">
-                      <AlbumCard album={album} />
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">No albums found.</p>
+          {/* HEADER MENU AND CONTROLS BAR */}
+          <div className="flex items-center justify-between p-6 md:px-12 z-20 gap-4">
+            {/* Left Top Group controls (Power, Theme, Sound) */}
+            <div className="flex items-center gap-3 bg-black/20 p-2 rounded-2xl border border-white/5 backdrop-blur-md">
+              <button 
+                onClick={handlePowerOff}
+                className="p-2 rounded-xl text-white/60 hover:text-red-400 hover:bg-white/5 transition-all"
+                title="Sign Out"
+              >
+                <Power size={18} />
+              </button>
+              <button 
+                onClick={() => setGlowingTheme(!glowingTheme)}
+                className={cn(
+                  "p-2 rounded-xl transition-all",
+                  glowingTheme ? "text-yellow-400 bg-white/5" : "text-white/60 hover:text-white hover:bg-white/5"
                 )}
-              </div>
+                title="Toggle Ambient Glow"
+              >
+                <Sun size={18} />
+              </button>
+              <button 
+                onClick={toggleMute}
+                className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                title="Mute Sound"
+              >
+                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
             </div>
 
+            {/* Category Center Pill Links */}
+            <div className="hidden md:flex items-center gap-4 text-xs font-black tracking-widest uppercase">
+              <button 
+                onClick={() => setActiveCategory('all')}
+                className={cn(
+                  "px-5 py-2.5 rounded-full transition-all text-[11px]",
+                  activeCategory === 'all' ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white"
+                )}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => setActiveCategory('music')}
+                className={cn(
+                  "px-5 py-2.5 rounded-full transition-all text-[11px]",
+                  activeCategory === 'music' ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white"
+                )}
+              >
+                Music
+              </button>
+              <button 
+                onClick={() => setActiveCategory('podcasts')}
+                className={cn(
+                  "px-5 py-2.5 rounded-full transition-all text-[11px]",
+                  activeCategory === 'podcasts' ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white"
+                )}
+              >
+                Podcasts
+              </button>
+              <button 
+                onClick={() => setActiveCategory('audiobooks')}
+                className={cn(
+                  "px-5 py-2.5 rounded-full transition-all text-[11px]",
+                  activeCategory === 'audiobooks' ? "bg-white text-black shadow-lg" : "text-white/60 hover:text-white"
+                )}
+              >
+                Audio Books
+              </button>
+            </div>
+
+            {/* Assist Pill Button */}
+            <button 
+              onClick={handleAssistClick}
+              className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-full shadow-lg text-[10px] tracking-widest uppercase font-black hover:scale-105 active:scale-95 transition-all shrink-0"
+            >
+              <Sparkles size={14} fill="black" />
+              <span>ASSIST</span>
+            </button>
           </div>
 
-          {/* RIGHT COLUMN: Play Lists & Mini Player Widget (5/12 width) */}
-          <div className="lg:col-span-5 space-y-8">
-            
-            {/* Play Lists Queue with Material Styling */}
-            <div className="bg-[#141125] border border-purple-500/10 rounded-[2.5rem] p-6 md:p-8 space-y-6 shadow-xl">
-              <h3 className="text-sm font-black text-purple-300 uppercase tracking-widest flex items-center gap-2">
-                <Compass size={16} className="text-purple-400" />
-                Trending Queue
-              </h3>
-              
-              <div className="space-y-3 max-h-[360px] overflow-y-auto no-scrollbar pr-1">
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 p-2">
-                      <Skeleton className="w-4 h-4" />
-                      <Skeleton className="w-12 h-12 rounded-xl" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-3 w-1/2" />
-                        <Skeleton className="h-2.5 w-1/3" />
-                      </div>
-                    </div>
-                  ))
-                ) : trendingSongs.length > 0 ? (
-                  trendingSongs.slice(0, 6).map((song, index) => {
-                    const isCurrent = currentSong?.id === song.id;
-                    const songImage = getHighResImage(song.image);
-                    
-                    return (
-                      <div 
-                        key={song.id}
-                        onClick={() => playSong(song, trendingSongs)}
-                        className={cn(
-                          "flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all group",
-                          isCurrent 
-                            ? "bg-purple-500 text-white shadow-lg shadow-purple-500/20" 
-                            : "hover:bg-white/5 text-purple-200/80 hover:text-white"
-                        )}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className={cn(
-                            "text-xs font-bold w-5 text-center shrink-0",
-                            isCurrent ? "text-white/70" : "text-purple-300/40"
-                          )}>
-                            {(index + 1).toString().padStart(2, '0')}
-                          </span>
-                          
-                          <img 
-                            src={songImage} 
-                            alt={song.name} 
-                            className="w-12 h-12 rounded-xl object-cover bg-zinc-800 shrink-0 shadow-md"
-                          />
-                          
-                          <div className="min-w-0">
-                            <p 
-                              className="text-xs font-bold truncate"
-                              dangerouslySetInnerHTML={{ __html: song.name }}
-                            />
-                            <p 
-                              className={cn(
-                                "text-[10px] truncate mt-0.5",
-                                isCurrent ? "text-white/70" : "text-purple-300/50"
-                              )}
-                              dangerouslySetInnerHTML={{ __html: song.primaryArtists }}
-                            />
-                          </div>
-                        </div>
-
-                        <button 
-                          className={cn(
-                            "p-2.5 rounded-full shrink-0 transition-all",
-                            isCurrent 
-                              ? "bg-white text-purple-600" 
-                              : "bg-white/5 text-white opacity-0 group-hover:opacity-100 hover:bg-white/10"
-                          )}
-                        >
-                          {isCurrent && isPlaying ? (
-                            <Pause size={12} fill="currentColor" />
-                          ) : (
-                            <Play size={12} fill="currentColor" className="ml-0.5" />
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-xs text-muted-foreground italic text-center py-8">No tracks available.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Mini Player Widget with Material Design */}
-            {currentSong && (
-              <div className="bg-gradient-to-br from-[#1e1a3a] to-[#141125] border border-purple-500/20 rounded-[2.5rem] p-6 md:p-8 space-y-6 shadow-2xl">
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={getHighResImage(currentSong.image)} 
-                    alt={currentSong.name} 
-                    className="w-16 h-16 rounded-2xl object-cover bg-zinc-800 shadow-lg shrink-0 border border-white/10"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h4 
-                      className="font-bold text-sm text-white truncate"
-                      dangerouslySetInnerHTML={{ __html: currentSong.name }}
-                    />
-                    <p 
-                      className="text-xs text-purple-300/70 truncate mt-0.5"
-                      dangerouslySetInnerHTML={{ __html: currentSong.primaryArtists }}
-                    />
-                  </div>
-                  <button 
-                    onClick={() => toggleLike(currentSong)}
-                    className={cn(
-                      "p-3 rounded-full transition-colors shrink-0 hover:scale-105 active:scale-95",
-                      isLiked(currentSong.id) ? "text-purple-300 bg-purple-500/20" : "text-purple-300/50 hover:text-white"
-                    )}
-                  >
-                    <Heart size={18} fill={isLiked(currentSong.id) ? "currentColor" : "none"} />
-                  </button>
-                </div>
-
-                {/* Progress Slider */}
-                <div className="space-y-2">
-                  <div 
-                    className="relative h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer"
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const pos = (e.clientX - rect.left) / rect.width;
-                      seek(pos * duration);
-                    }}
-                  >
-                    <div 
-                      className="h-full bg-purple-500 rounded-full transition-all"
-                      style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-bold text-purple-300/60">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-                </div>
-
-                {/* Playback Controls */}
-                <div className="flex items-center justify-center gap-6 pt-1">
-                  <button 
-                    onClick={() => playPrevious()}
-                    className="text-purple-300/60 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
-                  >
-                    <SkipBack size={20} fill="currentColor" />
-                  </button>
-                  
-                  <button 
-                    onClick={togglePlay}
-                    className="bg-white text-purple-950 p-4 rounded-full hover:scale-110 active:scale-95 transition-transform shadow-xl"
-                  >
-                    {isPlaying ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
-                  </button>
-                  
-                  <button 
-                    onClick={() => playNext()}
-                    className="text-purple-300/60 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
-                  >
-                    <SkipForward size={20} fill="currentColor" />
-                  </button>
-                </div>
+          {/* MAIN SPOTLIGHT BANNER HERO (Minimal retro look matched exactly) */}
+          <div className="flex-1 flex flex-col justify-center px-6 md:px-12 relative min-h-[400px]">
+            {/* Big spotlight absolute background art */}
+            {spotlightSong && (
+              <div className="absolute right-0 top-0 bottom-0 w-full lg:w-3/5 z-0 select-none pointer-events-none overflow-hidden rounded-l-[3rem]">
+                <img 
+                  src={spotlightImage} 
+                  alt={spotlightSong.name} 
+                  className="w-full h-full object-cover object-center opacity-40 lg:opacity-75"
+                />
+                {/* Immersive shadows mapping color blending perfectly with velvet theme */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#140107] via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1c020b] via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-[#1c020b]/20" />
               </div>
             )}
 
+            <div className="relative z-10 max-w-xl space-y-4 md:space-y-6 text-left">
+              <span className="text-xs md:text-sm font-black uppercase tracking-[0.25em] text-[#fda4af] flex items-center gap-2">
+                <span className="w-1.5 h-4 bg-rose-500 rounded-full" />
+                Audio Station
+              </span>
+
+              {spotlightSong ? (
+                <>
+                  <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] drop-shadow-xl select-text" dangerouslySetInnerHTML={{ __html: spotlightSong.name }} />
+                  <p className="text-sm md:text-base text-zinc-300 font-semibold max-w-md leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: spotlightSong.primaryArtists }} />
+                  {spotlightSong.duration && (
+                    <p className="text-xs text-rose-300/60 font-bold uppercase tracking-wider">
+                      ★ Active Track • {Math.floor(Number(spotlightSong.duration) / 60)} Mins
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none">Retro</h1>
+                  <p className="text-sm md:text-base text-zinc-300 font-semibold max-w-md">David Bowie, Pink Floyd, Prince, ...</p>
+                  <p className="text-xs text-rose-300/60 font-bold uppercase tracking-wider">78 Songs</p>
+                </>
+              )}
+
+              {/* Minimal Circle Play Button aligned perfectly */}
+              <div className="flex items-center gap-6 pt-4">
+                <button 
+                  onClick={handleSpotlightPlay}
+                  className="group flex items-center gap-4 bg-white/10 hover:bg-white/20 text-white pl-6 pr-4 py-3 rounded-full border border-white/20 transition-all hover:scale-105 active:scale-95"
+                >
+                  <span className="text-xs font-black uppercase tracking-widest text-white/90">
+                    {currentSong?.id === spotlightSong?.id && isPlaying ? 'Pause' : 'Play'}
+                  </span>
+                  <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                    {currentSong?.id === spotlightSong?.id && isPlaying ? (
+                      <Pause size={16} fill="black" />
+                    ) : (
+                      <Play size={16} fill="black" className="ml-0.5" />
+                    )}
+                  </div>
+                </button>
+
+                {spotlightSong && (
+                  <button 
+                    onClick={() => toggleLike(spotlightSong)}
+                    className={cn(
+                      "p-3 rounded-full border transition-all hover:scale-105",
+                      isLiked(spotlightSong.id) ? "text-rose-400 border-rose-500/40 bg-rose-500/10" : "text-white/40 border-white/10 hover:text-white"
+                    )}
+                  >
+                    <Heart size={18} fill={isLiked(spotlightSong.id) ? "currentColor" : "none"} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* HORIZONTAL MINIMAL BOTTOM TRENDING ROW (From reference mockup) */}
+          <div className="px-6 md:px-12 pb-12 mt-auto pt-8">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <h3 className="text-xs font-black tracking-widest uppercase text-white/60">Trending Tracks</h3>
+              <button 
+                onClick={() => navigate('/search?type=music')}
+                className="text-xs font-bold text-rose-300 hover:text-rose-400 flex items-center gap-1 transition-colors"
+              >
+                <span>Search all</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+
+            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="w-36 shrink-0 space-y-2.5">
+                    <Skeleton className="aspect-square w-full rounded-2xl bg-white/5" />
+                    <Skeleton className="h-4 w-3/4 bg-white/5" />
+                    <Skeleton className="h-3 w-1/2 bg-white/5" />
+                  </div>
+                ))
+              ) : trendingSongs.length > 0 ? (
+                trendingSongs.slice(0, 10).map((song) => {
+                  const songImg = getHighResImage(song.image);
+                  const isCurrent = currentSong?.id === song.id;
+                  
+                  return (
+                    <div 
+                      key={song.id}
+                      onClick={() => playSong(song, trendingSongs)}
+                      className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
+                    >
+                      {/* Image container */}
+                      <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
+                        <img 
+                          src={songImg} 
+                          alt={song.name} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                            {isCurrent && isPlaying ? (
+                              <Pause size={14} fill="currentColor" />
+                            ) : (
+                              <Play size={14} fill="currentColor" className="ml-0.5" />
+                            )}
+                          </div>
+                        </div>
+                        {isCurrent && (
+                          <div className="absolute inset-0 bg-rose-950/40 backdrop-blur-[1px] flex items-center justify-center">
+                            <div className="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Text Details matching layout */}
+                      <div className="text-left px-1 mt-0.5 min-w-0">
+                        <h4 className="font-bold text-xs text-white truncate group-hover:text-rose-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="py-8 text-center text-xs text-muted-foreground w-full">No active trending tracks.</div>
+              )}
+            </div>
           </div>
 
         </div>
