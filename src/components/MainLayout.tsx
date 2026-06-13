@@ -40,8 +40,8 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   if (!user) return null;
 
-  // Check if we are on Cinema, Music, or Songs page to enable fully immersive fullscreen
-  const isImmersiveFullscreen = location.pathname === '/movies' || location.pathname === '/music' || location.pathname === '/songs';
+  // Only the Cinema (/movies) page remains completely fullscreen without any sidebar
+  const isImmersiveFullscreen = location.pathname === '/movies';
 
   if (isImmersiveFullscreen) {
     return (
