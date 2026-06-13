@@ -32,7 +32,6 @@ const CURATED_ARTIST_NAMES: { composers: ArtistConfig[]; maleSingers: ArtistConf
     "K. J. Yesudas", 
     "Sid Sriram", 
     { name: "Hariharan", id: "Z2qyrGA65Yo_" }, 
-    "Hariharan", // Keep search name as fallback
     "Shankar Mahadevan", 
     "P. Unnikrishnan", 
     "Karthik", 
@@ -97,6 +96,18 @@ const Artists = () => {
               if (uniqueCheck.has(lookupKey)) return null;
               uniqueCheck.add(lookupKey);
 
+              let imageObj: any = null;
+
+              // Always attempt to grab a fresh high-res image from name search as standard format
+              try {
+                const searchRes = await musicApi.searchArtists(name, 0, 1);
+                if (searchRes && searchRes[0]) {
+                  imageObj = searchRes[0].image;
+                }
+              } catch (e) {
+                console.warn("Name search failed for image fetch:", name, e);
+              }
+
               if (explicitId) {
                 // Fetch direct details by ID
                 const details = await musicApi.getArtistDetails(explicitId);
@@ -104,14 +115,14 @@ const Artists = () => {
                   return {
                     id: details.id || explicitId,
                     name: details.name || name,
-                    image: details.image || '',
+                    image: imageObj || details.image || '',
                     role: role,
                     popularity: Math.floor(Math.random() * 20) + 80
                   };
                 }
               }
 
-              // Fallback to name search
+              // Fallback to name search completely if no ID
               const res = await musicApi.searchArtists(name, 0, 1);
               const artist = res[0];
               if (artist) {
