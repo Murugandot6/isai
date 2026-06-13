@@ -45,6 +45,31 @@ export interface Playlist {
 
 const BASE_URL = 'https://jiosaavn-api.imurugan.workers.dev';
 
+/**
+ * Standardizes song metadata formats (like building the primaryArtists string 
+ * when the API returns complex nested artists structure instead).
+ */
+export const mapApiSong = (song: any): Song => {
+  if (!song) return song;
+
+  let primaryArtists = song.primaryArtists;
+  if (!primaryArtists && song.artists) {
+    if (Array.isArray(song.artists.primary)) {
+      primaryArtists = song.artists.primary.map((a: any) => a.name).join(', ');
+    } else if (Array.isArray(song.artists.all)) {
+      primaryArtists = song.artists.all
+        .filter((a: any) => a.role === 'primary_artists' || a.role === 'singers' || a.role === 'music')
+        .map((a: any) => a.name)
+        .join(', ');
+    }
+  }
+
+  return {
+    ...song,
+    primaryArtists: primaryArtists || 'Unknown Artist'
+  };
+};
+
 // Helper to get the song count from any album/playlist object consistently
 export const getContainerCount = (item: any): number => {
   if (!item) return 0;
@@ -72,7 +97,8 @@ export const musicApi = {
   searchSongs: async (query: string, page: number = 0, limit: number = 20): Promise<Song[]> => {
     const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
     const res = await response.json();
-    return res.data?.results || [];
+    const results = res.data?.results || [];
+    return (Array.isArray(results) ? results : []).map(mapApiSong);
   },
 
   searchAlbums: async (query: string): Promise<Album[]> => {
@@ -98,7 +124,8 @@ export const musicApi = {
     try {
       const response = await fetch(`${BASE_URL}/api/songs/${id}`);
       const res = await response.json();
-      return res.data?.[0] || null;
+      const song = res.data?.[0] || null;
+      return song ? mapApiSong(song) : null;
     } catch (e) {
       return null;
     }
@@ -108,7 +135,11 @@ export const musicApi = {
     try {
       const response = await fetch(`${BASE_URL}/api/albums?id=${id}`);
       const res = await response.json();
-      return res.data || null;
+      if (res.data) {
+        const songs = Array.isArray(res.data.songs) ? res.data.songs.map(mapApiSong) : [];
+        return { ...res.data, songs };
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -116,24 +147,23 @@ export const musicApi = {
 
   getPlaylistDetails: async (id: string): Promise<Playlist | null> => {
     try {
-      // Try query parameter first as it is standard for imurugan/saavn API
       let response = await fetch(`${BASE_URL}/api/playlists?id=${id}&limit=500`);
       let res = await response.json();
-      if (res.data) return res.data;
-
-      // Fallback to path parameter
-      response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=500`);
-      res = await response.json();
-      return res.data || null;
-    } catch (e) {
-      try {
-        // Fallback to path parameter on error
-        const response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=500`);
-        const res = await response.json();
-        return res.data || null;
-      } catch (err) {
-        return null;
+      
+      let data = res.data;
+      if (!data) {
+        response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=500`);
+        res = await response.json();
+        data = res.data;
       }
+
+      if (data) {
+        const songs = Array.isArray(data.songs) ? data.songs.map(mapApiSong) : [];
+        return { ...data, songs };
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   },
 
@@ -142,10 +172,10 @@ export const musicApi = {
     try {
       const langList = languages.split(',').filter(Boolean);
       const primaryLang = langList[0] || 'tamil';
-      // Fetch trending songs by searching for popular hits in the selected language with a high limit
       const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(primaryLang + ' hits')}&limit=150`);
       const res = await response.json();
-      return res.data?.results || [];
+      const results = res.data?.results || [];
+      return (Array.isArray(results) ? results : []).map(mapApiSong);
     } catch (e) {
       console.error("Error in getTrending:", e);
       return [];
@@ -169,14 +199,32 @@ export const musicApi = {
     try {
       const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${page}`);
       const res = await response.json();
-      const songsData = res.data?.songs || res.data?.results || [];
       
-      // Sanitize object responses (such as JSONs with index keys "0", "1", "2") and transform them into standard arrays
-      if (songsData && !Array.isArray(songsData) && typeof songsData === 'object') {
-        return Object.values(songsData).filter((item: any) => item && typeof item === 'object' && item.id) as Song[];
+      // The API may return the list nested directly inside `res`, or nested in `res.data`, or in `res.data.songs`
+      let rawData = res;
+      if (res && typeof res === 'object') {
+        if (res.data !== undefined) {
+          rawData = res.data;
+        }
       }
-      
-      return (Array.isArray(songsData) ? songsData : []) as Song[];
+
+      if (rawData && typeof rawData === 'object') {
+        if (rawData.songs !== undefined) {
+          rawData = rawData.songs;
+        } else if (rawData.results !== undefined) {
+          rawData = rawData.results;
+        }
+      }
+
+      // Convert indexed object responses (e.g. {"3": {...}}) to standard array
+      let songsList: any[] = [];
+      if (Array.isArray(rawData)) {
+        songsList = rawData;
+      } else if (rawData && typeof rawData === 'object') {
+        songsList = Object.values(rawData).filter((item: any) => item && typeof item === 'object' && item.id);
+      }
+
+      return songsList.map(mapApiSong);
     } catch (e) {
       console.error("Error in getArtistSongs:", e);
       return [];
