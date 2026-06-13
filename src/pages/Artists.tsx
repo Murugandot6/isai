@@ -87,7 +87,6 @@ const Artists = () => {
     if (pageNum === 0) setLoadingSongs(true);
     
     try {
-      // Use the specific artist songs endpoint which is more reliable
       const results = await musicApi.getArtistSongs(artistId, pageNum);
       
       if (!results || results.length === 0) {
@@ -96,16 +95,16 @@ const Artists = () => {
         return;
       }
 
-      // Looser filter on the specific artist page to ensure content shows up
+      // Strictly filter by selected languages (lowercase for comparison)
+      const lowerSelectedLangs = selectedLanguages.map(l => l.toLowerCase());
       const filtered = results.filter((song: Song) => {
-        if (!song.language) return true;
-        const lang = song.language.toLowerCase();
-        // Show if language matches OR if it's one of the main Indian languages usually associated with these artists
-        return selectedLanguages.includes(lang) || (pageNum === 0 && artistSongs.length < 5);
+        if (!song.language) return false;
+        return lowerSelectedLangs.includes(song.language.toLowerCase());
       });
 
-      setArtistSongs(prev => pageNum === 0 ? results : [...prev, ...results]);
+      setArtistSongs(prev => pageNum === 0 ? filtered : [...prev, ...filtered]);
       
+      // If we got fewer results than expected or overall API results are empty, stop fetching
       if (results.length < 10) {
         setHasMore(false);
       }
@@ -214,12 +213,12 @@ const Artists = () => {
             )}
 
             {!hasMore && artistSongs.length > 0 && (
-              <p className="text-center text-zinc-500 text-xs py-10">You've reached the end of the discography.</p>
+              <p className="text-center text-zinc-500 text-xs py-10">You've reached the end of the filtered discography.</p>
             )}
 
             {!loadingSongs && artistSongs.length === 0 && (
               <div className="text-center py-20 text-zinc-500">
-                Loading tracks...
+                No songs found for this artist in your selected languages ({selectedLanguages.join(', ')}).
               </div>
             )}
           </div>
@@ -299,8 +298,7 @@ const Artists = () => {
                     <ArtistCard key={idx} artist={artist} onClick={() => handleArtistClick(artist)} />
                   ))}
                 </div>
-              </TabsContent>
-            </>
+              </>
           )}
         </Tabs>
       </div>
