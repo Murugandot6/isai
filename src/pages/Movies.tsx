@@ -82,9 +82,6 @@ const Movies = () => {
     }
   };
 
-  // Spotlight movie is the first trending movie
-  const spotlightMovie = trendingMovies[0];
-
   return (
     <MainLayout>
       <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-12">
@@ -249,15 +246,15 @@ const Movies = () => {
           </div>
         ) : (
           <>
-            {/* Immersive Spotlight Hero Banner */}
-            {spotlightMovie && (
-              <MovieHero movie={spotlightMovie} onPlay={playMovie} />
+            {/* Immersive Spotlight Hero Slider using trending movies */}
+            {trendingMovies.length > 0 && (
+              <MovieHero movies={trendingMovies.slice(0, 6)} onPlay={playMovie} />
             )}
 
-            {/* Netflix-Style Horizontal Rows */}
-            <div className="space-y-8">
+            {/* Netflix-Style Horizontal Rows with Vertical Posters */}
+            <div className="space-y-12">
               <MovieRow 
-                title="Trending Now" 
+                title="Latest Releases" 
                 movies={trendingMovies} 
                 onPlay={playMovie} 
               />
