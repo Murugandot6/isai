@@ -101,28 +101,16 @@ const MusicPage = () => {
         
         {/* Absolute Background Hero Image overlapping top header seamlessly */}
         {spotlightSong && (
-          <div className="absolute right-0 top-0 w-full lg:w-4/5 h-[700px] z-0 select-none pointer-events-none overflow-hidden">
+          <div className="absolute right-0 top-0 w-full lg:w-3/5 h-[620px] z-0 select-none pointer-events-none overflow-hidden rounded-l-[3rem]">
             <img 
               src={spotlightImage} 
               alt={spotlightSong.name} 
-              className="w-full h-full object-cover object-center opacity-40 lg:opacity-70"
+              className="w-full h-full object-cover object-center opacity-35 lg:opacity-60"
             />
-            {/* Multi-layered cinematic feathering to melt the image into the dark UI */}
-            {/* Left fade - essential for text legibility */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent w-full lg:w-1/2" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
-            
-            {/* Bottom fade - blends with the content rows */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-            
-            {/* Top fade - blends with the header */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-transparent h-40" />
-            
-            {/* Right side feathering to remove hard edge */}
-            <div className="absolute top-0 bottom-0 right-0 w-32 bg-gradient-to-l from-black to-transparent" />
-            
-            {/* Global dark tint for consistency */}
-            <div className="absolute inset-0 bg-black/20" />
+            {/* Complex blended black gradients to smoothly blend standard image to black background */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-black/40" />
           </div>
         )}
 
@@ -177,7 +165,7 @@ const MusicPage = () => {
         </div>
 
         {/* MAIN SPOTLIGHT BANNER HERO (Seamless Black Blended Look) */}
-        <div className="flex-1 flex flex-col justify-center px-6 md:px-12 relative min-h-[450px] py-12">
+        <div className="flex-1 flex flex-col justify-center px-6 md:px-12 relative min-h-[420px] py-12">
           <div className="relative z-10 max-w-xl space-y-4 md:space-y-6 text-left">
             <span className="text-xs md:text-sm font-black uppercase tracking-[0.25em] text-purple-400 flex items-center gap-2">
               <span className="w-1.5 h-4 bg-purple-500 rounded-full" />
