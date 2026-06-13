@@ -41,6 +41,7 @@ interface MusicContextType {
   currentSong: Song | null;
   isPlaying: boolean;
   playSong: (song: Song, queue?: Song[], fromSync?: boolean) => Promise<void>;
+  playRandom: () => Promise<void>;
   pauseSong: (fromSync?: boolean) => void;
   resumeSong: (fromSync?: boolean) => void;
   togglePlay: () => void;
@@ -199,7 +200,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const streams = fullDetails.downloadUrl || [];
-      // Prefer 320kbps (usually last in the list)
       const stream = streams.find(s => s.quality === '320kbps') || streams[streams.length - 1];
       const streamUrl = stream?.url || (song as any).url_resolved || (song as any).url;
 
@@ -213,23 +213,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(true);
       
       let updatedQueue = newQueue || queue;
-      
-      // If shuffle is active, and we don't have many songs of the same language in the queue,
-      // let's fetch trending songs of this language and append them to the queue!
-      if (isShuffle && !isRadio) {
-        const lang = fullDetails.language?.toLowerCase() || 'tamil';
-        try {
-          const extraSongs = await musicApi.getTrending(lang);
-          if (extraSongs && extraSongs.length > 0) {
-            const existingIds = new Set(updatedQueue.map(s => s.id));
-            const uniqueExtras = extraSongs.filter(s => !existingIds.has(s.id));
-            updatedQueue = [...updatedQueue, ...uniqueExtras];
-          }
-        } catch (err) {
-          console.error("Failed to fetch extra songs for shuffle in playSong:", err);
-        }
-      }
-
       setQueue(updatedQueue);
       setCurrentIndex(updatedQueue.findIndex(s => s.id === song.id));
       
@@ -241,7 +224,22 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error(error);
       setIsPlaying(false);
     }
-  }, [queue, currentMovie, broadcast, isShuffle]);
+  }, [queue, currentMovie, broadcast]);
+
+  const playRandom = useCallback(async () => {
+    const randomLang = selectedLanguages[Math.floor(Math.random() * selectedLanguages.length)] || 'tamil';
+    toast.info(`Fetching random songs in ${randomLang}...`);
+    
+    try {
+      const results = await musicApi.getTrending(randomLang);
+      if (results && results.length > 0) {
+        const randomSong = results[Math.floor(Math.random() * results.length)];
+        await playSong(randomSong, results);
+      }
+    } catch (err) {
+      toast.error("Failed to play random songs");
+    }
+  }, [selectedLanguages, playSong]);
 
   const togglePlay = () => {
     if (!audioRef.current || !currentSong) return;
@@ -275,18 +273,21 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const playNext = useCallback((fromSync: boolean = false) => {
     if (queue.length === 0) return;
     let nextIdx = currentIndex + 1;
+    
     if (isShuffle) {
-      // Filter queue to same language
-      const currentLang = currentSong?.language?.toLowerCase() || 'tamil';
-      const sameLangSongs = queue.filter(s => s.language?.toLowerCase() === currentLang);
-      
-      if (sameLangSongs.length > 1) {
-        const candidates = sameLangSongs.filter(s => s.id !== currentSong?.id);
+      // Shuffle logic: Shuffles ONLY from selected languages
+      const validSongs = queue.filter(s => 
+        selectedLanguages.includes(s.language?.toLowerCase() || 'tamil')
+      );
+
+      if (validSongs.length > 0) {
+        const candidates = validSongs.filter(s => s.id !== currentSong?.id);
         const chosen = candidates.length > 0 
           ? candidates[Math.floor(Math.random() * candidates.length)]
-          : sameLangSongs[Math.floor(Math.random() * sameLangSongs.length)];
+          : validSongs[Math.floor(Math.random() * validSongs.length)];
         nextIdx = queue.findIndex(s => s.id === chosen.id);
       } else {
+        // Fallback if no songs in queue match selected languages (unlikely given new playRandom behavior)
         nextIdx = Math.floor(Math.random() * queue.length);
       }
     } else if (nextIdx >= queue.length) {
@@ -298,7 +299,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       playSong(queue[nextIdx]);
     }
     if (!fromSync) broadcast('next', {});
-  }, [queue, currentIndex, isShuffle, repeatMode, playSong, broadcast, currentSong]);
+  }, [queue, currentIndex, isShuffle, repeatMode, playSong, broadcast, currentSong, selectedLanguages]);
 
   const playPrevious = useCallback((fromSync: boolean = false) => {
     if (queue.length === 0) return;
@@ -377,27 +378,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     toast.success("Memory removed from your Journal");
   };
 
-  const toggleShuffle = useCallback(async (fromSync: boolean = false) => {
+  const toggleShuffle = useCallback((fromSync: boolean = false) => {
     const newShuffle = !isShuffle;
     setIsShuffle(newShuffle);
-    
-    if (newShuffle && currentSong) {
-      const lang = currentSong.language?.toLowerCase() || 'tamil';
-      try {
-        const extraSongs = await musicApi.getTrending(lang);
-        if (extraSongs && extraSongs.length > 0) {
-          setQueue(prev => {
-            const existingIds = new Set(prev.map(s => s.id));
-            const uniqueExtras = extraSongs.filter(s => !existingIds.has(s.id));
-            return [...prev, ...uniqueExtras];
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch extra songs for shuffle:", err);
-      }
-    }
     if (!fromSync) broadcast('shuffle', { isShuffle: newShuffle });
-  }, [isShuffle, currentSong, broadcast]);
+  }, [isShuffle, broadcast]);
 
   // Automatic track progression when a song ends
   useEffect(() => {
@@ -440,7 +425,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .on('broadcast', { event: 'sync' }, ({ payload }) => {
         const { type, data } = payload;
         
-        if (isHost) return; // Host ignores incoming sync events to prevent loops
+        if (isHost) return; 
 
         switch (type) {
           case 'play':
@@ -483,7 +468,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           isChannelReady.current = true;
           toast.success(`Connected to room: ${roomCode}`);
           
-          // If host, broadcast current state immediately so new joiners sync up
           if (isHost && currentSong) {
             channel.send({
               type: 'broadcast',
@@ -507,11 +491,11 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       supabase.removeChannel(channel);
       isChannelReady.current = false;
     };
-  }, [roomCode, isHost, playSong, seek, pauseSong, resumeSong, playMovie, closeMovie, playNext, playPrevious]);
+  }, [roomCode, isHost, playSong, seek, pauseSong, resumeSong, playMovie, closeMovie, playNext, playPrevious, currentSong, queue]);
 
   return (
     <MusicContext.Provider value={{
-      currentSong, isPlaying, playSong, pauseSong, resumeSong, togglePlay, playNext, playPrevious,
+      currentSong, isPlaying, playSong, playRandom, pauseSong, resumeSong, togglePlay, playNext, playPrevious,
       addToNext: (s) => setQueue(prev => [...prev.slice(0, currentIndex + 1), s, ...prev.slice(currentIndex + 1)]),
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation: () => {}, isStationLiked: () => false,
