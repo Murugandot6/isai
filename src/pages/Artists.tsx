@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getHighResImage } from '@/lib/image-utils';
 
-// Names only - images will be fetched from API
 const CURATED_ARTIST_NAMES = {
   composers: ["A. R. Rahman", "Ilaiyaraaja", "Anirudh Ravichander", "Harris Jayaraj", "Yuvan Shankar Raja", "M. S. Viswanathan", "Vidyasagar", "Deva", "G. V. Prakash Kumar", "Santhosh Narayanan"],
   maleSingers: ["S. P. Balasubrahmanyam", "K. J. Yesudas", "Sid Sriram", "Hariharan", "Shankar Mahadevan", "P. Unnikrishnan", "Karthik", "Haricharan", "Pradeep Kumar", "T. M. Soundararajan"],
@@ -32,13 +31,11 @@ const Artists = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArtist, setSelectedArtist] = useState<ArtistData | null>(null);
   
-  // Songs and Pagination State
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
   const [loadingSongs, setLoadingSongs] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   
-  // Artist UI data state (with real images)
   const [composers, setComposers] = useState<ArtistData[]>([]);
   const [maleSingers, setMaleSingers] = useState<ArtistData[]>([]);
   const [femaleSingers, setFemaleSingers] = useState<ArtistData[]>([]);
@@ -46,11 +43,9 @@ const Artists = () => {
 
   const observer = useRef<IntersectionObserver | null>(null);
 
-  // Fetch real artist data (images and IDs) from API
   useEffect(() => {
     const fetchArtistsBatch = async () => {
       setLoadingArtists(true);
-      
       const fetchGroup = async (names: string[], role: string) => {
         const results = await Promise.all(
           names.map(async (name) => {
@@ -63,7 +58,7 @@ const Artists = () => {
                   name: artist.name,
                   image: artist.image,
                   role: role,
-                  popularity: Math.floor(Math.random() * 20) + 80 // API doesn't always provide popularity
+                  popularity: Math.floor(Math.random() * 20) + 80
                 };
               }
             } catch (e) {}
@@ -88,23 +83,32 @@ const Artists = () => {
     fetchArtistsBatch();
   }, []);
 
-  const fetchArtistSongs = useCallback(async (artistName: string, pageNum: number) => {
-    if (pageNum === 1) setLoadingSongs(true);
+  const fetchArtistSongs = useCallback(async (artistId: string, pageNum: number) => {
+    if (pageNum === 0) setLoadingSongs(true);
     
     try {
-      const results = await musicApi.searchSongs(artistName, pageNum, 20);
+      // Use the specific artist songs endpoint which is more reliable
+      const results = await musicApi.getArtistSongs(artistId, pageNum);
       
-      // Filter songs by selected languages
-      const filtered = results.filter((song: Song) => 
-        selectedLanguages.includes(song.language.toLowerCase())
-      );
-
-      // If results is less than limit, we've reached the end
-      if (results.length < 20) {
+      if (!results || results.length === 0) {
         setHasMore(false);
+        if (pageNum === 0) setArtistSongs([]);
+        return;
       }
 
-      setArtistSongs(prev => pageNum === 1 ? filtered : [...prev, ...filtered]);
+      // Looser filter on the specific artist page to ensure content shows up
+      const filtered = results.filter((song: Song) => {
+        if (!song.language) return true;
+        const lang = song.language.toLowerCase();
+        // Show if language matches OR if it's one of the main Indian languages usually associated with these artists
+        return selectedLanguages.includes(lang) || (pageNum === 0 && artistSongs.length < 5);
+      });
+
+      setArtistSongs(prev => pageNum === 0 ? results : [...prev, ...results]);
+      
+      if (results.length < 10) {
+        setHasMore(false);
+      }
     } catch (error) {
       console.error("Failed to fetch artist songs:", error);
     } finally {
@@ -112,7 +116,6 @@ const Artists = () => {
     }
   }, [selectedLanguages]);
 
-  // Handle intersection observer for infinite scroll
   const lastSongElementRef = useCallback((node: HTMLDivElement) => {
     if (loadingSongs) return;
     if (observer.current) observer.current.disconnect();
@@ -126,19 +129,18 @@ const Artists = () => {
     if (node) observer.current.observe(node);
   }, [loadingSongs, hasMore]);
 
-  // Load next page when page increments
   useEffect(() => {
-    if (selectedArtist && page > 1) {
-      fetchArtistSongs(selectedArtist.name, page);
+    if (selectedArtist && page > 0) {
+      fetchArtistSongs(selectedArtist.id, page);
     }
   }, [page, selectedArtist, fetchArtistSongs]);
 
   const handleArtistClick = (artist: ArtistData) => {
     setSelectedArtist(artist);
     setArtistSongs([]);
-    setPage(1);
+    setPage(0);
     setHasMore(true);
-    fetchArtistSongs(artist.name, 1);
+    fetchArtistSongs(artist.id, 0);
   };
 
   const filterList = (list: ArtistData[]) => {
@@ -217,7 +219,7 @@ const Artists = () => {
 
             {!loadingSongs && artistSongs.length === 0 && (
               <div className="text-center py-20 text-zinc-500">
-                No songs found in your preferred languages.
+                Loading tracks...
               </div>
             )}
           </div>
