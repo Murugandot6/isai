@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { Sidebar } from './Sidebar';
 import { MusicPlayer } from './MusicPlayer';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
-import { Music, User, LogIn, Settings, Loader2, Sparkles, Star, Home } from 'lucide-react';
+import { Music, User, LogIn, Settings, Loader2, Sparkles, Star, Home, Heart, History, Library, Film, Radio, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -41,8 +40,8 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   if (!user) return null;
 
-  // Music, Cinema, and Songs pages are completely fullscreen, bypassing the standard layout
-  const isImmersiveFullscreen = location.pathname === '/movies' || location.pathname === '/music' || location.pathname === '/songs';
+  // Fullscreen interactive player views
+  const isImmersiveFullscreen = location.pathname === '/movies' || location.pathname === '/music';
 
   const path = location.pathname;
   const searchParams = new URLSearchParams(location.search);
@@ -55,7 +54,6 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   if (isImmersiveFullscreen) {
     return (
       <div className="min-h-screen bg-zinc-950 text-foreground overflow-x-hidden relative">
-        {/* Render children completely unconstrained */}
         <main className="min-h-screen relative pb-16 lg:pb-0">
           {children}
         </main>
@@ -67,7 +65,6 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Global Header */}
         <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md border-b border-border/50 px-3 md:px-6 py-2.5 md:py-4 flex items-center justify-between gap-4">
@@ -78,50 +75,125 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             <span className="text-sm font-black tracking-tight italic">anbae</span>
           </div>
           
-          {/* Dynamic curations context list inside the header */}
-          {isMusicContext ? (
-            <div className="hidden lg:flex items-center gap-3">
-              {/* Home shortcut */}
-              <button 
-                onClick={() => navigate('/')}
-                className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all shrink-0"
-                title="Gateway Hub"
-              >
-                <Home size={18} />
-              </button>
+          {/* Dynamic Top Navigation Curations replacing the sidebar layout */}
+          <div className="hidden lg:flex items-center gap-3">
+            {/* Home gateway shortcut */}
+            <button 
+              onClick={() => navigate('/')}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all shrink-0"
+              title="Gateway Hub"
+            >
+              <Home size={18} />
+            </button>
 
-              <div className="h-5 w-[1px] bg-border/50 mx-1 shrink-0" />
+            <div className="h-5 w-[1px] bg-border/50 mx-1 shrink-0" />
 
+            {isMusicContext && (
               <div className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
+                <button 
+                  onClick={() => navigate('/music')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/music' ? 'bg-primary text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Music size={14} />
+                  Music Home
+                </button>
                 <button 
                   onClick={() => navigate('/featured')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/featured' ? 'bg-primary text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
                 >
-                  <Sparkles size={14} className={path === '/featured' ? 'text-white' : 'text-purple-400'} />
+                  <Sparkles size={14} />
                   Trending Playlists
-                </button>
-                <button 
-                  onClick={() => {
-                    toast.success("Editor's Picks activated!");
-                    navigate('/music');
-                  }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5 transition-all text-[11px]"
-                >
-                  <Star size={14} className="text-yellow-400" />
-                  Editor's Picks
                 </button>
                 <button 
                   onClick={() => navigate('/artists')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/artists' ? 'bg-primary text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
                 >
-                  <User size={14} className={path === '/artists' ? 'text-white' : 'text-cyan-400'} />
+                  <User size={14} />
                   Top Artists
                 </button>
+                <button 
+                  onClick={() => navigate('/songs')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/songs' ? 'bg-primary text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <History size={14} />
+                  Recent Songs
+                </button>
+                <button 
+                  onClick={() => navigate('/favourites')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/favourites' ? 'bg-primary text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Heart size={14} />
+                  Favourites
+                </button>
+                <button 
+                  onClick={() => navigate('/library')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/library' ? 'bg-primary text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Library size={14} />
+                  Library
+                </button>
               </div>
-            </div>
-          ) : (
-            <div className="hidden lg:block" />
-          )}
+            )}
+
+            {isMoviesContext && (
+              <div className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
+                <button 
+                  onClick={() => navigate('/movies')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/movies' ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Film size={14} />
+                  Cinema Home
+                </button>
+                <button 
+                  onClick={() => navigate('/search?type=movies')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${(path === '/search' && searchType === 'movies') ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Search size={14} />
+                  Search Movies
+                </button>
+                <button 
+                  onClick={() => navigate('/library')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/library' ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <History size={14} />
+                  Continue Watching
+                </button>
+                <button 
+                  onClick={() => navigate('/favourites')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/favourites' ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Heart size={14} />
+                  Liked Movies
+                </button>
+              </div>
+            )}
+
+            {isRadioContext && (
+              <div className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
+                <button 
+                  onClick={() => navigate('/radio')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/radio' ? 'bg-orange-500 text-white' : 'bg-white/5 text-orange-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Radio size={14} />
+                  World FM Radio
+                </button>
+                <button 
+                  onClick={() => navigate('/search?type=fm')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${(path === '/search' && searchType === 'fm') ? 'bg-orange-500 text-white' : 'bg-white/5 text-orange-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Search size={14} />
+                  Search Radio
+                </button>
+                <button 
+                  onClick={() => navigate('/favourites')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/favourites' ? 'bg-orange-500 text-white' : 'bg-white/5 text-orange-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                >
+                  <Heart size={14} />
+                  Starred Stations
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center gap-1.5 md:gap-3 ml-auto">
             <LanguageSelector />
