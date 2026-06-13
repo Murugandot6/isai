@@ -95,7 +95,7 @@ const Artists = () => {
         return;
       }
 
-      // Strictly filter by selected languages (lowercase for comparison)
+      // Strictly filter by selected languages
       const lowerSelectedLangs = selectedLanguages.map(l => l.toLowerCase());
       const filtered = results.filter((song: Song) => {
         if (!song.language) return false;
@@ -104,7 +104,6 @@ const Artists = () => {
 
       setArtistSongs(prev => pageNum === 0 ? filtered : [...prev, ...filtered]);
       
-      // If we got fewer results than expected or overall API results are empty, stop fetching
       if (results.length < 10) {
         setHasMore(false);
       }
@@ -213,12 +212,12 @@ const Artists = () => {
             )}
 
             {!hasMore && artistSongs.length > 0 && (
-              <p className="text-center text-zinc-500 text-xs py-10">You've reached the end of the filtered discography.</p>
+              <p className="text-center text-zinc-500 text-xs py-10">You've reached the end of the discography.</p>
             )}
 
             {!loadingSongs && artistSongs.length === 0 && (
               <div className="text-center py-20 text-zinc-500">
-                No songs found for this artist in your selected languages ({selectedLanguages.join(', ')}).
+                No tracks found matching your language preferences.
               </div>
             )}
           </div>
@@ -298,7 +297,8 @@ const Artists = () => {
                     <ArtistCard key={idx} artist={artist} onClick={() => handleArtistClick(artist)} />
                   ))}
                 </div>
-              </>
+              </TabsContent>
+            </>
           )}
         </Tabs>
       </div>
