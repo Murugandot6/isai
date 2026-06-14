@@ -9,27 +9,30 @@ interface StreamPlayerProps {
 }
 
 type EmbedServerType = 
+  | 'vidzee'
   | 'vidsrc'
   | 'xplay' 
   | 'superembed' 
   | 'cinext' 
-  | 'vidzee' 
   | 'vidzee_v2'
   | 'videasy' 
-  | 'anyembed' 
   | 'vidsync' 
   | 'multiembed' 
   | 'twoembed' 
   | 'autoembed' 
-  | 'embedsu';
+  | 'embedsu'
+  | 'anyembed';
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const [embedServer, setEmbedServer] = useState<EmbedServerType>('vidsrc');
+  // Set vidzee as default as requested
+  const [embedServer, setEmbedServer] = useState<EmbedServerType>('vidzee');
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Exact Embed URLs using TMDB ID
   const getEmbedUrl = () => {
     switch (embedServer) {
+      case 'vidzee':
+        return `https://player.vidzee.wtf/embed/movie/${movie.id}`;
       case 'vidsrc':
         return `https://vidsrc.to/embed/movie/${movie.id}`;
       case 'xplay':
@@ -38,14 +41,10 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://play.superembed.cc/?video_id=${movie.id}&tmdb=1`;
       case 'cinext':
         return `https://cinextma-app.netlify.app/movie/${movie.id}/player`;
-      case 'vidzee':
-        return `https://player.vidzee.wtf/embed/movie/${movie.id}`;
       case 'vidzee_v2':
         return `https://player.vidzee.wtf/v2/embed/movie/${movie.id}`;
       case 'videasy':
         return `https://player.videasy.net/movie/${movie.id}`;
-      case 'anyembed':
-        return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}?theme=purple&logo=false`;
       case 'vidsync':
         return `https://vidsync.xyz/embed/movie/${movie.id}`;
       case 'multiembed':
@@ -56,25 +55,27 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://player.autoembed.cc/embed/movie/${movie.id}`;
       case 'embedsu':
         return `https://embed.su/embed/movie/${movie.id}`;
+      case 'anyembed':
+        return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}?theme=purple&logo=false`;
       default:
-        return `https://vidsrc.to/embed/movie/${movie.id}`;
+        return `https://player.vidzee.wtf/embed/movie/${movie.id}`;
     }
   };
 
   const servers: { id: EmbedServerType; label: string }[] = [
-    { id: 'vidsrc', label: 'VidSrc (Default)' },
+    { id: 'vidzee', label: 'VidZee (Stable)' },
+    { id: 'vidsrc', label: 'VidSrc' },
     { id: 'xplay', label: 'XPlay Cinema' },
     { id: 'superembed', label: 'SuperEmbed' },
-    { id: 'vidzee', label: 'VidZee' },
     { id: 'vidzee_v2', label: 'VidZee V2' },
     { id: 'videasy', label: 'VidEasy' },
-    { id: 'anyembed', label: 'AnyEmbed' },
     { id: 'cinext', label: 'Cinext' },
     { id: 'vidsync', label: 'VidSync' },
     { id: 'multiembed', label: 'MultiEmbed' },
     { id: 'twoembed', label: '2Embed' },
     { id: 'autoembed', label: 'AutoEmbed' },
     { id: 'embedsu', label: 'Embed.su' },
+    { id: 'anyembed', label: 'AnyEmbed' },
   ];
 
   return (
@@ -118,11 +119,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
           <Info size={16} className="text-primary shrink-0 mt-0.5" />
-          <p>If the video doesn't load, try switching to <strong>VidSrc</strong> or <strong>AnyEmbed</strong>. Some servers might be blocked by ad-blockers or specific browser privacy settings.</p>
+          <p>VidZee is now set as your primary server. If you encounter incorrect titles on AnyEmbed, we recommend sticking with the first few servers on the list.</p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
           <Shield size={16} className="text-primary shrink-0 mt-0.5" />
-          <p><strong>Note:</strong> We strip referral data to protect your privacy. If a player fails, it might be due to server-side anti-hotlink measures; switching servers usually resolves this.</p>
+          <p><strong>Note:</strong> Anti-tracking is enabled. If a player fails to load, simply switch servers. Different regions have different server availability.</p>
         </div>
       </div>
     </div>
