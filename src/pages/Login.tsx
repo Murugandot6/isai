@@ -111,8 +111,8 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-black">
-      {/* Fallback Pure Black Background & Video Container */}
-      <div className="absolute inset-0 w-full h-full bg-zinc-950 z-0 overflow-hidden">
+      {/* Animated CSS Gradient Fallback + Video Container */}
+      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-950 via-purple-950/20 to-black z-0 overflow-hidden animate-pulse duration-[8000ms]">
         <video
           ref={videoRef}
           autoPlay
@@ -120,16 +120,14 @@ const Login = () => {
           muted
           playsInline
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover opacity-70"
+          src="https://cdn.pixabay.com/video/2021/09/10/88111-603434343_large.mp4"
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
           style={{ objectFit: 'cover' }}
-        >
-          {/* Using a highly reliable, gorgeous dark abstract loop from a stable CDN */}
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-tunnel-of-futuristic-blue-lights-32611-large.mp4" type="video/mp4" />
-        </video>
+        />
       </div>
 
       {/* Dark Overlay for Contrast */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10" />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-10" />
 
       {/* Login Card */}
       <div className="relative w-full max-w-md space-y-6 md:space-y-8 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
