@@ -36,6 +36,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'nxsha':
         return `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
       case 'twoembed':
+        // Using the requested 2Embed URL structure
         return `https://www.2embed.cc/embed/${id}`;
       case 'vidsrc_me':
         return `https://vidsrc.me/embed/movie?tmdb=${id}`;
@@ -62,8 +63,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { id: 'vidzee', label: 'VidZee (Stable)', priority: true },
     { id: 'vidsrc', label: 'VidSrc (Fast)', priority: true },
     { id: 'nxsha', label: 'NXSHA (Tamil)', priority: true },
+    { id: 'twoembed', label: '2Embed (Reliable)', priority: true },
     { id: 'vidsrc_me', label: 'VidSrc.me' },
-    { id: 'twoembed', label: '2Embed' },
     { id: 'autoembed', label: 'AutoEmbed' },
     { id: 'multiembed', label: 'MultiEmbed' },
     { id: 'superembed', label: 'SuperEmbed' },
@@ -123,7 +124,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
           <Info size={16} className="text-primary shrink-0 mt-0.5" />
           <p>
-            If a server plays the wrong movie, please switch to <strong>VidZee</strong>, <strong>VidSrc</strong>, or <strong>NXSHA</strong>.
+            If a server plays the wrong movie, please switch to <strong>VidZee</strong>, <strong>VidSrc</strong>, or <strong>2Embed</strong>.
           </p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
