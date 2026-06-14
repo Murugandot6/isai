@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
+// Importing the local video file from the src directory
+import backgroundVideo from '@/anbae.mp4';
+
 const Login = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -34,7 +37,6 @@ const Login = () => {
 
   useEffect(() => {
     addLog("Login component mounted.");
-    addLog(`User Agent: ${navigator.userAgent}`);
     if (session) {
       navigate('/');
     }
@@ -45,7 +47,7 @@ const Login = () => {
     const playVideo = async () => {
       const video = videoRef.current;
       if (video) {
-        addLog(`Attempting autoplay. Video src: ${video.src || 'none'}`);
+        addLog(`Attempting autoplay with local file: ${backgroundVideo}`);
         try {
           video.muted = true;
           await video.play();
@@ -64,8 +66,6 @@ const Login = () => {
           document.addEventListener('click', forcePlay);
           document.addEventListener('touchstart', forcePlay);
         }
-      } else {
-        addLog("Video ref is null on mount.");
       }
     };
 
@@ -140,7 +140,7 @@ const Login = () => {
           muted
           playsInline
           preload="auto"
-          src="https://assets.mixkit.co/videos/preview/mixkit-tunnel-of-futuristic-blue-lights-32611-large.mp4"
+          src={backgroundVideo}
           className="absolute inset-0 w-full h-full object-cover opacity-60"
           style={{ objectFit: 'cover' }}
           onLoadStart={() => addLog("Video event: loadstart")}
@@ -149,9 +149,6 @@ const Login = () => {
           onCanPlay={() => addLog("Video event: canplay")}
           onPlay={() => addLog("Video event: play")}
           onPause={() => addLog("Video event: pause")}
-          onWaiting={() => addLog("Video event: waiting (buffering)")}
-          onStalled={() => addLog("Video event: stalled")}
-          onSuspend={() => addLog("Video event: suspend")}
           onError={(e) => {
             const err = videoRef.current?.error;
             addLog(`Video event: ERROR. Code: ${err?.code}, Message: ${err?.message}`);
@@ -191,7 +188,7 @@ const Login = () => {
             ))}
           </div>
           <div className="mt-2 pt-2 border-t border-white/10 flex justify-between text-[9px] text-zinc-500">
-            <span>Autoplay: Muted</span>
+            <span>Source: Local anbae.mp4</span>
             <button 
               onClick={() => {
                 if (videoRef.current) {
