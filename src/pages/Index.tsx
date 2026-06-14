@@ -53,7 +53,7 @@ const Index = () => {
 
   return (
     <MainLayout>
-      <div className="relative min-h-[90vh] flex flex-col justify-center overflow-hidden">
+      <div className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-20 md:pt-24">
         {/* Dynamic Background Image */}
         <div className="absolute inset-0 z-0">
           <img 

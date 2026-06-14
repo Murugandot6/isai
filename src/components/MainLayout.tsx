@@ -10,6 +10,7 @@ import { Music, User, Settings, Loader2, Sparkles, Home, Heart, History, Library
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,9 +67,14 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Global Header */}
-        <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md border-b border-border/50 px-3 md:px-6 py-2.5 md:py-4 flex items-center justify-between gap-4">
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        {/* Global Header - Translucent / Sticky on subpages, Absolute / Transparent on Home page */}
+        <header className={cn(
+          "z-40 w-full px-3 md:px-6 py-2.5 md:py-4 flex items-center justify-between gap-4 transition-all duration-300",
+          path === '/' 
+            ? "absolute top-0 left-0 right-0 bg-transparent border-b-0" 
+            : "sticky top-0 bg-background/80 backdrop-blur-md border-b border-border/50"
+        )}>
           <div className="flex items-center gap-1.5 lg:hidden shrink-0">
             <div className="bg-primary p-1.5 rounded-lg">
               <Music className="text-primary-foreground" size={14} />
