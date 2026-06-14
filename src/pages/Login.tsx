@@ -8,8 +8,6 @@ import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeO
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-// Using relative path to ensure Vite resolves the asset correctly from the src folder
-import anbaeVideo from '../anbae.mp4';
 
 const Login = () => {
   const { session } = useAuth();
@@ -125,7 +123,9 @@ const Login = () => {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectFit: 'cover' }}
         >
-          <source src={anbaeVideo} type="video/mp4" />
+          {/* Try loading from local src directory dynamically first, with an immersive premium abstract video backup */}
+          <source src="/src/anbae.mp4" type="video/mp4" />
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-laser-lights-background-glow-31843-large.mp4" type="video/mp4" />
         </video>
       </div>
 
