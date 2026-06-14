@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff, Terminal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -22,7 +22,19 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [inviteCode, setInviteCode] = useState('');
 
+  // Debugging States
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setDebugLogs((prev) => [`[${timestamp}] ${message}`, ...prev].slice(0, 50));
+    console.log(`[Video Debug] ${message}`);
+  };
+
   useEffect(() => {
+    addLog("Login component mounted.");
+    addLog(`User Agent: ${navigator.userAgent}`);
     if (session) {
       navigate('/');
     }
@@ -33,19 +45,27 @@ const Login = () => {
     const playVideo = async () => {
       const video = videoRef.current;
       if (video) {
+        addLog(`Attempting autoplay. Video src: ${video.src || 'none'}`);
         try {
           video.muted = true;
           await video.play();
-        } catch (err) {
+          addLog("Autoplay SUCCESSFUL.");
+        } catch (err: any) {
+          addLog(`Autoplay BLOCKED/FAILED: ${err.message || err}`);
           // Fallback: try playing again on first document click/touch
           const forcePlay = () => {
-            video?.play().catch(() => {});
+            addLog("User interaction detected. Forcing play...");
+            video?.play()
+              .then(() => addLog("Forced play SUCCESSFUL."))
+              .catch((e) => addLog(`Forced play FAILED: ${e.message}`));
             document.removeEventListener('click', forcePlay);
             document.removeEventListener('touchstart', forcePlay);
           };
           document.addEventListener('click', forcePlay);
           document.addEventListener('touchstart', forcePlay);
         }
+      } else {
+        addLog("Video ref is null on mount.");
       }
     };
 
@@ -123,11 +143,71 @@ const Login = () => {
           src="https://cdn.pixabay.com/video/2021/09/10/88111-603434343_large.mp4"
           className="absolute inset-0 w-full h-full object-cover opacity-60"
           style={{ objectFit: 'cover' }}
+          onLoadStart={() => addLog("Video event: loadstart")}
+          onLoadedMetadata={() => addLog(`Video event: loadedmetadata (Duration: ${videoRef.current?.duration}s)`)}
+          onLoadedData={() => addLog("Video event: loadeddata")}
+          onCanPlay={() => addLog("Video event: canplay")}
+          onPlay={() => addLog("Video event: play")}
+          onPause={() => addLog("Video event: pause")}
+          onWaiting={() => addLog("Video event: waiting (buffering)")}
+          onStalled={() => addLog("Video event: stalled")}
+          onSuspend={() => addLog("Video event: suspend")}
+          onError={(e) => {
+            const err = videoRef.current?.error;
+            addLog(`Video event: ERROR. Code: ${err?.code}, Message: ${err?.message}`);
+          }}
         />
       </div>
 
       {/* Dark Overlay for Contrast */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-10" />
+
+      {/* Floating Debug Toggle Button */}
+      <button
+        onClick={() => setShowDebug(!showDebug)}
+        className="absolute top-4 left-4 z-50 p-2.5 rounded-xl bg-black/60 hover:bg-black/80 text-white border border-white/10 backdrop-blur-md flex items-center gap-2 text-xs font-bold transition-all"
+      >
+        <Terminal size={14} className="text-purple-400" />
+        <span>{showDebug ? "Hide Debug" : "Show Debug"}</span>
+      </button>
+
+      {/* Debug Panel Overlay */}
+      {showDebug && (
+        <div className="fixed bottom-4 left-4 right-4 md:right-auto md:w-96 max-h-[300px] bg-zinc-950/95 border border-white/10 rounded-2xl p-4 z-50 text-left font-mono text-[10px] text-zinc-300 flex flex-col shadow-2xl backdrop-blur-lg">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+            <span className="font-bold text-purple-400 flex items-center gap-1.5">
+              <Terminal size={12} />
+              Video Playback Debugger
+            </span>
+            <button onClick={() => setShowDebug(false)} className="text-zinc-500 hover:text-white">
+              <X size={14} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1 pr-1">
+            {debugLogs.map((log, idx) => (
+              <div key={idx} className="leading-relaxed break-all border-b border-white/5 pb-1">
+                {log}
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 pt-2 border-t border-white/10 flex justify-between text-[9px] text-zinc-500">
+            <span>Autoplay: Muted</span>
+            <button 
+              onClick={() => {
+                if (videoRef.current) {
+                  addLog("Manual play trigger clicked.");
+                  videoRef.current.play()
+                    .then(() => addLog("Manual play SUCCESSFUL."))
+                    .catch(e => addLog(`Manual play FAILED: ${e.message}`));
+                }
+              }}
+              className="text-purple-400 hover:underline font-bold"
+            >
+              Force Play Video
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Login Card */}
       <div className="relative w-full max-w-md space-y-6 md:space-y-8 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
