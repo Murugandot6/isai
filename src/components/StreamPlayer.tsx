@@ -13,6 +13,7 @@ type EmbedServerType =
   | 'superembed' 
   | 'cinext' 
   | 'vidzee' 
+  | 'vidzee_v2'
   | 'videasy' 
   | 'anyembed' 
   | 'vidsync' 
@@ -36,9 +37,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'cinext':
         return `https://cinextma-app.netlify.app/movie/${movie.id}/player`;
       case 'vidzee':
-        return `https://vidzee.wtf/embed/movie/${movie.id}`;
+        return `https://player.vidzee.wtf/embed/movie/${movie.id}`;
+      case 'vidzee_v2':
+        return `https://player.vidzee.wtf/v2/embed/movie/${movie.id}`;
       case 'videasy':
-        return `https://www.videasy.to/embed/movie/${movie.id}`;
+        return `https://player.videasy.net/movie/${movie.id}`;
       case 'anyembed':
         return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}`;
       case 'vidsync':
@@ -61,6 +64,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { id: 'superembed', label: 'SuperEmbed' },
     { id: 'cinext', label: 'Cinext' },
     { id: 'vidzee', label: 'VidZee' },
+    { id: 'vidzee_v2', label: 'VidZee V2' },
     { id: 'videasy', label: 'VidEasy' },
     { id: 'anyembed', label: 'AnyEmbed' },
     { id: 'vidsync', label: 'VidSync' },
@@ -83,7 +87,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             className="w-full h-full border-none"
             allowFullScreen
             scrolling="no"
-            referrerPolicy="no-referrer" // Hides domain from ad networks to protect privacy
+            referrerPolicy="no-referrer"
             allow="autoplay; encrypted-media"
           />
         </div>
