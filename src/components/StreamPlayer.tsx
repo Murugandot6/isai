@@ -12,7 +12,6 @@ type EmbedServerType =
   | 'vidzee'
   | 'vidsrc'
   | 'twoembed' 
-  | 'embedsu'
   | 'autoembed' 
   | 'multiembed' 
   | 'superembed' 
@@ -35,10 +34,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://vidsrc.to/embed/movie/${id}`;
       case 'twoembed':
         return `https://www.2embed.cc/embed/${id}`;
-      case 'embedsu':
-        return `https://embed.su/embed/movie/${id}`;
       case 'autoembed':
-        return `https://player.autoembed.cc/embed/movie/${id}`;
+        return `https://autoembed.app/embed/movie/${id}`;
       case 'multiembed':
         return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
       case 'superembed':
@@ -62,7 +59,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { id: 'vidzee', label: 'VidZee (Stable)', priority: true },
     { id: 'vidsrc', label: 'VidSrc (Fast)', priority: true },
     { id: 'twoembed', label: '2Embed', priority: true },
-    { id: 'embedsu', label: 'Embed.su' },
     { id: 'autoembed', label: 'AutoEmbed' },
     { id: 'multiembed', label: 'MultiEmbed' },
     { id: 'superembed', label: 'SuperEmbed' },
