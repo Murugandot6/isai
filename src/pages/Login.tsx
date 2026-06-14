@@ -32,34 +32,24 @@ const Login = () => {
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setDebugLogs((prev) => [`[${timestamp}] ${message}`, ...prev].slice(0, 50));
-    console.log(`[Video Debug] ${message}`);
   };
 
   useEffect(() => {
-    addLog("Login component mounted.");
     if (session) {
       navigate('/');
     }
   }, [session, navigate]);
 
-  // Robust autoplay trigger for mobile & desktop
   useEffect(() => {
     const playVideo = async () => {
       const video = videoRef.current;
       if (video) {
-        addLog(`Attempting autoplay with local file: ${backgroundVideo}`);
         try {
           video.muted = true;
           await video.play();
-          addLog("Autoplay SUCCESSFUL.");
         } catch (err: any) {
-          addLog(`Autoplay BLOCKED/FAILED: ${err.message || err}`);
-          // Fallback: try playing again on first document click/touch
           const forcePlay = () => {
-            addLog("User interaction detected. Forcing play...");
-            video?.play()
-              .then(() => addLog("Forced play SUCCESSFUL."))
-              .catch((e) => addLog(`Forced play FAILED: ${e.message}`));
+            video?.play().catch(() => {});
             document.removeEventListener('click', forcePlay);
             document.removeEventListener('touchstart', forcePlay);
           };
@@ -68,18 +58,15 @@ const Login = () => {
         }
       }
     };
-
     playVideo();
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setLoading(true);
 
     if (isSignUp) {
       const formattedCode = inviteCode.trim().toUpperCase();
-
       try {
         const { data: inviteData, error: inviteError } = await supabase
           .from('invite_codes')
@@ -88,7 +75,7 @@ const Login = () => {
           .maybeSingle();
 
         if (inviteError || !inviteData) {
-          toast.error("Invalid Invite Code! If you don't have one, please contact 11x13y on Instagram.");
+          toast.error("Invalid Invite Code!");
           setLoading(false);
           return;
         }
@@ -112,7 +99,7 @@ const Login = () => {
           },
         });
         if (error) throw error;
-        toast.success("Account created! Please check your email for the confirmation link.");
+        toast.success("Account created! Please check your email.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -131,8 +118,8 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-black">
-      {/* Animated CSS Gradient Fallback + Video Container */}
-      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-950 via-purple-950/20 to-black z-0 overflow-hidden animate-pulse duration-[8000ms]">
+      {/* Background Video with Overlay */}
+      <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
@@ -141,192 +128,137 @@ const Login = () => {
           playsInline
           preload="auto"
           src={backgroundVideo}
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
-          style={{ objectFit: 'cover' }}
-          onLoadStart={() => addLog("Video event: loadstart")}
-          onLoadedMetadata={() => addLog(`Video event: loadedmetadata (Duration: ${videoRef.current?.duration}s)`)}
-          onLoadedData={() => addLog("Video event: loadeddata")}
-          onCanPlay={() => addLog("Video event: canplay")}
-          onPlay={() => addLog("Video event: play")}
-          onPause={() => addLog("Video event: pause")}
-          onError={(e) => {
-            const err = videoRef.current?.error;
-            addLog(`Video event: ERROR. Code: ${err?.code}, Message: ${err?.message}`);
-          }}
+          className="absolute inset-0 w-full h-full object-cover opacity-70 scale-105"
         />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
       </div>
 
-      {/* Dark Overlay for Contrast */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-10" />
-
-      {/* Floating Debug Toggle Button */}
+      {/* Floating Debug Toggle (Glassy) */}
       <button
         onClick={() => setShowDebug(!showDebug)}
-        className="absolute top-4 left-4 z-50 p-2.5 rounded-xl bg-black/60 hover:bg-black/80 text-white border border-white/10 backdrop-blur-md flex items-center gap-2 text-xs font-bold transition-all"
+        className="absolute top-4 left-4 z-50 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 border border-white/10 backdrop-blur-md flex items-center gap-2 text-[10px] font-bold transition-all"
       >
-        <Terminal size={14} className="text-purple-400" />
-        <span>{showDebug ? "Hide Debug" : "Show Debug"}</span>
+        <Terminal size={12} />
+        <span>DEBUG</span>
       </button>
 
-      {/* Debug Panel Overlay */}
+      {/* Debug Panel (Glassy) */}
       {showDebug && (
-        <div className="fixed bottom-4 left-4 right-4 md:right-auto md:w-96 max-h-[300px] bg-zinc-950/95 border border-white/10 rounded-2xl p-4 z-50 text-left font-mono text-[10px] text-zinc-300 flex flex-col shadow-2xl backdrop-blur-lg">
+        <div className="fixed bottom-4 left-4 right-4 md:right-auto md:w-80 max-h-[200px] bg-black/60 border border-white/10 rounded-2xl p-4 z-50 text-left font-mono text-[9px] text-zinc-400 flex flex-col shadow-2xl backdrop-blur-xl">
           <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-            <span className="font-bold text-purple-400 flex items-center gap-1.5">
-              <Terminal size={12} />
-              Video Playback Debugger
-            </span>
-            <button onClick={() => setShowDebug(false)} className="text-zinc-500 hover:text-white">
-              <X size={14} />
-            </button>
+            <span className="font-bold text-primary">Logs</span>
+            <button onClick={() => setShowDebug(false)}><X size={12} /></button>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-            {debugLogs.map((log, idx) => (
-              <div key={idx} className="leading-relaxed break-all border-b border-white/5 pb-1">
-                {log}
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 pt-2 border-t border-white/10 flex justify-between text-[9px] text-zinc-500">
-            <span>Source: Local anbae.mp4</span>
-            <button 
-              onClick={() => {
-                if (videoRef.current) {
-                  addLog("Manual play trigger clicked.");
-                  videoRef.current.play()
-                    .then(() => addLog("Manual play SUCCESSFUL."))
-                    .catch(e => addLog(`Manual play FAILED: ${e.message}`));
-                }
-              }}
-              className="text-purple-400 hover:underline font-bold"
-            >
-              Force Play Video
-            </button>
+          <div className="flex-1 overflow-y-auto space-y-1">
+            {debugLogs.map((log, idx) => <div key={idx}>{log}</div>)}
           </div>
         </div>
       )}
 
-      {/* Login Card */}
-      <div className="relative w-full max-w-md space-y-6 md:space-y-8 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-primary rounded-2xl mb-4 shadow-lg shadow-primary/20">
-            <Music className="text-primary-foreground" size={32} />
+      {/* Glass Morphism Login Card */}
+      <div className="relative w-full max-w-md space-y-8 bg-white/[0.03] backdrop-blur-3xl p-8 md:p-10 rounded-[2.5rem] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-700 z-20">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center p-4 bg-primary/20 backdrop-blur-xl rounded-3xl mb-4 border border-primary/20 shadow-2xl shadow-primary/10">
+            <Music className="text-primary" size={32} />
           </div>
-          <h1 className="text-3xl font-black tracking-tight italic mb-2">anbae</h1>
-          <p className="text-muted-foreground font-medium text-sm">
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+          <h1 className="text-4xl font-black tracking-tighter italic text-white">anbae</h1>
+          <p className="text-white/50 font-medium text-sm tracking-wide">
+            {isSignUp ? 'Join the collective' : 'Welcome back to the sound'}
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-5">
           {isSignUp && (
-            <div className="space-y-2">
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input
-                  type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
-                  required
-                />
-              </div>
+            <div className="group relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors" size={18} />
+              <Input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pl-12 bg-white/[0.05] border-white/5 h-14 rounded-2xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.08] transition-all text-white placeholder:text-white/20"
+                required
+              />
             </div>
           )}
 
-          <div className="space-y-2">
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
-                required
-              />
-            </div>
+          <div className="group relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors" size={18} />
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-12 bg-white/[0.05] border-white/5 h-14 rounded-2xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.08] transition-all text-white placeholder:text-white/20"
+              required
+            />
           </div>
 
-          <div className="space-y-2">
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
+          <div className="group relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors" size={18} />
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-12 pr-12 bg-white/[0.05] border-white/5 h-14 rounded-2xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.08] transition-all text-white placeholder:text-white/20"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           {isSignUp && (
-            <div className="space-y-2">
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                <Input
-                  type="text"
-                  placeholder="Invite Code"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  className="pl-10 bg-accent/10 border-none h-12 rounded-xl focus-visible:ring-2 focus-visible:ring-primary/20 font-bold tracking-wider"
-                  required
-                />
-              </div>
+            <div className="group relative">
+              <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-primary transition-colors" size={18} />
+              <Input
+                type="text"
+                placeholder="Invite Code"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                className="pl-12 bg-white/[0.05] border-white/5 h-14 rounded-2xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.08] transition-all text-white placeholder:text-white/20 font-bold tracking-widest"
+                required
+              />
             </div>
           )}
 
           <Button 
             type="submit" 
             disabled={loading}
-            className="w-full h-12 rounded-xl font-bold text-base shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary hover:bg-primary/90 text-white"
           >
             {loading ? (
-              <Loader2 className="animate-spin mr-2" size={20} />
+              <Loader2 className="animate-spin" size={20} />
             ) : (
-              <>
-                {isSignUp ? 'Sign Up' : 'Sign In'}
-                <ArrowRight className="ml-2" size={18} />
-              </>
+              <span className="flex items-center justify-center gap-2">
+                {isSignUp ? 'Create Account' : 'Sign In'}
+                <ArrowRight size={18} />
+              </span>
             )}
           </Button>
         </form>
 
-        {isSignUp && (
-          <div className="flex gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10 animate-in fade-in duration-300">
-            <Info size={16} className="text-primary shrink-0 mt-0.5" />
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              An invite code is required to access this platform. If you do not have an invite code, please contact{" "}
-              <a 
-                href="https://www.instagram.com/11x13y/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-primary hover:underline font-bold"
-              >
-                11x13y
-              </a>{" "}
-              on Instagram.
-            </p>
-          </div>
-        )}
-
-        <div className="text-center pt-2">
+        <div className="text-center space-y-6">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm font-bold text-primary hover:underline underline-offset-4 transition-all"
+            className="text-xs font-bold text-white/40 hover:text-primary transition-all uppercase tracking-widest"
           >
-            {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+            {isSignUp ? 'Already a member? Sign In' : "New here? Request Access"}
           </button>
+
+          {isSignUp && (
+            <div className="flex gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <Info size={14} className="text-primary shrink-0 mt-0.5" />
+              <p className="text-[10px] text-white/40 leading-relaxed text-left">
+                Access is currently restricted. Contact <a href="https://www.instagram.com/11x13y/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">11x13y</a> for an invite code.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
