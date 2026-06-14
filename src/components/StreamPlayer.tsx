@@ -11,16 +11,16 @@ interface StreamPlayerProps {
 type EmbedServerType = 
   | 'vidzee'
   | 'vidsrc'
-  | 'twoembed' 
-  | 'autoembed' 
   | 'nxsha'
+  | 'twoembed' 
+  | 'vidsrc_me'
+  | 'autoembed' 
   | 'multiembed' 
   | 'superembed' 
   | 'xplay' 
   | 'vidzee_v2'
   | 'videasy' 
-  | 'vidsync' 
-  | 'anyembed';
+  | 'vidsync';
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [embedServer, setEmbedServer] = useState<EmbedServerType>('vidzee');
@@ -33,13 +33,14 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://player.vidzee.wtf/embed/movie/${id}`;
       case 'vidsrc':
         return `https://vidsrc.to/embed/movie/${id}`;
+      case 'nxsha':
+        return `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
       case 'twoembed':
         return `https://www.2embed.cc/embed/${id}`;
+      case 'vidsrc_me':
+        return `https://vidsrc.me/embed/movie?tmdb=${id}`;
       case 'autoembed':
         return `https://autoembed.app/embed/movie/${id}`;
-      case 'nxsha':
-        // Use the provided URL format with autoplay and language query params
-        return `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
       case 'multiembed':
         return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
       case 'superembed':
@@ -52,8 +53,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://player.videasy.net/movie/${id}`;
       case 'vidsync':
         return `https://vidsync.xyz/embed/movie/${id}`;
-      case 'anyembed':
-        return `https://anyembed.xyz/embed/tmdb-movie-${id}?theme=purple&logo=false`;
       default:
         return `https://player.vidzee.wtf/embed/movie/${id}`;
     }
@@ -62,13 +61,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const servers: { id: EmbedServerType; label: string; priority?: boolean }[] = [
     { id: 'vidzee', label: 'VidZee (Stable)', priority: true },
     { id: 'vidsrc', label: 'VidSrc (Fast)', priority: true },
-    { id: 'twoembed', label: '2Embed', priority: true },
+    { id: 'nxsha', label: 'NXSHA (Tamil)', priority: true },
+    { id: 'vidsrc_me', label: 'VidSrc.me' },
+    { id: 'twoembed', label: '2Embed' },
     { id: 'autoembed', label: 'AutoEmbed' },
-    { id: 'nxsha', label: 'NXSHA' },
     { id: 'multiembed', label: 'MultiEmbed' },
     { id: 'superembed', label: 'SuperEmbed' },
     { id: 'xplay', label: 'XPlay Cinema' },
-    { id: 'anyembed', label: 'AnyEmbed' },
   ];
 
   const refreshPlayer = () => setKey(prev => prev + 1);
@@ -124,7 +123,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
           <Info size={16} className="text-primary shrink-0 mt-0.5" />
           <p>
-            If a server plays the wrong movie, please switch to <strong>VidZee</strong> or <strong>VidSrc</strong>. These servers have the most accurate movie-to-ID mapping.
+            If a server plays the wrong movie, please switch to <strong>VidZee</strong>, <strong>VidSrc</strong>, or <strong>NXSHA</strong>.
           </p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
