@@ -8,8 +8,10 @@ interface StreamPlayerProps {
   movie: Movie;
 }
 
+type EmbedServerType = 'xplay' | 'anyembed' | 'vidsync' | 'vidsrc' | 'multiembed' | 'twoembed' | 'autoembed' | 'embedsu';
+
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const [embedServer, setEmbedServer] = useState<'xplay' | 'anyembed' | 'vidsync' | 'vidsrc'>('xplay');
+  const [embedServer, setEmbedServer] = useState<EmbedServerType>('xplay');
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Exact Embed URLs using TMDB ID
@@ -23,8 +25,27 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://vidsync.xyz/embed/movie/${movie.id}`;
       case 'vidsrc':
         return `https://vidsrc.to/embed/movie/${movie.id}`;
+      case 'multiembed':
+        return `https://multiembed.mov/?video_id=${movie.id}&tmdb=1`;
+      case 'twoembed':
+        return `https://www.2embed.online/embed/movie/${movie.id}`;
+      case 'autoembed':
+        return `https://player.autoembed.cc/embed/movie/${movie.id}`;
+      case 'embedsu':
+        return `https://embed.su/embed/movie/${movie.id}`;
     }
   };
+
+  const servers: { id: EmbedServerType; label: string }[] = [
+    { id: 'xplay', label: 'XPlay Cinema' },
+    { id: 'anyembed', label: 'AnyEmbed' },
+    { id: 'vidsync', label: 'VidSync' },
+    { id: 'vidsrc', label: 'VidSrc' },
+    { id: 'multiembed', label: 'MultiEmbed' },
+    { id: 'twoembed', label: '2Embed' },
+    { id: 'autoembed', label: 'AutoEmbed' },
+    { id: 'embedsu', label: 'Embed.su' },
+  ];
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -44,7 +65,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         </div>
 
         {/* Player Controls Bar */}
-        <div className="p-4 bg-zinc-900 border-t border-white/5 flex flex-wrap items-center justify-between gap-4">
+        <div className="p-4 bg-zinc-900 border-t border-white/5 flex flex-col gap-3">
           <div className="flex items-center gap-2 text-xs text-white/60">
             <Server size={14} className="text-primary" />
             <span className="font-bold">Select Streaming Server:</span>
@@ -52,13 +73,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
           {/* Embed Server Switcher */}
           <div className="flex flex-wrap gap-2">
-            {(['xplay', 'anyembed', 'vidsync', 'vidsrc'] as const).map((srv) => (
+            {servers.map((srv) => (
               <button
-                key={srv}
-                onClick={() => setEmbedServer(srv)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+                key={srv.id}
+                onClick={() => setEmbedServer(srv.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
               >
-                {srv === 'xplay' ? 'XPlay Cinema' : srv === 'anyembed' ? 'AnyEmbed' : srv === 'vidsync' ? 'VidSync' : 'VidSrc'}
+                {srv.label}
               </button>
             ))}
           </div>
