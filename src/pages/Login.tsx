@@ -112,7 +112,7 @@ const Login = () => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 md:p-6 overflow-hidden bg-black">
       {/* Fallback Pure Black Background & Video Container */}
-      <div className="absolute inset-0 w-full h-full bg-black z-0 overflow-hidden">
+      <div className="absolute inset-0 w-full h-full bg-zinc-950 z-0 overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
@@ -120,17 +120,16 @@ const Login = () => {
           muted
           playsInline
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover opacity-70"
           style={{ objectFit: 'cover' }}
         >
-          {/* Try loading from local src directory dynamically first, with an immersive premium abstract video backup */}
-          <source src="/src/anbae.mp4" type="video/mp4" />
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-laser-lights-background-glow-31843-large.mp4" type="video/mp4" />
+          {/* Using a highly reliable, gorgeous dark abstract loop from a stable CDN */}
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-tunnel-of-futuristic-blue-lights-32611-large.mp4" type="video/mp4" />
         </video>
       </div>
 
       {/* Dark Overlay for Contrast */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] z-10" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10" />
 
       {/* Login Card */}
       <div className="relative w-full max-w-md space-y-6 md:space-y-8 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-border/50 shadow-2xl animate-in fade-in zoom-in duration-500 z-20">
