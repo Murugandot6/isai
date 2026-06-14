@@ -9,6 +9,7 @@ interface StreamPlayerProps {
 }
 
 type EmbedServerType = 
+  | 'vidsrc'
   | 'xplay' 
   | 'superembed' 
   | 'cinext' 
@@ -17,19 +18,20 @@ type EmbedServerType =
   | 'videasy' 
   | 'anyembed' 
   | 'vidsync' 
-  | 'vidsrc' 
   | 'multiembed' 
   | 'twoembed' 
   | 'autoembed' 
   | 'embedsu';
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const [embedServer, setEmbedServer] = useState<EmbedServerType>('xplay');
+  const [embedServer, setEmbedServer] = useState<EmbedServerType>('vidsrc');
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Exact Embed URLs using TMDB ID
   const getEmbedUrl = () => {
     switch (embedServer) {
+      case 'vidsrc':
+        return `https://vidsrc.to/embed/movie/${movie.id}`;
       case 'xplay':
         return `https://play.xpass.top/e/movie/${movie.id}`;
       case 'superembed':
@@ -46,8 +48,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}?theme=purple&logo=false`;
       case 'vidsync':
         return `https://vidsync.xyz/embed/movie/${movie.id}`;
-      case 'vidsrc':
-        return `https://vidsrc.to/embed/movie/${movie.id}`;
       case 'multiembed':
         return `https://multiembed.mov/?video_id=${movie.id}&tmdb=1`;
       case 'twoembed':
@@ -56,19 +56,21 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://player.autoembed.cc/embed/movie/${movie.id}`;
       case 'embedsu':
         return `https://embed.su/embed/movie/${movie.id}`;
+      default:
+        return `https://vidsrc.to/embed/movie/${movie.id}`;
     }
   };
 
   const servers: { id: EmbedServerType; label: string }[] = [
+    { id: 'vidsrc', label: 'VidSrc (Default)' },
     { id: 'xplay', label: 'XPlay Cinema' },
     { id: 'superembed', label: 'SuperEmbed' },
-    { id: 'cinext', label: 'Cinext' },
     { id: 'vidzee', label: 'VidZee' },
     { id: 'vidzee_v2', label: 'VidZee V2' },
     { id: 'videasy', label: 'VidEasy' },
     { id: 'anyembed', label: 'AnyEmbed' },
+    { id: 'cinext', label: 'Cinext' },
     { id: 'vidsync', label: 'VidSync' },
-    { id: 'vidsrc', label: 'VidSrc' },
     { id: 'multiembed', label: 'MultiEmbed' },
     { id: 'twoembed', label: '2Embed' },
     { id: 'autoembed', label: 'AutoEmbed' },
@@ -82,13 +84,12 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         {/* Player Screen */}
         <div className="relative aspect-video w-full bg-zinc-950 flex items-center justify-center">
           <iframe 
-            ref={iframeRef}
+            key={`${embedServer}-${movie.id}`}
             src={getEmbedUrl()}
             className="w-full h-full border-none"
             allowFullScreen
             scrolling="no"
-            referrerPolicy="no-referrer"
-            allow="autoplay; fullscreen; picture-in-picture"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
           />
         </div>
 
@@ -117,11 +118,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
           <Info size={16} className="text-primary shrink-0 mt-0.5" />
-          <p>If the video doesn't load or is slow, try switching to a different streaming server above. Referrer stripping is active to minimize tracking.</p>
+          <p>If the video doesn't load, try switching to <strong>VidSrc</strong> or <strong>AnyEmbed</strong>. Some servers might be blocked by ad-blockers or specific browser privacy settings.</p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
           <Shield size={16} className="text-primary shrink-0 mt-0.5" />
-          <p><strong>Privacy Protection Active:</strong> Referrer stripping is enabled to hide your connection details from third-party ad networks.</p>
+          <p><strong>Note:</strong> We strip referral data to protect your privacy. If a player fails, it might be due to server-side anti-hotlink measures; switching servers usually resolves this.</p>
         </div>
       </div>
     </div>
