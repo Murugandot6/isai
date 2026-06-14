@@ -8,8 +8,8 @@ import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeO
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-// Importing the video from the src folder
-import anbaeVideo from '@/anbae.mp4';
+// Using relative path to ensure Vite resolves the asset correctly from the src folder
+import anbaeVideo from '../anbae.mp4';
 
 const Login = () => {
   const { session } = useAuth();
