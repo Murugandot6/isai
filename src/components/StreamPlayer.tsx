@@ -11,12 +11,11 @@ interface StreamPlayerProps {
 type EmbedServerType = 
   | 'vidzee'
   | 'vidsrc'
+  | 'vidsrc_pro'
   | 'nxsha'
   | 'twoembed' 
   | 'vidsrc_me'
   | 'autoembed' 
-  | 'multiembed' 
-  | 'superembed' 
   | 'xplay' 
   | 'vidzee_v2'
   | 'videasy' 
@@ -33,19 +32,16 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://player.vidzee.wtf/embed/movie/${id}`;
       case 'vidsrc':
         return `https://vidsrc.to/embed/movie/${id}`;
+      case 'vidsrc_pro':
+        return `https://vidsrc.pro/embed/movie/${id}`;
       case 'nxsha':
         return `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
       case 'twoembed':
-        // Using the requested 2Embed URL structure
         return `https://www.2embed.cc/embed/${id}`;
       case 'vidsrc_me':
         return `https://vidsrc.me/embed/movie?tmdb=${id}`;
       case 'autoembed':
         return `https://autoembed.app/embed/movie/${id}`;
-      case 'multiembed':
-        return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
-      case 'superembed':
-        return `https://multiembed.sbs/embed.php?tmdb=${id}`;
       case 'xplay':
         return `https://play.xpass.top/e/movie/${id}`;
       case 'vidzee_v2':
@@ -61,13 +57,12 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
   const servers: { id: EmbedServerType; label: string; priority?: boolean }[] = [
     { id: 'vidzee', label: 'VidZee (Stable)', priority: true },
-    { id: 'vidsrc', label: 'VidSrc (Fast)', priority: true },
+    { id: 'vidsrc', label: 'VidSrc.to', priority: true },
+    { id: 'vidsrc_pro', label: 'VidSrc.pro', priority: true },
     { id: 'nxsha', label: 'NXSHA (Tamil)', priority: true },
     { id: 'twoembed', label: '2Embed (Reliable)', priority: true },
     { id: 'vidsrc_me', label: 'VidSrc.me' },
     { id: 'autoembed', label: 'AutoEmbed' },
-    { id: 'multiembed', label: 'MultiEmbed' },
-    { id: 'superembed', label: 'SuperEmbed' },
     { id: 'xplay', label: 'XPlay Cinema' },
   ];
 
