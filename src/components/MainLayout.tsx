@@ -2,12 +2,13 @@
 
 import React, { useEffect } from 'react';
 import { MusicPlayer } from './MusicPlayer';
+import { MoviePlayerOverlay } from './MoviePlayerOverlay';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
-import { Music, User, LogIn, Settings, Loader2, Sparkles, Star, Home, Heart, History, Library, Film, Radio, Search } from 'lucide-react';
+import { Music, User, Settings, Loader2, Sparkles, Home, Heart, History, Library, Film, Radio, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,7 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from 'sonner';
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, signOut } = useAuth();
@@ -58,6 +58,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           {children}
         </main>
         <MusicPlayer />
+        <MoviePlayerOverlay />
         <MobileNav />
       </div>
     );
@@ -75,7 +76,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             <span className="text-sm font-black tracking-tight italic">anbae</span>
           </div>
           
-          {/* Dynamic Top Navigation Curations replacing the sidebar layout */}
+          {/* Dynamic Top Navigation Curations */}
           <div className="hidden lg:flex items-center gap-3">
             {/* Home gateway shortcut */}
             <button 
@@ -237,12 +238,13 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           </div>
         </header>
 
-        {/* Main Content with extra padding for mobile player + nav */}
+        {/* Main Content */}
         <main className="flex-1 relative pb-[160px] md:pb-32">
           {children}
         </main>
       </div>
       <MusicPlayer />
+      <MoviePlayerOverlay />
       <MobileNav />
     </div>
   );
