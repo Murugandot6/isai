@@ -140,7 +140,7 @@ const Login = () => {
           muted
           playsInline
           preload="auto"
-          src="https://cdn.pixabay.com/video/2021/09/10/88111-603434343_large.mp4"
+          src="https://assets.mixkit.co/videos/preview/mixkit-tunnel-of-futuristic-blue-lights-32611-large.mp4"
           className="absolute inset-0 w-full h-full object-cover opacity-60"
           style={{ objectFit: 'cover' }}
           onLoadStart={() => addLog("Video event: loadstart")}
