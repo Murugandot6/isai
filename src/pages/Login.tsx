@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff, Terminal, X } from 'lucide-react';
+import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -24,15 +24,6 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [inviteCode, setInviteCode] = useState('');
-
-  // Debugging States
-  const [showDebug, setShowDebug] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugLogs((prev) => [`[${timestamp}] ${message}`, ...prev].slice(0, 50));
-  };
 
   useEffect(() => {
     if (session) {
@@ -132,28 +123,6 @@ const Login = () => {
         />
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
       </div>
-
-      {/* Floating Debug Toggle (Glassy) */}
-      <button
-        onClick={() => setShowDebug(!showDebug)}
-        className="absolute top-4 left-4 z-50 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 border border-white/10 backdrop-blur-md flex items-center gap-2 text-[10px] font-bold transition-all"
-      >
-        <Terminal size={12} />
-        <span>DEBUG</span>
-      </button>
-
-      {/* Debug Panel (Glassy) */}
-      {showDebug && (
-        <div className="fixed bottom-4 left-4 right-4 md:right-auto md:w-80 max-h-[200px] bg-black/60 border border-white/10 rounded-2xl p-4 z-50 text-left font-mono text-[9px] text-zinc-400 flex flex-col shadow-2xl backdrop-blur-xl">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-            <span className="font-bold text-primary">Logs</span>
-            <button onClick={() => setShowDebug(false)}><X size={12} /></button>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-1">
-            {debugLogs.map((log, idx) => <div key={idx}>{log}</div>)}
-          </div>
-        </div>
-      )}
 
       {/* Glass Morphism Login Card */}
       <div className="relative w-full max-w-md space-y-8 bg-white/[0.03] backdrop-blur-3xl p-8 md:p-10 rounded-[2.5rem] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-700 z-20">
