@@ -13,6 +13,7 @@ type EmbedServerType =
   | 'vidsrc'
   | 'twoembed' 
   | 'autoembed' 
+  | 'nxsha'
   | 'multiembed' 
   | 'superembed' 
   | 'xplay' 
@@ -36,6 +37,9 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://www.2embed.cc/embed/${id}`;
       case 'autoembed':
         return `https://autoembed.app/embed/movie/${id}`;
+      case 'nxsha':
+        // Use the provided URL format with autoplay and language query params
+        return `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
       case 'multiembed':
         return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
       case 'superembed':
@@ -60,6 +64,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { id: 'vidsrc', label: 'VidSrc (Fast)', priority: true },
     { id: 'twoembed', label: '2Embed', priority: true },
     { id: 'autoembed', label: 'AutoEmbed' },
+    { id: 'nxsha', label: 'NXSHA' },
     { id: 'multiembed', label: 'MultiEmbed' },
     { id: 'superembed', label: 'SuperEmbed' },
     { id: 'xplay', label: 'XPlay Cinema' },
