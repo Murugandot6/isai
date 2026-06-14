@@ -8,7 +8,7 @@ interface StreamPlayerProps {
   movie: Movie;
 }
 
-type EmbedServerType = 'xplay' | 'superembed' | 'anyembed' | 'vidsync' | 'vidsrc' | 'multiembed' | 'twoembed' | 'autoembed' | 'embedsu';
+type EmbedServerType = 'xplay' | 'superembed' | 'cinext' | 'anyembed' | 'vidsync' | 'vidsrc' | 'multiembed' | 'twoembed' | 'autoembed' | 'embedsu';
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [embedServer, setEmbedServer] = useState<EmbedServerType>('xplay');
@@ -21,6 +21,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://play.xpass.top/e/movie/${movie.id}`;
       case 'superembed':
         return `https://play.superembed.cc/?video_id=${movie.id}&tmdb=1`;
+      case 'cinext':
+        return `https://cinextma-app.netlify.app/movie/${movie.id}/`;
       case 'anyembed':
         return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}`;
       case 'vidsync':
@@ -41,6 +43,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const servers: { id: EmbedServerType; label: string }[] = [
     { id: 'xplay', label: 'XPlay Cinema' },
     { id: 'superembed', label: 'SuperEmbed' },
+    { id: 'cinext', label: 'Cinext' },
     { id: 'anyembed', label: 'AnyEmbed' },
     { id: 'vidsync', label: 'VidSync' },
     { id: 'vidsrc', label: 'VidSrc' },
