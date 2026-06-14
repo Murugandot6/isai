@@ -43,7 +43,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'videasy':
         return `https://player.videasy.net/movie/${movie.id}`;
       case 'anyembed':
-        return `https://anyembed.com/embed/tmdb-movie-${movie.id}?theme=purple&logo=false`;
+        return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}?theme=purple&logo=false`;
       case 'vidsync':
         return `https://vidsync.xyz/embed/movie/${movie.id}`;
       case 'vidsrc':
@@ -88,7 +88,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             allowFullScreen
             scrolling="no"
             referrerPolicy="no-referrer"
-            allow="autoplay; encrypted-media"
+            allow="autoplay; fullscreen; picture-in-picture"
           />
         </div>
 
