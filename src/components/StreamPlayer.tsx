@@ -22,7 +22,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'superembed':
         return `https://play.superembed.cc/?video_id=${movie.id}&tmdb=1`;
       case 'cinext':
-        return `https://cinextma-app.netlify.app/movie/${movie.id}/`;
+        return `https://cinextma-app.netlify.app/movie/${movie.id}/player`;
       case 'anyembed':
         return `https://anyembed.xyz/embed/tmdb-movie-${movie.id}`;
       case 'vidsync':
