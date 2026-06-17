@@ -52,16 +52,24 @@ const MusicPage = () => {
 
         // Parallel fetch for legendary artist playlists/tracks
         const [rahman, yuvan, harris, vairamuthu] = await Promise.all([
-          musicApi.searchSongs("A.R. Rahman", 1, 12).catch(() => []),
-          musicApi.searchSongs("Yuvan Shankar Raja", 1, 12).catch(() => []),
-          musicApi.searchSongs("Harris Jayaraj", 1, 12).catch(() => []),
-          musicApi.searchSongs("Vairamuthu Hits", 1, 12).catch(() => [])
+          musicApi.searchSongs("A.R. Rahman", 1, 40).catch(() => []),
+          musicApi.searchSongs("Yuvan Shankar Raja", 1, 40).catch(() => []),
+          musicApi.searchSongs("Harris Jayaraj", 1, 40).catch(() => []),
+          musicApi.searchSongs("Vairamuthu Hits", 1, 40).catch(() => [])
         ]);
 
-        setRahmanSongs(rahman);
-        setYuvanSongs(yuvan);
-        setHarrisSongs(harris);
-        setVairamuthuSongs(vairamuthu);
+        // Filter helper to strictly enforce language settings
+        const filterByLanguage = (songsList: Song[]) => {
+          return songsList.filter(song => {
+            if (!song.language) return false;
+            return selectedLanguages.includes(song.language.toLowerCase().trim());
+          }).slice(0, 12);
+        };
+
+        setRahmanSongs(filterByLanguage(rahman));
+        setYuvanSongs(filterByLanguage(yuvan));
+        setHarrisSongs(filterByLanguage(harris));
+        setVairamuthuSongs(filterByLanguage(vairamuthu));
 
       } catch (err) {
         console.error("Failed to load trending music & artists", err);
@@ -351,157 +359,165 @@ const MusicPage = () => {
           </div>
 
           {/* A.R. RAHMAN HITS SLIDER */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
-                <Compass size={13} className="text-cyan-400" />
-                A.R. Rahman Hits
-              </h3>
-              <button 
-                onClick={() => navigate('/artists')}
-                className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
-              >
-                <span>Artist Page</span>
-                <ChevronRight size={14} />
-              </button>
-            </div>
+          {rahmanSongs.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
+                  <Compass size={13} className="text-cyan-400" />
+                  A.R. Rahman Hits
+                </h3>
+                <button 
+                  onClick={() => navigate('/artists')}
+                  className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
+                >
+                  <span>Artist Page</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
 
-            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
-              {rahmanSongs.map((song) => {
-                const songImg = getHighResImage(song.image);
-                const isCurrent = currentSong?.id === song.id;
-                return (
-                  <div 
-                    key={song.id}
-                    onClick={() => playSong(song, rahmanSongs)}
-                    className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
-                  >
-                    <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
-                      <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                          {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
+                {rahmanSongs.map((song) => {
+                  const songImg = getHighResImage(song.image);
+                  const isCurrent = currentSong?.id === song.id;
+                  return (
+                    <div 
+                      key={song.id}
+                      onClick={() => playSong(song, rahmanSongs)}
+                      className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
+                    >
+                      <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
+                        <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                            {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+                          </div>
                         </div>
+                        {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
-                      {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
+                      <div className="text-left px-1 mt-0.5 min-w-0">
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
+                      </div>
                     </div>
-                    <div className="text-left px-1 mt-0.5 min-w-0">
-                      <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
-                      <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* YUVAN SHANKAR RAJA HITS SLIDER */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
-              <Compass size={13} className="text-purple-400" />
-              Yuvan Shankar Raja Hits
-            </h3>
+          {yuvanSongs.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
+                <Compass size={13} className="text-purple-400" />
+                Yuvan Shankar Raja Hits
+              </h3>
 
-            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
-              {yuvanSongs.map((song) => {
-                const songImg = getHighResImage(song.image);
-                const isCurrent = currentSong?.id === song.id;
-                return (
-                  <div 
-                    key={song.id}
-                    onClick={() => playSong(song, yuvanSongs)}
-                    className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
-                  >
-                    <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
-                      <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                          {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
+                {yuvanSongs.map((song) => {
+                  const songImg = getHighResImage(song.image);
+                  const isCurrent = currentSong?.id === song.id;
+                  return (
+                    <div 
+                      key={song.id}
+                      onClick={() => playSong(song, yuvanSongs)}
+                      className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
+                    >
+                      <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
+                        <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                            {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+                          </div>
                         </div>
+                        {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
-                      {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
+                      <div className="text-left px-1 mt-0.5 min-w-0">
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
+                      </div>
                     </div>
-                    <div className="text-left px-1 mt-0.5 min-w-0">
-                      <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
-                      <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* HARRIS JAYARAJ HITS SLIDER */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
-              <Compass size={13} className="text-emerald-400" />
-              Harris Jayaraj Hits
-            </h3>
+          {harrisSongs.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
+                <Compass size={13} className="text-emerald-400" />
+                Harris Jayaraj Hits
+              </h3>
 
-            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
-              {harrisSongs.map((song) => {
-                const songImg = getHighResImage(song.image);
-                const isCurrent = currentSong?.id === song.id;
-                return (
-                  <div 
-                    key={song.id}
-                    onClick={() => playSong(song, harrisSongs)}
-                    className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
-                  >
-                    <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
-                      <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                          {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
+                {harrisSongs.map((song) => {
+                  const songImg = getHighResImage(song.image);
+                  const isCurrent = currentSong?.id === song.id;
+                  return (
+                    <div 
+                      key={song.id}
+                      onClick={() => playSong(song, harrisSongs)}
+                      className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
+                    >
+                      <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
+                        <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                            {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+                          </div>
                         </div>
+                        {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
-                      {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
+                      <div className="text-left px-1 mt-0.5 min-w-0">
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
+                      </div>
                     </div>
-                    <div className="text-left px-1 mt-0.5 min-w-0">
-                      <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
-                      <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* VAIRAMUTHU MELODIES SLIDER */}
-          <div className="space-y-4">
-            <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
-              <Compass size={13} className="text-amber-400" />
-              Vairamuthu Melodies
-            </h3>
+          {vairamuthuSongs.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
+                <Compass size={13} className="text-amber-400" />
+                Vairamuthu Melodies
+              </h3>
 
-            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
-              {vairamuthuSongs.map((song) => {
-                const songImg = getHighResImage(song.image);
-                const isCurrent = currentSong?.id === song.id;
-                return (
-                  <div 
-                    key={song.id}
-                    onClick={() => playSong(song, vairamuthuSongs)}
-                    className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
-                  >
-                    <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
-                      <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                          {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
+                {vairamuthuSongs.map((song) => {
+                  const songImg = getHighResImage(song.image);
+                  const isCurrent = currentSong?.id === song.id;
+                  return (
+                    <div 
+                      key={song.id}
+                      onClick={() => playSong(song, vairamuthuSongs)}
+                      className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
+                    >
+                      <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
+                        <img src={songImg} alt={song.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                            {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+                          </div>
                         </div>
+                        {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
-                      {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
+                      <div className="text-left px-1 mt-0.5 min-w-0">
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
+                      </div>
                     </div>
-                    <div className="text-left px-1 mt-0.5 min-w-0">
-                      <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
-                      <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
       </div>
