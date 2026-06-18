@@ -64,16 +64,20 @@ interface MusicContextType {
   repeatMode: 'none' | 'one' | 'all';
   toggleRepeat: (fromSync?: boolean) => void;
   queue: Song[];
-  // Music Journal
   memories: SongMemory[];
   addMemory: (song: Song, text: string) => void;
   deleteMemory: (memoryId: string) => void;
+  closeMovie: () => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
 export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const channelRef = useRef<any>(null);
+  const isChannelReady = useRef(false);
+
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -154,12 +158,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const audio = audioRef.current;
     
     try {
-      if (currentMovie) setCurrentMovie(null);
-
       const isRadio = song.type === 'radio' || song.album?.id === 'radio';
       let fullDetails = song;
 
-      // Fetch fresh details for streams if it's not a radio
       if (!isRadio) {
         const data = await musicApi.getSongDetails(song.id);
         if (data) fullDetails = data;
@@ -240,7 +241,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     let nextIdx = currentIndex + 1;
     
     if (isShuffle) {
-      // Shuffle logic: Shuffles ONLY from selected languages
       const validSongs = queue.filter(s => 
         selectedLanguages.includes(s.language?.toLowerCase() || 'tamil')
       );
@@ -252,7 +252,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : validSongs[Math.floor(Math.random() * validSongs.length)];
         nextIdx = queue.findIndex(s => s.id === chosen.id);
       } else {
-        // Fallback if no songs in queue match selected languages (unlikely given new playRandom behavior)
         nextIdx = Math.floor(Math.random() * queue.length);
       }
     } else if (nextIdx >= queue.length) {
@@ -302,7 +301,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setLikedSongs(prev => isLiked(song.id) ? prev.filter(s => s.id !== song.id) : [song, ...prev]);
   };
 
-  // Music Journal Actions
   const addMemory = (song: Song, text: string) => {
     const newMemory: SongMemory = {
       id: Math.random().toString(36).substring(2, 9),
@@ -328,7 +326,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!fromSync) broadcast('shuffle', { isShuffle: newShuffle });
   }, [isShuffle, broadcast]);
 
-  // Automatic track progression when a song ends
+  const closeMovie = () => {
+    // Cleanup any movie playback state if needed
+  };
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -348,7 +349,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [playNext, repeatMode]);
 
-  // Supabase Realtime Broadcast Subscription
   useEffect(() => {
     if (!roomCode) {
       if (channelRef.current) {
@@ -390,12 +390,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             if (data.time !== undefined) {
               seek(data.time, true);
             }
-            break;
-          case 'play_movie':
-            // Movie playback is now handled through routing, so we ignore this
-            break;
-          case 'close_movie':
-            // Movie closing is now handled through routing, so we ignore this
             break;
           case 'next':
             playNext(true);
@@ -446,7 +440,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       removeFromPlaylist: (id, sid) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: p.songs.filter(s => s.id !== sid) } : p)),
       isShuffle, toggleShuffle,
       repeatMode, toggleRepeat: () => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none'),
-      queue, memories, addMemory, deleteMemory
+      queue, memories, addMemory, deleteMemory, closeMovie
     }}>
       {children}
     </MusicContext.Provider>
