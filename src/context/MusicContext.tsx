@@ -14,19 +14,6 @@ export interface Playlist {
   createdAt: number;
 }
 
-export interface Movie {
-  id: string;
-  title: string;
-  overview: string;
-  backdrop: string;
-  poster: string;
-  rating: number;
-  year: string;
-  genre: string;
-  language: string;
-  imdbId?: string;
-}
-
 export interface SongMemory {
   id: string;
   songId: string;
@@ -77,13 +64,6 @@ interface MusicContextType {
   repeatMode: 'none' | 'one' | 'all';
   toggleRepeat: (fromSync?: boolean) => void;
   queue: Song[];
-  currentMovie: Movie | null;
-  playMovie: (movie: Movie, fromSync?: boolean) => void;
-  closeMovie: (fromSync?: boolean) => void;
-  likedMovies: Movie[];
-  toggleLikeMovie: (movie: Movie) => void;
-  isMovieLiked: (movieId: string) => boolean;
-  recentlyWatched: Movie[];
   // Music Journal
   memories: SongMemory[];
   addMemory: (song: Song, text: string) => void;
@@ -109,14 +89,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
 
-  const [currentMovie, setCurrentMovie] = useState<Movie | null>(null);
-  const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
-  const [recentlyWatched, setRecentlyWatched] = useState<Movie[]>([]);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const channelRef = useRef<any>(null);
-  const isChannelReady = useRef(false);
-
   const [likedSongs, setLikedSongs] = useState<Song[]>([]);
   const [likedStations, setLikedStations] = useState<RadioStation[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
@@ -128,16 +100,12 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedStations = localStorage.getItem('isai_liked_stations');
     const savedRecent = localStorage.getItem('isai_recent_songs');
     const savedPlaylists = localStorage.getItem('isai_playlists');
-    const savedLikedMovies = localStorage.getItem('isai_liked_movies');
-    const savedRecentMovies = localStorage.getItem('isai_recent_movies');
     const savedMemories = localStorage.getItem('isai_memories');
 
     if (savedLiked) try { setLikedSongs(JSON.parse(savedLiked)); } catch (e) {}
     if (savedStations) try { setLikedStations(JSON.parse(savedStations)); } catch (e) {}
     if (savedRecent) try { setRecentlyPlayed(JSON.parse(savedRecent)); } catch (e) {}
     if (savedPlaylists) try { setPlaylists(JSON.parse(savedPlaylists)); } catch (e) {}
-    if (savedLikedMovies) try { setLikedMovies(JSON.parse(savedLikedMovies)); } catch (e) {}
-    if (savedRecentMovies) try { setRecentlyWatched(JSON.parse(savedRecentMovies)); } catch (e) {}
     if (savedMemories) try { setMemories(JSON.parse(savedMemories)); } catch (e) {}
   }, []);
 
@@ -146,10 +114,8 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('isai_liked_stations', JSON.stringify(likedStations));
     localStorage.setItem('isai_recent_songs', JSON.stringify(recentlyPlayed));
     localStorage.setItem('isai_playlists', JSON.stringify(playlists));
-    localStorage.setItem('isai_liked_movies', JSON.stringify(likedMovies));
-    localStorage.setItem('isai_recent_movies', JSON.stringify(recentlyWatched));
     localStorage.setItem('isai_memories', JSON.stringify(memories));
-  }, [likedSongs, likedStations, recentlyPlayed, playlists, likedMovies, recentlyWatched, memories]);
+  }, [likedSongs, likedStations, recentlyPlayed, playlists, memories]);
 
   useEffect(() => {
     if (!audioRef.current) audioRef.current = new Audio();
@@ -224,7 +190,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error(error);
       setIsPlaying(false);
     }
-  }, [queue, currentMovie, broadcast]);
+  }, [queue, broadcast]);
 
   const playRandom = useCallback(async () => {
     const randomLang = selectedLanguages[Math.floor(Math.random() * selectedLanguages.length)] || 'tamil';
@@ -336,27 +302,6 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setLikedSongs(prev => isLiked(song.id) ? prev.filter(s => s.id !== song.id) : [song, ...prev]);
   };
 
-  const playMovie = useCallback((movie: Movie, fromSync: boolean = false) => {
-    if (audioRef.current) audioRef.current.pause();
-    setIsPlaying(false);
-    setCurrentMovie(movie);
-    if (!fromSync) {
-      setRecentlyWatched(prev => [movie, ...prev.filter(m => m.id !== movie.id)].slice(0, 20));
-      broadcast('play_movie', { movie });
-    }
-  }, [broadcast]);
-
-  const closeMovie = useCallback((fromSync: boolean = false) => {
-    setCurrentMovie(null);
-    if (!fromSync) broadcast('close_movie', {});
-  }, [broadcast]);
-
-  const toggleLikeMovie = (movie: Movie) => {
-    setLikedMovies(prev => prev.some(m => m.id === movie.id) ? prev.filter(m => m.id !== movie.id) : [movie, ...prev]);
-  };
-
-  const isMovieLiked = (movieId: string) => likedMovies.some(m => m.id === movieId);
-
   // Music Journal Actions
   const addMemory = (song: Song, text: string) => {
     const newMemory: SongMemory = {
@@ -447,12 +392,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
             break;
           case 'play_movie':
-            if (data.movie) {
-              playMovie(data.movie, true);
-            }
+            // Movie playback is now handled through routing, so we ignore this
             break;
           case 'close_movie':
-            closeMovie(true);
+            // Movie closing is now handled through routing, so we ignore this
             break;
           case 'next':
             playNext(true);
@@ -489,7 +432,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       supabase.removeChannel(channel);
       isChannelReady.current = false;
     };
-  }, [roomCode, isHost, playSong, seek, pauseSong, resumeSong, playMovie, closeMovie, playNext, playPrevious, currentSong, queue]);
+  }, [roomCode, isHost, playSong, seek, pauseSong, resumeSong, playNext, playPrevious, currentSong, queue]);
 
   return (
     <MusicContext.Provider value={{
@@ -503,8 +446,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       removeFromPlaylist: (id, sid) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: p.songs.filter(s => s.id !== sid) } : p)),
       isShuffle, toggleShuffle,
       repeatMode, toggleRepeat: () => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none'),
-      queue, currentMovie, playMovie, closeMovie, likedMovies, toggleLikeMovie, isMovieLiked, recentlyWatched,
-      memories, addMemory, deleteMemory
+      queue, memories, addMemory, deleteMemory
     }}>
       {children}
     </MusicContext.Provider>

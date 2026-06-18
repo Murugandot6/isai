@@ -20,6 +20,7 @@ import Movies from "./pages/Movies";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import MoviePlayer from "./pages/MoviePlayer"; // Import the new MoviePlayer page
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/favourites" element={<Favourites />} />
               <Route path="/featured" element={<Featured />} />
               <Route path="/movies" element={<Movies />} />
+              <Route path="/movie/:id" element={<MoviePlayer />} /> {/* New route for movie player */}
               <Route path="/album/:id" element={<AlbumDetails />} />
               <Route path="/playlist/:id" element={<PlaylistDetails />} />
               <Route path="*" element={<NotFound />} />

@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react';
 import { MusicPlayer } from './MusicPlayer';
-import { MoviePlayerOverlay } from './MoviePlayerOverlay';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
@@ -59,7 +58,6 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           {children}
         </main>
         <MusicPlayer />
-        <MoviePlayerOverlay />
         <MobileNav />
       </div>
     );
@@ -87,7 +85,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
             {/* Home gateway shortcut */}
             <button 
               onClick={() => navigate('/')}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all shrink-0"
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover-bg-white/10 text-white/60 hover:text-white transition-all shrink-0"
               title="Gateway Hub"
             >
               <Home size={18} />
@@ -250,7 +248,6 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         </main>
       </div>
       <MusicPlayer />
-      <MoviePlayerOverlay />
       <MobileNav />
     </div>
   );

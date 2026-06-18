@@ -128,7 +128,10 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
 
           <div className="flex items-center gap-3.5 pt-2">
             <Button 
-              onClick={() => onPlay(currentMovie)}
+              onClick={() => {
+                // Navigate to movie player page instead of triggering overlay
+                navigate(`/movie/${currentMovie.id}`);
+              }}
               className="rounded-full bg-red-600 text-white hover:bg-red-700 px-8 h-12 md:h-14 text-sm font-black uppercase tracking-wider gap-2 shadow-xl shadow-red-600/25 transition-all hover:scale-105 active:scale-95"
             >
               <Play size={16} fill="currentColor" />
