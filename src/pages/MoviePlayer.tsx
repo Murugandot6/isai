@@ -180,7 +180,7 @@ const MoviePlayer = () => {
                       <Skeleton className="h-3 w-16 bg-white/5" />
                     </div>
                   ))}
-                )
+                </div>
               ) : cast.length > 0 ? (
                 <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
                   {cast.map((actor) => (
