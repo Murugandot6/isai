@@ -18,8 +18,9 @@ type EmbedServerType =
   | 'autoembed' 
   | 'xplay' 
   | 'vidzee_v2'
-  | 'videasy' 
-  | 'vidsync';
+  | 'videasy'
+  | 'vidsync'
+  | '111movies';
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [embedServer, setEmbedServer] = useState<EmbedServerType>('vidzee');
@@ -50,6 +51,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://player.videasy.net/movie/${id}`;
       case 'vidsync':
         return `https://vidsync.xyz/embed/movie/${id}`;
+      case '111movies':
+        return `https://111movies.net/movie/${id}`;
       default:
         return `https://player.vidzee.wtf/embed/movie/${id}`;
     }
@@ -64,6 +67,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { id: 'vidsrc_me', label: 'VidSrc.me' },
     { id: 'autoembed', label: 'AutoEmbed' },
     { id: 'xplay', label: 'XPlay Cinema' },
+    { id: '111movies', label: '111Movies' },
   ];
 
   const refreshPlayer = () => setKey(prev => prev + 1);
