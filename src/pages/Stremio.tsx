@@ -29,11 +29,23 @@ interface StremioAddon {
   description: string;
   icon: string;
   manifestUrl: string;
+  streamUrl: string; // Base URL for stream requests
   category: 'Metadata' | 'Streams' | 'Subtitles' | 'Other';
   active: boolean;
 }
 
 const POPULAR_ADDONS: StremioAddon[] = [
+  {
+    id: 'torrentio',
+    name: 'Torrentio Lite',
+    version: '1.2.0',
+    description: 'Provides torrent streams from popular providers. Supports direct streaming of public torrents.',
+    icon: '⚡',
+    manifestUrl: 'https://torrentio.strem.fun/manifest.json',
+    streamUrl: 'https://torrentio.strem.fun',
+    category: 'Streams',
+    active: true
+  },
   {
     id: 'cinemeta',
     name: 'Cinemeta',
@@ -41,26 +53,7 @@ const POPULAR_ADDONS: StremioAddon[] = [
     description: 'Official Stremio add-on providing metadata and catalogs from IMDb and TMDB.',
     icon: '🎬',
     manifestUrl: 'https://v3-cinemeta.strem.io/manifest.json',
-    category: 'Metadata',
-    active: true
-  },
-  {
-    id: 'torrentio',
-    name: 'Torrentio RD+',
-    version: '1.2.0',
-    description: 'Provides torrent streams from popular providers. Supports RealDebrid, Premiumize, and AllDebrid caching.',
-    icon: '⚡',
-    manifestUrl: 'https://torrentio.strem.fun/manifest.json',
-    category: 'Streams',
-    active: true
-  },
-  {
-    id: 'cyberflix',
-    name: 'CyberFlix Catalog',
-    version: '1.4.1',
-    description: 'Adds catalogs from Netflix, Disney+, HBO Max, Apple TV+, and Amazon Prime Video.',
-    icon: '🍿',
-    manifestUrl: 'https://cyberflix.strem.io/manifest.json',
+    streamUrl: 'https://v3-cinemeta.strem.io',
     category: 'Metadata',
     active: true
   },
@@ -71,18 +64,9 @@ const POPULAR_ADDONS: StremioAddon[] = [
     description: 'Official multi-language subtitle provider for all movies and series.',
     icon: '💬',
     manifestUrl: 'https://opensubtitles-v3.strem.io/manifest.json',
+    streamUrl: 'https://opensubtitles-v3.strem.io',
     category: 'Subtitles',
     active: true
-  },
-  {
-    id: 'anime-kitsu',
-    name: 'Kitsu Anime',
-    version: '2.1.0',
-    description: 'Full anime catalog, metadata, and posters powered by Kitsu.io.',
-    icon: '🌸',
-    manifestUrl: 'https://anime-kitsu.strem.io/manifest.json',
-    category: 'Metadata',
-    active: false
   }
 ];
 
@@ -152,60 +136,79 @@ export const Stremio = () => {
     }));
   };
 
-  // Resolve Torrentio Streams
+  // Resolve Streams from Active Addons
   const handleSelectMeta = async (meta: StremioMeta) => {
     setSelectedMeta(meta);
     setResolvingStreams(true);
     setResolvedStreams([]);
 
-    // Simulate Torrentio scraping torrent providers
-    setTimeout(() => {
-      const isTorrentioActive = addons.find(a => a.id === 'torrentio')?.active;
-      
-      if (!isTorrentioActive) {
-        setResolvedStreams([]);
-        setResolvingStreams(false);
-        return;
-      }
-
-      const mockStreams = [
-        {
-          provider: 'Torrentio RD+',
-          quality: '4K',
-          title: `[RD+] ${meta.name} (2160p) [HEVC] [HDR] [Atmos 5.1] - QxR`,
-          size: '14.2 GB',
-          seeders: 412,
-          type: 'cached'
-        },
-        {
-          provider: 'Torrentio RD+',
-          quality: '1080p',
-          title: `[RD+] ${meta.name} (1080p) [10bit] [AAC 5.1] - Tigole`,
-          size: '4.8 GB',
-          seeders: 1205,
-          type: 'cached'
-        },
-        {
-          provider: 'Torrentio (P2P)',
-          quality: '1080p',
-          title: `${meta.name} 1080p BluRay x264-SPARKS`,
-          size: '2.1 GB',
-          seeders: 84,
-          type: 'p2p'
-        },
-        {
-          provider: 'Torrentio (P2P)',
-          quality: '720p',
-          title: `${meta.name} 720p WEBRip x264-YTS`,
-          size: '950 MB',
-          seeders: 240,
-          type: 'p2p'
-        }
-      ];
-
-      setResolvedStreams(mockStreams);
+    const activeStreamAddons = addons.filter(a => a.active && a.category === 'Streams');
+    
+    if (activeStreamAddons.length === 0) {
+      setResolvedStreams([]);
       setResolvingStreams(false);
-    }, 1500);
+      toast.error("No active stream add-ons found. Please enable Torrentio in the Add-on Manager.");
+      return;
+    }
+
+    try {
+      const streamPromises = activeStreamAddons.map(async (addon) => {
+        // Stremio Protocol URL format: /stream/{type}/{id}.json
+        const url = `${addon.streamUrl}/stream/${meta.type}/${meta.id}.json`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return [];
+          const data = await res.json();
+          
+          return (data.streams || []).map((stream: any) => {
+            // Parse stream details
+            let quality = '1080p';
+            if (stream.title.includes('2160p') || stream.title.includes('4K')) quality = '4K';
+            else if (stream.title.includes('720p')) quality = '720p';
+            else if (stream.title.includes('480p')) quality = '480p';
+
+            let size = 'Unknown Size';
+            const sizeMatch = stream.title.match(/(\d+(\.\d+)?\s*(GB|MB))/i);
+            if (sizeMatch) size = sizeMatch[0];
+
+            let seeders = 0;
+            const seedersMatch = stream.title.match(/(👤|seeders:|seeds:)\s*(\d+)/i) || stream.title.match(/(\d+)\s*(seeders|seeds)/i);
+            if (seedersMatch) {
+              seeders = parseInt(seedersMatch[2] || seedersMatch[1]) || 0;
+            }
+
+            // Extract direct stream URL or fallback to magnet/infohash
+            let streamUrl = stream.url;
+            if (!streamUrl && stream.infoHash) {
+              // Convert infoHash to magnet link
+              streamUrl = `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(meta.name)}`;
+            }
+
+            return {
+              provider: addon.name,
+              quality,
+              title: stream.title.split('\n')[0] || stream.title,
+              size,
+              seeders: seeders || 10,
+              type: stream.url ? 'direct' : 'torrent',
+              url: streamUrl
+            };
+          });
+        } catch (err) {
+          console.error(`Failed to fetch streams from ${addon.name}:`, err);
+          return [];
+        }
+      });
+
+      const results = await Promise.all(streamPromises);
+      const allStreams = results.flat();
+      setResolvedStreams(allStreams);
+    } catch (error) {
+      console.error("Failed to resolve streams:", error);
+      toast.error("Failed to resolve streams");
+    } finally {
+      setResolvingStreams(false);
+    }
   };
 
   // Play Stream
@@ -452,9 +455,9 @@ export const Stremio = () => {
                           <div className="flex items-center gap-2">
                             <Badge className={cn(
                               "text-[9px] font-black uppercase border-none px-2 py-0.5",
-                              stream.type === 'cached' ? "bg-green-500/10 text-green-400" : "bg-amber-500/10 text-amber-400"
+                              stream.type === 'direct' ? "bg-green-500/10 text-green-400" : "bg-amber-500/10 text-amber-400"
                             )}>
-                              {stream.type === 'cached' ? 'RD+ Cached' : 'P2P Stream'}
+                              {stream.type === 'direct' ? 'Direct Stream' : 'Torrent Stream'}
                             </Badge>
                             <span className="text-xs font-black text-white">{stream.quality}</span>
                             <span className="text-[10px] text-zinc-500 font-bold">{stream.size}</span>
@@ -481,7 +484,7 @@ export const Stremio = () => {
                     <AlertCircle className="text-zinc-600 mb-2" size={28} />
                     <h4 className="font-bold text-sm">No streams resolved</h4>
                     <p className="text-xs text-zinc-500 max-w-xs mt-1">
-                      Make sure the <strong>Torrentio RD+</strong> add-on is enabled in the Add-on Manager tab.
+                      Make sure the <strong>Torrentio Lite</strong> add-on is enabled in the Add-on Manager tab.
                     </p>
                   </div>
                 )}
