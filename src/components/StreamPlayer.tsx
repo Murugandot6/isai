@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Movie } from '@/context/MusicContext';
 import { Server, Info, Shield, RefreshCcw } from 'lucide-react';
 
@@ -9,6 +9,7 @@ interface StreamPlayerProps {
 }
 
 type EmbedServerType = 
+  | 'filmu'
   | 'vidzee'
   | 'vidsrc'
   | 'vidsrc_pro'
@@ -22,12 +23,14 @@ type EmbedServerType =
   | 'vidsync';
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const [embedServer, setEmbedServer] = useState<EmbedServerType>('vidzee');
+  const [embedServer, setEmbedServer] = useState<EmbedServerType>('filmu');
   const [key, setKey] = useState(0);
 
   const getEmbedUrl = () => {
     const id = movie.id;
     switch (embedServer) {
+      case 'filmu':
+        return `https://embed.filmu.in/embed/movie/${id}`;
       case 'vidzee':
         return `https://player.vidzee.wtf/embed/movie/${id}`;
       case 'vidsrc':
@@ -51,11 +54,12 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'vidsync':
         return `https://vidsync.xyz/embed/movie/${id}`;
       default:
-        return `https://player.vidzee.wtf/embed/movie/${id}`;
+        return `https://embed.filmu.in/embed/movie/${id}`;
     }
   };
 
   const servers: { id: EmbedServerType; label: string; priority?: boolean }[] = [
+    { id: 'filmu', label: 'Filmu (Premium)', priority: true },
     { id: 'vidzee', label: 'VidZee (Stable)', priority: true },
     { id: 'vidsrc', label: 'VidSrc.to', priority: true },
     { id: 'vidsrc_pro', label: 'VidSrc.pro', priority: true },
@@ -119,7 +123,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
           <Info size={16} className="text-primary shrink-0 mt-0.5" />
           <p>
-            If a server plays the wrong movie, please switch to <strong>VidZee</strong>, <strong>VidSrc</strong>, or <strong>2Embed</strong>.
+            If a server plays the wrong movie, please switch to <strong>Filmu</strong>, <strong>VidZee</strong>, or <strong>VidSrc</strong>.
           </p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
