@@ -225,7 +225,8 @@ export const Stremio = () => {
       rating: selectedMeta.imdbRating ? parseFloat(selectedMeta.imdbRating) : 8.0,
       year: selectedMeta.releaseInfo || 'N/A',
       genre: selectedMeta.type === 'series' ? 'TV Series' : 'Movie',
-      language: 'EN'
+      language: 'EN',
+      streamUrl: stream.url // Pass the resolved stream URL directly!
     };
 
     playMovie(moviePayload);

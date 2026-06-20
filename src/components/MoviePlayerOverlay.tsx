@@ -20,8 +20,13 @@ export const MoviePlayerOverlay = () => {
 
       setLoadingCast(true);
       try {
-        const credits = await tmdbApi.getMovieCredits(currentMovie.id);
-        setCast(credits || []);
+        // Only fetch credits if it's a standard TMDb ID (not an IMDb ID starting with tt)
+        if (currentMovie.id && !currentMovie.id.startsWith('tt')) {
+          const credits = await tmdbApi.getMovieCredits(currentMovie.id);
+          setCast(credits || []);
+        } else {
+          setCast([]);
+        }
       } catch (error) {
         console.error("Failed to load movie details:", error);
       } finally {
@@ -35,8 +40,8 @@ export const MoviePlayerOverlay = () => {
   if (!currentMovie) return null;
 
   return (
-    <div className="fixed inset-0 bg-black z-[60] flex flex-col animate-in fade-in duration-300 overflow-y-auto">
-      {/* Player Header */}
+    <div className="fixed inset-0 bg-background/98 backdrop-blur-3xl z-50 flex flex-col overflow-y-auto pb-safe">
+      {/* Header */}
       <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10 gap-4">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <Tv className="text-purple-400 shrink-0 w-6 h-6" />
@@ -66,9 +71,9 @@ export const MoviePlayerOverlay = () => {
         </div>
       </div>
 
-      {/* Premium Stream Player Component */}
+      {/* Premium Stream Player Component - Forced to remount on movie change using key prop */}
       <div className="p-2 sm:p-6 md:p-10 max-w-5xl mx-auto w-full">
-        <StreamPlayer movie={currentMovie} />
+        <StreamPlayer key={currentMovie.id} movie={currentMovie} />
       </div>
 
       {/* Player Footer / Info & Cast */}

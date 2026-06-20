@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, ChevronDown } from 'lucide-react';
+import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, ChevronDown, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -11,9 +11,10 @@ interface StreamPlayerProps {
 }
 
 type EmbedServerType = 
-  | 'vidsrc'
+  | 'direct'
   | 'vidsrc_xyz'
   | 'embed_su'
+  | 'vidsrc'
   | 'vidsrc_me'
   | 'vidsrc_pro'
   | 'twoembed' 
@@ -25,12 +26,16 @@ type EmbedServerType =
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const isImdb = movie.id.startsWith('tt');
   const isTv = movie.genre?.toLowerCase().includes('tv') || movie.genre?.toLowerCase().includes('series');
+  const hasDirectStream = !!movie.streamUrl;
   
-  // Default to vidsrc_xyz or vidsrc for IMDb IDs
-  const [embedServer, setEmbedServer] = useState<EmbedServerType>(isImdb ? 'vidsrc_xyz' : 'filmu');
+  // Default to direct stream if available, otherwise fallback to vidsrc_xyz or filmu
+  const [embedServer, setEmbedServer] = useState<EmbedServerType>(
+    hasDirectStream ? 'direct' : (isImdb ? 'vidsrc_xyz' : 'filmu')
+  );
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const getEmbedUrl = () => {
     const id = movie.id;
@@ -80,6 +85,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   };
 
   const servers: { id: EmbedServerType; label: string; priority?: boolean; supportsImdb?: boolean; supportsTv?: boolean }[] = [
+    ...(hasDirectStream ? [{ id: 'direct' as EmbedServerType, label: 'Direct Stream (Ad-Free)', priority: true, supportsImdb: true, supportsTv: true }] : []),
     { id: 'vidsrc_xyz', label: 'VidSrc.xyz (Highly Recommended)', priority: true, supportsImdb: true, supportsTv: true },
     { id: 'embed_su', label: 'Embed.su (Fast & Stable)', priority: true, supportsImdb: true, supportsTv: true },
     { id: 'vidsrc', label: 'VidSrc.to', supportsImdb: true, supportsTv: true },
@@ -95,7 +101,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const refreshPlayer = () => setKey(prev => prev + 1);
 
   const handleOpenExternal = () => {
-    window.open(getEmbedUrl(), '_blank', 'noopener,noreferrer');
+    if (embedServer === 'direct' && movie.streamUrl) {
+      window.open(movie.streamUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      window.open(getEmbedUrl(), '_blank', 'noopener,noreferrer');
+    }
   };
 
   // Filter servers based on whether they support the current ID type and TV/Movie format
@@ -108,7 +118,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* TV Show Season/Episode Selectors */}
-      {isTv && (
+      {isTv && embedServer !== 'direct' && (
         <div className="flex flex-wrap items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl animate-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Season:</span>
@@ -145,17 +155,47 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       )}
 
       <div className="flex-1 flex flex-col bg-black rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-        {/* Iframe Container - Removed restrictive sandbox attribute to allow video players to load correctly */}
+        {/* Player Container */}
         <div className="relative aspect-video w-full bg-zinc-950 flex items-center justify-center">
-          <iframe 
-            key={`${embedServer}-${movie.id}-${season}-${episode}-${key}`}
-            src={getEmbedUrl()}
-            className="w-full h-full border-none"
-            allowFullScreen
-            scrolling="no"
-            referrerPolicy="origin"
-            allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
-          />
+          {embedServer === 'direct' && movie.streamUrl ? (
+            movie.streamUrl.startsWith('magnet:') ? (
+              <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                <AlertCircle className="text-indigo-400 w-12 h-12 animate-bounce" />
+                <h3 className="font-black text-lg">Magnet Link Detected</h3>
+                <p className="text-xs text-zinc-400 max-w-md leading-relaxed">
+                  This stream is a direct P2P torrent magnet link. Standard browsers cannot play magnet links natively. Please click the button below to open it in your local torrent client (like uTorrent, qBittorrent, or Stremio).
+                </p>
+                <Button 
+                  onClick={() => window.open(movie.streamUrl, '_self')}
+                  className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs gap-2"
+                >
+                  <Play size={14} fill="currentColor" />
+                  Open in Torrent Client
+                </Button>
+              </div>
+            ) : (
+              <video 
+                ref={videoRef}
+                key={`${movie.streamUrl}-${key}`}
+                src={movie.streamUrl}
+                className="w-full h-full"
+                controls
+                autoPlay
+                preload="auto"
+                playsInline
+              />
+            )
+          ) : (
+            <iframe 
+              key={`${embedServer}-${movie.id}-${season}-${episode}-${key}`}
+              src={getEmbedUrl()}
+              className="w-full h-full border-none"
+              allowFullScreen
+              scrolling="no"
+              referrerPolicy="origin"
+              allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
+            />
+          )}
         </div>
 
         {/* Controls & Server Switcher */}

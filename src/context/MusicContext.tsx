@@ -25,6 +25,7 @@ export interface Movie {
   genre: string;
   language: string;
   imdbId?: string;
+  streamUrl?: string;
 }
 
 export interface SongMemory {
@@ -104,23 +105,19 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isHost, setIsHost] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['tamil']);
   
-  const [queue, setQueue] = useState<Song[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const [isShuffle, setIsShuffle] = useState(false);
-  const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
-
+  const [queue, setQueue] = useState<any[]>([]);
   const [currentMovie, setCurrentMovie] = useState<Movie | null>(null);
   const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
   const [recentlyWatched, setRecentlyWatched] = useState<Movie[]>([]);
-  
+  const [likedSongs, setLikedSongs] = useState<Song[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
   const isChannelReady = useRef(false);
 
-  const [likedSongs, setLikedSongs] = useState<Song[]>([]);
   const [likedStations, setLikedStations] = useState<RadioStation[]>([]);
-  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [memories, setMemories] = useState<SongMemory[]>([]);
 
   useEffect(() => {
