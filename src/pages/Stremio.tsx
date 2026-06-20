@@ -35,6 +35,15 @@ interface StremioAddon {
   active: boolean;
 }
 
+const WEBRTC_TRACKERS = [
+  'wss://tracker.webtorrent.dev',
+  'wss://tracker.openwebtorrent.com',
+  'wss://tracker.btorrent.xyz',
+  'wss://tracker.files.fm:7073/announce',
+  'wss://tracker.gbitt.info:443/announce',
+  'wss://tracker.fastcast.nz'
+];
+
 const POPULAR_ADDONS: StremioAddon[] = [
   {
     id: 'torrentio',
@@ -84,13 +93,13 @@ export const Stremio = () => {
   const [resolvingStreams, setResolvingStreams] = useState(false);
   const [resolvedStreams, setResolvedStreams] = useState<any[]>([]);
 
-  // Fetch Catalogs instantly using TMDb api (since cinemeta-catalogs is several megabytes and extremely slow)
+  // Fetch Catalogs instantly using TMDb api
   const fetchCatalogs = async () => {
     setLoading(true);
     try {
       const [trendingMovies, popularTV] = await Promise.all([
         tmdbApi.getTrendingMovies(),
-        tmdbApi.getPopularMovies() // Fallback to movies context/TV context
+        tmdbApi.getPopularMovies()
       ]);
 
       const mappedMovies: StremioMeta[] = trendingMovies.slice(0, 15).map(m => ({
@@ -184,20 +193,18 @@ export const Stremio = () => {
     }
 
     try {
-      // Cinemeta protocol uses IMDb IDs (e.g. tt1234567). If the ID is a TMDb numerical ID, fetch the IMDb ID first
+      // Cinemeta protocol uses IMDb IDs (e.g. tt1234567).
       let imdbId = meta.id;
       if (!imdbId.startsWith('tt')) {
         const fetchedId = await tmdbApi.getMovieImdbId(meta.id);
         if (fetchedId) {
           imdbId = fetchedId;
         } else {
-          // Fallback to title search if IMDb ID cannot be found
           console.warn("Could not find IMDb ID for TMDb movie:", meta.name);
         }
       }
 
       const streamPromises = activeStreamAddons.map(async (addon) => {
-        // Stremio Protocol URL format: /stream/{type}/{imdbId}.json
         const url = `${addon.streamUrl}/stream/${meta.type}/${imdbId}.json`;
         try {
           const res = await fetch(url);
@@ -222,7 +229,9 @@ export const Stremio = () => {
 
             let streamUrl = stream.url;
             if (!streamUrl && stream.infoHash) {
-              streamUrl = `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(meta.name)}`;
+              // ALWAYS append WebRTC WebSocket trackers to the magnet link so WebTorrent can discover peers in the browser
+              const trackerParams = WEBRTC_TRACKERS.map(tr => `&tr=${encodeURIComponent(tr)}`).join('');
+              streamUrl = `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(meta.name)}${trackerParams}`;
             }
 
             return {
@@ -287,14 +296,14 @@ export const Stremio = () => {
             <div>
               <h1 className="text-3xl md:text-4xl font-black tracking-tight">Stremio Station</h1>
               <p className="text-xs md:text-sm text-zinc-400 font-semibold">
-                Decentralized streaming powered by community add-ons and Cinemeta catalogs.
+                Decentralized entertainment powered by community add-ons.
               </p>
             </div>
           </div>
 
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

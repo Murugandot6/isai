@@ -24,6 +24,15 @@ type EmbedServerType =
   | 'vidzee'
   | 'nxsha';
 
+const WEBRTC_TRACKERS = [
+  'wss://tracker.webtorrent.dev',
+  'wss://tracker.openwebtorrent.com',
+  'wss://tracker.btorrent.xyz',
+  'wss://tracker.files.fm:7073/announce',
+  'wss://tracker.gbitt.info:443/announce',
+  'wss://tracker.fastcast.nz'
+];
+
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const isImdb = movie.id.startsWith('tt');
   const isTv = movie.genre?.toLowerCase().includes('tv') || movie.genre?.toLowerCase().includes('series');
@@ -100,21 +109,18 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       const client = new WebTorrent();
       wtClientRef.current = client;
 
-      // Premium WebRTC & Public BitTorrent trackers for maximum peer connectivity
-      const trackers = [
-        'wss://tracker.openwebtorrent.com',
-        'wss://tracker.btorrent.xyz',
-        'wss://tracker.files.fm:7073/announce',
-        'wss://tracker.gbitt.info:443/announce',
-        'wss://tracker.fastcast.nz',
-        'udp://tracker.coppersurfer.tk:6969/announce',
-        'udp://tracker.openbittorrent.com:80/announce',
-        'udp://tracker.opentrackr.org:1337/announce',
-        'udp://movies.coppersurfer.tk:6969/announce'
-      ];
+      // Ensure any incoming magnet URI contains all required WebRTC signaling tracker parameters
+      let enrichedMagnetUri = movie.streamUrl;
+      if (enrichedMagnetUri.startsWith('magnet:')) {
+        WEBRTC_TRACKERS.forEach(tr => {
+          if (!enrichedMagnetUri.includes(encodeURIComponent(tr)) && !enrichedMagnetUri.includes(tr)) {
+            enrichedMagnetUri += `&tr=${encodeURIComponent(tr)}`;
+          }
+        });
+      }
 
       setWtStatus('metadata');
-      client.add(movie.streamUrl, { announce: trackers }, (torrent: any) => {
+      client.add(enrichedMagnetUri, { announce: WEBRTC_TRACKERS }, (torrent: any) => {
         // Find largest video file available in torrent package
         const file = torrent.files.find((f: any) => 
           f.name.endsWith('.mp4') || 
@@ -147,7 +153,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         torrent.on('download', () => {
           setWtLoadedProgress(Math.round(torrent.progress * 100));
           setWtPeers(torrent.numPeers);
-          // Format speeds beautifully
           const speedInMB = (torrent.downloadSpeed / (1024 * 1024)).toFixed(2);
           setWtSpeed(`${speedInMB} MB/s`);
         });
@@ -323,7 +328,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                       <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed max-w-sm mx-auto">
                         {wtStatus === 'initializing' && 'Initializing local sandbox torrent client...'}
                         {wtStatus === 'connecting' && 'Connecting to active browser-to-browser WebRTC seeds...'}
-                        {wtStatus === 'metadata' && 'Reading files and file structures in peer network...'}
+                        {wtStatus === 'metadata' && 'Reading files and structures in peer network...'}
                         {wtStatus === 'error' && (wtErrorMsg || 'Unable to connect to peers.')}
                       </p>
                     </div>
@@ -343,17 +348,17 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                           </div>
                         </div>
 
-                        {/* HIGHLY INTERACTIVE EXPLANATORY EXPLAINER NOTICE + INSTANT HTTP BYPASSES */}
+                        {/* EXPLANATORY EXPLAINER NOTICE + INSTANT HTTP BYPASSES */}
                         <div className="p-3.5 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl text-[10px] text-zinc-400 leading-relaxed text-left space-y-3">
                           <p className="flex items-start gap-1.5">
                             <HelpCircle size={14} className="text-indigo-400 shrink-0 mt-0.5" />
                             <span>
-                              <strong>Why is it taking too long?</strong> Web browsers can *only* stream torrents seeded by other WebRTC browser peers. Standard desktop torrent clients (TCP/UDP) do not connect natively to web browsers, resulting in <strong>0 WebRTC seeds</strong>.
+                              <strong>WebRTC Peer Discovery Notice:</strong> Web browsers can only stream torrents seeded by other WebRTC browser peers. Connecting to these WebRTC trackers enables fast browser-to-browser P2P.
                             </span>
                           </p>
                           
                           <div className="pt-2 border-t border-white/5 space-y-2">
-                            <p className="font-bold text-zinc-300 text-center">👇 Don't wait! Play instantly using cloud servers:</p>
+                            <p className="font-bold text-zinc-300 text-center">👇 Play instantly using cloud servers:</p>
                             <div className="grid grid-cols-2 gap-2">
                               <Button 
                                 onClick={() => setEmbedServer('vidsrc_xyz')}
