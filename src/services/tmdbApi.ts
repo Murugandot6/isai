@@ -35,12 +35,19 @@ export interface CastMember {
 }
 
 const mapTMDbToMovie = (item: any): Movie => {
-  const genres = item.genre_ids 
+  const genres = item.genre_ids && Array.isArray(item.genre_ids)
     ? item.genre_ids.map((id: number) => GENRE_MAP[id] || '').filter(Boolean).slice(0, 2).join(' / ')
     : 'Movie';
 
+  let year = 'N/A';
+  if (item.release_date && typeof item.release_date === 'string') {
+    year = item.release_date.split('-')[0] || 'N/A';
+  } else if (item.first_air_date && typeof item.first_air_date === 'string') {
+    year = item.first_air_date.split('-')[0] || 'N/A';
+  }
+
   return {
-    id: item.id.toString(),
+    id: (item.id || '').toString(),
     title: item.title || item.name || 'Untitled Movie',
     overview: item.overview || 'No overview available.',
     backdrop: item.backdrop_path 
@@ -50,7 +57,7 @@ const mapTMDbToMovie = (item: any): Movie => {
       ? `https://image.tmdb.org/t/p/w500${item.poster_path}` 
       : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=400',
     rating: item.vote_average ? Math.round(item.vote_average * 10) / 10 : 0,
-    year: item.release_date ? item.release_date.split('-')[0] : 'N/A',
+    year,
     genre: genres || 'Drama',
     language: item.original_language ? item.original_language.toUpperCase() : 'EN',
     imdbId: item.imdb_id || undefined
