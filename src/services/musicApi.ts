@@ -44,6 +44,7 @@ export interface Playlist {
 }
 
 const BASE_URL = 'https://jiosaavn-api.imurugan.workers.dev';
+const STREAWRIP_URL = 'https://streamrip.fun/api';
 
 /**
  * Standardizes song metadata formats (like building the primaryArtists string 
@@ -241,6 +242,69 @@ export const musicApi = {
     } catch (e) {
       console.error("Error in getArtistSongs:", e);
       return [];
+    }
+  },
+
+  // StreamRip API endpoints
+  streamrip: {
+    // Search for songs/albums
+    search: async (query: string, type: 'song' | 'album' | 'artist' = 'song', limit: number = 20) => {
+      try {
+        const response = await fetch(`${STREAWRIP_URL}/search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}`);
+        const data = await response.json();
+        return data.results || [];
+      } catch (e) {
+        console.error("StreamRip search error:", e);
+        return [];
+      }
+    },
+
+    // Get song details by ID
+    getSong: async (id: string) => {
+      try {
+        const response = await fetch(`${STREAWRIP_URL}/song/${id}`);
+        const data = await response.json();
+        return data;
+      } catch (e) {
+        console.error("StreamRip getSong error:", e);
+        return null;
+      }
+    },
+
+    // Get album details by ID
+    getAlbum: async (id: string) => {
+      try {
+        const response = await fetch(`${STREAWRIP_URL}/album/${id}`);
+        const data = await response.json();
+        return data;
+      } catch (e) {
+        console.error("StreamRip getAlbum error:", e);
+        return null;
+      }
+    },
+
+    // Get download URL for a song
+    getDownloadUrl: async (id: string, quality: '320' | '128' = '320') => {
+      try {
+        const response = await fetch(`${STREAWRIP_URL}/download/${id}?quality=${quality}`);
+        const data = await response.json();
+        return data.url || null;
+      } catch (e) {
+        console.error("StreamRip getDownloadUrl error:", e);
+        return null;
+      }
+    },
+
+    // Get streaming URL for a song
+    getStreamUrl: async (id: string, quality: '320' | '128' = '320') => {
+      try {
+        const response = await fetch(`${STREAWRIP_URL}/stream/${id}?quality=${quality}`);
+        const data = await response.json();
+        return data.url || null;
+      } catch (e) {
+        console.error("StreamRip getStreamUrl error:", e);
+        return null;
+      }
     }
   }
 };
