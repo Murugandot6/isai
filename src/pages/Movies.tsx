@@ -6,7 +6,8 @@ import { useMusic, Movie } from '@/context/MusicContext';
 import { tmdbApi } from '@/services/tmdbApi';
 import { MovieHero } from '@/components/MovieHero';
 import { MovieRow } from '@/components/MovieRow';
-import { Search, X } from 'lucide-react';
+import { CustomWatchParty } from '@/components/CustomWatchParty';
+import { Search, X, Users, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
@@ -96,6 +97,24 @@ const Movies = () => {
                 onSearchClick={() => setIsSearchOpen(true)}
               />
             )}
+
+            {/* Watch Party Quick Launch Area */}
+            <div className="px-6 md:px-16 pt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-gradient-to-r from-purple-900/40 via-indigo-900/20 to-zinc-900/50 border border-purple-500/20 rounded-[2rem] gap-4 backdrop-blur-md">
+                <div className="space-y-1 text-left">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 flex items-center gap-1">
+                    <Sparkles size={11} /> Synchronized Watch Party
+                  </span>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight">Got your own custom movie stream?</h2>
+                  <p className="text-xs text-zinc-400 font-semibold max-w-lg">
+                    Enter direct file links (MP4, MKV, HLS) or direct magnet links to broadcast and play with everyone connected in real-time.
+                  </p>
+                </div>
+                <div className="shrink-0 w-full sm:w-auto">
+                  <CustomWatchParty />
+                </div>
+              </div>
+            </div>
 
             {/* Immersive Scroll Rows */}
             <div className="px-6 md:px-16 space-y-12 pb-24">
