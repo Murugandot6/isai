@@ -52,8 +52,8 @@ const POPULAR_ADDONS: StremioAddon[] = [
     version: '3.0.4',
     description: 'Official Stremio add-on providing metadata and catalogs from IMDb and TMDB.',
     icon: '🎬',
-    manifestUrl: 'https://v3-cinemeta.strem.io/manifest.json',
-    streamUrl: 'https://v3-cinemeta.strem.io',
+    manifestUrl: 'https://cinemeta-catalogs.strem.io/manifest.json',
+    streamUrl: 'https://cinemeta-catalogs.strem.io',
     category: 'Metadata',
     active: true
   },
@@ -83,13 +83,13 @@ export const Stremio = () => {
   const [resolvingStreams, setResolvingStreams] = useState(false);
   const [resolvedStreams, setResolvedStreams] = useState<any[]>([]);
 
-  // Fetch Cinemeta Catalogs
+  // Fetch Cinemeta Catalogs - Using correct URL
   const fetchCatalogs = async () => {
     setLoading(true);
     try {
       const [movieRes, seriesRes] = await Promise.all([
-        fetch('https://v3-cinemeta.strem.io/catalog/movie/top.json').then(r => r.json()),
-        fetch('https://v3-cinemeta.strem.io/catalog/series/top.json').then(r => r.json())
+        fetch('https://cinemeta-catalogs.strem.io/top/catalog/movie/top.json').then(r => r.json()),
+        fetch('https://cinemeta-catalogs.strem.io/top/catalog/series/top.json').then(r => r.json())
       ]);
 
       if (movieRes?.metas) setMovies(movieRes.metas.slice(0, 15));
@@ -106,14 +106,14 @@ export const Stremio = () => {
     fetchCatalogs();
   }, []);
 
-  // Search Cinemeta
+  // Search Cinemeta - Using correct URL
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     setSearching(true);
     try {
-      const res = await fetch(`https://v3-cinemeta.strem.io/catalog/movie/top/search=${encodeURIComponent(searchQuery)}.json`);
+      const res = await fetch(`https://cinemeta-catalogs.strem.io/top/catalog/movie/top/search=${encodeURIComponent(searchQuery)}.json`);
       const data = await res.json();
       setSearchResults(data?.metas || []);
     } catch (error) {
@@ -549,5 +549,10 @@ const MetaCard = ({ meta, onClick }: { meta: StremioMeta; onClick: () => void })
     </div>
   );
 };
+
+// Helper function for conditional class names
+function cn(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 export default Stremio;
