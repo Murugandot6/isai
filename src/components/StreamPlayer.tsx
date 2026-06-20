@@ -1,233 +1,3 @@
-` with full code. Need no markdown code block. Need maybe no `<dyad-file>`. Good.
-
-Need think about "Always use shadcn/ui". Already uses. Good.
-Need maybe no dependencies. Good.
-
-Need maybe "Before sending final answer, review every import statement you output". Imports from existing files. All described. Good.
-
-Need maybe "Only use one dyad-write per file". We'll do one.
-
-Need maybe maybe create a separate source registry file? User asked add sources. Could create `src/lib/stream-sources.ts` and update StreamPlayer. But to minimize, rewrite StreamPlayer. However, file is long. Good.
-
-Need maybe "do not overengineer". But user provided full code. We can implement.
-
-Need maybe "No markdown code blocks". We must not use triple backticks. Need final answer concise.
-
-Need maybe "If requested feature already implemented" - not already implemented. We'll implement.
-
-Need maybe not mention "verified from GitHub..." because false. We can include comments but maybe not.
-
-Need maybe use `useEffect` to reset WebTorrent status when movie changes. Need ensure no infinite loop. Let's craft robust code.
-
-Potential issue: `isMagnet` derived from `effectiveStreamUrl` and used in effect dependencies. In component, if `effectiveStreamUrl` changes due to `manualMagnetUrl`, isMagnet changes. Good.
-- `hasDirectStream = !!effectiveStreamUrl` maybe rename `hasStreamUrl`.
-- `isMagnet = effectiveStreamUrl?.startsWith('magnet:') || effectiveStreamUrl?.endsWith('.torrent');`
-- Default embed server:
-const defaultEmbedServer = effectiveStreamUrl && !isMagnet ? 'direct' : isImdb ? 'vidsrc_xyz' : 'vidlink';
-useState(defaultEmbedServer)
-- useEffect reset:
-useEffect(() => {
-const nextDefault = effectiveStreamUrl && !isMagnet ? 'direct' : isImdb ? 'vidsrc_xyz' : 'vidlink';
-setEmbedServer(nextDefault);
-setWtStatus('initializing'); setWtPeers(0); setWtSpeed(''); setWtProgress(0); setWtErrorMsg(''); setWtCountdown(0);
-}, [effectiveStreamUrl, isImdb, isMagnet]);
-But if user has set embedServer to 'embed_su', and `movie.streamUrl` exists direct, this effect runs only on mount and movie changes, not when user changes. Good. On mount it sets default. But if manual magnet set, effect runs and sets direct. Good.
-Potential issue: `effectiveStreamUrl` is a const derived each render. If `movie.streamUrl` is undefined, manual null => undefined. Good.
-- If user clicks Direct/P2P when `hasStreamUrl && !isMagnet` direct video. If magnet, direct shows WebTorrent. Good.
-- If manual magnet entered, `hasStreamUrl` true, `isMagnet` true, `direct` button? Should show Direct/P2P? The "hasDirectStream" button condition currently `hasDirectStream &&` true for manual. But if no movie streamUrl and manual magnet, yes. Good. If no streamUrl, no direct. Good.
-- But if manual magnet entered, `handleMagnetPlay` sets manual and embedServer direct. Good.
-- If movie has magnet streamUrl, direct button visible. Good.
-
-Need maybe "tmdbId" not used. Remove.
-
-Need maybe `getEmbedUrl` for `dbgdrive` movie fallback:
-case 'dbgdrive':
-return isTv ? `https://databasegdriveplayer.co/player.php?type=series&tmdb=${id}&season=${s}&episode=${e}` : `https://databasegdriveplayer.co/player.php?type=movie&tmdb=${id}`;
-Need maybe `nxsha` only movie. If isTv and embedServer nxsha? It supportsTv false so not compatible for TV. Fine.
-- `gomo` no TV, not compatible for TV. Good.
-- `vidcloud` no TV, not compatible. Good.
-- `vidzee` no TV, not compatible.
-- `superembed` logic maybe uses multiembed for TV. Fine.
-- `multiembed` tv: tmdb param should be `0` for imdb, `1` for tmdb. Good.
-- `embedmaster` series for movies? It uses series for movies? Actually for movie, embedmaster.com/embed/movie/... good.
-- `apimdb` TV uses tmdb path for both imdb and tmdb, but supports imdb. Fine.
-- `curtstream` TV uses series/tmdb, movies/imdb. Fine.
-- `fsapi` TV uses tv-imdb for all, supports tmdb true. Maybe okay.
-- `gomo` movie only.
-- `vidsrc_vip` maybe URL? okay.
-- `vidsrc_to` maybe URL. okay.
-- `vidsrc_fyi` maybe. okay.
-- `vidlink` supports imdb false; if isImdb, not compatible. Good.
-- `videasy`, `vidfast`, `vidking`, `rivestream`, etc supportsImdb false; if isImdb, not compatible. But many providers might accept imdb but user says skip duplicates. We'll follow.
-- `compatibleServers` if isTv false and supportsTv false okay. Good.
-- Need `TIER_COLORS` type `Record<number, string>`. Good.
-- Need maybe activeServer note undefined, display blank. Good.
-
-Need maybe ensure `setEmbedServer('vidlink')` fallback if no compatible? For non-IMDb, vidlink compatible. For IMDb, vidsrc_xyz. Good.
-- If user manually clicks direct when effectiveStreamUrl exists but isMagnet false, video. If effectiveStreamUrl is magnet, WebTorrent. Good.
-- `handleOpenExternal`: if direct and effectiveStreamUrl, open. But if direct and no effective? direct button not. If embedServer direct and no streamUrl? possible if manual? no.
-- `getEmbedUrl` uses `movie.id`. If manual magnet with movie id, okay.
-- Need maybe `magnetInput` local. Good.
-
-Need maybe "CSP" issues? If app hosted, iframes maybe. Not relevant.
-
-Need maybe "No try/catch" for destroy. We can use `wtClientRef.current?.destroy();` but destroy may throw? not likely. Good.
-
-Need maybe "setWtCountdown(12)" then interval. When status ready, wtCountdown maybe stops at 0. Good.
-- In WebTorrent effect, when `client.add` callback receives torrent, we clear timeout. But if `client.add` throws synchronously? We don't catch. Could bubble? The guideline says don't catch. Good.
-- `file.renderTo('#webtorrent-video',...)`: If React StrictMode remounts, maybe element exists. Good.
-- Need maybe `document.body.appendChild(script)` can duplicate script if effect reruns due to `isMagnet` or `embedServer`. If embedServer direct remains, effect dependencies not change after setWtLoaded? `isMagnet` and embedServer stable. It won't run. Good. If `wtLoaded` set true, effect not rerun because not dependency. Good.
-- If script already loaded global but state false? script effect sees global and sets. Good.
-
-Need maybe "type EmbedServerType" includes `direct` but ALL_SERVERS doesn't include direct. Good.
-
-Need maybe "activeServer" undefined if embedServer direct. Good.
-
-Need maybe "movie.genre?.toLowerCase().includes('tv')" if genre undefined. Good.
-
-Need maybe "movie.id.startsWith" if id undefined? Movie interface string. Fine.
-
-Need maybe "const hasStreamUrl = !!effectiveStreamUrl;" direct button. Good.
-
-Need maybe "isMagnet" if effectiveStreamUrl undefined: false. Good.
-
-Need maybe "defaultEmbedServer" if no stream and isImdb false -> vidlink. Good.
-
-Need maybe "TIER_COLORS[1] + ' shadow-lg'" if TIER_COLORS[1] undefined? no.
-
-Need maybe "supportsTmdb" for isImdb? Good.
-
-Need maybe "manual magnet input" and "effectiveStreamUrl" resets when movie changes. Good.
-
-Need maybe "if already added skip" maybe we shouldn't duplicate `ALL_SERVERS` with old ones. We'll replace. Good.
-
-Need maybe maybe no "BlackHatWorld" comment. Good.
-
-Need maybe "source list with 50" maybe not exact. Fine.
-
-Need maybe "do not catch errors with try/catch" but code has no try/catch. Good.
-
-Need maybe "Only edit files directly requested". We edit StreamPlayer. Good.
-
-Need maybe "After all code changes, provide concise summary." We'll mention.
-
-Need maybe "If you need a project file that does not yet exist, create it" no.
-
-Need maybe "If package not listed in package.json, install" no new imports.
-
-Need maybe "Use dyad-write for code output exclusively" yes.
-
-Need maybe "No markdown code blocks" final no code blocks.
-
-Need maybe "same language user using" English. Good.
-
-Let's craft full file. Need be careful not too long? It's okay. Need close dyad-write. Use no markdown.
-
-Need maybe include comments? Fine.
-
-Let's write full file. Ensure no accidental triple backticks. Need maybe include "use client";. Need imports.
-
-Potential TS issue: `window as any` in useEffect. Fine.
-Potential TS issue: `ReturnType<typeof setInterval>` in browser returns number. Fine.
-Potential TS issue: `wtTimeoutRef.current` type `ReturnType<typeof setTimeout>` but setTimeout returns number in DOM. Fine.
-Potential TS issue: `document.body.appendChild(script);` script async. Fine.
-Potential TS issue: `file.renderTo('#webtorrent-video'...` okay.
-Potential TS issue: `movie.streamUrl` optional, `effectiveStreamUrl` maybe undefined. In `handleOpenExternal`, if direct and effectiveStreamUrl. Good.
-Potential TS issue: `TIER_COLORS[1]` returns string | undefined if strict noUncheckedIndexedAccess? Probably false. To be safe:
-const TIER_COLORS: Record<number, string> = ...
-No issue.
-Potential TS issue: `activeServer` type ServerDef | undefined. Good.
-Potential TS issue: `compatibleServers` type ServerDef[]. Good.
-Potential TS issue: `tier3plus` type ServerDef[]. Good.
-Potential TS issue: `const defaultEmbedServer = hasStreamUrl && !isMagnet ? 'direct' : isImdb ? 'vidsrc_xyz' : 'vidlink';` TypeScript infers union with direct and string. Good.
-Potential TS issue: `setEmbedServer(nextDefault);` nextDefault inferred "direct" | "vidsrc_xyz" | "vidlink". Good.
-Potential TS issue: `const [embedServer, setEmbedServer] = useState<EmbedServerType>(defaultEmbedServer);` okay.
-Potential TS issue: `wtClientRef.current?.destroy();` if destroy undefined? WebTorrent client has destroy. Good.
-Potential TS issue: `wtCountdownRef.current` in cleanup. Good.
-Potential TS issue: `const isMagnet = effectiveStreamUrl?.startsWith('magnet:') || effectiveStreamUrl?.endsWith('.torrent');` inferred boolean | undefined? Actually `||` of boolean | undefined and boolean | undefined yields boolean | undefined? Let's check: `undefined || undefined` => undefined. TypeScript may infer boolean | undefined. But `isMagnet` used in `hasStreamUrl && !isMagnet`: `!undefined` okay. But state condition `isMagnet ?` okay. To ensure boolean: `const isMagnet = Boolean(effectiveStreamUrl?.startsWith('magnet:') || effectiveStreamUrl?.endsWith('.torrent'));`. Use Boolean. Good.
-Potential TS issue: `movie.genre?.toLowerCase().includes('tv') || ...` yields boolean | undefined. Use Boolean(...). Good.
-Potential TS issue: `movie.id.startsWith('tt')` okay.
-Potential TS issue: `const isTv = Boolean(movie.genre?.toLowerCase().includes('tv') || movie.genre?.toLowerCase().includes('series'));` calls toLowerCase twice. Fine. Could lower once.
-Potential TS issue: `setWtCountdown(prev => { if (prev <= 1) { if (wtCountdownRef.current) clearInterval(wtCountdownRef.current); return 0; } return prev - 1; });` setState in interval, ok.
-Potential TS issue: `client.add` callback may not fire if error? okay.
-Potential TS issue: `file.renderTo('#webtorrent-video', { autoplay: true, controls: true }, (err: any) => { ... });` okay.
-Potential TS issue: `window.open(movie.streamUrl, '_blank', 'noopener,noreferrer')` with string | undefined guarded. Good.
-Potential TS issue: `button` active class with `TIER_COLORS[1] + ' shadow-lg'`: if undefined, but no.
-Potential TS issue: `showAllServers` and `tier3plus.length`. Good.
-
-Need maybe "activeServer = ALL_SERVERS.find(s => s.id === embedServer);" If embedServer direct, undefined. Good.
-Need maybe "Direct / P2P" button should appear if hasStreamUrl. Good.
-Need maybe "Direct / P2P" button if manual magnet and embedServer direct. Good.
-Need maybe "hasStreamUrl" if movie.streamUrl is empty string. Good.
-
-Need maybe "if the requested change has already been implemented" not. Good.
-
-Need maybe "Summary less than sentence, exactly one chat title". Use `<dyad-chat-summary>Expanding StreamPlayer sources</dyad-chat-summary>` at end.
-
-Need maybe final after dyad-write: "I've added the expanded source list to StreamPlayer and skipped duplicates." One sentence.
-
-Need maybe use `<dyad-write path="src/components/StreamPlayer.tsx" description="Updating StreamPlayer with expanded embed source tiers and manual magnet playback.">` full code.
-
-Let's draft code. Need maybe include `const lowerGenre = movie.genre?.toLowerCase() || ''; const isTv = lowerGenre.includes('tv') || lowerGenre.includes('series');` good.
-Need maybe `const effectiveStreamUrl = manualMagnetUrl || movie.streamUrl;` if `movie.streamUrl` empty and manual empty => undefined. Good.
-Need maybe `const hasStreamUrl = Boolean(effectiveStreamUrl);`
-Need maybe `const isMagnet = Boolean(effectiveStreamUrl?.startsWith('magnet:') || effectiveStreamUrl?.endsWith('.torrent'));`
-Need maybe reset effect:
-useEffect(() => {
-const nextDefault = hasStreamUrl && !isMagnet ? 'direct' : isImdb ? 'vidsrc_xyz' : 'vidlink';
-setEmbedServer(nextDefault);
-setWtStatus('initializing');
-setWtPeers(0);
-setWtSpeed('');
-setWtProgress(0);
-setWtErrorMsg('');
-setWtCountdown(0);
-}, [effectiveStreamUrl, isImdb, isMagnet]);
-But this effect runs after initial render and sets embedServer to same. It also runs if manualMagnetUrl changes. Good.
-Potential issue: If user clicks a server, `effectiveStreamUrl` unchanged. no reset. Good.
-Potential issue: If user clicks direct button when effectiveStreamUrl exists, set direct. Good.
-Potential issue: If no streamUrl and user somehow clicks direct? Button not present. Good.
-Potential issue: If user clicks Direct/P2P with movie.streamUrl but `embedServer` default maybe direct. Good.
-Potential issue: If user clicks "Play" manual magnet, `manualMagnetUrl` set, effect runs, sets embedServer direct, isMagnet true. Good.
-Potential issue: If manual magnet entered and movie.streamUrl exists, effectiveStreamUrl uses manual. Good.
-Potential issue: If user clicks server after manual magnet, `effectiveStreamUrl` manual but embed server server. Good.
-Potential issue: If user clicks Direct/P2P after using server, direct. Good.
-Potential issue: If user clicks Direct/P2P with non-magnet direct stream, video. Good.
-Potential issue: If user clicks Direct/P2P with magnet, WebTorrent. Good.
-
-Need maybe "Manual magnet input" should set key and maybe clear errors. handleMagnetPlay:
-if (!magnetInput.trim()) return;
-setManualMagnetUrl(magnetInput.trim());
-setEmbedServer('direct');
-setKey(prev => prev + 1);
-Maybe setWtStatus('initializing'). Good.
-Need maybe "If direct stream no magnet, no need key"? okay.
-
-Need maybe "Auto-fallback after 12s with 0 peers" The code currently always fallback after 12s even if peers > 0 but not ready. It says with 0 peers, but code doesn't check. Could improve: in timeout:
-if (wtPeers === 0) setEmbedServer(...); else maybe keep. But state closure wtPeers at effect start 0, stale. Could use ref. Simpler: fallback after 12s regardless. UI says Auto-switch. Fine. User code same.
-
-Need maybe "Clear interval when prev <=1 but interval may continue? It returns 0 every second and clears, but after first clear, no more calls. Good.
-Need maybe "When setting embedServer to cloud in timeout, cleanup will run because dependency changes. It will clear timeout and destroy client. Good.
-Need maybe "When setEmbedServer('vidsrc_xyz') from timeout, `wtCountdownRef.current` clear. Good.
-
-Need maybe "If client.add callback gets file and renderTo, but no `torrent.on('download')` before metadata? okay.
-Need maybe "If torrent has no video file, status error but client not destroyed. Could leave. Fine.
-Need maybe "If renderTo error, client not destroyed. Fine.
-
-Need maybe "Server source count" in tips says 50. There are 51? Let's count direct + 52? But user says 50. We can say "Expanded source list". To avoid false, maybe "Multiple streaming sources available." But user asked 50. Maybe keep "50+"? Hmm. Better "Expanded streaming sources available." We'll update tips to not claim exactly 50 maybe. But user requested "add these new sources". Fine.
-
-Need maybe "ALL 50 EMBED SOURCES — verified..." comment could be false. We can remove "verified from..." and just say "Expanded source list." Good.
-
-Need maybe "BlackHatWorld" not mention.
-
-Need maybe "ALL 50" count? Could say "Expanded source list". Good.
-
-Need maybe "Skip duplicates" not in code.
-
-Let's write.
-</think>I’ll update the Stremio stream player with the expanded source list, skipping anything that was already present.
-
-<dyad-write path="src/components/StreamPlayer.tsx" description="Updating StreamPlayer with expanded Stremio-compatible source tiers and manual magnet playback.">
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -235,7 +5,6 @@ import { Movie } from '@/context/MusicContext';
 import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, Star, AlertCircle, Users, Download, Activity, Zap, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 
 interface StreamPlayerProps {
@@ -318,7 +87,6 @@ const ALL_SERVERS: ServerDef[] = [
   { id: 'vidsrc_vip', label: 'VidSrc.vip', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Download support' },
   { id: 'vidsrc_me', label: 'VidSrc.me', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'vidsrc_to', label: 'VidSrc.to', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-
   { id: 'autoembed', label: 'AutoEmbed.cc', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Anime + drama' },
   { id: 'autoembed_co', label: 'AutoEmbed.co', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'multiembed', label: 'MultiEmbed.mov', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: '10+ servers' },
@@ -333,7 +101,6 @@ const ALL_SERVERS: ServerDef[] = [
   { id: 'vidsrc_sbs', label: 'VidSrc.sbs', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: '2embed', label: '2Embed.cc', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'embedmaster', label: 'EmbedMaster', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-
   { id: 'vidzee', label: 'VidZee.wtf', tier: 3, quality: '4K', supportsImdb: false, supportsTmdb: true, supportsTv: false, note: '4K embed' },
   { id: 'filmku', label: 'Filmku.stream', tier: 3, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'Anime support' },
   { id: 'vidora', label: 'Vidora.su', tier: 3, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'Ad-free' },
@@ -346,14 +113,12 @@ const ALL_SERVERS: ServerDef[] = [
   { id: 'moviewp', label: 'MovieWP', tier: 3, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'vidsrc_su', label: 'VidSrc.su', tier: 3, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'vidsrcme_ru', label: 'VidSrc-Embed.ru', tier: 3, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-
   { id: 'nxsha', label: 'NXSHA (Tamil)', tier: 4, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: false, note: 'Tamil content' },
   { id: 'dbgdrive', label: 'DatabaseGDrive', tier: 4, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
   { id: 'getsuperembed', label: 'GetSuperEmbed', tier: 4, quality: '1080p', supportsImdb: true, supportsTmdb: false, supportsTv: true },
   { id: 'vidsrc_icu', label: 'VidSrc.icu', tier: 4, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'vidcloud', label: 'VidCloud', tier: 4, quality: '1080p', supportsImdb: true, supportsTmdb: false, supportsTv: false },
   { id: 'smashystream', label: 'SmashyStream', tier: 4, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
-
   { id: 'rive_torrent_tv', label: 'Rive Torrent TV', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
   { id: 'ezvidapi', label: 'EzVidAPI', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'Auto-failover' },
   { id: 'vidsync', label: 'VidSync', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
@@ -393,7 +158,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [magnetInput, setMagnetInput] = useState('');
 
   const [wtLoaded, setWtLoaded] = useState(false);
-  const [wtProgress, setWtLoadedProgress] = useState(0);
+  const [wtProgress, setWtProgress] = useState(0);
   const [wtPeers, setWtPeers] = useState(0);
   const [wtSpeed, setWtSpeed] = useState('');
   const [wtStatus, setWtStatus] = useState<'initializing' | 'connecting' | 'metadata' | 'ready' | 'error'>('initializing');
@@ -525,7 +290,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         });
 
         torrent.on('download', () => {
-          setWtLoadedProgress(Math.round(torrent.progress * 100));
+          setWtProgress(Math.round(torrent.progress * 100));
           setWtPeers(torrent.numPeers);
           setWtSpeed(`${(torrent.downloadSpeed / (1024 * 1024)).toFixed(2)} MB/s`);
         });
@@ -906,8 +671,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               {hasStreamUrl && (
                 <button
                   onClick={() => setEmbedServer('direct')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === 'direct' ? 'bg-green-600 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}
-                >
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === 'direct' ? 'bg-green-600 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}>
                   Direct / P2P
                 </button>
               )}
@@ -915,8 +679,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                 <button
                   key={srv.id}
                   onClick={() => setEmbedServer(srv.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? `${TIER_COLORS[1]} shadow-lg` : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}
-                >
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? `${TIER_COLORS[1]} shadow-lg` : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}>
                   {srv.label}
                 </button>
               ))}
@@ -930,8 +693,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                 <button
                   key={srv.id}
                   onClick={() => setEmbedServer(srv.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? `${TIER_COLORS[2]} shadow-lg` : 'bg-white/5 text-white/60 hover:bg-white/10 border border-indigo-500/10'}`}
-                >
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? `${TIER_COLORS[2]} shadow-lg` : 'bg-white/5 text-white/60 hover:bg-white/10 border border-indigo-500/10'}`}>
                   {srv.label}
                 </button>
               ))}
@@ -953,8 +715,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   <button
                     key={srv.id}
                     onClick={() => setEmbedServer(srv.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? 'bg-zinc-600 text-white shadow-lg' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}
-                  >
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? 'bg-zinc-600 text-white shadow-lg' : 'bg-white/5 text-white/50 hover:bg-white/10'}`}>
                     {srv.label}
                     {srv.note && <span className="ml-1 text-[8px] opacity-60">({srv.note})</span>}
                   </button>
@@ -993,3 +754,5 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     </div>
   );
 };
+
+export default StreamPlayer;
