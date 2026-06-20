@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, ChevronDown, AlertCircle } from 'lucide-react';
+import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, ChevronDown, AlertCircle, Loader2, Users, Download, Activity, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 interface StreamPlayerProps {
   movie: Movie;
@@ -27,15 +28,146 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const isImdb = movie.id.startsWith('tt');
   const isTv = movie.genre?.toLowerCase().includes('tv') || movie.genre?.toLowerCase().includes('series');
   const hasDirectStream = !!movie.streamUrl;
+  const isMagnet = movie.streamUrl?.startsWith('magnet:') || movie.streamUrl?.endsWith('.torrent');
   
-  // Default to direct stream if available, otherwise fallback to vidsrc_xyz or filmu
+  // Default to direct stream if available, otherwise fallback to vidsrc_xyz
   const [embedServer, setEmbedServer] = useState<EmbedServerType>(
     hasDirectStream ? 'direct' : (isImdb ? 'vidsrc_xyz' : 'filmu')
   );
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
+  
+  // WebTorrent specific states
+  const [wtLoaded, setWtLoaded] = useState(false);
+  const [wtProgress, setWtLoadedProgress] = useState(0);
+  const [wtPeers, setWtPeers] = useState(0);
+  const [wtSpeed, setWtSpeed] = useState('');
+  const [wtStatus, setWtStatus] = useState<'initializing' | 'connecting' | 'metadata' | 'ready' | 'error'>('initializing');
+  const [wtErrorMsg, setWtErrorMsg] = useState('');
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const wtClientRef = useRef<any>(null);
+
+  // Dynamic WebTorrent Script Loader
+  useEffect(() => {
+    if (isMagnet && embedServer === 'direct') {
+      if ((window as any).WebTorrent) {
+        setWtLoaded(true);
+        return;
+      }
+
+      setWtStatus('initializing');
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js';
+      script.async = true;
+      script.onload = () => {
+        setWtLoaded(true);
+      };
+      script.onerror = () => {
+        setWtStatus('error');
+        setWtErrorMsg('Failed to load WebTorrent streaming engine library.');
+      };
+      document.body.appendChild(script);
+
+      return () => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      };
+    }
+  }, [isMagnet, embedServer]);
+
+  // WebTorrent Client & Peer Stream Setup
+  useEffect(() => {
+    if (isMagnet && embedServer === 'direct' && wtLoaded && movie.streamUrl) {
+      setWtStatus('connecting');
+      const WebTorrent = (window as any).WebTorrent;
+      
+      if (!WebTorrent) {
+        setWtStatus('error');
+        setWtErrorMsg('WebTorrent player is not available.');
+        return;
+      }
+
+      // Destroy old client instance if exists
+      if (wtClientRef.current) {
+        try {
+          wtClientRef.current.destroy();
+        } catch (e) {}
+      }
+
+      const client = new WebTorrent();
+      wtClientRef.current = client;
+
+      // Recommended public WebRTC trackers for instant browser-to-browser P2P
+      const trackers = [
+        'wss://tracker.openwebtorrent.com',
+        'wss://tracker.btorrent.xyz',
+        'wss://tracker.files.fm:7073/announce',
+        'wss://tracker.gbitt.info:443/announce',
+        'wss://tracker.fastcast.nz'
+      ];
+
+      setWtStatus('metadata');
+      client.add(movie.streamUrl, { announce: trackers }, (torrent: any) => {
+        // Find largest video file available in torrent package
+        const file = torrent.files.find((f: any) => 
+          f.name.endsWith('.mp4') || 
+          f.name.endsWith('.mkv') || 
+          f.name.endsWith('.webm') || 
+          f.name.endsWith('.avi')
+        );
+
+        if (!file) {
+          setWtStatus('error');
+          setWtErrorMsg('No streamable HTML5 video files found in torrent.');
+          return;
+        }
+
+        setWtStatus('ready');
+
+        // Render file streams straight to native HTML5 <video> tag
+        file.renderTo('#webtorrent-video', {
+          autoplay: true,
+          controls: true
+        }, (err: any, elem: any) => {
+          if (err) {
+            console.error("WebTorrent render error:", err);
+            setWtStatus('error');
+            setWtErrorMsg('Render error: This audio/video codec may not be natively supported by your browser.');
+          }
+        });
+
+        // Set up real-time performance & speed listener
+        torrent.on('download', () => {
+          setWtLoadedProgress(Math.round(torrent.progress * 100));
+          setWtPeers(torrent.numPeers);
+          // Format speeds beautifully
+          const speedInMB = (torrent.downloadSpeed / (1024 * 1024)).toFixed(2);
+          setWtSpeed(`${speedInMB} MB/s`);
+        });
+
+        torrent.on('wire', () => {
+          setWtPeers(torrent.numPeers);
+        });
+      });
+
+      client.on('error', (err: any) => {
+        console.error("WebTorrent error:", err);
+        setWtStatus('error');
+        setWtErrorMsg(err.message || 'P2P Connection failed.');
+      });
+
+      return () => {
+        if (client) {
+          try {
+            client.destroy();
+          } catch (e) {}
+        }
+      };
+    }
+  }, [isMagnet, embedServer, wtLoaded, movie.streamUrl, key]);
 
   const getEmbedUrl = () => {
     const id = movie.id;
@@ -85,7 +217,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   };
 
   const servers: { id: EmbedServerType; label: string; priority?: boolean; supportsImdb?: boolean; supportsTv?: boolean }[] = [
-    ...(hasDirectStream ? [{ id: 'direct' as EmbedServerType, label: 'Direct Stream (Ad-Free)', priority: true, supportsImdb: true, supportsTv: true }] : []),
+    ...(hasDirectStream ? [{ id: 'direct' as EmbedServerType, label: 'Direct Stream / Torrent (P2P)', priority: true, supportsImdb: true, supportsTv: true }] : []),
     { id: 'vidsrc_xyz', label: 'VidSrc.xyz (Highly Recommended)', priority: true, supportsImdb: true, supportsTv: true },
     { id: 'embed_su', label: 'Embed.su (Fast & Stable)', priority: true, supportsImdb: true, supportsTv: true },
     { id: 'vidsrc', label: 'VidSrc.to', supportsImdb: true, supportsTv: true },
@@ -108,7 +240,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   };
 
-  // Filter servers based on whether they support the current ID type and TV/Movie format
   const activeServers = servers.filter(srv => {
     const imdbMatch = !isImdb || srv.supportsImdb;
     const tvMatch = !isTv || srv.supportsTv;
@@ -158,20 +289,79 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         {/* Player Container */}
         <div className="relative aspect-video w-full bg-zinc-950 flex items-center justify-center">
           {embedServer === 'direct' && movie.streamUrl ? (
-            movie.streamUrl.startsWith('magnet:') ? (
-              <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-                <AlertCircle className="text-indigo-400 w-12 h-12 animate-bounce" />
-                <h3 className="font-black text-lg">Magnet Link Detected</h3>
-                <p className="text-xs text-zinc-400 max-w-md leading-relaxed">
-                  This stream is a direct P2P torrent magnet link. Standard browsers cannot play magnet links natively. Please click the button below to open it in your local torrent client (like uTorrent, qBittorrent, or Stremio).
-                </p>
-                <Button 
-                  onClick={() => window.open(movie.streamUrl, '_self')}
-                  className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs gap-2"
-                >
-                  <Play size={14} fill="currentColor" />
-                  Open in Torrent Client
-                </Button>
+            isMagnet ? (
+              /* Native WebTorrent Stream Loader View */
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 text-white p-6 text-center">
+                {wtStatus === 'ready' ? (
+                  <video 
+                    id="webtorrent-video"
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay
+                  />
+                ) : (
+                  <div className="max-w-md w-full space-y-6 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-xl animate-in fade-in duration-500">
+                    <div className="flex justify-center">
+                      {wtStatus === 'error' ? (
+                        <AlertCircle className="text-red-500 w-12 h-12" />
+                      ) : (
+                        <Loader2 className="animate-spin text-indigo-500 w-12 h-12" />
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h3 className="font-black text-lg tracking-tight uppercase">
+                        {wtStatus === 'initializing' && 'Booting Torrent Client...'}
+                        {wtStatus === 'connecting' && 'Connecting to WebRTC trackers...'}
+                        {wtStatus === 'metadata' && 'Fetching Torrent Metadata...'}
+                        {wtStatus === 'error' && 'Playback failed'}
+                      </h3>
+                      <p className="text-xs text-zinc-400 font-semibold leading-relaxed">
+                        {wtStatus === 'initializing' && 'Initializing local sandbox torrent client...'}
+                        {wtStatus === 'connecting' && 'Locating active browser seeds and WebRTC signal brokers...'}
+                        {wtStatus === 'metadata' && 'Reading files and file structures in peer network...'}
+                        {wtStatus === 'error' && (wtErrorMsg || 'Unable to connect to peers.')}
+                      </p>
+                    </div>
+
+                    {wtStatus !== 'error' && (
+                      <div className="space-y-4">
+                        <Progress value={wtStatus === 'metadata' ? 35 : wtStatus === 'connecting' ? 15 : 5} className="h-1.5 bg-white/5" />
+                        
+                        <div className="flex items-center justify-around text-[10px] font-bold text-zinc-500">
+                          <div className="flex items-center gap-1"><Users size={12} /> {wtPeers} PEERS</div>
+                          <div className="flex items-center gap-1"><Activity size={12} /> {wtSpeed || '0.00 MB/s'}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {wtStatus === 'error' && (
+                      <div className="flex flex-col gap-2 pt-2">
+                        <Button 
+                          onClick={refreshPlayer}
+                          className="rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 font-bold text-xs"
+                        >
+                          Retry Streaming
+                        </Button>
+                        <Button 
+                          onClick={() => window.open(movie.streamUrl, '_self')}
+                          className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs gap-2"
+                        >
+                          Open in Local Client
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Floating peer stats bar during live streaming */}
+                {wtStatus === 'ready' && (
+                  <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/15 flex items-center gap-4 text-[10px] font-bold text-zinc-400 z-10 pointer-events-none animate-in fade-in duration-500">
+                    <div className="flex items-center gap-1 text-green-400"><Users size={12} /> {wtPeers} PEERS</div>
+                    <div className="flex items-center gap-1 text-indigo-400"><Download size={12} /> {wtSpeed}</div>
+                    <div className="flex items-center gap-1 text-yellow-500"><Zap size={12} /> {wtProgress}%</div>
+                  </div>
+                )}
               </div>
             ) : (
               <video 
