@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, ChevronDown, AlertCircle, Loader2, Users, Download, Activity, Zap } from 'lucide-react';
+import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, ChevronDown, AlertCircle, Loader2, Users, Download, Activity, Zap, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
@@ -100,13 +100,17 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       const client = new WebTorrent();
       wtClientRef.current = client;
 
-      // Recommended public WebRTC trackers for instant browser-to-browser P2P
+      // Premium WebRTC & Public BitTorrent trackers for maximum peer connectivity
       const trackers = [
         'wss://tracker.openwebtorrent.com',
         'wss://tracker.btorrent.xyz',
         'wss://tracker.files.fm:7073/announce',
         'wss://tracker.gbitt.info:443/announce',
-        'wss://tracker.fastcast.nz'
+        'wss://tracker.fastcast.nz',
+        'udp://tracker.coppersurfer.tk:6969/announce',
+        'udp://tracker.openbittorrent.com:80/announce',
+        'udp://tracker.opentrackr.org:1337/announce',
+        'udp://movies.coppersurfer.tk:6969/announce'
       ];
 
       setWtStatus('metadata');
@@ -291,7 +295,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           {embedServer === 'direct' && movie.streamUrl ? (
             isMagnet ? (
               /* Native WebTorrent Stream Loader View */
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 text-white p-6 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 text-white p-4 md:p-6 text-center overflow-y-auto">
                 {wtStatus === 'ready' ? (
                   <video 
                     id="webtorrent-video"
@@ -300,25 +304,25 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     autoPlay
                   />
                 ) : (
-                  <div className="max-w-md w-full space-y-6 p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-xl animate-in fade-in duration-500">
+                  <div className="max-w-lg w-full space-y-5 p-5 md:p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-xl animate-in fade-in duration-500">
                     <div className="flex justify-center">
                       {wtStatus === 'error' ? (
-                        <AlertCircle className="text-red-500 w-12 h-12" />
+                        <AlertCircle className="text-red-500 w-10 h-10" />
                       ) : (
-                        <Loader2 className="animate-spin text-indigo-500 w-12 h-12" />
+                        <Loader2 className="animate-spin text-indigo-500 w-10 h-10" />
                       )}
                     </div>
 
-                    <div className="space-y-1.5">
-                      <h3 className="font-black text-lg tracking-tight uppercase">
+                    <div className="space-y-1">
+                      <h3 className="font-black text-base tracking-tight uppercase flex items-center justify-center gap-2">
                         {wtStatus === 'initializing' && 'Booting Torrent Client...'}
                         {wtStatus === 'connecting' && 'Connecting to WebRTC trackers...'}
                         {wtStatus === 'metadata' && 'Fetching Torrent Metadata...'}
                         {wtStatus === 'error' && 'Playback failed'}
                       </h3>
-                      <p className="text-xs text-zinc-400 font-semibold leading-relaxed">
+                      <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed max-w-sm mx-auto">
                         {wtStatus === 'initializing' && 'Initializing local sandbox torrent client...'}
-                        {wtStatus === 'connecting' && 'Locating active browser seeds and WebRTC signal brokers...'}
+                        {wtStatus === 'connecting' && 'Connecting to active browser-to-browser WebRTC seeds...'}
                         {wtStatus === 'metadata' && 'Reading files and file structures in peer network...'}
                         {wtStatus === 'error' && (wtErrorMsg || 'Unable to connect to peers.')}
                       </p>
@@ -328,9 +332,45 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                       <div className="space-y-4">
                         <Progress value={wtStatus === 'metadata' ? 35 : wtStatus === 'connecting' ? 15 : 5} className="h-1.5 bg-white/5" />
                         
-                        <div className="flex items-center justify-around text-[10px] font-bold text-zinc-500">
-                          <div className="flex items-center gap-1"><Users size={12} /> {wtPeers} PEERS</div>
-                          <div className="flex items-center gap-1"><Activity size={12} /> {wtSpeed || '0.00 MB/s'}</div>
+                        <div className="flex items-center justify-around text-[10px] font-bold text-zinc-400">
+                          <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg">
+                            <Users size={12} className="text-indigo-400 animate-pulse" />
+                            <span>{wtPeers} WebRTC Seeds</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg">
+                            <Activity size={12} className="text-indigo-400" />
+                            <span>{wtSpeed || '0.00 MB/s'}</span>
+                          </div>
+                        </div>
+
+                        {/* HIGHLY INTERACTIVE EXPLANATORY EXPLAINER NOTICE + INSTANT HTTP BYPASSES */}
+                        <div className="p-3.5 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl text-[10px] text-zinc-400 leading-relaxed text-left space-y-3">
+                          <p className="flex items-start gap-1.5">
+                            <HelpCircle size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+                            <span>
+                              <strong>Why is it taking too long?</strong> Web browsers can *only* stream torrents seeded by other WebRTC browser peers. Standard desktop torrent clients (TCP/UDP) do not connect natively to web browsers, resulting in <strong>0 WebRTC seeds</strong>.
+                            </span>
+                          </p>
+                          
+                          <div className="pt-2 border-t border-white/5 space-y-2">
+                            <p className="font-bold text-zinc-300 text-center">👇 Don't wait! Play instantly using cloud servers:</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button 
+                                onClick={() => setEmbedServer('vidsrc_xyz')}
+                                className="rounded-xl bg-purple-600 hover:bg-purple-700 font-bold text-[10px] h-9 gap-1 shadow-lg shadow-purple-600/20 text-white"
+                              >
+                                <Play size={10} fill="currentColor" />
+                                Play via VidSrc.xyz
+                              </Button>
+                              <Button 
+                                onClick={() => setEmbedServer('embed_su')}
+                                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-[10px] h-9 gap-1 shadow-lg shadow-indigo-600/20 text-white"
+                              >
+                                <Play size={10} fill="currentColor" />
+                                Play via Embed.su
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -341,14 +381,22 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                           onClick={refreshPlayer}
                           className="rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 font-bold text-xs"
                         >
-                          Retry Streaming
+                          Retry Torrent Loading
                         </Button>
-                        <Button 
-                          onClick={() => window.open(movie.streamUrl, '_self')}
-                          className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs gap-2"
-                        >
-                          Open in Local Client
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button 
+                            onClick={() => setEmbedServer('vidsrc_xyz')}
+                            className="rounded-xl bg-purple-600 hover:bg-purple-700 font-bold text-xs text-white"
+                          >
+                            Use VidSrc Server
+                          </Button>
+                          <Button 
+                            onClick={() => window.open(movie.streamUrl, '_self')}
+                            className="rounded-xl bg-zinc-800 hover:bg-zinc-700 font-bold text-xs"
+                          >
+                            Open in Torrent App
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
