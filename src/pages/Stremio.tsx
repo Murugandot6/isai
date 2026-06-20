@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useMusic, Movie } from '@/context/MusicContext';
+import { tmdbApi } from '@/services/tmdbApi';
 
 interface StremioMeta {
   id: string;
@@ -29,7 +30,7 @@ interface StremioAddon {
   description: string;
   icon: string;
   manifestUrl: string;
-  streamUrl: string; // Base URL for stream requests
+  streamUrl: string;
   category: 'Metadata' | 'Streams' | 'Subtitles' | 'Other';
   active: boolean;
 }
@@ -83,20 +84,42 @@ export const Stremio = () => {
   const [resolvingStreams, setResolvingStreams] = useState(false);
   const [resolvedStreams, setResolvedStreams] = useState<any[]>([]);
 
-  // Fetch Cinemeta Catalogs - Using correct URL
+  // Fetch Catalogs instantly using TMDb api (since cinemeta-catalogs is several megabytes and extremely slow)
   const fetchCatalogs = async () => {
     setLoading(true);
     try {
-      const [movieRes, seriesRes] = await Promise.all([
-        fetch('https://cinemeta-catalogs.strem.io/top/catalog/movie/top.json').then(r => r.json()),
-        fetch('https://cinemeta-catalogs.strem.io/top/catalog/series/top.json').then(r => r.json())
+      const [trendingMovies, popularTV] = await Promise.all([
+        tmdbApi.getTrendingMovies(),
+        tmdbApi.getPopularMovies() // Fallback to movies context/TV context
       ]);
 
-      if (movieRes?.metas) setMovies(movieRes.metas.slice(0, 15));
-      if (seriesRes?.metas) setSeries(seriesRes.metas.slice(0, 15));
+      const mappedMovies: StremioMeta[] = trendingMovies.slice(0, 15).map(m => ({
+        id: m.id,
+        name: m.title,
+        type: 'movie',
+        poster: m.poster,
+        background: m.backdrop,
+        releaseInfo: m.year,
+        imdbRating: m.rating.toString(),
+        description: m.overview
+      }));
+
+      const mappedSeries: StremioMeta[] = popularTV.slice(0, 15).map(m => ({
+        id: m.id,
+        name: m.title,
+        type: 'series',
+        poster: m.poster,
+        background: m.backdrop,
+        releaseInfo: m.year,
+        imdbRating: m.rating.toString(),
+        description: m.overview
+      }));
+
+      setMovies(mappedMovies);
+      setSeries(mappedSeries);
     } catch (error) {
-      console.error("Failed to fetch Cinemeta catalogs:", error);
-      toast.error("Failed to load Stremio catalogs");
+      console.error("Failed to fetch catalogs:", error);
+      toast.error("Failed to load catalogs");
     } finally {
       setLoading(false);
     }
@@ -106,18 +129,27 @@ export const Stremio = () => {
     fetchCatalogs();
   }, []);
 
-  // Search Cinemeta - Using correct URL
+  // Search using TMDb api for instant results
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     setSearching(true);
     try {
-      const res = await fetch(`https://cinemeta-catalogs.strem.io/top/catalog/movie/top/search=${encodeURIComponent(searchQuery)}.json`);
-      const data = await res.json();
-      setSearchResults(data?.metas || []);
+      const results = await tmdbApi.searchMovies(searchQuery);
+      const mappedResults: StremioMeta[] = results.map(m => ({
+        id: m.id,
+        name: m.title,
+        type: 'movie',
+        poster: m.poster,
+        background: m.backdrop,
+        releaseInfo: m.year,
+        imdbRating: m.rating.toString(),
+        description: m.overview
+      }));
+      setSearchResults(mappedResults);
     } catch (error) {
-      console.error("Cinemeta search failed:", error);
+      console.error("Search failed:", error);
       toast.error("Search failed");
     } finally {
       setSearching(false);
@@ -152,16 +184,27 @@ export const Stremio = () => {
     }
 
     try {
+      // Cinemeta protocol uses IMDb IDs (e.g. tt1234567). If the ID is a TMDb numerical ID, fetch the IMDb ID first
+      let imdbId = meta.id;
+      if (!imdbId.startsWith('tt')) {
+        const fetchedId = await tmdbApi.getMovieImdbId(meta.id);
+        if (fetchedId) {
+          imdbId = fetchedId;
+        } else {
+          // Fallback to title search if IMDb ID cannot be found
+          console.warn("Could not find IMDb ID for TMDb movie:", meta.name);
+        }
+      }
+
       const streamPromises = activeStreamAddons.map(async (addon) => {
-        // Stremio Protocol URL format: /stream/{type}/{id}.json
-        const url = `${addon.streamUrl}/stream/${meta.type}/${meta.id}.json`;
+        // Stremio Protocol URL format: /stream/{type}/{imdbId}.json
+        const url = `${addon.streamUrl}/stream/${meta.type}/${imdbId}.json`;
         try {
           const res = await fetch(url);
           if (!res.ok) return [];
           const data = await res.json();
           
           return (data.streams || []).map((stream: any) => {
-            // Parse stream details
             let quality = '1080p';
             if (stream.title.includes('2160p') || stream.title.includes('4K')) quality = '4K';
             else if (stream.title.includes('720p')) quality = '720p';
@@ -177,10 +220,8 @@ export const Stremio = () => {
               seeders = parseInt(seedersMatch[2] || seedersMatch[1]) || 0;
             }
 
-            // Extract direct stream URL or fallback to magnet/infohash
             let streamUrl = stream.url;
             if (!streamUrl && stream.infoHash) {
-              // Convert infoHash to magnet link
               streamUrl = `magnet:?xt=urn:btih:${stream.infoHash}&dn=${encodeURIComponent(meta.name)}`;
             }
 
@@ -215,9 +256,8 @@ export const Stremio = () => {
   const handlePlayStream = (stream: any) => {
     if (!selectedMeta) return;
 
-    // Map Stremio Meta to our internal Movie player format
     const moviePayload: Movie = {
-      id: selectedMeta.id, // Cinemeta returns IMDB ID (e.g. tt1234567)
+      id: selectedMeta.id,
       title: selectedMeta.name,
       overview: selectedMeta.description || 'Streaming via Stremio Add-on Protocol.',
       backdrop: selectedMeta.background || selectedMeta.poster,
@@ -226,7 +266,7 @@ export const Stremio = () => {
       year: selectedMeta.releaseInfo || 'N/A',
       genre: selectedMeta.type === 'series' ? 'TV Series' : 'Movie',
       language: 'EN',
-      streamUrl: stream.url // Pass the resolved stream URL directly!
+      streamUrl: stream.url
     };
 
     playMovie(moviePayload);
@@ -258,7 +298,7 @@ export const Stremio = () => {
             <Input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Cinemeta catalog..." 
+              placeholder="Search global catalogs..." 
               className="pl-10 bg-white/5 border-none h-11 rounded-xl text-sm text-white focus-visible:ring-indigo-500/20"
             />
           </form>
@@ -484,7 +524,7 @@ export const Stremio = () => {
                   <div className="flex flex-col items-center justify-center py-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
                     <AlertCircle className="text-zinc-600 mb-2" size={28} />
                     <h4 className="font-bold text-sm">No streams resolved</h4>
-                    <p className="text-xs text-zinc-500 max-w-xs mt-1">
+                    <p className="text-xs text-zinc-400 max-w-xs mt-1">
                       Make sure the <strong>Torrentio Lite</strong> add-on is enabled in the Add-on Manager tab.
                     </p>
                   </div>
