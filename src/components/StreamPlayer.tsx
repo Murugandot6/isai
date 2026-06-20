@@ -12,6 +12,8 @@ interface StreamPlayerProps {
 
 type EmbedServerType = 
   | 'vidsrc'
+  | 'vidsrc_xyz'
+  | 'embed_su'
   | 'vidsrc_me'
   | 'vidsrc_pro'
   | 'twoembed' 
@@ -24,7 +26,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const isImdb = movie.id.startsWith('tt');
   const isTv = movie.genre?.toLowerCase().includes('tv') || movie.genre?.toLowerCase().includes('series');
   
-  const [embedServer, setEmbedServer] = useState<EmbedServerType>(isImdb ? 'vidsrc' : 'filmu');
+  // Default to vidsrc_xyz or vidsrc for IMDb IDs
+  const [embedServer, setEmbedServer] = useState<EmbedServerType>(isImdb ? 'vidsrc_xyz' : 'filmu');
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
@@ -32,6 +35,14 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const getEmbedUrl = () => {
     const id = movie.id;
     switch (embedServer) {
+      case 'vidsrc_xyz':
+        return isTv
+          ? `https://vidsrc.xyz/embed/tv/${id}/${season}/${episode}`
+          : `https://vidsrc.xyz/embed/movie/${id}`;
+      case 'embed_su':
+        return isTv
+          ? `https://embed.su/embed/tv/${id}/${season}/${episode}`
+          : `https://embed.su/embed/movie/${id}`;
       case 'vidsrc':
         return isTv 
           ? `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`
@@ -64,14 +75,16 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'nxsha':
         return `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
       default:
-        return `https://vidsrc.to/embed/movie/${id}`;
+        return `https://vidsrc.xyz/embed/movie/${id}`;
     }
   };
 
   const servers: { id: EmbedServerType; label: string; priority?: boolean; supportsImdb?: boolean; supportsTv?: boolean }[] = [
-    { id: 'vidsrc', label: 'VidSrc.to (Best for Stremio)', priority: true, supportsImdb: true, supportsTv: true },
-    { id: 'vidsrc_me', label: 'VidSrc.me (Highly Stable)', priority: true, supportsImdb: true, supportsTv: true },
-    { id: 'vidsrc_pro', label: 'VidSrc.pro', priority: true, supportsImdb: true, supportsTv: true },
+    { id: 'vidsrc_xyz', label: 'VidSrc.xyz (Highly Recommended)', priority: true, supportsImdb: true, supportsTv: true },
+    { id: 'embed_su', label: 'Embed.su (Fast & Stable)', priority: true, supportsImdb: true, supportsTv: true },
+    { id: 'vidsrc', label: 'VidSrc.to', supportsImdb: true, supportsTv: true },
+    { id: 'vidsrc_me', label: 'VidSrc.me', supportsImdb: true, supportsTv: true },
+    { id: 'vidsrc_pro', label: 'VidSrc.pro', supportsImdb: true, supportsTv: true },
     { id: 'twoembed', label: '2Embed', supportsImdb: true, supportsTv: true },
     { id: 'autoembed', label: 'AutoEmbed', supportsImdb: true, supportsTv: true },
     { id: 'filmu', label: 'Filmu (Premium TMDb)', supportsImdb: false, supportsTv: false },
@@ -132,7 +145,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       )}
 
       <div className="flex-1 flex flex-col bg-black rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-        {/* Iframe Container with Sandbox to block malicious redirects/popups */}
+        {/* Iframe Container - Removed restrictive sandbox attribute to allow video players to load correctly */}
         <div className="relative aspect-video w-full bg-zinc-950 flex items-center justify-center">
           <iframe 
             key={`${embedServer}-${movie.id}-${season}-${episode}-${key}`}
@@ -140,8 +153,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             className="w-full h-full border-none"
             allowFullScreen
             scrolling="no"
-            sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
-            allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
+            referrerPolicy="origin"
+            allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
           />
         </div>
 
@@ -199,7 +212,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
           <Info size={16} className="text-purple-400 shrink-0 mt-0.5" />
           <p>
-            Stremio content uses IMDb IDs. We have automatically selected <strong>VidSrc.to</strong> as your default server for maximum compatibility.
+            Stremio content uses IMDb IDs. We have automatically selected <strong>VidSrc.xyz</strong> as your default server for maximum compatibility.
           </p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10 text-xs text-purple-200 leading-relaxed">
