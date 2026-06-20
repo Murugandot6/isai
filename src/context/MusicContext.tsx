@@ -106,12 +106,15 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['tamil']);
   
   const [queue, setQueue] = useState<any[]>([]);
+  const [currentIndex, setCurrentIndex] = useState<number>(-1);
   const [currentMovie, setCurrentMovie] = useState<Movie | null>(null);
   const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
   const [recentlyWatched, setRecentlyWatched] = useState<Movie[]>([]);
   const [likedSongs, setLikedSongs] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const channelRef = useRef<any>(null);
