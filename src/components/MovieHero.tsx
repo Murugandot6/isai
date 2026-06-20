@@ -42,7 +42,7 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black select-none">
+    <div className="relative w-full h-screen overflow-hidden bg-black select-none group">
       {/* Immersive Background Image */}
       <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100">
         <img 
