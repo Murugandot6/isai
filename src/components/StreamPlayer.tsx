@@ -15,7 +15,12 @@ type EmbedServerType =
   | 'vidsrc_pro'
   | 'nxsha'
   | 'twoembed' 
-  | 'vidsrc_me';
+  | 'vidsrc_me'
+  | 'autoembed' 
+  | 'xplay' 
+  | 'vidzee_v2'
+  | 'videasy' 
+  | 'vidsync';
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [embedServer, setEmbedServer] = useState<EmbedServerType>('filmu');
@@ -38,7 +43,16 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return `https://www.2embed.cc/embed/${id}`;
       case 'vidsrc_me':
         return `https://vidsrc.me/embed/movie?tmdb=${id}`;
-
+      case 'autoembed':
+        return `https://autoembed.app/embed/movie/${id}`;
+      case 'xplay':
+        return `https://play.xpass.top/e/movie/${id}`;
+      case 'vidzee_v2':
+        return `https://player.vidzee.wtf/v2/embed/movie/${id}`;
+      case 'videasy':
+        return `https://player.videasy.net/movie/${id}`;
+      case 'vidsync':
+        return `https://vidsync.xyz/embed/movie/${id}`;
       default:
         return `https://embed.filmu.in/embed/movie/${id}`;
     }
@@ -52,6 +66,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { id: 'nxsha', label: 'NXSHA (Tamil)', priority: true },
     { id: 'twoembed', label: '2Embed (Reliable)', priority: true },
     { id: 'vidsrc_me', label: 'VidSrc.me' },
+    { id: 'autoembed', label: 'AutoEmbed' },
+    { id: 'xplay', label: 'XPlay Cinema' },
   ];
 
   const refreshPlayer = () => setKey(prev => prev + 1);
@@ -67,7 +83,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             allowFullScreen
             scrolling="no"
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
           />
         </div>
 
@@ -108,13 +123,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         <div className="flex gap-2 p-4 rounded-2xl bg-white/5 border border-white/10 text-xs text-white/60 leading-relaxed">
           <Info size={16} className="text-primary shrink-0 mt-0.5" />
           <p>
-            If a server plays the wrong movie, please switch to <strong>Filmu</strong> or <strong>VidZee</strong> for the most reliable stream.
+            If a server plays the wrong movie, please switch to <strong>Filmu</strong>, <strong>VidZee</strong>, or <strong>VidSrc</strong>.
           </p>
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-primary/5 border border-primary/10 text-xs text-primary-foreground/80 leading-relaxed">
           <Shield size={16} className="text-primary shrink-0 mt-0.5" />
           <p>
-            <strong>Ad Tip:</strong> The sandbox attribute blocks popups/redirects from embed servers. For the smoothest experience, try <strong>Filmu</strong> or <strong>VidZee</strong> first. Using an ad-blocker extension is also recommended.
+            <strong>Connection Tip:</strong> Some servers might require you to click a 'Play' button twice inside the frame. Ad-blockers are recommended for the best experience.
           </p>
         </div>
       </div>
