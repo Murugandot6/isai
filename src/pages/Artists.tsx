@@ -177,7 +177,9 @@ const Artists = () => {
 
       setArtistSongs(prev => pageNum === 0 ? filtered : [...prev, ...filtered]);
       
-      if (results.length < 10) {
+      // Only set hasMore to false if we got fewer results than the limit (50)
+      // Assuming the API returns up to 50 songs per page; if less, we assume no more.
+      if (results.length < 50) {
         setHasMore(false);
       }
     } catch (error) {

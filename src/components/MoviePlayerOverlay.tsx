@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from 'react';
 import { useMusic } from '@/context/MusicContext';
 import { tmdbApi, CastMember } from '@/services/tmdbApi';
@@ -37,7 +35,7 @@ export const MoviePlayerOverlay = () => {
   if (!currentMovie) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/98 z-[60] flex flex-col animate-in fade-in duration-300 overflow-y-auto">
+    <div className="fixed inset-0 bg-black z-[60] flex flex-col animate-in fade-in duration-300 overflow-y-auto">
       {/* Player Header */}
       <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10 gap-4">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
