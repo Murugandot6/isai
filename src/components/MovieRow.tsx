@@ -4,7 +4,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Movie, useMusic } from '@/context/MusicContext';
 import { Play, Star, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
 
 interface MovieRowProps {
   title: string;
@@ -14,7 +13,6 @@ interface MovieRowProps {
 
 export const MovieRow: React.FC<MovieRowProps> = ({ title, movies, onPlay }) => {
   const { toggleLikeMovie, isMovieLiked } = useMusic();
-  const navigate = useNavigate();
   const rowRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -110,10 +108,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({ title, movies, onPlay }) => 
               >
                 <div 
                   className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-zinc-900 border border-white/5 shadow-md shadow-black/40"
-                  onClick={() => {
-                    // Navigate to movie player page instead of triggering overlay
-                    navigate(`/movie/${movie.id}`);
-                  }}
+                  onClick={() => onPlay(movie)}
                 >
                   <img 
                     src={movie.poster || movie.backdrop} 
@@ -137,10 +132,7 @@ export const MovieRow: React.FC<MovieRowProps> = ({ title, movies, onPlay }) => 
                 <div className="px-1 text-left">
                   <div className="flex items-start justify-between gap-1">
                     <h4 
-                      onClick={() => {
-                        // Navigate to movie player page instead of triggering overlay
-                        navigate(`/movie/${movie.id}`);
-                      }}
+                      onClick={() => onPlay(movie)}
                       className="font-bold text-xs text-white/90 truncate flex-1 group-hover:text-purple-400 transition-colors"
                     >
                       {movie.title}
