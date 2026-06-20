@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/MainLayout';
 import { useMusic } from '@/context/MusicContext';
 import { tmdbApi, CastMember } from '@/services/tmdbApi';
 import { StreamPlayer } from '@/components/StreamPlayer';
-import { Tv, X, Users, Layers, User } from 'lucide-react';
+import { Tv, X, Users, Layers, User, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -98,8 +98,9 @@ const MoviePlayer = () => {
             <button 
               onClick={handleBack}
               className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
+              title="Back to Movies"
             >
-              <X className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <Tv className="text-purple-400 shrink-0 w-6 h-6" />
             <div className="min-w-0">
@@ -118,13 +119,7 @@ const MoviePlayer = () => {
                 Sync Room: {roomCode}
               </Badge>
             )}
-
-            <button 
-              onClick={handleBack}
-              className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* Redundant button removed from here */}
           </div>
         </div>
 
