@@ -63,9 +63,7 @@ type EmbedServerType =
   | 'xprime'
   | 'yflix'
   | 'abyss'
-  | 'vidfast_alt'
-  | 'invisiproxy'
-  | 'adblock_imurugan';
+  | 'vidfast_alt';
 
 interface ServerDef {
   id: EmbedServerType;
@@ -80,8 +78,6 @@ interface ServerDef {
 
 const ALL_SERVERS: ServerDef[] = [
   { id: 'vidsrc_xyz', label: 'VidSrc.xyz', tier: 1, quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Most reliable' },
-  { id: 'invisiproxy', label: 'InvisiProxy', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypass geo-restrictions' },
-  { id: 'adblock_imurugan', label: 'Adblock Player', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypasses popups/ads' },
   { id: 'embed_su', label: 'Embed.su', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Fast & stable' },
   { id: 'vidlink', label: 'VidLink.pro', tier: 1, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'TMDb native' },
   { id: 'videasy', label: 'Videasy.net', tier: 1, quality: '4K', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'Ad-free, 4K' },
@@ -355,147 +351,192 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   }, [isMagnet, embedServer, wtLoaded, effectiveStreamUrl, isImdb, key]);
 
+  // Global helper to proxy all HTTP/S source endpoints cleanly using the adblock worker
+  const getProxiedUrl = (rawUrl: string): string => {
+    return `https://adblock.imurugan.workers.dev/?url=${encodeURIComponent(rawUrl)}`;
+  };
+
   const getEmbedUrl = (): string => {
     const id = movie.id;
     const s = season;
     const e = episode;
+    let rawUrl = '';
 
     switch (embedServer) {
       case 'vidsrc_xyz':
-        return isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
-      case 'invisiproxy':
-        const targetUrlInvis = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
-        return `https://invisiproxy.com/partners?url=${encodeURIComponent(targetUrlInvis)}`;
-      case 'adblock_imurugan':
-        const targetUrlAd = isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
-        return `https://adblock.imurugan.workers.dev/?url=${encodeURIComponent(targetUrlAd)}`;
+        rawUrl = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
+        break;
       case 'embed_su':
-        return isTv ? `https://embed.su/embed/tv/${id}/${s}/${e}` : `https://embed.su/embed/movie/${id}`;
+        rawUrl = isTv ? `https://embed.su/embed/tv/${id}/${s}/${e}` : `https://embed.su/embed/movie/${id}`;
+        break;
       case 'vidlink':
-        return isTv ? `https://vidlink.pro/tv/${id}/${s}/${e}` : `https://vidlink.pro/movie/${id}`;
+        rawUrl = isTv ? `https://vidlink.pro/tv/${id}/${s}/${e}` : `https://vidlink.pro/movie/${id}`;
+        break;
       case 'videasy':
-        return isTv ? `https://player.videasy.net/tv/${id}/${s}/${e}` : `https://player.videasy.net/movie/${id}`;
+        rawUrl = isTv ? `https://player.videasy.net/tv/${id}/${s}/${e}` : `https://player.videasy.net/movie/${id}`;
+        break;
       case 'vidfast':
-        return isTv ? `https://vidfast.pro/tv/${id}/${s}/${e}` : `https://vidfast.pro/movie/${id}`;
+        rawUrl = isTv ? `https://vidfast.pro/tv/${id}/${s}/${e}` : `https://player.videasy.net/movie/${id}`;
+        break;
       case 'vidsrc_fyi':
-        return isTv ? `https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` : `https://vidsrc.fyi/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` : `https://vidsrc.fyi/embed/movie/${id}`;
+        break;
       case 'vidsrc_pro':
-        return isTv ? `https://vidsrc.pro/embed/tv/${id}/${s}/${e}` : `https://vidsrc.pro/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vidsrc.pro/embed/tv/${id}/${s}/${e}` : `https://vidsrc.pro/embed/movie/${id}`;
+        break;
       case 'vidsrc_vip':
-        return isTv ? `https://vidsrc.vip/embed/tv/${id}/${s}/${e}` : `https://vidsrc.vip/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vidsrc.vip/embed/tv/${id}/${s}/${e}` : `https://vidsrc.vip/embed/movie/${id}`;
+        break;
       case 'vidsrc_me':
-        return isTv
-          ? isImdb ? `https://vidsrc.me/embed/tv?imdb=${id}&season=${s}&episode=${e}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`
-          : isImdb ? `https://vidsrc.me/embed/movie?imdb=${id}` : `https://vidsrc.me/embed/movie?tmdb=${id}`;
+        rawUrl = isTv
+          ? `https://vidsrc.me/embed/tv?imdb=${id}&season=${s}&episode=${e}`
+          : `https://vidsrc.me/embed/movie?imdb=${id}`;
+        break;
       case 'vidsrc_to':
-        return isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
-
+        rawUrl = isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
+        break;
       case 'autoembed':
-        return isTv ? `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}` : `https://player.autoembed.cc/embed/movie/${id}`;
+        rawUrl = isTv ? `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}` : `https://player.autoembed.cc/embed/movie/${id}`;
+        break;
       case 'autoembed_co':
-        return isTv
-          ? isImdb ? `https://autoembed.co/tv/imdb/${id}-${s}-${e}` : `https://autoembed.co/tv/tmdb/${id}-${s}-${e}`
-          : isImdb ? `https://autoembed.co/movie/imdb/${id}` : `https://autoembed.co/movie/tmdb/${id}`;
+        rawUrl = isTv
+          ? `https://autoembed.co/tv/imdb/${id}-${s}-${e}`
+          : `https://autoembed.co/movie/imdb/${id}`;
+        break;
       case 'multiembed':
-        return isTv
+        rawUrl = isTv
           ? `https://multiembed.mov/?video_id=${id}&tmdb=${isImdb ? 0 : 1}&s=${s}&e=${e}`
           : `https://multiembed.mov/?video_id=${id}&tmdb=${isImdb ? 0 : 1}`;
+        break;
       case 'multiembed_vip':
-        return isTv
+        rawUrl = isTv
           ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=${isImdb ? 0 : 1}&s=${s}&e=${e}`
           : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=${isImdb ? 0 : 1}`;
       case 'superembed':
-        return isTv
+        rawUrl = isTv
           ? `https://multiembed.mov/?video_id=${id}&tmdb=${isImdb ? 0 : 1}&s=${s}&e=${e}`
           : `https://www.superembed.stream/embed?id=${id}&tmdb=${isImdb ? 0 : 1}`;
       case 'rivestream':
-        return isTv ? `https://www.rivestream.app/embed?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed?type=movie&id=${id}`;
+        rawUrl = isTv ? `https://www.rivestream.app/embed?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed?type=movie&id=${id}`;
+        break;
       case 'rivestream_torr':
-        return isTv ? `https://www.rivestream.app/embed/torrent?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed/torrent?type=movie&id=${id}`;
+        rawUrl = isTv ? `https://www.rivestream.app/embed/torrent?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed/torrent?type=movie&id=${id}`;
+        break;
       case 'rivestream_agg':
-        return isTv ? `https://www.rivestream.app/embed/agg?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed/agg?type=movie&id=${id}`;
+        rawUrl = isTv ? `https://www.rivestream.app/embed/agg?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed/agg?type=movie&id=${id}`;
+        break;
       case 'vidking':
-        return isTv ? `https://www.vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true` : `https://www.vidking.net/embed/movie/${id}?autoPlay=true`;
+        rawUrl = isTv ? `https://www.vidking.net/embed/tv/${id}/${s}/${e}?autoPlay=true` : `https://www.vidking.net/embed/movie/${id}?autoPlay=true`;
+        break;
       case 'vidapi':
-        return isTv ? `https://vidapi.xyz/embed/tv/${id}/${s}/${e}` : `https://vidapi.xyz/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vidapi.xyz/embed/tv/${id}/${s}/${e}` : `https://vidapi.xyz/embed/movie/${id}`;
+        break;
       case 'moviesapi':
-        return isTv ? `https://moviesapi.club/tv/${id}-${s}-${e}` : `https://moviesapi.club/movie/${id}`;
+        rawUrl = isTv ? `https://moviesapi.club/tv/${id}-${s}-${e}` : `https://moviesapi.club/movie/${id}`;
+        break;
       case 'vidsrc_sbs':
-        return isTv ? `https://vidsrc.sbs/embed/tv/${id}/${s}/${e}?autoplay=1` : `https://vidsrc.sbs/embed/movie/${id}?autoplay=1`;
+        rawUrl = isTv ? `https://vidsrc.sbs/embed/tv/${id}/${s}/${e}?autoplay=1` : `https://vidsrc.sbs/embed/movie/${id}?autoplay=1`;
+        break;
       case '2embed':
-        return isTv ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` : `https://www.2embed.cc/embed/${id}`;
+        rawUrl = isTv ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` : `https://www.2embed.cc/embed/${id}`;
+        break;
       case 'embedmaster':
-        return isTv
+        rawUrl = isTv
           ? isImdb ? `https://embedmaster.com/embed/series/${id}/${s}/${e}` : `https://embedmaster.com/embed/series/tmdb/${id}/${s}/${e}`
           : isImdb ? `https://embedmaster.com/embed/movie/${id}` : `https://embedmaster.com/embed/movie/tmdb/${id}`;
-
       case 'vidzee':
-        return `https://player.vidzee.wtf/embed/movie/${id}`;
+        rawUrl = `https://player.vidzee.wtf/embed/movie/${id}`;
+        break;
       case 'filmku':
-        return isTv ? `https://filmku.stream/embed/tv?tmdb=${id}&sea=${s}&epi=${e}` : `https://filmku.stream/embed/movie?tmdb=${id}`;
+        rawUrl = isTv ? `https://filmku.stream/embed/tv?tmdb=${id}&sea=${s}&epi=${e}` : `https://filmku.stream/embed/movie?tmdb=${id}`;
+        break;
       case 'vidora':
-        return isTv ? `https://vidora.su/tv/${id}/${s}/${e}` : `https://vidora.su/movie/${id}`;
+        rawUrl = isTv ? `https://vidora.su/tv/${id}/${s}/${e}` : `https://vidora.su/movie/${id}`;
+        break;
       case 'pstream':
-        return isTv ? `https://iframe.pstream.org/embed/tmdb/tv-${id}/${s}/${e}` : `https://iframe.pstream.org/embed/tmdb/movie-${id}`;
+        rawUrl = isTv ? `https://iframe.pstream.org/embed/tmdb/tv-${id}/${s}/${e}` : `https://iframe.pstream.org/embed/tmdb/movie-${id}`;
+        break;
       case 'gomo':
-        return `https://gomo.to/movie/${id}`;
+        rawUrl = `https://gomo.to/movie/${id}`;
+        break;
       case 'vikembed':
-        return isTv ? `https://vembed.click/embed/tv/${id}/${s}/${e}` : `https://vembed.click/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vembed.click/embed/tv/${id}/${s}/${e}` : `https://vembed.click/embed/movie/${id}`;
+        break;
       case 'fsapi':
-        return isTv ? `https://fsapi.xyz/tv-imdb/${id}-${s}-${e}` : `https://fsapi.xyz/movie/${id}`;
+        rawUrl = isTv ? `https://fsapi.xyz/tv-imdb/${id}-${s}-${e}` : `https://fsapi.xyz/movie/${id}`;
+        break;
       case 'curtstream':
-        return isTv ? `https://curtstream.com/series/tmdb/${id}/${s}/${e}` : `https://curtstream.com/movies/imdb/${id}`;
+        rawUrl = isTv ? `https://curtstream.com/series/tmdb/${id}/${s}/${e}` : `https://curtstream.com/movies/imdb/${id}`;
+        break;
       case 'apimdb':
-        return isTv ? `https://v2.apimdb.net/e/tmdb/tv/${id}/${s}/${e}/` : `https://v2.apimdb.net/e/movie/${id}`;
+        rawUrl = isTv ? `https://v2.apimdb.net/e/tmdb/tv/${id}/${s}/${e}/` : `https://v2.apimdb.net/e/movie/${id}`;
+        break;
       case 'moviewp':
-        return isTv ? `https://moviewp.com/se.php?video_id=${id}&tmdb=1&s=${s}&e=${e}` : `https://moviewp.com/se.php?video_id=${id}&tmdb=1`;
+        rawUrl = isTv ? `https://moviewp.com/se.php?video_id=${id}&tmdb=1&s=${s}&e=${e}` : `https://moviewp.com/se.php?video_id=${id}&tmdb=1`;
+        break;
       case 'vidsrc_su':
-        return isTv ? `https://vidsrc.su/embed/tv/${id}/${s}/${e}` : `https://vidsrc.su/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vidsrc.su/embed/tv/${id}/${s}/${e}` : `https://vidsrc.su/embed/movie/${id}`;
+        break;
       case 'vidsrcme_ru':
-        return isTv ? `https://vidsrc-embed.ru/embed/tv?tmdb=${id}&season=${s}&episode=${e}` : `https://vidsrc-embed.ru/embed/movie?tmdb=${id}`;
-
+        rawUrl = isTv ? `https://vidsrc-embed.ru/embed/tv?tmdb=${id}&season=${s}&episode=${e}` : `https://vidsrc-embed.ru/embed/movie?tmdb=${id}`;
+        break;
       case 'nxsha':
-        return `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
+        rawUrl = `https://web.nxsha.app/embed/movie/${id}?lang=tamil&autoplay=true`;
+        break;
       case 'dbgdrive':
-        return isTv ? `https://databasegdriveplayer.co/player.php?type=series&tmdb=${id}&season=${s}&episode=${e}` : `https://databasegdriveplayer.co/player.php?type=movie&tmdb=${id}`;
+        rawUrl = isTv ? `https://databasegdriveplayer.co/player.php?type=series&tmdb=${id}&season=${s}&episode=${e}` : `https://databasegdriveplayer.co/player.php?type=movie&tmdb=${id}`;
+        break;
       case 'getsuperembed':
-        return isTv ? `https://getsuperembed.link/?video_id=${id}&season=${s}&episode=${e}` : `https://getsuperembed.link/?video_id=${id}`;
+        rawUrl = isTv ? `https://getsuperembed.link/?video_id=${id}&season=${s}&episode=${e}` : `https://getsuperembed.link/?video_id=${id}`;
+        break;
       case 'vidsrc_icu':
-        return isTv ? `https://vidsrc.icu/embed/tv/${id}/${s}/${e}` : `https://vidsrc.icu/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vidsrc.icu/embed/tv/${id}/${s}/${e}` : `https://vidsrc.icu/embed/movie/${id}`;
+        break;
       case 'vidcloud':
-        return `https://vidcloud.stream/${id}.html`;
+        rawUrl = `https://vidcloud.stream/${id}.html`;
+        break;
       case 'smashystream':
-        return isTv ? `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}` : `https://embed.smashystream.com/playere.php?tmdb=${id}`;
-
+        rawUrl = isTv ? `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}` : `https://embed.smashystream.com/playere.php?tmdb=${id}`;
+        break;
       case 'rive_torrent_tv':
-        return isTv ? `https://www.rivestream.app/embed/torrent?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed/torrent?type=movie&id=${id}`;
+        rawUrl = isTv ? `https://www.rivestream.app/embed/torrent?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed/torrent?type=movie&id=${id}`;
+        break;
       case 'ezvidapi':
-        return isTv ? `https://ezvidapi.com/embed/tv/${id}/${s}/${e}` : `https://ezvidapi.com/embed/movie/${id}`;
+        rawUrl = isTv ? `https://ezvidapi.com/embed/tv/${id}/${s}/${e}` : `https://ezvidapi.com/embed/movie/${id}`;
+        break;
       case 'vidsync':
-        return isTv ? `https://vidsync.to/embed/tv/${id}/${s}/${e}` : `https://vidsync.to/embed/movie/${id}`;
+        rawUrl = isTv ? `https://vidsync.to/embed/tv/${id}/${s}/${e}` : `https://vidsync.to/embed/movie/${id}`;
+        break;
       case 'cinesrc':
-        return isTv ? `https://cinesrc.org/embed/tv/${id}/${s}/${e}` : `https://cinesrc.org/embed/movie/${id}`;
+        rawUrl = isTv ? `https://cinesrc.org/embed/tv/${id}/${s}/${e}` : `https://cinesrc.org/embed/movie/${id}`;
+        break;
       case 'lordflix':
-        return isTv ? `https://lordflix.to/embed/tv/${id}/${s}/${e}` : `https://lordflix.to/embed/movie/${id}`;
+        rawUrl = isTv ? `https://lordflix.to/embed/tv/${id}/${s}/${e}` : `https://lordflix.to/embed/movie/${id}`;
+        break;
       case 'xprime':
-        return isTv ? `https://xprime.tv/embed/tv/${id}/${s}/${e}` : `https://xprime.tv/embed/movie/${id}`;
+        rawUrl = isTv ? `https://xprime.tv/embed/tv/${id}/${s}/${e}` : `https://xprime.tv/embed/movie/${id}`;
+        break;
       case 'yflix':
-        return isTv ? `https://yflix.to/embed/tv/${id}/${s}/${e}` : `https://yflix.to/embed/movie/${id}`;
+        rawUrl = isTv ? `https://yflix.to/embed/tv/${id}/${s}/${e}` : `https://yflix.to/embed/movie/${id}`;
+        break;
       case 'abyss':
-        return isTv ? `https://abysscdn.com/embed/tv/${id}/${s}/${e}` : `https://abysscdn.com/embed/movie/${id}`;
+        rawUrl = isTv ? `https://abysscdn.com/embed/tv/${id}/${s}/${e}` : `https://abysscdn.com/embed/movie/${id}`;
+        break;
       case 'vidfast_alt':
-        return isTv ? `https://vidfast.pro/tv/${id}/${s}/${e}?autoPlay=true` : `https://vidfast.pro/movie/${id}?autoPlay=true`;
-
+        rawUrl = isTv ? `https://vidfast.pro/tv/${id}/${s}/${e}?autoPlay=true` : `https://vidfast.pro/movie/${id}?autoPlay=true`;
+        break;
       default:
-        return `https://vidsrc.xyz/embed/movie/${id}`;
+        rawUrl = `https://vidsrc.xyz/embed/movie/${id}`;
     }
+
+    return getProxiedUrl(rawUrl);
   };
 
   const refreshPlayer = () => setKey(prev => prev + 1);
 
   const handleOpenExternal = () => {
     if (embedServer === 'direct' && effectiveStreamUrl) {
-      window.open(effectiveStreamUrl, '_blank', 'noopener,noreferrer');
+      window.open(getProxiedUrl(effectiveStreamUrl), '_blank', 'noopener,noreferrer');
     } else {
       window.open(getEmbedUrl(), '_blank', 'noopener,noreferrer');
     }
@@ -657,7 +698,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             ) : isWebsitePage ? (
               <iframe
                 key={`page-${effectiveStreamUrl}-${key}`}
-                src={effectiveStreamUrl}
+                src={getProxiedUrl(effectiveStreamUrl)}
                 className="w-full h-full border-none"
                 allowFullScreen
                 scrolling="auto"
@@ -668,7 +709,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <video
                 ref={videoRef}
                 key={`${effectiveStreamUrl}-${key}`}
-                src={effectiveStreamUrl}
+                src={getProxiedUrl(effectiveStreamUrl)}
                 className="w-full h-full"
                 controls
                 autoPlay
@@ -711,7 +752,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
           <div className="space-y-2">
             <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1">
-              <Star size={9} className="text-yellow-500" /> Tier 1 — Best Quality
+              <Star size={9} className="text-yellow-500" /> Tier 1 — Best Quality (Adblocked)
             </p>
             <div className="flex flex-wrap gap-2">
               {hasStreamUrl && (
@@ -733,7 +774,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           </div>
 
           <div className="space-y-2">
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Tier 2 — Good Reliability</p>
+            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Tier 2 — Good Reliability (Adblocked)</p>
             <div className="flex flex-wrap gap-2">
               {tier2.map(srv => (
                 <button
@@ -803,7 +844,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         </div>
         <div className="flex gap-2 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10 text-xs text-purple-200 leading-relaxed">
           <Shield size={16} className="text-purple-400 shrink-0 mt-0.5" />
-          <p><strong>Adblocker Tip:</strong> Some sources work better with uBlock Origin enabled. If you see a blank screen, click <strong>Open in New Tab</strong> to watch directly.</p>
+          <p>All iframe sources are automatically routed via secure anti-pop adblock filters, allowing secure distraction-free playback.</p>
         </div>
       </div>
     </div>
