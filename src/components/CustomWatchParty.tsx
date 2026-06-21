@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Users, Play, Info, Link, Type, Image, Plus, LogIn, Check } from 'lucide-react';
+import { Users, Play, Info, Link, Type, Image, Plus, LogIn, Check, Globe, RefreshCw } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useMusic, Movie } from '@/context/MusicContext';
 
@@ -21,6 +22,8 @@ export const CustomWatchParty = () => {
   const [streamUrl, setStreamUrl] = useState('');
   const [title, setTitle] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [isFetching, setIsFetching] = useState(false);
   
   // Quick host controls inside the watch party modal
   const [quickCode, setQuickCode] = useState(`ISAI-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
@@ -29,6 +32,39 @@ export const CustomWatchParty = () => {
     setRoomCode(quickCode);
     setIsHost(true);
     toast.success("Watch Party Sync Room created! Share code to invite friends.");
+  };
+
+  const fetchFromSourceUrl = async () => {
+    if (!sourceUrl.trim()) return;
+    
+    setIsFetching(true);
+    try {
+      // In a real implementation, this would call your backend API
+      // that scrapes or fetches the stream URL from your website
+      const response = await fetch('/api/fetch-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceUrl: sourceUrl.trim() })
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch stream');
+      
+      const data = await response.json();
+      
+      if (data.streamUrl) {
+        setStreamUrl(data.streamUrl);
+        if (data.title) setTitle(data.title);
+        if (data.poster) setPosterUrl(data.poster);
+        toast.success('Stream URL fetched successfully!');
+      } else {
+        throw new Error('No stream URL found');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      toast.error('Could not fetch stream from source URL. Please enter it manually.');
+    } finally {
+      setIsFetching(false);
+    }
   };
 
   const handleLaunchParty = (e: React.FormEvent) => {
@@ -98,12 +134,36 @@ export const CustomWatchParty = () => {
         ) : (
           <form onSubmit={handleLaunchParty} className="space-y-4 pt-4">
             <div className="space-y-3">
+              {/* Source URL */}
+              <div className="space-y-1">
+                <Label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Globe size={10} className="text-purple-400" />
+                  Your Website Source URL (Optional)
+                </Label>
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="https://yourwebsite.com/movie-page" 
+                    value={sourceUrl}
+                    onChange={(e) => setSourceUrl(e.target.value)}
+                    className="bg-accent/5 border-none h-11 rounded-xl text-xs text-white focus-visible:ring-2 focus-visible:ring-purple-600/30 flex-1"
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={fetchFromSourceUrl}
+                    disabled={isFetching || !sourceUrl.trim()}
+                    className="h-11 w-11 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shrink-0"
+                  >
+                    {isFetching ? <RefreshCw className="animate-spin" size={16} /> : <Check size={16} />}
+                  </Button>
+                </div>
+              </div>
+
               {/* Stream URL */}
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-1 flex items-center gap-1">
+                <Label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Link size={10} className="text-purple-400" />
                   Stream link or magnet link
-                </label>
+                </Label>
                 <Input 
                   placeholder="https://example.com/movie.mp4 or magnet:?xt=..." 
                   value={streamUrl}
@@ -115,10 +175,10 @@ export const CustomWatchParty = () => {
 
               {/* Title */}
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-1 flex items-center gap-1">
+                <Label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Type size={10} className="text-purple-400" />
                   Video Title
-                </label>
+                </Label>
                 <Input 
                   placeholder="e.g. Inception (2010)" 
                   value={title}
@@ -129,10 +189,10 @@ export const CustomWatchParty = () => {
 
               {/* Cover Image */}
               <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground ml-1 flex items-center gap-1">
+                <Label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Image size={10} className="text-purple-400" />
                   Cover Poster URL (Optional)
-                </label>
+                </Label>
                 <Input 
                   placeholder="https://example.com/poster.jpg" 
                   value={posterUrl}
@@ -145,7 +205,7 @@ export const CustomWatchParty = () => {
             <div className="flex gap-2 p-3 rounded-xl bg-purple-500/5 border border-purple-500/10">
               <Info size={16} className="text-purple-400 shrink-0 mt-0.5" />
               <p className="text-[10px] text-muted-foreground leading-normal">
-                <strong>How to play:</strong> Launching plays the video directly. Anyone connected to Room Code <strong className="text-purple-400">{roomCode}</strong> will automatically have their player sync-launch.
+                <strong>How to use:</strong> Paste your website URL above to auto-fetch the stream link, or enter it manually. Anyone in Room Code <strong className="text-purple-400">{roomCode}</strong> will sync-play when you launch.
               </p>
             </div>
 
