@@ -80,6 +80,8 @@ interface ServerDef {
 
 const ALL_SERVERS: ServerDef[] = [
   { id: 'vidsrc_xyz', label: 'VidSrc.xyz', tier: 1, quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Most reliable' },
+  { id: 'invisiproxy', label: 'InvisiProxy', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Geo-bypass proxy' },
+  { id: 'adblock_imurugan', label: 'Adblock Player', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypasses popups/ads' },
   { id: 'embed_su', label: 'Embed.su', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Fast & stable' },
   { id: 'vidlink', label: 'VidLink.pro', tier: 1, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'TMDb native' },
   { id: 'videasy', label: 'Videasy.net', tier: 1, quality: '4K', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'Ad-free, 4K' },
@@ -130,8 +132,6 @@ const ALL_SERVERS: ServerDef[] = [
   { id: 'yflix', label: 'YFlix', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
   { id: 'abyss', label: 'Abyss', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
   { id: 'vidfast_alt', label: 'VidFast (Alt)', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
-  { id: 'invisiproxy', label: 'InvisiProxy', tier: 5, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypass geo-restrictions' },
-  { id: 'adblock_imurugan', label: 'Adblock Worker', tier: 5, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypass ad-blockers' },
 ];
 
 const WEBRTC_TRACKERS = [
@@ -345,6 +345,12 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     switch (embedServer) {
       case 'vidsrc_xyz':
         return isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
+      case 'invisiproxy':
+        const targetUrlInvis = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
+        return `https://invisiproxy.vercel.app/${targetUrlInvis}`;
+      case 'adblock_imurugan':
+        const targetUrlAd = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
+        return `https://adblock.imurugan.workers.dev/${targetUrlAd}`;
       case 'embed_su':
         return isTv ? `https://embed.su/embed/tv/${id}/${s}/${e}` : `https://embed.su/embed/movie/${id}`;
       case 'vidlink':
@@ -461,11 +467,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return isTv ? `https://abysscdn.com/embed/tv/${id}/${s}/${e}` : `https://abysscdn.com/embed/movie/${id}`;
       case 'vidfast_alt':
         return isTv ? `https://vidfast.pro/tv/${id}/${s}/${e}?autoPlay=true` : `https://vidfast.pro/movie/${id}?autoPlay=true`;
-
-      case 'invisiproxy':
-        return isTv ? `https://invisiproxy.vercel.app/embed/tv/${id}/${s}/${e}` : `https://invisiproxy.vercel.app/embed/movie/${id}`;
-      case 'adblock_imurugan':
-        return isTv ? `https://adblock.imurugan.workers.dev/embed/tv/${id}/${s}/${e}` : `https://adblock.imurugan.workers.dev/embed/movie/${id}`;
 
       default:
         return `https://vidsrc.xyz/embed/movie/${id}`;
