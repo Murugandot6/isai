@@ -346,8 +346,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'vidsrc_xyz':
         return isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
       case 'invisiproxy':
-        const targetUrlInvis = isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
-        return `https://invisiproxy.vercel.app/?url=${encodeURIComponent(targetUrlInvis)}`;
+        const targetUrlInvis = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
+        return `https://invisiproxy.com/partners?url=${encodeURIComponent(targetUrlInvis)}`;
       case 'adblock_imurugan':
         const targetUrlAd = isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
         return `https://adblock.imurugan.workers.dev/?url=${encodeURIComponent(targetUrlAd)}`;
