@@ -63,7 +63,9 @@ type EmbedServerType =
   | 'xprime'
   | 'yflix'
   | 'abyss'
-  | 'vidfast_alt';
+  | 'vidfast_alt'
+  | 'invisiproxy'
+  | 'adblock_imurugan';
 
 interface ServerDef {
   id: EmbedServerType;
@@ -128,6 +130,8 @@ const ALL_SERVERS: ServerDef[] = [
   { id: 'yflix', label: 'YFlix', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
   { id: 'abyss', label: 'Abyss', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
   { id: 'vidfast_alt', label: 'VidFast (Alt)', tier: 5, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
+  { id: 'invisiproxy', label: 'InvisiProxy', tier: 5, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypass geo-restrictions' },
+  { id: 'adblock_imurugan', label: 'Adblock Worker', tier: 5, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypass ad-blockers' },
 ];
 
 const WEBRTC_TRACKERS = [
@@ -457,6 +461,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return isTv ? `https://abysscdn.com/embed/tv/${id}/${s}/${e}` : `https://abysscdn.com/embed/movie/${id}`;
       case 'vidfast_alt':
         return isTv ? `https://vidfast.pro/tv/${id}/${s}/${e}?autoPlay=true` : `https://vidfast.pro/movie/${id}?autoPlay=true`;
+
+      case 'invisiproxy':
+        return isTv ? `https://invisiproxy.vercel.app/embed/tv/${id}/${s}/${e}` : `https://invisiproxy.vercel.app/embed/movie/${id}`;
+      case 'adblock_imurugan':
+        return isTv ? `https://adblock.imurugan.workers.dev/embed/tv/${id}/${s}/${e}` : `https://adblock.imurugan.workers.dev/embed/movie/${id}`;
 
       default:
         return `https://vidsrc.xyz/embed/movie/${id}`;
