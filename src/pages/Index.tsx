@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useNavigate } from 'react-router-dom';
-import { Music, Film, Radio, ArrowRight, Sparkles } from 'lucide-react';
+import { Music, Film, Radio, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
@@ -50,9 +50,9 @@ const Index = () => {
       <div className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-12 md:pt-16">
         {/* Dynamic Background Image */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src={bgImage} 
-            alt="Background" 
+          <img
+            src={bgImage}
+            alt="Background"
             className="w-full h-full object-cover transition-opacity duration-1000"
           />
           {/* Cinematic Overlays for readability */}
@@ -98,14 +98,6 @@ const Index = () => {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Minimal Social Sync broadcast system footer */}
-          <div className="flex items-center justify-center gap-2 max-w-xs mx-auto p-2.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-md animate-in fade-in duration-1000">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-            <span className="text-[10px] text-zinc-400 font-semibold tracking-wide uppercase">
-              Social Sync broadcast is active
-            </span>
           </div>
         </div>
       </div>
