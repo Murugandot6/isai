@@ -3,7 +3,8 @@
 import React, { useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useNavigate } from 'react-router-dom';
-import { Music, Film, Radio, ArrowRight } from 'lucide-react';
+import { Music, Film, Radio, ArrowRight, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -18,26 +19,29 @@ const Index = () => {
     {
       id: 'music',
       title: 'Music',
+      subtitle: 'Premium Spotify-like Player',
       icon: Music,
       path: '/music',
       borderColor: 'group-hover:border-green-500/30',
-      accent: 'text-green-400 bg-green-500/10 group-hover:bg-green-500/20 group-hover:scale-110'
+      accent: 'text-green-400 bg-green-500/10 group-hover:bg-green-500/20'
     },
     {
       id: 'movies',
       title: 'Cinema',
+      subtitle: 'On-demand synchronized streaming',
       icon: Film,
       path: '/movies',
       borderColor: 'group-hover:border-purple-500/30',
-      accent: 'text-purple-400 bg-purple-500/10 group-hover:bg-purple-500/20 group-hover:scale-110'
+      accent: 'text-purple-400 bg-purple-500/10 group-hover:bg-purple-500/20'
     },
     {
       id: 'radio',
       title: 'World Radio',
+      subtitle: 'Global live FM broadcasts',
       icon: Radio,
       path: '/radio',
       borderColor: 'group-hover:border-orange-500/30',
-      accent: 'text-orange-400 bg-orange-500/10 group-hover:bg-orange-500/20 group-hover:scale-110'
+      accent: 'text-orange-400 bg-orange-500/10 group-hover:bg-orange-500/20'
     }
   ];
 
@@ -67,24 +71,29 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Vertical Minimalist Navigation Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000">
+          {/* Minimalist Navigation Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {hubs.map((hub) => (
               <div
                 key={hub.id}
                 onClick={() => navigate(hub.path)}
-                className={`group relative flex flex-col items-center justify-center p-8 rounded-3xl bg-white/[0.02] backdrop-blur-2xl border border-white/5 cursor-pointer text-center transition-all duration-300 hover:bg-white/[0.05] hover:-translate-y-1.5 ${hub.borderColor}`}
+                className={`group relative flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] backdrop-blur-2xl border border-white/5 cursor-pointer transition-all duration-300 hover:bg-white/[0.05] hover:-translate-y-1 ${hub.borderColor}`}
               >
-                {/* Large circular/rounded icon wrapper */}
-                <div className={`p-5 rounded-2xl mb-4 transition-all duration-300 ${hub.accent}`}>
-                  <hub.icon size={32} />
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className={`p-3 rounded-2xl transition-all duration-300 ${hub.accent}`}>
+                    <hub.icon size={22} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <h3 className="text-lg font-black text-white group-hover:text-primary transition-colors flex items-center gap-1.5">
+                      {hub.title}
+                    </h3>
+                    <p className="text-zinc-400 text-[11px] font-medium truncate mt-0.5">
+                      {hub.subtitle}
+                    </p>
+                  </div>
                 </div>
-                
-                <h3 className="text-xl font-black text-white group-hover:text-primary transition-colors mb-4">
-                  {hub.title}
-                </h3>
 
-                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300">
+                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shrink-0 ml-3">
                   <ArrowRight size={14} />
                 </div>
               </div>
