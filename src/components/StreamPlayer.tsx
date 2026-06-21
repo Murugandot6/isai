@@ -76,17 +76,18 @@ interface ServerDef {
   note?: string;
 }
 
+// Reprioritized to place proxy-compatible servers (which don't use Next.js routing) at the very top of Tier 1.
 const ALL_SERVERS: ServerDef[] = [
-  { id: 'vidsrc_xyz', label: 'VidSrc.xyz', tier: 1, quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Most reliable' },
-  { id: 'embed_su', label: 'Embed.su', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Fast & stable' },
-  { id: 'vidlink', label: 'VidLink.pro', tier: 1, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'TMDb native' },
+  { id: 'vidsrc_xyz', label: 'VidSrc.xyz', tier: 1, quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Highly compatible with Proxy' },
+  { id: 'embed_su', label: 'Embed.su', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Fast & proxy-stable' },
+  { id: 'vidsrc_to', label: 'VidSrc.to', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Works great with Proxy' },
+  { id: 'vidsrc_fyi', label: 'VidSrc.fyi', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Failover proxy-stable' },
+  { id: 'vidlink', label: 'VidLink.pro', tier: 1, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'May block proxy asset loads' },
   { id: 'videasy', label: 'Videasy.net', tier: 1, quality: '4K', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'Ad-free, 4K' },
   { id: 'vidfast', label: 'VidFast.pro', tier: 1, quality: '4K', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: '4K, anime' },
-  { id: 'vidsrc_fyi', label: 'VidSrc.fyi', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Multi-server failover' },
   { id: 'vidsrc_pro', label: 'VidSrc.pro', tier: 1, quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Anime + 4K' },
   { id: 'vidsrc_vip', label: 'VidSrc.vip', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Download support' },
   { id: 'vidsrc_me', label: 'VidSrc.me', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'vidsrc_to', label: 'VidSrc.to', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'autoembed', label: 'AutoEmbed.cc', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Anime + drama' },
   { id: 'autoembed_co', label: 'AutoEmbed.co', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
   { id: 'multiembed', label: 'MultiEmbed.mov', tier: 2, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: '10+ servers' },
@@ -155,7 +156,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const isMagnet = Boolean(effectiveStreamUrl?.startsWith('magnet:') || effectiveStreamUrl?.endsWith('.torrent'));
   const isWebsitePage = Boolean(effectiveStreamUrl && !isMagnet && !isPlayableDirectUrl(effectiveStreamUrl));
 
-  const defaultEmbedServer = hasStreamUrl && !isMagnet ? 'direct' : isImdb ? 'vidsrc_xyz' : 'vidlink';
+  // Direct is fallback; for standard embed sources, we now default to vidsrc_xyz (highly stable with workers proxy)
+  const defaultEmbedServer = hasStreamUrl && !isMagnet ? 'direct' : 'vidsrc_xyz';
   const [embedServer, setEmbedServer] = useState<EmbedServerType>(defaultEmbedServer);
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
@@ -177,7 +179,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const wtCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const nextDefault = hasStreamUrl && !isMagnet ? 'direct' : isImdb ? 'vidsrc_xyz' : 'vidlink';
+    const nextDefault = hasStreamUrl && !isMagnet ? 'direct' : 'vidsrc_xyz';
     setEmbedServer(nextDefault);
     setWtStatus('initializing');
     setWtPeers(0);
@@ -274,7 +276,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           wtCountdownRef.current = null;
         }
 
-        setEmbedServer(isImdb ? 'vidsrc_xyz' : 'vidlink');
+        setEmbedServer('vidsrc_xyz');
       }, 12000);
 
       client.add(enrichedMagnet, { announce: WEBRTC_TRACKERS }, (torrent: any) => {
@@ -472,7 +474,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         rawUrl = isTv ? `https://v2.apimdb.net/e/tmdb/tv/${id}/${s}/${e}/` : `https://v2.apimdb.net/e/movie/${id}`;
         break;
       case 'moviewp':
-        rawUrl = isTv ? `https://moviewp.com/se.php?video_id=${id}&tmdb=1&s=${s}&e=${e}` : `https://moviewp.com/se.php?video_id=${id}&tmdb=1`;
+        rawUrl = isTv ? `https://moviewp.com/se.php?video_id={id}&tmdb=1&s={s}&e={e}` : `https://moviewp.com/se.php?video_id={id}&tmdb=1`;
         break;
       case 'vidsrc_su':
         rawUrl = isTv ? `https://vidsrc.su/embed/tv/${id}/${s}/${e}` : `https://vidsrc.su/embed/movie/${id}`;
@@ -661,8 +663,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                             <Button onClick={() => setEmbedServer('vidsrc_xyz')} className="rounded-xl bg-purple-600 hover:bg-purple-700 font-bold text-[10px] h-9 gap-1 text-white">
                               <Play size={10} fill="currentColor" /> VidSrc.xyz
                             </Button>
-                            <Button onClick={() => setEmbedServer('vidlink')} className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-[10px] h-9 gap-1 text-white">
-                              <Play size={10} fill="currentColor" /> VidLink.pro
+                            <Button onClick={() => setEmbedServer('embed_su')} className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-[10px] h-9 gap-1 text-white">
+                              <Play size={10} fill="currentColor" /> Embed.su
                             </Button>
                           </div>
                         </div>
@@ -674,7 +676,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                         <Button onClick={refreshPlayer} className="rounded-xl bg-white/5 border border-white/10 font-bold text-xs">Retry P2P</Button>
                         <div className="grid grid-cols-2 gap-2">
                           <Button onClick={() => setEmbedServer('vidsrc_xyz')} className="rounded-xl bg-purple-600 text-white font-bold text-xs">VidSrc.xyz</Button>
-                          <Button onClick={() => setEmbedServer('vidlink')} className="rounded-xl bg-indigo-600 text-white font-bold text-xs">VidLink.pro</Button>
+                          <Button onClick={() => setEmbedServer('embed_su')} className="rounded-xl bg-indigo-600 text-white font-bold text-xs">Embed.su</Button>
                         </div>
                       </div>
                     )}
