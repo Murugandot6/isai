@@ -350,6 +350,10 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (audioRef.current) audioRef.current.pause();
     setIsPlaying(false);
     setCurrentMovie(movie);
+    
+    // Automatically route to full-page watch viewport
+    window.location.hash = '#/watch';
+
     if (!fromSync) {
       setRecentlyWatched(prev => [movie, ...prev.filter(m => m.id !== movie.id)].slice(0, 20));
       broadcast('play_movie', { movie });
@@ -358,7 +362,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const closeMovie = useCallback((fromSync: boolean = false) => {
     setCurrentMovie(null);
-    if (!fromSync) broadcast('close_movie', {});
+    
+    // Route back to Movies hub
+    window.location.hash = '#/movies';
+
+    if (!fromSync) {
+      broadcast('close_movie', {});
+    }
   }, [broadcast]);
 
   const toggleLikeMovie = (movie: Movie) => {

@@ -18,6 +18,7 @@ import PlaylistDetails from "./pages/PlaylistDetails";
 import Featured from "./pages/Featured";
 import Movies from "./pages/Movies";
 import Stremio from "./pages/Stremio";
+import Watch from "./pages/Watch";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/featured" element={<Featured />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/stremio" element={<Stremio />} />
+              <Route path="/watch" element={<Watch />} />
               <Route path="/album/:id" element={<AlbumDetails />} />
               <Route path="/playlist/:id" element={<PlaylistDetails />} />
               <Route path="*" element={<NotFound />} />

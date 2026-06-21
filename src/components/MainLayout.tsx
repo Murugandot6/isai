@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react';
 import { MusicPlayer } from './MusicPlayer';
-import { MoviePlayerOverlay } from './MoviePlayerOverlay';
 import { ListenTogether } from './ListenTogether';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
@@ -42,13 +41,13 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   if (!user) return null;
 
   // Fullscreen interactive player views
-  const isImmersiveFullscreen = location.pathname === '/movies' || location.pathname === '/music';
+  const isImmersiveFullscreen = location.pathname === '/movies' || location.pathname === '/music' || location.pathname === '/watch';
 
   const path = location.pathname;
   const searchParams = new URLSearchParams(location.search);
   const searchType = searchParams.get('type');
 
-  const isMoviesContext = path.startsWith('/movies') || (path === '/search' && searchType === 'movies');
+  const isMoviesContext = path.startsWith('/movies') || path.startsWith('/watch') || (path === '/search' && searchType === 'movies');
   const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
   const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
 
@@ -59,7 +58,6 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           {children}
         </main>
         <MusicPlayer />
-        <MoviePlayerOverlay />
         <MobileNav />
       </div>
     );
@@ -250,7 +248,6 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         </main>
       </div>
       <MusicPlayer />
-      <MoviePlayerOverlay />
       <MobileNav />
     </div>
   );

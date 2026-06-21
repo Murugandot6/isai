@@ -1,26 +1,30 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { useMusic } from '@/context/MusicContext';
 import { tmdbApi, CastMember } from '@/services/tmdbApi';
 import { StreamPlayer } from '@/components/StreamPlayer';
-import { Tv, X, Users, Layers, User } from 'lucide-react';
+import { Tv, ArrowLeft, Users, Layers, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MainLayout } from '@/components/MainLayout';
+import { useNavigate } from 'react-router-dom';
 
-export const MoviePlayerOverlay = () => {
+const Watch = () => {
   const { currentMovie, closeMovie, roomCode } = useMusic();
   const [cast, setCast] = useState<CastMember[]>([]);
   const [loadingCast, setLoadingCast] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchMovieDetails = async () => {
-      if (!currentMovie) {
-        setCast([]);
-        return;
-      }
+    if (!currentMovie) {
+      navigate('/movies');
+      return;
+    }
 
+    const fetchMovieDetails = async () => {
       setLoadingCast(true);
       try {
-        // Only fetch credits if it's a standard TMDb ID (not an IMDb ID starting with tt)
         if (currentMovie.id && !currentMovie.id.startsWith('tt')) {
           const credits = await tmdbApi.getMovieCredits(currentMovie.id);
           setCast(credits || []);
@@ -35,53 +39,61 @@ export const MoviePlayerOverlay = () => {
     };
 
     fetchMovieDetails();
-  }, [currentMovie]);
+  }, [currentMovie, navigate]);
 
-  if (!currentMovie) return null;
+  if (!currentMovie) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="animate-spin text-primary" size={48} />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-background/98 backdrop-blur-3xl z-50 flex flex-col overflow-y-auto pb-safe">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10 gap-4">
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <Tv className="text-purple-400 shrink-0 w-6 h-6" />
-          <div className="min-w-0">
-            <h2 className="text-base md:text-xl font-black text-white flex items-center gap-2 truncate">
-              {currentMovie.title}
-              <span className="text-xs text-muted-foreground font-normal shrink-0">({currentMovie.year})</span>
-            </h2>
-            <p className="text-[10px] md:text-xs text-muted-foreground truncate">{currentMovie.genre}</p>
+    <MainLayout>
+      <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-10 max-w-7xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <button 
+              onClick={() => closeMovie()}
+              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10 shrink-0"
+              title="Back to Cinema"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-3xl font-black text-white flex items-center gap-2 truncate leading-tight">
+                {currentMovie.title}
+                <span className="text-sm md:text-base text-zinc-500 font-normal shrink-0">({currentMovie.year})</span>
+              </h1>
+              <p className="text-xs text-zinc-400 mt-1">{currentMovie.genre} • {currentMovie.language}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+            {roomCode && (
+              <Badge className="bg-purple-500 text-white gap-1.5 py-1.5 px-4 rounded-full font-black text-[10px] tracking-wide uppercase animate-pulse">
+                <Users size={12} />
+                Sync Room: {roomCode}
+              </Badge>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3 shrink-0">
-          {roomCode && (
-            <Badge className="bg-purple-500 text-white gap-1 py-1 px-3.5 rounded-full font-black text-[10px] tracking-wide uppercase animate-pulse hidden sm:flex">
-              <Users size={12} />
-              Sync Room: {roomCode}
-            </Badge>
-          )}
-
-          <button 
-            onClick={() => closeMovie()}
-            className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all border border-white/10"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        {/* Video Player Frame */}
+        <div className="max-w-5xl mx-auto w-full">
+          <StreamPlayer key={currentMovie.id} movie={currentMovie} />
         </div>
-      </div>
 
-      {/* Premium Stream Player Component - Forced to remount on movie change using key prop */}
-      <div className="p-2 sm:p-6 md:p-10 max-w-5xl mx-auto w-full">
-        <StreamPlayer key={currentMovie.id} movie={currentMovie} />
-      </div>
-
-      {/* Player Footer / Info & Cast */}
-      <div className="p-6 md:p-12 bg-zinc-950 border-t border-white/5 text-white flex-1">
-        <div className="max-w-5xl mx-auto space-y-8">
-          {/* Sync Notice */}
+        {/* Details & Info Section */}
+        <div className="max-w-5xl mx-auto space-y-8 pt-4">
+          
           {roomCode && (
-            <div className="flex gap-3 p-4 rounded-3xl bg-purple-500/10 border border-purple-500/20 text-xs md:text-sm text-purple-200">
+            <div className="flex gap-3 p-4 rounded-3xl bg-purple-500/10 border border-purple-500/20 text-xs md:text-sm text-purple-200 text-left">
               <Users size={20} className="text-purple-400 shrink-0 mt-0.5" />
               <p className="leading-relaxed">
                 <strong>Social Sync Active:</strong> Your movie page is fully broadcast-linked. When you trigger playback, other attendees inside room lobby <strong>{roomCode}</strong> will synchronize automatically!
@@ -89,17 +101,16 @@ export const MoviePlayerOverlay = () => {
             </div>
           )}
 
-          {/* Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-4">
-              <h3 className="text-lg font-black text-white flex items-center gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            <div className="md:col-span-2 space-y-3">
+              <h3 className="text-base md:text-lg font-black text-white flex items-center gap-2 uppercase tracking-wider">
                 <Layers size={16} className="text-purple-400" />
                 Synopsis
               </h3>
               <p className="text-xs md:text-sm text-zinc-300 leading-relaxed font-semibold">{currentMovie.overview}</p>
             </div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3 text-xs">
-              <h4 className="font-black text-white uppercase tracking-wider text-[10px]">Metadata Details</h4>
+            <div className="p-5 rounded-3xl bg-white/5 border border-white/10 space-y-3 text-xs">
+              <h4 className="font-black text-white uppercase tracking-wider text-[10px] tracking-widest text-purple-400">Metadata Details</h4>
               <div className="space-y-2 font-semibold text-zinc-400">
                 <div className="flex justify-between"><span className="text-zinc-500">Rating:</span> <span className="text-yellow-400">{currentMovie.rating} / 10 ★</span></div>
                 <div className="flex justify-between"><span className="text-zinc-500">Language:</span> <span className="text-white">{currentMovie.language.toUpperCase()}</span></div>
@@ -108,9 +119,9 @@ export const MoviePlayerOverlay = () => {
             </div>
           </div>
 
-          {/* Cast / Actors Section */}
-          <div className="border-t border-white/5 pt-8 pb-20">
-            <h3 className="text-base md:text-lg font-black mb-6 flex items-center gap-2">
+          {/* Cast */}
+          <div className="border-t border-white/5 pt-8 text-left">
+            <h3 className="text-base md:text-lg font-black mb-6 flex items-center gap-2 uppercase tracking-wider">
               <User size={16} className="text-purple-400" />
               Cast & Starcast
             </h3>
@@ -151,7 +162,24 @@ export const MoviePlayerOverlay = () => {
             )}
           </div>
         </div>
+
       </div>
-    </div>
+    </MainLayout>
   );
 };
+
+// Simple helper fallback Loader loader
+const Loader2 = ({ className, size }: { className?: string, size?: number }) => (
+  <svg 
+    className={`${className} animate-spin`} 
+    style={{ width: size, height: size }}
+    xmlns="http://www.w3.org/2000/svg" 
+    fill="none" 
+    viewBox="0 0 24 24"
+  >
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
+export default Watch;
