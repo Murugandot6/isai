@@ -135,11 +135,9 @@ const ALL_SERVERS: ServerDef[] = [
 ];
 
 const WEBRTC_TRACKERS = [
-  'wss://tracker.webtorrent.dev',
   'wss://tracker.openwebtorrent.com',
-  'wss://tracker.btorrent.xyz',
+  'wss://tracker.webtorrent.dev',
   'wss://tracker.files.fm:7073/announce',
-  'wss://tracker.gbitt.info:443/announce',
   'wss://tracker.fastcast.nz'
 ];
 
@@ -228,7 +226,15 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         return;
       }
 
-      wtClientRef.current?.destroy();
+      if (wtClientRef.current && !wtClientRef.current.destroyed) {
+        try {
+          wtClientRef.current.destroy();
+        } catch (e) {
+          console.warn("Error destroying previous WebTorrent client:", e);
+        }
+      }
+      wtClientRef.current = null;
+
       if (wtTimeoutRef.current) clearTimeout(wtTimeoutRef.current);
       if (wtCountdownRef.current) clearInterval(wtCountdownRef.current);
 
@@ -258,7 +264,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       }, 1000);
 
       wtTimeoutRef.current = setTimeout(() => {
-        wtClientRef.current?.destroy();
+        if (wtClientRef.current && !wtClientRef.current.destroyed) {
+          try {
+            wtClientRef.current.destroy();
+          } catch (e) {
+            console.warn("Timeout destruction error:", e);
+          }
+        }
         wtClientRef.current = null;
 
         if (wtCountdownRef.current) {
@@ -332,7 +344,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           clearInterval(wtCountdownRef.current);
           wtCountdownRef.current = null;
         }
-        client.destroy();
+        if (client && !client.destroyed) {
+          try {
+            client.destroy();
+          } catch (e) {
+            console.warn("Cleanup destruction error:", e);
+          }
+        }
       };
     }
   }, [isMagnet, embedServer, wtLoaded, effectiveStreamUrl, isImdb, key]);
