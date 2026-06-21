@@ -201,11 +201,20 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const streams = fullDetails.downloadUrl || [];
       const stream = streams.find(s => s.quality === '320kbps') || streams[streams.length - 1];
-      const streamUrl = stream?.url || (song as any).url_resolved || (song as any).url;
+      
+      // Support both stream.url and stream.link for diverse API payloads
+      let streamUrl = stream?.url || stream?.link || (song as any).url_resolved || (song as any).url;
 
       if (!streamUrl) throw new Error("No stream URL found");
 
-      audio.src = streamUrl.replace('http://', 'https://');
+      // For standard songs/compositions, force SSL upgrade.
+      // For global radio broadcast feeds, preserve their original protocol (or support secure fallback dynamically)
+      if (!isRadio) {
+        audio.src = streamUrl.replace('http://', 'https://');
+      } else {
+        audio.src = streamUrl;
+      }
+      
       audio.load();
       await audio.play();
 
@@ -221,8 +230,9 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         broadcast('play', { song: fullDetails, time: 0, queue: updatedQueue });
       }
     } catch (error) {
-      console.error(error);
+      console.error("Playback failed:", error);
       setIsPlaying(false);
+      toast.error("Playback failed. Please try another stream or station.");
     }
   }, [queue, currentMovie, broadcast]);
 
