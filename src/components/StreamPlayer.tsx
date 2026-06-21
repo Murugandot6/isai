@@ -80,7 +80,7 @@ interface ServerDef {
 
 const ALL_SERVERS: ServerDef[] = [
   { id: 'vidsrc_xyz', label: 'VidSrc.xyz', tier: 1, quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Most reliable' },
-  { id: 'invisiproxy', label: 'InvisiProxy', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Geo-bypass proxy' },
+  { id: 'invisiproxy', label: 'InvisiProxy', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypass geo-restrictions' },
   { id: 'adblock_imurugan', label: 'Adblock Player', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Bypasses popups/ads' },
   { id: 'embed_su', label: 'Embed.su', tier: 1, quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Fast & stable' },
   { id: 'vidlink', label: 'VidLink.pro', tier: 1, quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'TMDb native' },
@@ -346,11 +346,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       case 'vidsrc_xyz':
         return isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
       case 'invisiproxy':
-        const targetUrlInvis = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
-        return `https://invisiproxy.vercel.app/${targetUrlInvis}`;
+        const targetUrlInvis = isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
+        return `https://invisiproxy.vercel.app/?url=${encodeURIComponent(targetUrlInvis)}`;
       case 'adblock_imurugan':
-        const targetUrlAd = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
-        return `https://adblock.imurugan.workers.dev/${targetUrlAd}`;
+        const targetUrlAd = isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
+        return `https://adblock.imurugan.workers.dev/?url=${encodeURIComponent(targetUrlAd)}`;
       case 'embed_su':
         return isTv ? `https://embed.su/embed/tv/${id}/${s}/${e}` : `https://embed.su/embed/movie/${id}`;
       case 'vidlink':
