@@ -139,6 +139,13 @@ const WEBRTC_TRACKERS = [
   'wss://tracker.fastcast.nz'
 ];
 
+const DIRECT_VIDEO_EXTENSIONS = ['.mp4', '.m3u8', '.mpd', '.webm', '.ogg', '.mov', '.mkv'];
+
+const isPlayableDirectUrl = (url: string) => {
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return cleanUrl.startsWith('blob:') || cleanUrl.startsWith('data:video') || DIRECT_VIDEO_EXTENSIONS.some(ext => cleanUrl.endsWith(ext));
+};
+
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const isImdb = movie.id.startsWith('tt');
   const lowerGenre = movie.genre?.toLowerCase() || '';
@@ -148,6 +155,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const effectiveStreamUrl = manualMagnetUrl || movie.streamUrl;
   const hasStreamUrl = Boolean(effectiveStreamUrl);
   const isMagnet = Boolean(effectiveStreamUrl?.startsWith('magnet:') || effectiveStreamUrl?.endsWith('.torrent'));
+  const isWebsitePage = Boolean(effectiveStreamUrl && !isMagnet && !isPlayableDirectUrl(effectiveStreamUrl));
 
   const defaultEmbedServer = hasStreamUrl && !isMagnet ? 'direct' : isImdb ? 'vidsrc_xyz' : 'vidlink';
   const [embedServer, setEmbedServer] = useState<EmbedServerType>(defaultEmbedServer);
@@ -618,6 +626,16 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   </div>
                 )}
               </div>
+            ) : isWebsitePage ? (
+              <iframe
+                key={`page-${effectiveStreamUrl}-${key}`}
+                src={effectiveStreamUrl}
+                className="w-full h-full border-none"
+                allowFullScreen
+                scrolling="auto"
+                referrerPolicy="origin"
+                allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
+              />
             ) : (
               <video
                 ref={videoRef}
@@ -672,7 +690,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                 <button
                   onClick={() => setEmbedServer('direct')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === 'direct' ? 'bg-green-600 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}>
-                  Direct / P2P
+                  {isWebsitePage ? 'Page Link' : isMagnet ? 'Direct / P2P' : 'Direct Video'}
                 </button>
               )}
               {tier1.map(srv => (
@@ -738,6 +756,15 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               </Button>
             </div>
           </div>
+
+          {isWebsitePage && (
+            <div className="flex gap-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-100 leading-relaxed">
+              <Info size={14} className="text-amber-400 shrink-0 mt-0.5" />
+              <p>
+                This looks like a normal website page, not a direct video file. It opens inside the player, but full playback sync may not work unless your website supports embedded player controls.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
