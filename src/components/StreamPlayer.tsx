@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, Info, Shield, RefreshCcw, ExternalLink, Play, Star, AlertCircle, Users, Download, Activity, Zap, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Server, RefreshCcw, ExternalLink, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
@@ -11,56 +11,7 @@ interface StreamPlayerProps {
   movie: Movie;
 }
 
-type EmbedServerType =
-  | 'direct'
-  | 'vidsrc_xyz'
-  | 'embed_su'
-  | 'embedmaster'
-  | 'vidsrc_to'
-  | 'vidsrc_fyi'
-  | 'vidsrc_pro'
-  | 'vidsrc_vip'
-  | 'vidsrc_me'
-  | 'autoembed'
-  | 'multiembed'
-  | 'superembed'
-  | '2embed'
-  | 'vidlink'
-  | 'videasy'
-  | 'vidfast'
-  | 'rivestream'
-  | 'cinesrc';
-
-interface ServerDef {
-  id: EmbedServerType;
-  label: string;
-  quality: string;
-  supportsImdb: boolean;
-  supportsTmdb: boolean;
-  supportsTv: boolean;
-  note?: string;
-}
-
-const ALL_SERVERS: ServerDef[] = [
-  { id: 'vidsrc_xyz', label: 'VidSrc.xyz', quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'High quality' },
-  { id: 'embed_su', label: 'Embed.su', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Fast & stable' },
-  { id: 'vidsrc_to', label: 'VidSrc.to', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'vidsrc_fyi', label: 'VidSrc.fyi', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'vidlink', label: 'VidLink.pro', quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
-  { id: 'videasy', label: 'Videasy.net', quality: '4K', supportsImdb: false, supportsTmdb: true, supportsTv: true, note: 'Ad-free' },
-  { id: 'vidfast', label: 'VidFast.pro', quality: '4K', supportsImdb: false, supportsTmdb: true, supportsTv: true },
-  { id: 'vidsrc_pro', label: 'VidSrc.pro', quality: '4K', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Anime' },
-  { id: 'vidsrc_vip', label: 'VidSrc.vip', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true, note: 'Download' },
-  { id: 'vidsrc_me', label: 'VidSrc.me', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'autoembed', label: 'AutoEmbed.cc', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'autoembed_co', label: 'AutoEmbed.co', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'multiembed', label: 'MultiEmbed.mov', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'superembed', label: 'SuperEmbed.stream', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: '2embed', label: '2Embed.cc', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'embedmaster', label: 'EmbedMaster', quality: '1080p', supportsImdb: true, supportsTmdb: true, supportsTv: true },
-  { id: 'rivestream', label: 'RiveStream', quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
-  { id: 'cinesrc', label: 'CineSrc', quality: '1080p', supportsImdb: false, supportsTmdb: true, supportsTv: true },
-];
+type EmbedServerType = 'direct' | 'cinepro';
 
 const DIRECT_VIDEO_EXTENSIONS = ['.mp4', '.m3u8', '.mpd', '.webm', '.ogg', '.mov', '.mkv'];
 
@@ -70,7 +21,6 @@ const isPlayableDirectUrl = (url: string) => {
 };
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const isImdb = movie.id.startsWith('tt');
   const lowerGenre = movie.genre?.toLowerCase() || '';
   const isTv = lowerGenre.includes('tv') || lowerGenre.includes('series');
 
@@ -79,7 +29,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const hasStreamUrl = Boolean(effectiveStreamUrl);
   const isDirectVideo = Boolean(effectiveStreamUrl && isPlayableDirectUrl(effectiveStreamUrl));
 
-  const defaultEmbedServer = hasStreamUrl && isDirectVideo ? 'direct' : 'vidsrc_xyz';
+  const defaultEmbedServer = hasStreamUrl && isDirectVideo ? 'direct' : 'cinepro';
   const [embedServer, setEmbedServer] = useState<EmbedServerType>(defaultEmbedServer);
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
@@ -87,93 +37,21 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [magnetInput, setMagnetInput] = useState('');
 
   useEffect(() => {
-    const nextDefault = hasStreamUrl && isDirectVideo ? 'direct' : 'vidsrc_xyz';
+    const nextDefault = hasStreamUrl && isDirectVideo ? 'direct' : 'cinepro';
     setEmbedServer(nextDefault);
-  }, [effectiveStreamUrl, isImdb, isDirectVideo]);
+  }, [effectiveStreamUrl, isDirectVideo]);
 
+  // CinePro API implementation based on official specs
   const getEmbedUrl = (): string => {
     const id = movie.id;
     const s = season;
     const e = episode;
-    let rawUrl = '';
 
-    switch (embedServer) {
-      case 'vidsrc_xyz':
-        rawUrl = isTv ? `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` : `https://vidsrc.xyz/embed/movie/${id}`;
-        break;
-      case 'embed_su':
-        rawUrl = isTv ? `https://embed.su/embed/tv/${id}/${s}/${e}` : `https://embed.su/embed/movie/${id}`;
-        break;
-      case 'vidlink':
-        rawUrl = isTv ? `https://vidlink.pro/tv/${id}/${s}/${e}` : `https://vidlink.pro/movie/${id}`;
-        break;
-      case 'videasy':
-        rawUrl = isTv ? `https://player.videasy.net/tv/${id}/${s}/${e}` : `https://player.videasy.net/movie/${id}`;
-        break;
-      case 'vidfast':
-        rawUrl = isTv ? `https://vidfast.pro/tv/${id}/${s}/${e}` : `https://player.videasy.net/movie/${id}`;
-        break;
-      case 'vidsrc_fyi':
-        rawUrl = isTv ? `https://vidsrc.fyi/embed/tv/${id}/${s}/${e}` : `https://vidsrc.fyi/embed/movie/${id}`;
-        break;
-      case 'vidsrc_pro':
-        rawUrl = isTv ? `https://vidsrc.pro/embed/tv/${id}/${s}/${e}` : `https://vidsrc.pro/embed/movie/${id}`;
-        break;
-      case 'vidsrc_vip':
-        rawUrl = isTv ? `https://vidsrc.vip/embed/tv/${id}/${s}/${e}` : `https://vidsrc.vip/embed/movie/${id}`;
-        break;
-      case 'vidsrc_me':
-        rawUrl = isTv
-          ? `https://vidsrc.me/embed/tv?imdb=${id}&season=${s}&episode=${e}`
-          : `https://vidsrc.me/embed/movie?imdb=${id}`;
-        break;
-      case 'vidsrc_to':
-        rawUrl = isTv ? `https://vidsrc.to/embed/tv/${id}/${s}/${e}` : `https://vidsrc.to/embed/movie/${id}`;
-        break;
-      case 'autoembed':
-        rawUrl = isTv
-          ? `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`
-          : `https://player.autoembed.cc/embed/movie/${id}`;
-        break;
-      case 'autoembed_co':
-        rawUrl = isTv
-          ? `https://autoembed.co/tv/imdb/${id}-${s}-${e}`
-          : `https://autoembed.co/movie/imdb/${id}`;
-        break;
-      case 'multiembed':
-        rawUrl = isTv
-          ? `https://multiembed.mov/?video_id=${id}&tmdb=${isImdb ? 0 : 1}&s=${s}&e=${e}`
-          : `https://multiembed.mov/?video_id=${id}&tmdb=${isImdb ? 0 : 1}`;
-        break;
-      case 'multiembed_vip':
-        rawUrl = isTv
-          ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=${isImdb ? 0 : 1}&s=${s}&e=${e}`
-          : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=${isImdb ? 0 : 1}`;
-        break;
-      case 'superembed':
-        rawUrl = isTv
-          ? `https://multiembed.mov/?video_id=${id}&tmdb=${isImdb ? 0 : 1}&s=${s}&e=${e}`
-          : `https://www.superembed.stream/embed?id=${id}&tmdb=${isImdb ? 0 : 1}`;
-        break;
-      case '2embed':
-        rawUrl = isTv ? `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` : `https://www.2embed.cc/embed/${id}`;
-        break;
-      case 'embedmaster':
-        rawUrl = isTv
-          ? isImdb ? `https://embedmaster.com/embed/series/${id}/${s}/${e}` : `https://embedmaster.com/embed/series/tmdb/${id}/${s}/${e}`
-          : isImdb ? `https://embedmaster.com/embed/movie/${id}` : `https://embedmaster.com/embed/movie/tmdb/${id}`;
-        break;
-      case 'rivestream':
-        rawUrl = isTv ? `https://www.rivestream.app/embed?type=tv&id=${id}&season=${s}&episode=${e}` : `https://www.rivestream.app/embed?type=movie&id=${id}`;
-        break;
-      case 'cinesrc':
-        rawUrl = isTv ? `https://cinesrc.org/embed/tv/${id}/${s}/${e}` : `https://cinesrc.org/embed/movie/${id}`;
-        break;
-      default:
-        rawUrl = `https://vidsrc.xyz/embed/movie/${id}`;
+    if (isTv) {
+      return `https://embed.cinepro.cc/tv/${id}/${s}/${e}`;
+    } else {
+      return `https://embed.cinepro.cc/movie/${id}`;
     }
-
-    return rawUrl;
   };
 
   const refreshPlayer = () => setKey(prev => prev + 1);
@@ -191,15 +69,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setManualStreamUrl(magnetInput.trim());
     setKey(prev => prev + 1);
   };
-
-  const compatibleServers = ALL_SERVERS.filter(srv => {
-    if (isImdb && !srv.supportsImdb) return false;
-    if (!isImdb && !srv.supportsTmdb) return false;
-    if (isTv && !srv.supportsTv) return false;
-    return true;
-  });
-
-  const activeServer = ALL_SERVERS.find(s => s.id === embedServer);
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -275,10 +144,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs text-white/60">
               <Server size={14} className="text-purple-400" />
-              <span className="font-bold">Streaming Sources ({isImdb ? 'IMDb' : 'TMDb'} • {isTv ? 'TV' : 'Movie'}):</span>
-              {activeServer && (
-                <span className="text-[10px]">• {activeServer.quality} • {activeServer.note || ''}</span>
-              )}
+              <span className="font-bold">Streaming Source (CinePro API • {isTv ? 'TV' : 'Movie'}):</span>
+              <span className="text-[10px]">• Auto HD Quality • Ad-blocked</span>
             </div>
 
             <div className="flex items-center gap-3">
@@ -292,7 +159,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           </div>
 
           <div className="space-y-2">
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Tier 1 — Best Quality</p>
+            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Active Source</p>
             <div className="flex flex-wrap gap-2">
               {hasStreamUrl && isDirectVideo && (
                 <button
@@ -302,20 +169,17 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   Direct Video
                 </button>
               )}
-              {compatibleServers.slice(0, 10).map(srv => (
-                <button
-                  key={srv.id}
-                  onClick={() => setEmbedServer(srv.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === srv.id ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}
-                >
-                  {srv.label}
-                </button>
-              ))}
+              <button
+                onClick={() => setEmbedServer('cinepro')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === 'cinepro' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}
+              >
+                CinePro Player
+              </button>
             </div>
           </div>
 
           <div className="pt-2 border-t border-white/5">
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Paste Direct Link</p>
+            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Paste Custom Direct Link</p>
             <div className="flex gap-2 mt-1">
               <Input
                 value={magnetInput}
