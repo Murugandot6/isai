@@ -27,6 +27,65 @@ const GENRE_MAP: Record<number, string> = {
   37: 'Western'
 };
 
+// High-quality fallback movies to guarantee the page is never blank
+const FALLBACK_MOVIES: Movie[] = [
+  {
+    id: "440918",
+    title: "Teen Spirit",
+    overview: "Violet is a shy teenager who dreams of escaping her small town and pursuing her passion for singing. With the help of an unlikely mentor, she enters a local singing competition that will test her integrity, talent and ambition.",
+    backdrop: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200",
+    poster: "https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=400",
+    rating: 6.1,
+    year: "2019",
+    genre: "Drama / Music",
+    language: "EN"
+  },
+  {
+    id: "27205",
+    title: "Inception",
+    overview: "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets, is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
+    backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200",
+    poster: "https://images.unsplash.com/photo-1509281373149-e957c6296406?q=80&w=400",
+    rating: 8.3,
+    year: "2010",
+    genre: "Action / Sci-Fi",
+    language: "EN"
+  },
+  {
+    id: "157336",
+    title: "Interstellar",
+    overview: "The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.",
+    backdrop: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200",
+    poster: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=400",
+    rating: 8.4,
+    year: "2014",
+    genre: "Adventure / Sci-Fi",
+    language: "EN"
+  },
+  {
+    id: "313369",
+    title: "La La Land",
+    overview: "Mia, an aspiring actress, and Sebastian, a dedicated jazz musician, struggle to make ends meet in a city known for crushing hopes and breaking hearts. With the showstopping musical numbers, they discover the joy and pain of pursuing their dreams.",
+    backdrop: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1200",
+    poster: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=400",
+    rating: 7.9,
+    year: "2016",
+    genre: "Comedy / Romance / Music",
+    language: "EN"
+  },
+  {
+    id: "120",
+    title: "The Lord of the Rings: The Fellowship of the Ring",
+    overview: "Young hobbit Frodo Baggins, after inheriting a mysterious ring from his uncle Bilbo, must leave his home and journey to Mount Doom to destroy it before the Dark Lord Sauron can reclaim it.",
+    backdrop: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=1200",
+    poster: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=400",
+    rating: 8.4,
+    year: "2001",
+    genre: "Adventure / Fantasy",
+    language: "EN"
+  }
+];
+
 export interface CastMember {
   id: number;
   name: string;
@@ -46,7 +105,6 @@ const mapTMDbToMovie = (item: any): Movie => {
     year = item.first_air_date.split('-')[0] || 'N/A';
   }
 
-  // Determine type for label
   const typeLabel = item.media_type === 'tv' ? 'TV Series' : (genres || 'Movie');
 
   return {
@@ -73,10 +131,11 @@ export const tmdbApi = {
       const res = await fetch(`${BASE_URL}/trending/movie/week?api_key=${API_KEY}`);
       if (!res.ok) throw new Error("Failed to fetch trending movies");
       const data = await res.json();
-      return (data.results || []).map(mapTMDbToMovie);
+      const results = (data.results || []).map(mapTMDbToMovie);
+      return results.length > 0 ? results : FALLBACK_MOVIES;
     } catch (error) {
-      console.error(error);
-      return [];
+      console.warn("TMDb API failed, using fallback movies:", error);
+      return FALLBACK_MOVIES;
     }
   },
 
@@ -85,10 +144,11 @@ export const tmdbApi = {
       const res = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}`);
       if (!res.ok) throw new Error("Failed to fetch popular movies");
       const data = await res.json();
-      return (data.results || []).map(mapTMDbToMovie);
+      const results = (data.results || []).map(mapTMDbToMovie);
+      return results.length > 0 ? results : FALLBACK_MOVIES;
     } catch (error) {
-      console.error(error);
-      return [];
+      console.warn("TMDb API failed, using fallback movies:", error);
+      return FALLBACK_MOVIES;
     }
   },
 
@@ -97,10 +157,11 @@ export const tmdbApi = {
       const res = await fetch(`${BASE_URL}/movie/top_rated?api_key=${API_KEY}`);
       if (!res.ok) throw new Error("Failed to fetch top rated movies");
       const data = await res.json();
-      return (data.results || []).map(mapTMDbToMovie);
+      const results = (data.results || []).map(mapTMDbToMovie);
+      return results.length > 0 ? results : FALLBACK_MOVIES;
     } catch (error) {
-      console.error(error);
-      return [];
+      console.warn("TMDb API failed, using fallback movies:", error);
+      return FALLBACK_MOVIES;
     }
   },
 
@@ -109,32 +170,31 @@ export const tmdbApi = {
       const res = await fetch(`${BASE_URL}/movie/upcoming?api_key=${API_KEY}`);
       if (!res.ok) throw new Error("Failed to fetch upcoming movies");
       const data = await res.json();
-      return (data.results || []).map(mapTMDbToMovie);
+      const results = (data.results || []).map(mapTMDbToMovie);
+      return results.length > 0 ? results : FALLBACK_MOVIES;
     } catch (error) {
-      console.error(error);
-      return [];
+      console.warn("TMDb API failed, using fallback movies:", error);
+      return FALLBACK_MOVIES;
     }
   },
 
   searchMovies: async (query: string): Promise<Movie[]> => {
     try {
-      // Use multi search to capture movies and TV series
       const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
       if (!res.ok) throw new Error("Failed to search movies/tv");
       const data = await res.json();
-      // Filter results to only include movies and tv series
-      return (data.results || [])
+      const results = (data.results || [])
         .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
         .map(mapTMDbToMovie);
+      return results.length > 0 ? results : FALLBACK_MOVIES.filter(m => m.title.toLowerCase().includes(query.toLowerCase()));
     } catch (error) {
-      console.error(error);
-      return [];
+      console.warn("TMDb API failed, using fallback search:", error);
+      return FALLBACK_MOVIES.filter(m => m.title.toLowerCase().includes(query.toLowerCase()));
     }
   },
 
   getMovieImdbId: async (movieId: string): Promise<string | null> => {
     try {
-      // First try checking if it's a TV show or movie
       const res = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&append_to_response=external_ids`);
       const data = await res.json();
       
@@ -142,7 +202,6 @@ export const tmdbApi = {
         return data.imdb_id || data.external_ids?.imdb_id;
       }
 
-      // If movie search failed, try TV endpoint
       const tvRes = await fetch(`${BASE_URL}/tv/${movieId}?api_key=${API_KEY}&append_to_response=external_ids`);
       const tvData = await tvRes.json();
       return tvData.external_ids?.imdb_id || null;
@@ -154,10 +213,8 @@ export const tmdbApi = {
 
   getMovieCredits: async (movieId: string): Promise<CastMember[]> => {
     try {
-      // Try movie endpoint
       let res = await fetch(`${BASE_URL}/movie/${movieId}/credits?api_key=${API_KEY}`);
       if (!res.ok) {
-        // Fallback to TV endpoint if movie fails
         res = await fetch(`${BASE_URL}/tv/${movieId}/credits?api_key=${API_KEY}`);
       }
       if (!res.ok) throw new Error("Failed to fetch credits");
