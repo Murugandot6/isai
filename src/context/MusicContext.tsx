@@ -228,7 +228,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (error) {
       console.error("Playback failed:", error);
       setIsPlaying(false);
-      toast.error("Playback failed. Please try another stream or station.");
+      toast.error("Playback failed. Please try another stream.");
     }
   }, [queue, currentMovie, broadcast]);
 
@@ -445,7 +445,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             break;
           case 'pause':
             pauseSong(true);
-          break;
+            break;
           case 'resume':
             resumeSong(true);
             break;
@@ -506,7 +506,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       currentTime, duration, volume, setVolume, isMuted, toggleMute, seek, roomCode, setRoomCode, isHost, setIsHost,
       selectedLanguages, toggleLanguage, likedSongs, toggleLike, isLiked, likedStations, toggleLikeStation: () => {}, isStationLiked: () => false,
       recentlyPlayed, playlists, 
-      createPlaylist: (name) => setPlaylists(prev => [{ id: Math.random().toString(36).substring(2, 8), name, songs: [], createdAt: Date.now() }, ...prev]),
+      createPlaylist: (name) => setPlaylists(prev => [{ id: Math.random().toString(36).substring(2, 9), name, songs: [], createdAt: Date.now() }, ...prev]),
       addToPlaylist: (id, s) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: [s, ...p.songs] } : p)),
       removeFromPlaylist: (id, sid) => setPlaylists(prev => prev.map(p => p.id === id ? { ...p, songs: p.songs.filter(s => s.id !== sid) } : p)),
       isShuffle, toggleShuffle,
