@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff, Terminal, ShieldAlert } from 'lucide-react';
+import { Music, Mail, Lock, User, ArrowRight, Loader2, KeyRound, Eye, EyeOff, Terminal, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -43,18 +43,18 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [inviteCode, setInviteCode] = useState('');
 
-  // Player/Canvas state
+  // Canvas state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [timeString, setTimeString] = useState('');
+  const rainDropsRef = useRef<number[]>([]);
   
   // Terminal logs state
   const [terminalText, setTerminalText] = useState<string[]>([]);
-  const [currentLineIndex, setCurrentIndex] = useState(0);
+  const [clockTime, setClockTime] = useState('');
 
   // Custom Stat values for visual flair
   const [stat1, setStat1] = useState(85);
   const [stat2, setStat2] = useState(42);
-  const [stat3, setStat4] = useState(64);
+  const [stat3, setStat3] = useState(64);
 
   useEffect(() => {
     if (session) {
@@ -67,44 +67,39 @@ const Login = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = audioCtxSetup(canvas);
-    let animationFrameId: number;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      const fontSize = 14;
+      const columns = Math.ceil(canvas.width / fontSize);
+      rainDropsRef.current = Array(columns).fill(1).map(() => Math.random() * -50);
     };
     
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    const fontSize = 11;
-    const columns = Math.ceil(window.innerWidth / fontSize);
-    const rainDrops: number[] = Array(columns).fill(1);
-
+    const fontSize = 14;
     const draw = () => {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#8b5cf6'; // Violet theme matching "anbae"
       ctx.font = `${fontSize}px monospace`;
 
-      for (let i = 0; i < rainDrops.length; i++) {
-        const text = String.fromCharCode(Math.floor(Math.random() * 93) + 33);
+      for (let i = 0; i < rainDropsRef.current.length; i++) {
+        const text = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
         const x = i * fontSize;
-        const y = rainPeriod(i) * fontSize;
+        const y = rainDropsRef.current[i] * fontSize;
 
-        // Randomly color primary / purple hues for matrix look
-        if (Math.random() > 0.98) {
-          ctx.fillStyle = '#ffffff'; // White flash
-        } else if (Math.random() > 0.85) {
-          ctx.fillStyle = '#a855f7'; // Bright purple
-        } else {
-          ctx.subtractAlpha = 0.15;
-          ctx.fillStyle = 'rgba(147, 51, 234, 0.4)';
-        }
-
+        // Leading character brighter
+        ctx.fillStyle = 'rgba(180, 255, 220, 0.9)';
         ctx.fillText(text, x, y);
+
+        // Trailing characters
+        ctx.fillStyle = 'rgba(0, 255, 140, 0.25)';
+        ctx.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)], x, y - fontSize);
 
         if (y > canvas.height && Math.random() > 0.975) {
           rainDropsRef.current[i] = 0;
@@ -121,45 +116,23 @@ const Login = () => {
     };
   }, []);
 
-  // Set up timer for clock and terminal animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      setTimeLeft(now.toLocaleTimeString());
-    }, 1000);
-
-    const termInterval = setInterval(() => {
-      setTerminalLines(prev => {
-        const nextIdx = Math.floor(Math.random() * PREDEFINED_TERMINAL_LOGS.length);
-        const line = PREDEFINED_ARTISTS_INFO[Math.floor(Math.random() * PREDEFINED_ARTISTS_INFO.length)] || PREDEFINED_ARTISTS.fallback;
-        return [...prev.slice(1), line];
-      });
-    }, 4500);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(timerInterval);
-    };
-  }, []);
-
-  const [clockTime, setClockTime] = useState('');
+  // Set up timer for clock
   useEffect(() => {
     const updateClock = () => {
-      const d = new Date();
-      setClock(d.toTimeString().split(' ')[0]);
+      setClockTime(new Date().toTimeString().slice(0, 8));
     };
     updateClock();
-    const t = setInterval(updateClock, 1000);
-    return () => clearInterval(tvTimer);
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   // Handle dynamic system resource stat bars jitter
   useEffect(() => {
     const interval = setInterval(() => {
-      setStat1(Math.floor(65 + Math.random() * 25));
-      setStat2(Math.floor(40 + Math.random() * 55));
-      setStat4(Math.floor(70 + Math.random() * 28));
-    }, 1200);
+      setStat1(Math.floor(40 + Math.random() * 60));
+      setStat2(Math.floor(40 + Math.random() * 60));
+      setStat3(Math.floor(40 + Math.random() * 60));
+    }, 900);
     return () => clearInterval(interval);
   }, []);
 
@@ -183,11 +156,11 @@ const Login = () => {
         charIdx++;
       } else {
         accumulated.push(text);
-        if (accumulated.length > 10) accumulated.shift();
+        if (accumulated.length > 14) accumulated.shift();
         lineIdx++;
         charIdx = 0;
       }
-    }, 80);
+    }, 50);
 
     return () => clearInterval(interval);
   }, []);
@@ -247,21 +220,6 @@ const Login = () => {
     }
   };
 
-  // Canvas helper variables
-  const rainDropsRef = useRef<number[]>([]);
-  const rainPeriod = (i: number) => {
-    if (rainDropsRef.current[i] === undefined) {
-      rainDropsRef.current[i] = Math.random() * -50;
-    }
-    return rainDropsRef.current[i];
-  };
-
-  const audioCtxSetup = (canvas: HTMLCanvasElement) => {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error("Could not acquire 2D context");
-    return ctx;
-  };
-
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black font-mono">
       {/* 1. Hacking Matrix-style rain background */}
@@ -271,47 +229,40 @@ const Login = () => {
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/85 to-black/55 z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#000_90%)] z-0" />
 
-      {/* 2. Left Terminal Sidebar Logs Screen (Hidden on small mobile screens, perfect for aesthetics) */}
-      <div className="hidden lg:block fixed top-10 left-10 w-96 max-h-[500px] h-[50vh] bg-[#050a08]/75 border border-[rgba(0,255,140,0.3)] shadow-[0_0_30px_rgba(0,255,140,0.08)] rounded-xl p-5 overflow-hidden backdrop-blur-md text-left text-[#6dffb0] select-none text-[11px] leading-relaxed">
-        <div className="flex items-center justify-between border-b border-[rgba(0,255,140,0.15)] pb-3 mb-4 text-[rgba(150,255,200,0.5)]">
-          <span className="flex items-center gap-1.5 font-bold uppercase tracking-widest text-[9px]">
-            <Terminal size={12} className="text-primary animate-pulse" />
-            root@node-7712:~#
-          </span>
-          <span className="font-bold tracking-wider">{new Date().toTimeString().slice(0, 8)}</span>
+      {/* 2. Left Terminal Sidebar Logs Screen */}
+      <div className="hidden lg:block fixed top-[6%] left-[6%] w-[44%] h-[60%] bg-[#050a08]/72 border border-[rgba(0,255,140,0.35)] shadow-[0_0_25px_rgba(0,255,140,0.15),inset_0_0_30px_rgba(0,0,0,0.6)] rounded-xl p-5 overflow-hidden backdrop-blur-[1px] text-left text-[#6dffb0] select-none text-[13px] leading-relaxed">
+        <div className="flex items-center justify-between border-b border-[rgba(0,255,140,0.2)] pb-1.5 mb-2 text-[rgba(150,255,200,0.5)] text-[11px]">
+          <span className="font-bold uppercase tracking-widest">root@node-7712:~#</span>
+          <span className="font-bold tracking-wider">{clockTime}</span>
         </div>
-        <div className="space-y-1.5 min-h-[300px] overflow-hidden">
+        <div className="space-y-0.5">
           {terminalText.map((line, idx) => (
-            <div key={idx} className={cn(
-              "font-mono truncate transition-all duration-300",
-              idx === terminalText.length - 1 ? "text-white opacity-100 font-bold" : "opacity-60"
-            )}>
-              {idx === terminalText.length - 1 ? <span className="text-primary pr-1">></span> : <span className="text-muted-foreground/30 pr-1">$</span>}
+            <div key={idx} className="font-mono truncate">
               {line}
             </div>
           ))}
-          <span className="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1" />
+          <span className="inline-block w-[7px] h-[13px] bg-[#6dffb0] animate-pulse align-middle" />
         </div>
       </div>
 
-      {/* 3. Stat Panels (Aligns floating at bottom-right corner) */}
-      <div className="hidden lg:block fixed bottom-10 right-10 text-right space-y-3 z-10 text-[rgba(150,255,200,0.65)] text-[10px] select-none text-shadow">
-        <div className="flex items-center justify-end gap-3.5">
-          <span className="font-black uppercase tracking-widest">THROUGHPUT</span>
-          <div className="w-32 h-2 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] rounded-full overflow-hidden relative">
-            <div className="absolute inset-y-0 left-0 bg-primary/70 transition-all duration-300" style={{ width: `${stat1}%` }} />
+      {/* 3. Stat Panels */}
+      <div className="hidden lg:block fixed bottom-[6%] right-[6%] text-right space-y-1 z-10 text-[rgba(150,255,200,0.75)] text-[11px] select-none text-shadow-[0_0_6px_rgba(0,255,140,0.4)]">
+        <div className="flex items-center justify-end gap-2.5">
+          <span className="font-bold uppercase tracking-widest">THROUGHPUT</span>
+          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.6)] transition-all duration-300" style={{ width: `${stat1}%` }} />
           </div>
         </div>
-        <div className="flex items-center justify-end gap-3.5">
-          <span className="font-black uppercase tracking-widest">INTEGRITY</span>
-          <div className="w-32 h-2 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] rounded-full overflow-hidden relative">
-            <div className="absolute inset-y-0 left-0 bg-primary/70 transition-all duration-300" style={{ width: `${stat2}%` }} />
+        <div className="flex items-center justify-end gap-2.5">
+          <span className="font-bold uppercase tracking-widest">INTEGRITY</span>
+          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.6)] transition-all duration-300" style={{ width: `${stat2}%` }} />
           </div>
         </div>
-        <div className="flex items-center justify-end gap-3.5">
-          <span className="font-black uppercase tracking-widest">SYNC</span>
-          <div className="w-32 h-2 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] rounded-full overflow-hidden relative">
-            <div className="absolute inset-y-0 left-0 bg-primary/70 transition-all duration-300" style={{ width: `${stat3}%` }} />
+        <div className="flex items-center justify-end gap-2.5">
+          <span className="font-bold uppercase tracking-widest">SYNC</span>
+          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.6)] transition-all duration-300" style={{ width: `${stat3}%` }} />
           </div>
         </div>
       </div>
@@ -322,7 +273,7 @@ const Login = () => {
           <div className="inline-flex items-center justify-center p-3 bg-primary/20 backdrop-blur-xl rounded-2xl mb-1.5 border border-primary/30 shadow-[0_0_20px_rgba(147,51,234,0.3)]">
             <Music className="text-primary animate-pulse" size={20} />
           </div>
-          <h1 className="text-3xl font-black tracking-tighter italic text-white text-shadow-glow">anbae</h1>
+          <h1 className="text-3xl font-black tracking-tighter italic text-white">anbae</h1>
           <p className="text-primary/70 font-black text-[10px] tracking-[0.25em] uppercase">
             {isSignUp ? 'REGISTER' : 'AUTHORIZE'}
           </p>
@@ -425,10 +376,5 @@ const Login = () => {
     </div>
   );
 };
-
-// Helper for conditional styling class merges
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
-}
 
 export default Login;
