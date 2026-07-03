@@ -20,6 +20,7 @@ interface VideoSource {
 }
 
 const VIDEO_SOURCES: VideoSource[] = [
+  // Major Providers
   {
     id: 'vidsrcto',
     name: 'VidSrc.to (Fastest)',
@@ -51,10 +52,90 @@ const VIDEO_SOURCES: VideoSource[] = [
     getTvUrl: (id, s, e) => `https://multiembed.mov/?video_id=${id}&s=${s}&e=${e}`
   },
   {
+    id: 'vidfast',
+    name: 'VidFast',
+    getMovieUrl: (id) => `https://vidfast.pro/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidfast.pro/tv/${id}/${s}/${e}`
+  },
+  // The "Vid" Family & Mirrors
+  {
+    id: '1embed',
+    name: '1Embed',
+    getMovieUrl: (id) => `https://1embed.cc/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://1embed.cc/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: '2embed',
+    name: '2Embed',
+    getMovieUrl: (id) => `https://www.2embed.cc/embed/${id}`,
+    getTvUrl: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`
+  },
+  {
+    id: 'vixsrc',
+    name: 'VixSrc',
+    getMovieUrl: (id) => `https://vixsrc.to/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vixsrc.to/tv/${id}/${s}/${e}`
+  },
+  {
     id: 'vidlink',
     name: 'VidLink.pro',
     getMovieUrl: (id) => `https://vidlink.pro/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'vidsrccx',
+    name: 'VidSrc.cx',
+    getMovieUrl: (id) => `https://vidsrc.cx/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrc.cx/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'vidsrcco',
+    name: 'VidSrc.co',
+    getMovieUrl: (id) => `https://vidsrc.co/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrc.co/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'vidsrcme',
+    name: 'VidSrc.me',
+    getMovieUrl: (id) => `https://vidsrcme.ru/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrcme.ru/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'vidsrcrip',
+    name: 'VidSrc.rip',
+    getMovieUrl: (id) => `https://vidsrc.rip/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrc.rip/embed/tv/${id}/${s}/${e}`
+  },
+  // Other API Providers
+  {
+    id: 'cinesrc',
+    name: 'CineSRC',
+    getMovieUrl: (id) => `https://cinesrc.st/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://cinesrc.st/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'primesrc',
+    name: 'PrimeSRC',
+    getMovieUrl: (id) => `https://primesrc.me/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://primesrc.me/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'goatapi',
+    name: 'GoatAPI',
+    getMovieUrl: (id) => `https://goatapi.imreallydagoatt.workers.dev/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://goatapi.imreallydagoatt.workers.dev/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'cinemaos',
+    name: 'Cinemaos',
+    getMovieUrl: (id) => `https://cinemaos.tech/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://cinemaos.tech/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'gomo',
+    name: 'GoMo',
+    getMovieUrl: (id) => `https://gomo.to/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://gomo.to/tv/${id}/${s}/${e}`
   }
 ];
 
@@ -233,7 +314,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           {/* Manual Server Selection */}
           <div className="space-y-2">
             <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Server Manually</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1 bg-white/5 rounded-xl">
               {hasStreamUrl && isDirectVideo && (
                 <button
                   onClick={() => setIsDirectMode(true)}
