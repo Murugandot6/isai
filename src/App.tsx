@@ -13,6 +13,7 @@ import Library from "./pages/Library";
 import Songs from "./pages/Songs";
 import Artists from "./pages/Artists";
 import Favourites from "./pages/Favourites";
+import Journal from "./pages/Journal";
 import AlbumDetails from "./pages/AlbumDetails";
 import PlaylistDetails from "./pages/PlaylistDetails";
 import Featured from "./pages/Featured";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/songs" element={<Songs />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/favourites" element={<Favourites />} />
+              <Route path="/journal" element={<Journal />} />
               <Route path="/featured" element={<Featured />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/stremio" element={<Stremio />} />

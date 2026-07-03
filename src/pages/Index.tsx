@@ -3,91 +3,109 @@
 import React, { useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useNavigate } from 'react-router-dom';
-import { Music, Film, Radio, ArrowRight } from 'lucide-react';
+import { Music, Film, Radio, ArrowRight, Layers, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const navigate = useNavigate();
 
-  // Generate a random seed to ensure a different image on every load
-  const bgImage = useMemo(() => {
-    const seed = Math.floor(Math.random() * 10000);
-    return `https://loremflickr.com/1920/1080/nature?lock=${seed}`;
-  }, []);
-
   const hubs = [
     {
       id: 'music',
       title: 'Music',
-      subtitle: 'Premium Spotify-like Player',
+      subtitle: 'Premium Audio Station',
       icon: Music,
       path: '/music',
-      borderColor: 'group-hover:border-green-500/30',
-      accent: 'text-green-400 bg-green-500/10 group-hover:bg-green-500/20'
+      color: 'from-green-600/20 to-emerald-900/10',
+      accent: 'text-green-400 group-hover:text-green-300',
+      description: 'Stream millions of tracks with zero interruptions.'
     },
     {
       id: 'movies',
       title: 'Cinema',
-      subtitle: 'On-demand synchronized streaming',
+      subtitle: 'On-demand Streaming',
       icon: Film,
       path: '/movies',
-      borderColor: 'group-hover:border-purple-500/30',
-      accent: 'text-purple-400 bg-purple-500/10 group-hover:bg-purple-500/20'
+      color: 'from-purple-600/20 to-indigo-900/10',
+      accent: 'text-purple-400 group-hover:text-purple-300',
+      description: 'Synchronized cinema experience for you and friends.'
+    },
+    {
+      id: 'stremio',
+      title: 'Stremio',
+      subtitle: 'Decentralized Hub',
+      icon: Layers,
+      path: '/stremio',
+      color: 'from-indigo-600/20 to-blue-900/10',
+      accent: 'text-indigo-400 group-hover:text-indigo-300',
+      description: 'Community-powered metadata and streaming nodes.'
     },
     {
       id: 'radio',
       title: 'World Radio',
-      subtitle: 'Global live FM broadcasts',
+      subtitle: 'Global FM Broadcasts',
       icon: Radio,
       path: '/radio',
-      borderColor: 'group-hover:border-orange-500/30',
-      accent: 'text-orange-400 bg-orange-500/10 group-hover:bg-orange-500/20'
+      color: 'from-orange-600/20 to-red-900/10',
+      accent: 'text-orange-400 group-hover:text-orange-300',
+      description: 'Live terrestrial radio from across the planet.'
     }
   ];
 
   return (
     <MainLayout>
-      <div className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-12 md:pt-16">
-        {/* Dynamic Background Image */}
+      <div className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black py-20 px-6">
+        {/* Background Visuals */}
         <div className="absolute inset-0 z-0">
-          <img src={bgImage} alt="Background" className="w-full h-full object-cover transition-opacity duration-1000" />
-          {/* Cinematic Overlays for readability */}
-          <div className="absolute inset-0 bg-black/75 backdrop-blur-[6px]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-green-600/10 rounded-full blur-[120px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
         </div>
-        <div className="relative z-10 p-6 md:p-12 max-w-5xl mx-auto w-full space-y-12">
-          {/* Minimalistic Welcome Section */}
-          <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-700">
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tighter leading-none text-white">
-              What are we experiencing <span className="text-primary italic">today</span>?
+
+        <div className="relative z-10 max-w-6xl mx-auto w-full space-y-16">
+          <div className="text-center space-y-6 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-2">
+              <Sparkles size={14} className="text-purple-400" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">Premium Portal v2.0</span>
+            </div>
+            <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] text-white uppercase">
+              EXPERIENCE <span className="text-zinc-600 italic">LIMITLESS</span>
             </h1>
-            <p className="text-zinc-400 text-xs sm:text-sm max-w-md mx-auto font-medium">
-              Choose your entertainment station. Clean, ad-blocked, and synchronized.
+            <p className="text-zinc-400 text-sm sm:text-base max-w-lg mx-auto font-bold uppercase tracking-widest leading-relaxed">
+              Choose your entertainment node. Clean, ad-blocked, and fully synchronized.
             </p>
           </div>
-          {/* Minimalist Navigation Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-1000">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {hubs.map((hub) => (
               <div
                 key={hub.id}
                 onClick={() => navigate(hub.path)}
-                className={`group relative flex items-center justify-between p-6 rounded-3xl bg-white/[0.02] backdrop-blur-2xl border border-white/5 cursor-pointer transition-all duration-300 hover:bg-white/[0.05] hover:-translate-y-1 ${hub.borderColor}`}
+                className={`group relative flex flex-col justify-between p-8 aspect-[4/5] rounded-[2.5rem] bg-zinc-900/40 border border-white/5 cursor-pointer transition-all duration-500 hover:bg-zinc-900/60 hover:-translate-y-2 hover:border-white/10 overflow-hidden shadow-2xl`}
               >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className={`p-3 rounded-2xl transition-all duration-300 ${hub.accent}`}>
-                    <hub.icon size={22} />
+                {/* Decorative background gradient */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${hub.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+                
+                <div className="relative z-10 space-y-4">
+                  <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 ${hub.accent} transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10`}>
+                    <hub.icon size={28} />
                   </div>
-                  <div className="text-left min-w-0">
-                    <h3 className="text-lg font-black text-white group-hover:text-primary transition-colors flex items-center gap-1.5">
-                      {hub.title}
-                    </h3>
-                    <p className="text-zinc-400 text-[11px] font-medium truncate mt-0.5">
-                      {hub.subtitle}
-                    </p>
+                  <div>
+                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">{hub.title}</h3>
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${hub.accent} mt-0.5`}>{hub.subtitle}</p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/40 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shrink-0 ml-3">
-                  <ArrowRight size={14} />
+
+                <div className="relative z-10 space-y-6">
+                  <p className="text-xs text-zinc-500 font-bold leading-relaxed uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
+                    {hub.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest group-hover:text-white/40 transition-colors">Launch Station</span>
+                    <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500 shadow-xl">
+                      <ArrowRight size={18} />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

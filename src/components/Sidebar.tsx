@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, Disc, History, ChevronRight, ChevronLeft, Menu, Layers } from 'lucide-react';
+import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, Disc, History, ChevronRight, ChevronLeft, Menu, Layers, BookOpen } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -272,6 +272,20 @@ export const Sidebar = () => {
 
           <nav className="space-y-1 mb-6 w-full">
             {!isCollapsed && <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-3">Your Space</p>}
+            <Link
+              to="/journal"
+              className={cn(
+                "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+                isCollapsed ? "p-3 justify-center" : "px-4 py-3",
+                path === '/journal' 
+                  ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
+                  : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+              )}
+              title="Music Journal"
+            >
+              <BookOpen size={20} />
+              {!isCollapsed && <span>Music Journal</span>}
+            </Link>
             <Link
               to="/songs"
               className={cn(
