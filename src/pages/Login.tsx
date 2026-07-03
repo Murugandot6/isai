@@ -1,3 +1,4 @@
+' with '>'.">
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -223,15 +224,15 @@ const Login = () => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black font-mono">
       {/* 1. Hacking Matrix-style rain background */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 block pointer-events-none opacity-40" />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 block pointer-events-none opacity-30" />
 
       {/* Background radial gradient mask for high visual readability in the center */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/85 to-black/55 z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#000_90%)] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/70 z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#000_95%)] z-0" />
 
       {/* 2. Left Terminal Sidebar Logs Screen */}
-      <div className="hidden lg:block fixed top-[6%] left-[6%] w-[44%] h-[60%] bg-[#050a08]/72 border border-[rgba(0,255,140,0.35)] shadow-[0_0_25px_rgba(0,255,140,0.15),inset_0_0_30px_rgba(0,0,0,0.6)] rounded-xl p-5 overflow-hidden backdrop-blur-[1px] text-left text-[#6dffb0] select-none text-[13px] leading-relaxed">
-        <div className="flex items-center justify-between border-b border-[rgba(0,255,140,0.2)] pb-1.5 mb-2 text-[rgba(150,255,200,0.5)] text-[11px]">
+      <div className="hidden lg:block fixed top-[6%] left-[6%] w-[44%] h-[60%] bg-[#020503]/80 border border-[rgba(0,255,140,0.25)] shadow-[0_0_25px_rgba(0,255,140,0.08),inset_0_0_30px_rgba(0,0,0,0.8)] rounded-xl p-5 overflow-hidden backdrop-blur-[1px] text-left text-[#4eff9d] select-none text-[13px] leading-relaxed">
+        <div className="flex items-center justify-between border-b border-[rgba(0,255,140,0.15)] pb-1.5 mb-2 text-[rgba(100,255,170,0.4)] text-[11px]">
           <span className="font-bold uppercase tracking-widest">root@node-7712:~#</span>
           <span className="font-bold tracking-wider">{clockTime}</span>
         </div>
@@ -241,132 +242,168 @@ const Login = () => {
               {line}
             </div>
           ))}
-          <span className="inline-block w-[7px] h-[13px] bg-[#6dffb0] animate-pulse align-middle" />
+          <span className="inline-block w-[7px] h-[13px] bg-[#4eff9d] animate-pulse align-middle" />
         </div>
       </div>
 
       {/* 3. Stat Panels */}
-      <div className="hidden lg:block fixed bottom-[6%] right-[6%] text-right space-y-1 z-10 text-[rgba(150,255,200,0.75)] text-[11px] select-none">
+      <div className="hidden lg:block fixed bottom-[6%] right-[6%] text-right space-y-1 z-10 text-[rgba(100,255,170,0.6)] text-[11px] select-none">
         <div className="flex items-center justify-end gap-2.5">
           <span className="font-bold uppercase tracking-widest">THROUGHPUT</span>
-          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] relative overflow-hidden">
-            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.6)] transition-all duration-300" style={{ width: `${stat1}%` }} />
+          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.05)] border border-[rgba(0,255,140,0.2)] relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.5)] transition-all duration-300" style={{ width: `${stat1}%` }} />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2.5">
           <span className="font-bold uppercase tracking-widest">INTEGRITY</span>
-          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] relative overflow-hidden">
-            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.6)] transition-all duration-300" style={{ width: `${stat2}%` }} />
+          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.05)] border border-[rgba(0,255,140,0.2)] relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.5)] transition-all duration-300" style={{ width: `${stat2}%` }} />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2.5">
           <span className="font-bold uppercase tracking-widest">SYNC</span>
-          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] relative overflow-hidden">
-            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.6)] transition-all duration-300" style={{ width: `${stat3}%` }} />
+          <div className="w-[140px] h-1.5 bg-[rgba(0,255,140,0.05)] border border-[rgba(0,255,140,0.2)] relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-[rgba(0,255,140,0.5)] transition-all duration-300" style={{ width: `${stat3}%` }} />
           </div>
         </div>
       </div>
 
-      {/* 4. Hacker glow themed login card */}
-      <div className="relative w-full max-w-[310px] space-y-6 bg-[#050a08]/80 backdrop-blur-2xl p-6 rounded-[2rem] border border-[rgba(0,255,140,0.35)] shadow-[0_0_35px_rgba(0,255,140,0.12)] animate-in fade-in zoom-in duration-700 z-20">
-        <div className="text-center space-y-1.5">
-          <div className="inline-flex items-center justify-center p-3 bg-primary/20 backdrop-blur-xl rounded-2xl mb-1.5 border border-primary/30 shadow-[0_0_20px_rgba(147,51,234,0.3)]">
-            <Music className="text-primary animate-pulse" size={20} />
+      {/* 4. High-Contrast CRT Hacker Terminal Card */}
+      <div className="relative w-full max-w-[360px] bg-[#020503] border-2 border-[#00ff8c] rounded-none p-6 shadow-[0_0_40px_rgba(0,255,140,0.3),inset_0_0_20px_rgba(0,255,140,0.15)] animate-in fade-in zoom-in duration-500 z-20 overflow-hidden">
+        
+        {/* CRT Scanline Overlay Effect */}
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-30 opacity-80" />
+        
+        {/* Subtle Green Grid Pattern */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(rgba(0,255,140,0.08)_1px,transparent_0)] bg-[size:16px_16px] z-10" />
+
+        {/* Corner Brackets for Military/Hacker Aesthetic */}
+        <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#00ff8c] z-20" />
+        <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#00ff8c] z-20" />
+        <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#00ff8c] z-20" />
+        <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#00ff8c] z-20" />
+
+        {/* Card Header */}
+        <div className="text-center space-y-3 relative z-20 border-b border-[#00ff8c]/30 pb-4 mb-6">
+          <div className="inline-flex items-center justify-center p-2.5 bg-[#00ff8c]/10 rounded-none border border-[#00ff8c]/30 shadow-[0_0_15px_rgba(0,255,140,0.2)]">
+            <Music className="text-[#00ff8c] animate-pulse" size={22} />
           </div>
-          <h1 className="text-3xl font-black tracking-tighter italic text-white">anbae</h1>
-          <p className="text-primary/70 font-black text-[10px] tracking-[0.25em] uppercase">
-            {isSignUp ? 'REGISTER' : 'AUTHORIZE'}
-          </p>
+          <h1 className="text-3xl font-black tracking-widest uppercase text-white drop-shadow-[0_0_8px_rgba(0,255,140,0.6)]">anbae</h1>
+          <div className="inline-block bg-[#00ff8c]/20 text-[#00ff8c] border border-[#00ff8c]/40 px-3 py-0.5 text-[9px] font-black tracking-[0.2em] uppercase">
+            {isSignUp ? 'SECURE_REGISTRATION' : 'SYSTEM_AUTHORIZATION'}
+          </div>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        {/* Form Fields */}
+        <form onSubmit={handleAuth} className="space-y-5 relative z-20">
           {isSignUp && (
-            <div className="group relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
-              <Input
-                type="text"
-                placeholder="USERNAME"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="pl-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold uppercase text-[10px] tracking-wider"
-                required
-              />
+            <div className="space-y-1">
+              <label className="text-[9px] font-black text-[#00ff8c] uppercase tracking-widest block pl-1">
+                [01] USER_ID
+              </label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+                <Input
+                  type="text"
+                  placeholder="ENTER_ID"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="pl-8 bg-black border border-[#00ff8c]/40 h-11 rounded-none focus-visible:ring-1 focus-visible:ring-[#00ff8c] focus-visible:border-[#00ff8c] text-[#00ff8c] placeholder:text-[#00ff8c]/30 font-bold uppercase text-[11px] tracking-wider"
+                  required
+                />
+              </div>
             </div>
           )}
 
-          <div className="group relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
-            <Input
-              type="email"
-              placeholder="EMAIL ADDR"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold uppercase text-[10px] tracking-wider"
-              required
-            />
+          <div className="space-y-1">
+            <label className="text-[9px] font-black text-[#00ff8c] uppercase tracking-widest block pl-1">
+              {isSignUp ? '[02] EMAIL_NODE' : '[01] EMAIL_NODE'}
+            </label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+              <Input
+                type="email"
+                placeholder="ENTER_EMAIL"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-8 bg-black border border-[#00ff8c]/40 h-11 rounded-none focus-visible:ring-1 focus-visible:ring-[#00ff8c] focus-visible:border-[#00ff8c] text-[#00ff8c] placeholder:text-[#00ff8c]/30 font-bold uppercase text-[11px] tracking-wider"
+                required
+              />
+            </div>
           </div>
 
-          <div className="group relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="ACCESS PHRASE"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold uppercase text-[10px] tracking-wider"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-primary/20 hover:text-primary transition-colors"
-            >
-              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
+          <div className="space-y-1">
+            <label className="text-[9px] font-black text-[#00ff8c] uppercase tracking-widest block pl-1">
+              {isSignUp ? '[03] ACCESS_PHRASE' : '[02] ACCESS_PHRASE'}
+            </label>
+            <div className="relative flex items-center">
+              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="ENTER_PHRASE"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-8 pr-10 bg-black border border-[#00ff8c]/40 h-11 rounded-none focus-visible:ring-1 focus-visible:ring-[#00ff8c] focus-visible:border-[#00ff8c] text-[#00ff8c] placeholder:text-[#00ff8c]/30 font-bold uppercase text-[11px] tracking-wider"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 text-[#00ff8c]/50 hover:text-[#00ff8c] transition-colors"
+              >
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
           </div>
 
           {isSignUp && (
-            <div className="group relative">
-              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
-              <Input
-                type="text"
-                placeholder="INVITE CODE"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                className="pl-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold tracking-[0.2em] text-[10px]"
-                required
-              />
+            <div className="space-y-1">
+              <label className="text-[9px] font-black text-[#00ff8c] uppercase tracking-widest block pl-1">
+                [04] DECRYPTION_KEY
+              </label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+                <Input
+                  type="text"
+                  placeholder="ENTER_KEY"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  className="pl-8 bg-black border border-[#00ff8c]/40 h-11 rounded-none focus-visible:ring-1 focus-visible:ring-[#00ff8c] focus-visible:border-[#00ff8c] text-[#00ff8c] placeholder:text-[#00ff8c]/30 font-bold tracking-[0.2em] text-[11px]"
+                  required
+                />
+              </div>
             </div>
           )}
 
           <Button 
             type="submit" 
             disabled={loading}
-            className="w-full h-11 rounded-xl font-black text-[11px] uppercase tracking-[0.25em] shadow-xl shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary hover:bg-primary/90 text-white border border-primary/20"
+            className="w-full h-12 rounded-none font-black text-xs uppercase tracking-[0.2em] transition-all bg-[#00ff8c] hover:bg-[#00e67a] text-black border border-[#00ff8c] shadow-[0_0_15px_rgba(0,255,140,0.3)]"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={16} />
             ) : (
               <span className="flex items-center justify-center gap-2">
-                {isSignUp ? 'COMPILE' : 'ACCESS'}
+                {isSignUp ? 'EXECUTE_COMPILE' : 'EXECUTE_ACCESS'}
                 <ArrowRight size={14} />
               </span>
             )}
           </Button>
         </form>
 
-        <div className="text-center space-y-4">
+        {/* Footer Actions */}
+        <div className="text-center space-y-4 pt-4 border-t border-[#00ff8c]/20 mt-6 relative z-20">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-[9px] font-black text-primary/50 hover:text-primary transition-all uppercase tracking-[0.15em] border border-[rgba(0,255,140,0.15)] px-4 py-1.5 rounded-full hover:bg-[rgba(0,255,140,0.03)]"
+            className="text-[9px] font-black text-[#00ff8c] hover:text-white transition-all uppercase tracking-[0.15em] border border-[#00ff8c]/30 px-4 py-1.5 rounded-none bg-[#00ff8c]/5 hover:bg-[#00ff8c]/10"
           >
             {isSignUp ? 'Return to Access' : "Generate Guest Key"}
           </button>
 
           {isSignUp && (
-            <div className="flex gap-2.5 p-3 rounded-2xl bg-black/30 border border-[rgba(0,255,140,0.15)] animate-in fade-in slide-in-from-bottom-2 duration-500 text-left">
-              <ShieldAlert size={12} className="text-primary shrink-0 mt-0.5" />
-              <p className="text-[8px] text-primary/75 leading-relaxed font-semibold">
+            <div className="flex gap-2.5 p-3 rounded-none bg-black border border-[#00ff8c]/20 text-left">
+              <ShieldAlert size={14} className="text-[#00ff8c] shrink-0 mt-0.5" />
+              <p className="text-[8px] text-[#00ff8c]/80 leading-relaxed font-semibold">
                 Access is restricted to invitees. Contact node master <a href="https://www.instagram.com/11x13y/" target="_blank" rel="noopener noreferrer" className="text-white hover:underline font-bold">11x13y</a> for a decryption code.
               </p>
             </div>
