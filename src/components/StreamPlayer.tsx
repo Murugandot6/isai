@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCcw, ExternalLink, Play, AlertTriangle, ChevronRight, HelpCircle } from 'lucide-react';
+import { Server, RefreshCcw, ExternalLink, Play, AlertTriangle, ChevronRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,13 @@ interface VideoSource {
 }
 
 const VIDEO_SOURCES: VideoSource[] = [
+  // Primary Source (Requested)
+  {
+    id: 'cinesrc',
+    name: 'CineSRC (Primary)',
+    getMovieUrl: (id) => `https://cinesrc.st/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://cinesrc.st/tv/${id}/${s}/${e}`
+  },
   // Major Providers
   {
     id: 'vidsrcto',
@@ -106,13 +113,6 @@ const VIDEO_SOURCES: VideoSource[] = [
     getMovieUrl: (id) => `https://vidsrc.rip/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidsrc.rip/embed/tv/${id}/${s}/${e}`
   },
-  // Other API Providers
-  {
-    id: 'cinesrc',
-    name: 'CineSRC',
-    getMovieUrl: (id) => `https://cinesrc.st/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://cinesrc.st/tv/${id}/${s}/${e}`
-  },
   {
     id: 'primesrc',
     name: 'PrimeSRC',
@@ -139,6 +139,8 @@ const VIDEO_SOURCES: VideoSource[] = [
   }
 ];
 
+const FALLBACK_TIMEOUT_MS = 25000; // 25 seconds before auto-fallback
+
 const DIRECT_VIDEO_EXTENSIONS = ['.mp4', '.m3u8', '.mpd', '.webm', '.ogg', '.mov', '.mkv'];
 
 const isPlayableDirectUrl = (url: string) => {
@@ -161,11 +163,43 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
   const [magnetInput, setMagnetInput] = useState('');
+  
+  // Fallback Timer State
+  const [timeLeft, setTimeLeft] = useState(FALLBACK_TIMEOUT_MS / 1000);
+  const [autoFallbackEnabled, setAutoFallbackEnabled] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsDirectMode(hasStreamUrl && isDirectVideo);
     setActiveSourceIdx(0);
-  }, [effectiveStreamUrl, isDirectVideo, movie.id]);
+    resetFallbackTimer();
+  }, [effectiveStreamUrl, isDirectVideo, movie.id, season, episode]);
+
+  // Handle auto-fallback countdown
+  useEffect(() => {
+    if (!autoFallbackEnabled || isDirectMode) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          handleNextSource();
+          return FALLBACK_TIMEOUT_MS / 1000;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    timerRef.current = interval;
+    return () => clearInterval(interval);
+  }, [autoFallbackEnabled, activeSourceIdx, isDirectMode]);
+
+  const resetFallbackTimer = () => {
+    setTimeLeft(FALLBACK_TIMEOUT_MS / 1000);
+    setAutoFallbackEnabled(true);
+  };
 
   const getEmbedUrl = (): string => {
     const source = VIDEO_SOURCES[activeSourceIdx];
@@ -179,11 +213,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     const nextIdx = (activeSourceIdx + 1) % VIDEO_SOURCES.length;
     setActiveSourceIdx(nextIdx);
     setIsDirectMode(false);
-    toast.info(`Switching to Server: ${VIDEO_SOURCES[nextIdx].name}`);
+    resetFallbackTimer();
+    toast.info(`Auto-fallback: Switching to ${VIDEO_SOURCES[nextIdx].name}`);
   };
 
   const refreshPlayer = () => {
     setKey(prev => prev + 1);
+    resetFallbackTimer();
     toast.success("Reloading player...");
   };
 
@@ -197,6 +233,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setManualStreamUrl(magnetInput.trim());
     setIsDirectMode(true);
     setKey(prev => prev + 1);
+    setAutoFallbackEnabled(false);
     toast.success("Playing custom direct link!");
   };
 
@@ -282,6 +319,18 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             </div>
 
             <div className="flex items-center gap-3">
+              {autoFallbackEnabled && !isDirectMode && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-purple-600/10 border border-purple-500/20 rounded-lg">
+                  <Clock size={12} className="text-purple-400" />
+                  <span className="text-[10px] font-black text-purple-300">Switching in {Math.round(timeLeft)}s</span>
+                  <button 
+                    onClick={() => setAutoFallbackEnabled(false)}
+                    className="text-[10px] font-black text-white hover:text-red-400 underline underline-offset-2 ml-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
               <button onClick={refreshPlayer} className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-white transition-colors">
                 <RefreshCcw size={12} /> Reload Player
               </button>
@@ -298,7 +347,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <div className="space-y-0.5">
                 <p className="text-xs font-bold text-purple-300">Server not loading or giving ads?</p>
                 <p className="text-[10px] text-zinc-400 leading-normal">
-                  If the current server fails, click "Try Next Server" to automatically switch to a working mirror.
+                  CineSRC is the primary source. If it doesn't fetch, we'll automatically try VidSrc and other mirrors.
                 </p>
               </div>
             </div>
@@ -317,7 +366,10 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1 bg-white/5 rounded-xl">
               {hasStreamUrl && isDirectVideo && (
                 <button
-                  onClick={() => setIsDirectMode(true)}
+                  onClick={() => {
+                    setIsDirectMode(true);
+                    setAutoFallbackEnabled(false);
+                  }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${isDirectMode ? 'bg-green-600 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}
                 >
                   Direct Video
@@ -329,6 +381,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   onClick={() => {
                     setActiveSourceIdx(idx);
                     setIsDirectMode(false);
+                    setAutoFallbackEnabled(false);
                     toast.success(`Switched to ${source.name}`);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${(!isDirectMode && activeSourceIdx === idx) ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}
