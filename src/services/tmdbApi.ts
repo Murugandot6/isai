@@ -37,7 +37,7 @@ export interface CastMember {
 const mapTMDbToMovie = (item: any): Movie => {
   const genres = item.genre_ids && Array.isArray(item.genre_ids)
     ? item.genre_ids.map((id: number) => GENRE_MAP[id] || '').filter(Boolean).slice(0, 2).join(' / ')
-    : 'Movie';
+    : '';
 
   let year = 'N/A';
   if (item.release_date && typeof item.release_date === 'string') {
@@ -46,9 +46,12 @@ const mapTMDbToMovie = (item: any): Movie => {
     year = item.first_air_date.split('-')[0] || 'N/A';
   }
 
+  // Determine type for label
+  const typeLabel = item.media_type === 'tv' ? 'TV Series' : (genres || 'Movie');
+
   return {
     id: (item.id || '').toString(),
-    title: item.title || item.name || 'Untitled Movie',
+    title: item.title || item.name || 'Untitled',
     overview: item.overview || 'No overview available.',
     backdrop: item.backdrop_path 
       ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` 
@@ -58,7 +61,7 @@ const mapTMDbToMovie = (item: any): Movie => {
       : 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=400',
     rating: item.vote_average ? Math.round(item.vote_average * 10) / 10 : 0,
     year,
-    genre: genres || 'Drama',
+    genre: typeLabel,
     language: item.original_language ? item.original_language.toUpperCase() : 'EN',
     imdbId: item.imdb_id || undefined
   };
@@ -115,10 +118,14 @@ export const tmdbApi = {
 
   searchMovies: async (query: string): Promise<Movie[]> => {
     try {
-      const res = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
-      if (!res.ok) throw new Error("Failed to search movies");
+      // Use multi search to capture movies and TV series
+      const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error("Failed to search movies/tv");
       const data = await res.json();
-      return (data.results || []).map(mapTMDbToMovie);
+      // Filter results to only include movies and tv series
+      return (data.results || [])
+        .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
+        .map(mapTMDbToMovie);
     } catch (error) {
       console.error(error);
       return [];
@@ -127,10 +134,18 @@ export const tmdbApi = {
 
   getMovieImdbId: async (movieId: string): Promise<string | null> => {
     try {
+      // First try checking if it's a TV show or movie
       const res = await fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&append_to_response=external_ids`);
-      if (!res.ok) throw new Error("Failed to fetch movie details");
       const data = await res.json();
-      return data.imdb_id || data.external_ids?.imdb_id || null;
+      
+      if (data.imdb_id || data.external_ids?.imdb_id) {
+        return data.imdb_id || data.external_ids?.imdb_id;
+      }
+
+      // If movie search failed, try TV endpoint
+      const tvRes = await fetch(`${BASE_URL}/tv/${movieId}?api_key=${API_KEY}&append_to_response=external_ids`);
+      const tvData = await tvRes.json();
+      return tvData.external_ids?.imdb_id || null;
     } catch (error) {
       console.error("Error fetching IMDB ID:", error);
       return null;
@@ -139,8 +154,13 @@ export const tmdbApi = {
 
   getMovieCredits: async (movieId: string): Promise<CastMember[]> => {
     try {
-      const res = await fetch(`${BASE_URL}/movie/${movieId}/credits?api_key=${API_KEY}`);
-      if (!res.ok) throw new Error("Failed to fetch movie credits");
+      // Try movie endpoint
+      let res = await fetch(`${BASE_URL}/movie/${movieId}/credits?api_key=${API_KEY}`);
+      if (!res.ok) {
+        // Fallback to TV endpoint if movie fails
+        res = await fetch(`${BASE_URL}/tv/${movieId}/credits?api_key=${API_KEY}`);
+      }
+      if (!res.ok) throw new Error("Failed to fetch credits");
       const data = await res.json();
       return (data.cast || []).slice(0, 10).map((c: any) => ({
         id: c.id,

@@ -56,6 +56,7 @@ const Search = () => {
         setMovieResults([]);
         setFmResults([]);
       } else if (type === 'movies') {
+        // This now calls the updated tmdbApi.searchMovies which uses multi-search (Movies + TV)
         const movies = await tmdbApi.searchMovies(searchQuery);
         setMovieResults(movies);
         setSongResults([]);
@@ -120,7 +121,7 @@ const Search = () => {
               <Input 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={searchType === 'music' ? "Songs or albums..." : searchType === 'movies' ? "Movies or genres..." : "FM stations..."} 
+                placeholder={searchType === 'music' ? "Songs or albums..." : searchType === 'movies' ? "Movies or TV Series..." : "FM stations..."} 
                 className="pl-11 pr-4 py-6 bg-accent/5 border-2 border-transparent focus-visible:ring-0 focus-visible:border-primary/20 rounded-2xl text-sm md:text-base transition-all h-12 md:h-14"
               />
             </div>
@@ -140,7 +141,7 @@ const Search = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border rounded-xl">
                   <SelectItem value="music" className="font-bold text-xs cursor-pointer">Music</SelectItem>
-                  <SelectItem value="movies" className="font-bold text-xs cursor-pointer">Movies</SelectItem>
+                  <SelectItem value="movies" className="font-bold text-xs cursor-pointer">Cinema</SelectItem>
                   <SelectItem value="fm" className="font-bold text-xs cursor-pointer">FM Radio</SelectItem>
                 </SelectContent>
               </Select>
@@ -201,52 +202,37 @@ const Search = () => {
             </TabsContent>
           </Tabs>
         ) : searchType === 'movies' && movieResults.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 animate-in fade-in duration-500">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8 animate-in fade-in duration-500">
             {movieResults.map((movie) => (
               <div 
                 key={movie.id}
-                className="group relative bg-card/40 border border-border/50 rounded-3xl overflow-hidden hover:border-primary/30 transition-all duration-500 hover:-translate-y-1.5 flex flex-col"
+                className="group relative flex flex-col gap-2 cursor-pointer transition-all duration-300 hover:-translate-y-1"
+                onClick={() => playMovie(movie)}
               >
-                <div className="relative aspect-[16/10] overflow-hidden bg-accent/10">
+                <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-zinc-900 border border-white/5 shadow-md shadow-black/40">
                   <img 
-                    src={movie.backdrop || movie.poster} 
+                    src={movie.poster} 
                     alt={movie.title} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = movie.poster;
-                    }}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Button 
-                      onClick={() => playMovie(movie)}
-                      className="rounded-full w-12 h-12 bg-primary text-white shadow-xl shadow-primary/30 hover:scale-110 transition-transform"
-                    >
-                      <Play size={20} fill="currentColor" />
-                    </Button>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+                      <Play size={16} fill="currentColor" className="ml-0.5" />
+                    </div>
+                  </div>
+                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded-md flex items-center gap-0.5 text-[9px] font-bold text-yellow-500">
+                    <Heart size={9} className="mr-1" />
+                    {movie.rating}
                   </div>
                 </div>
-
-                <div className="p-4 md:p-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[8px] font-bold uppercase">
-                        {movie.language}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground font-bold">{movie.year}</span>
-                    </div>
-                    <h3 className="text-base md:text-xl font-black tracking-tight mb-1 group-hover:text-primary transition-colors line-clamp-1">{movie.title}</h3>
-                    <p className="text-[11px] md:text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-4">{movie.overview}</p>
+                <div className="px-1 text-left">
+                  <h4 className="font-bold text-xs text-white/90 truncate group-hover:text-primary transition-colors">{movie.title}</h4>
+                  <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground font-bold">
+                    <span>{movie.year}</span>
+                    <span>•</span>
+                    <span className="uppercase text-[9px] text-primary/90">{movie.genre}</span>
                   </div>
-
-                  <Button 
-                    onClick={() => playMovie(movie)}
-                    className="w-full rounded-xl font-bold gap-1.5 h-10 bg-accent/10 hover:bg-primary hover:text-white text-foreground transition-all text-xs"
-                  >
-                    <Play size={14} fill="currentColor" />
-                    Watch Now
-                  </Button>
                 </div>
               </div>
             ))}
@@ -316,7 +302,7 @@ const Search = () => {
               {urlQuery ? `No results found for "${urlQuery}"` : "Start Exploring"}
             </h3>
             <p className="text-xs md:text-sm text-muted-foreground max-w-xs">
-              {urlQuery ? "Try searching for a different title or check back later." : "Search for your favorite tracks, movies, or FM stations instantly."}
+              {urlQuery ? "Try searching for a different title or check back later." : "Search for your favorite tracks, tv series, movies, or FM stations instantly."}
             </p>
           </div>
         )}
