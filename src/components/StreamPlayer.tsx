@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCcw, ExternalLink, Play, AlertTriangle, ChevronRight, Clock } from 'lucide-react';
+import { Server, RefreshCcw, ExternalLink, Play, AlertTriangle, ChevronRight, Clock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface StreamPlayerProps {
   movie: Movie;
@@ -18,11 +19,9 @@ interface VideoSource {
   getTvUrl: (id: string, season: string, episode: string) => string;
 }
 
-// App Theme Color for Player Customization (Purple-600)
 const PLAYER_ACCENT = '9333ea';
 
 const VIDEO_SOURCES: VideoSource[] = [
-  // 1. Vyla (Optimized Primary)
   {
     id: 'vyla',
     name: 'Vyla (Primary)',
@@ -35,35 +34,24 @@ const VIDEO_SOURCES: VideoSource[] = [
       return `https://player.vyla.cc/?id=${id}${!isImdb ? '&tmdb=1' : ''}&s=${s}&e=${e}&color=${PLAYER_ACCENT}`;
     }
   },
-  // 2. VidCore
   {
     id: 'vidcore',
     name: 'VidCore',
     getMovieUrl: (id) => `https://vidcore.net/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidcore.net/embed/tv/${id}/${s}/${e}`
   },
-  // 3. CineSRC
   {
     id: 'cinesrc',
     name: 'CineSRC',
     getMovieUrl: (id) => `https://cinesrc.st/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://cinesrc.st/embed/tv/${id}/${s}/${e}`
   },
-  // 4. VidLux
   {
     id: 'vidlux',
     name: 'VidLux',
     getMovieUrl: (id) => `https://vidlux.xyz/embed/movie/${id}?autoplay=true`,
     getTvUrl: (id, s, e) => `https://vidlux.xyz/embed/tv/${id}/${s}/${e}?autoplay=true`
   },
-  // 5. ZXCSTREAM
-  {
-    id: 'zxcstream',
-    name: 'ZXCSTREAM',
-    getMovieUrl: (id) => `https://a.zxcstream.xyz/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://a.zxcstream.xyz/embed/tv/${id}/${s}/${e}`
-  },
-  // Fallbacks & Mirrors
   {
     id: 'vidsrcto',
     name: 'VidSrc.to',
@@ -71,67 +59,34 @@ const VIDEO_SOURCES: VideoSource[] = [
     getTvUrl: (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`
   },
   {
-    id: 'vidsrccc',
-    name: 'VidSrc.cc',
-    getMovieUrl: (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'autoembed',
-    name: 'AutoEmbed',
-    getMovieUrl: (id) => `https://player.autoembed.app/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://player.autoembed.app/embed/tv/${id}/${s}/${e}`
-  },
-  {
     id: 'smashystream',
     name: 'SmashyStream',
     getMovieUrl: (id) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
     getTvUrl: (id, s, e) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`
-  },
-  {
-    id: 'multiembed',
-    name: 'MultiEmbed',
-    getMovieUrl: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
-    getTvUrl: (id, s, e) => `https://multiembed.mov/?video_id=${id}&s=${s}&e=${e}`
   }
 ];
 
 const FALLBACK_TIMEOUT_MS = 25000;
 
-const DIRECT_VIDEO_EXTENSIONS = ['.mp4', '.m3u8', '.mpd', '.webm', '.ogg', '.mov', '.mkv'];
-
-const isPlayableDirectUrl = (url: string) => {
-  const cleanUrl = url.split('?')[0].toLowerCase();
-  return cleanUrl.startsWith('blob:') || cleanUrl.startsWith('data:video') || DIRECT_VIDEO_EXTENSIONS.some(ext => cleanUrl.endsWith(ext));
-};
-
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const lowerGenre = movie.genre?.toLowerCase() || '';
   const isTv = lowerGenre.includes('tv') || lowerGenre.includes('series');
 
-  const [manualStreamUrl, setManualStreamUrl] = useState<string | null>(null);
-  const effectiveStreamUrl = manualStreamUrl || movie.streamUrl;
-  const hasStreamUrl = Boolean(effectiveStreamUrl);
-  const isDirectVideo = Boolean(effectiveStreamUrl && isPlayableDirectUrl(effectiveStreamUrl));
-
   const [activeSourceIdx, setActiveSourceIdx] = useState(0);
-  const [isDirectMode, setIsDirectMode] = useState(hasStreamUrl && isDirectVideo);
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
-  
   const [timeLeft, setTimeLeft] = useState(FALLBACK_TIMEOUT_MS / 1000);
   const [autoFallbackEnabled, setAutoFallbackEnabled] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    setIsDirectMode(hasStreamUrl && isDirectVideo);
     setActiveSourceIdx(0);
     resetFallbackTimer();
-  }, [effectiveStreamUrl, isDirectVideo, movie.id, season, episode]);
+  }, [movie.id, season, episode]);
 
   useEffect(() => {
-    if (!autoFallbackEnabled || isDirectMode) {
+    if (!autoFallbackEnabled) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
@@ -148,7 +103,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
     timerRef.current = interval;
     return () => clearInterval(interval);
-  }, [autoFallbackEnabled, activeSourceIdx, isDirectMode]);
+  }, [autoFallbackEnabled, activeSourceIdx]);
 
   const resetFallbackTimer = () => {
     setTimeLeft(FALLBACK_TIMEOUT_MS / 1000);
@@ -158,179 +113,121 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const getEmbedUrl = (): string => {
     const source = VIDEO_SOURCES[activeSourceIdx];
     if (!source) return '';
-    return isTv 
-      ? source.getTvUrl(movie.id, season, episode) 
-      : source.getMovieUrl(movie.id);
+    return isTv ? source.getTvUrl(movie.id, season, episode) : source.getMovieUrl(movie.id);
   };
 
   const handleNextSource = () => {
     const nextIdx = (activeSourceIdx + 1) % VIDEO_SOURCES.length;
     setActiveSourceIdx(nextIdx);
-    setIsDirectMode(false);
     resetFallbackTimer();
-    toast.info(`Switching server: ${VIDEO_SOURCES[nextIdx].name}`);
-  };
-
-  const refreshPlayer = () => {
-    setKey(prev => prev + 1);
-    resetFallbackTimer();
-    toast.success("Reloading player...");
   };
 
   const handleOpenExternal = () => {
-    const url = isDirectMode && effectiveStreamUrl ? effectiveStreamUrl : getEmbedUrl();
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(getEmbedUrl(), '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full">
-      {isTv && !isDirectMode && (
-        <div className="flex flex-wrap items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Season:</span>
+    <div className="flex flex-col h-full bg-black">
+      {/* Viewport Area */}
+      <div className="relative flex-1 group">
+        <iframe
+          key={`${activeSourceIdx}-${movie.id}-${season}-${episode}-${key}`}
+          src={getEmbedUrl()}
+          className="w-full h-full border-none"
+          allowFullScreen
+          scrolling="no"
+          referrerPolicy="origin"
+          allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
+        />
+        
+        {/* TV Controls Floating Overlay */}
+        {isTv && (
+          <div className="absolute top-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <Select value={season} onValueChange={setSeason}>
-              <SelectTrigger className="w-[100px] bg-zinc-900 border-none rounded-xl font-bold text-xs h-9">
+              <SelectTrigger className="w-[110px] bg-black/60 backdrop-blur-xl border-white/10 text-white font-black text-[10px] h-9 rounded-full uppercase tracking-widest">
                 <SelectValue placeholder="Season" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-xl">
+              <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-2xl">
                 {Array.from({ length: 15 }).map((_, i) => (
                   <SelectItem key={i + 1} value={(i + 1).toString()} className="font-bold text-xs">Season {i + 1}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Episode:</span>
             <Select value={episode} onValueChange={setEpisode}>
-              <SelectTrigger className="w-[100px] bg-zinc-900 border-none rounded-xl font-bold text-xs h-9">
+              <SelectTrigger className="w-[110px] bg-black/60 backdrop-blur-xl border-white/10 text-white font-black text-[10px] h-9 rounded-full uppercase tracking-widest">
                 <SelectValue placeholder="Episode" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-xl">
+              <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-2xl">
                 {Array.from({ length: 30 }).map((_, i) => (
                   <SelectItem key={i + 1} value={(i + 1).toString()} className="font-bold text-xs">Episode {i + 1}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className="flex-1 flex flex-col bg-black rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-        <div className="relative aspect-video w-full bg-zinc-950 flex items-center justify-center">
-          {isDirectMode && effectiveStreamUrl ? (
-            isDirectVideo ? (
-              <video
-                key={`${effectiveStreamUrl}-${key}`}
-                src={effectiveStreamUrl}
-                className="w-full h-full"
-                controls
-                autoPlay
-                preload="auto"
-                playsInline
-              />
-            ) : (
-              <iframe
-                key={`${effectiveStreamUrl}-${key}`}
-                src={effectiveStreamUrl}
-                className="w-full h-full border-none"
-                allowFullScreen
-                scrolling="auto"
-                referrerPolicy="origin"
-                allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
-              />
-            )
-          ) : (
-            <iframe
-              key={`${activeSourceIdx}-${movie.id}-${season}-${episode}-${key}`}
-              src={getEmbedUrl()}
-              className="w-full h-full border-none"
-              allowFullScreen
-              scrolling="no"
-              referrerPolicy="origin"
-              allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
-            />
-          )}
-        </div>
-
-        <div className="p-4 bg-zinc-900 border-t border-white/5 flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <Server size={14} className="text-purple-400" />
-              <span className="font-bold">
-                Active Server: <span className="text-purple-400">{isDirectMode ? 'Direct Link' : VIDEO_SOURCES[activeSourceIdx].name}</span>
-              </span>
+      {/* Controller Bar */}
+      <div className="p-4 md:p-6 bg-zinc-950 border-t border-white/5 flex flex-col gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Live Station</span>
             </div>
-
-            <div className="flex items-center gap-3">
-              {autoFallbackEnabled && !isDirectMode && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-purple-600/10 border border-purple-500/20 rounded-lg">
-                  <Clock size={12} className="text-purple-400" />
-                  <span className="text-[10px] font-black text-purple-300">Auto-fallback in {Math.round(timeLeft)}s</span>
-                  <button 
-                    onClick={() => setAutoFallbackEnabled(false)}
-                    className="text-[10px] font-black text-white hover:text-red-400 underline underline-offset-2 ml-1"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-              <button onClick={refreshPlayer} className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 hover:text-white transition-colors">
-                <RefreshCcw size={12} /> Reload Player
-              </button>
-              <Button onClick={handleOpenExternal} variant="outline" size="sm" className="h-8 rounded-lg border-purple-500/20 hover:bg-purple-500/10 text-purple-300 hover:text-white text-[10px] font-bold gap-1.5">
-                <ExternalLink size={12} /> Open in New Tab
-              </Button>
+            <div className="flex items-center gap-2">
+              <Server size={14} className="text-purple-500" />
+              <p className="text-xs font-bold text-zinc-300 uppercase tracking-widest">
+                Server: <span className="text-purple-400">{VIDEO_SOURCES[activeSourceIdx].name}</span>
+              </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
-            <div className="flex items-start gap-2.5 text-left">
-              <AlertTriangle size={16} className="text-purple-400 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <p className="text-xs font-bold text-purple-300">Trouble with the current server?</p>
-                <p className="text-[10px] text-zinc-400 leading-normal">
-                  If you encounter ads or buffering, try switching to a different server manually or let the auto-fallback handle it.
-                </p>
+          <div className="flex items-center gap-3">
+            {autoFallbackEnabled && (
+              <div className="hidden sm:flex items-center gap-2.5 px-4 py-1.5 bg-purple-600/10 border border-purple-500/20 rounded-full">
+                <Clock size={12} className="text-purple-400" />
+                <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider">Fallback in {Math.round(timeLeft)}s</span>
+                <button onClick={() => setAutoFallbackEnabled(false)} className="text-[9px] font-black text-white hover:text-red-400 uppercase tracking-widest ml-1">Cancel</button>
               </div>
-            </div>
-            <Button 
-              onClick={handleNextSource}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-9 px-4 rounded-xl shrink-0 gap-1.5"
-            >
-              Try Next Server
-              <ChevronRight size={14} />
+            )}
+            <button onClick={() => setKey(k => k + 1)} className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors" title="Reload Player">
+              <RefreshCcw size={16} />
+            </button>
+            <Button onClick={handleOpenExternal} variant="outline" className="rounded-full border-white/10 h-10 px-5 text-[10px] font-black uppercase tracking-widest gap-2 bg-white/5">
+              <ExternalLink size={14} />
+              Popout
             </Button>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Server Manually</p>
-            <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1 bg-white/5 rounded-xl">
-              {hasStreamUrl && isDirectVideo && (
-                <button
-                  onClick={() => {
-                    setIsDirectMode(true);
-                    setAutoFallbackEnabled(false);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${isDirectMode ? 'bg-green-600 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}
-                >
-                  Direct Video
-                </button>
-              )}
-              {VIDEO_SOURCES.map((source, idx) => (
-                <button
-                  key={source.id}
-                  onClick={() => {
-                    setActiveSourceIdx(idx);
-                    setIsDirectMode(false);
-                    setAutoFallbackEnabled(false);
-                    toast.success(`Switched to ${source.name}`);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${(!isDirectMode && activeSourceIdx === idx) ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}
-                >
-                  {source.name}
-                </button>
-              ))}
+        {/* Server Switcher Grid */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Switch Station Node</p>
+            <div className="flex items-center gap-1.5 text-[9px] text-zinc-500 font-bold">
+              <ShieldCheck size={12} className="text-green-500" />
+              SECURE TLS ACTIVE
             </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {VIDEO_SOURCES.map((source, idx) => (
+              <button
+                key={source.id}
+                onClick={() => {
+                  setActiveSourceIdx(idx);
+                  setAutoFallbackEnabled(false);
+                }}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                  activeSourceIdx === idx 
+                    ? "bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/20" 
+                    : "bg-white/5 border-white/5 text-zinc-500 hover:text-zinc-200 hover:border-white/10"
+                )}
+              >
+                {source.name.split(' ')[0]}
+              </button>
+            ))}
           </div>
         </div>
       </div>
