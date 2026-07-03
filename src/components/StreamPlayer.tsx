@@ -20,14 +20,35 @@ interface VideoSource {
 }
 
 const VIDEO_SOURCES: VideoSource[] = [
-  // Primary Source (Requested)
+  // 1. VidCore (Primary 1)
+  {
+    id: 'vidcore',
+    name: 'VidCore (Primary 1)',
+    getMovieUrl: (id) => `https://vidcore.net/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidcore.net/embed/tv/${id}/${s}/${e}`
+  },
+  // 2. CineSRC (Primary 2)
   {
     id: 'cinesrc',
-    name: 'CineSRC (Primary)',
-    getMovieUrl: (id) => `https://cinesrc.st/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://cinesrc.st/tv/${id}/${s}/${e}`
+    name: 'CineSRC (Primary 2)',
+    getMovieUrl: (id) => `https://cinesrc.st/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://cinesrc.st/embed/tv/${id}/${s}/${e}`
   },
-  // Major Providers
+  // 3. VidLux (Primary 3)
+  {
+    id: 'vidlux',
+    name: 'VidLux (Primary 3)',
+    getMovieUrl: (id) => `https://vidlux.xyz/embed/movie/${id}?autoplay=true`,
+    getTvUrl: (id, s, e) => `https://vidlux.xyz/embed/tv/${id}/${s}/${e}?autoplay=true`
+  },
+  // 4. ZXCSTREAM (Primary 4)
+  {
+    id: 'zxcstream',
+    name: 'ZXCSTREAM (Primary 4)',
+    getMovieUrl: (id) => `https://a.zxcstream.xyz/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://a.zxcstream.xyz/embed/tv/${id}/${s}/${e}`
+  },
+  // Fallbacks & Mirrors
   {
     id: 'vidsrcto',
     name: 'VidSrc.to (Fastest)',
@@ -64,7 +85,6 @@ const VIDEO_SOURCES: VideoSource[] = [
     getMovieUrl: (id) => `https://vidfast.pro/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidfast.pro/tv/${id}/${s}/${e}`
   },
-  // The "Vid" Family & Mirrors
   {
     id: '1embed',
     name: '1Embed',
@@ -347,7 +367,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <div className="space-y-0.5">
                 <p className="text-xs font-bold text-purple-300">Server not loading or giving ads?</p>
                 <p className="text-[10px] text-zinc-400 leading-normal">
-                  CineSRC is the primary source. If it doesn't fetch, we'll automatically try VidSrc and other mirrors.
+                  Our system defaults to the premier servers (VidCore, CineSRC, VidLux, ZXCSTREAM) and automatically cycles through mirrors if they fail.
                 </p>
               </div>
             </div>
