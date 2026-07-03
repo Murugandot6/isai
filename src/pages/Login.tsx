@@ -4,13 +4,32 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { Music, Mail, Lock, User, ArrowRight, Loader2, Info, KeyRound, Eye, EyeOff, Terminal, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-// Importing the local video file from the src directory
-import backgroundVideo from '@/anbae.mp4';
+const TERMINAL_LINES = [
+  'initializing session handshake...',
+  'resolving node cluster 10.114.2.0/24',
+  'mounting virtual filesystem [ok]',
+  'requesting auth token exchange',
+  'token accepted — scope: read/write',
+  'indexing 48213 objects',
+  'building dependency graph...',
+  'compiling module cache (312/312)',
+  'verifying checksum: 9f3a1c...e02b  [match]',
+  'opening secure channel on port 8443',
+  'syncing shard 3 of 7',
+  'syncing shard 4 of 7',
+  'applying patch delta 0447',
+  'rebuilding search index...',
+  'flushing write buffer',
+  'session integrity check passed',
+  'all systems nominal'
+];
+
+const GLYPHS = 'アイウエオカキクケコサシスセソ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const Login = () => {
   const { session } = useAuth();
@@ -18,12 +37,24 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+
+  // Player/Canvas state
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [timeString, setTimeString] = useState('');
+  
+  // Terminal logs state
+  const [terminalText, setTerminalText] = useState<string[]>([]);
+  const [currentLineIndex, setCurrentIndex] = useState(0);
+
+  // Custom Stat values for visual flair
+  const [stat1, setStat1] = useState(85);
+  const [stat2, setStat2] = useState(42);
+  const [stat3, setStat4] = useState(64);
 
   useEffect(() => {
     if (session) {
@@ -31,25 +62,134 @@ const Login = () => {
     }
   }, [session, navigate]);
 
+  // Handle matrix digital rain effect on canvas
   useEffect(() => {
-    const playVideo = async () => {
-      const video = videoRef.current;
-      if (video) {
-        try {
-          video.muted = true;
-          await video.play();
-        } catch (err: any) {
-          const forcePlay = () => {
-            video?.play().catch(() => {});
-            document.removeEventListener('click', forcePlay);
-            document.removeEventListener('touchstart', forcePlay);
-          };
-          document.addEventListener('click', forcePlay);
-          document.addEventListener('touchstart', forcePlay);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = audioCtxSetup(canvas);
+    let animationFrameId: number;
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const fontSize = 11;
+    const columns = Math.ceil(window.innerWidth / fontSize);
+    const rainDrops: number[] = Array(columns).fill(1);
+
+    const draw = () => {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#8b5cf6'; // Violet theme matching "anbae"
+      ctx.font = `${fontSize}px monospace`;
+
+      for (let i = 0; i < rainDrops.length; i++) {
+        const text = String.fromCharCode(Math.floor(Math.random() * 93) + 33);
+        const x = i * fontSize;
+        const y = rainPeriod(i) * fontSize;
+
+        // Randomly color primary / purple hues for matrix look
+        if (Math.random() > 0.98) {
+          ctx.fillStyle = '#ffffff'; // White flash
+        } else if (Math.random() > 0.85) {
+          ctx.fillStyle = '#a855f7'; // Bright purple
+        } else {
+          ctx.subtractAlpha = 0.15;
+          ctx.fillStyle = 'rgba(147, 51, 234, 0.4)';
         }
+
+        ctx.fillText(text, x, y);
+
+        if (y > canvas.height && Math.random() > 0.975) {
+          rainDropsRef.current[i] = 0;
+        }
+        rainDropsRef.current[i]++;
       }
     };
-    playVideo();
+
+    const interval = setInterval(draw, 35);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
+
+  // Set up timer for clock and terminal animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      setTimeLeft(now.toLocaleTimeString());
+    }, 1000);
+
+    const termInterval = setInterval(() => {
+      setTerminalLines(prev => {
+        const nextIdx = Math.floor(Math.random() * PREDEFINED_TERMINAL_LOGS.length);
+        const line = PREDEFINED_ARTISTS_INFO[Math.floor(Math.random() * PREDEFINED_ARTISTS_INFO.length)] || PREDEFINED_ARTISTS.fallback;
+        return [...prev.slice(1), line];
+      });
+    }, 4500);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(timerInterval);
+    };
+  }, []);
+
+  const [clockTime, setClockTime] = useState('');
+  useEffect(() => {
+    const updateClock = () => {
+      const d = new Date();
+      setClock(d.toTimeString().split(' ')[0]);
+    };
+    updateClock();
+    const t = setInterval(updateClock, 1000);
+    return () => clearInterval(tvTimer);
+  }, []);
+
+  // Handle dynamic system resource stat bars jitter
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStat1(Math.floor(65 + Math.random() * 25));
+      setStat2(Math.floor(40 + Math.random() * 55));
+      setStat4(Math.floor(70 + Math.random() * 28));
+    }, 1200);
+    return () => clearInterval(interval);
+  }, []);
+
+  // terminal typewriter log simulator
+  useEffect(() => {
+    let lineIdx = 0;
+    let charIdx = 0;
+    let currentLine = '';
+    let accumulated: string[] = [];
+
+    const interval = setInterval(() => {
+      if (lineIdx >= TERMINAL_LINES.length) {
+        accumulated = [];
+        lineIdx = 0;
+      }
+      
+      const text = TERMINAL_LINES[lineIdx];
+      if (charIdx <= text.length) {
+        currentLine = text.substring(0, charIdx);
+        setTerminalText([...accumulated, currentLine]);
+        charIdx++;
+      } else {
+        accumulated.push(text);
+        if (accumulated.length > 10) accumulated.shift();
+        lineIdx++;
+        charIdx = 0;
+      }
+    }, 80);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -107,76 +247,128 @@ const Login = () => {
     }
   };
 
+  // Canvas helper variables
+  const rainDropsRef = useRef<number[]>([]);
+  const rainPeriod = (i: number) => {
+    if (rainDropsRef.current[i] === undefined) {
+      rainDropsRef.current[i] = Math.random() * -50;
+    }
+    return rainDropsRef.current[i];
+  };
+
+  const audioCtxSetup = (canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error("Could not acquire 2D context");
+    return ctx;
+  };
+
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black">
-      {/* Background Video with Overlay */}
-      <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          src={backgroundVideo}
-          className="absolute inset-0 w-full h-full object-cover opacity-70 scale-105"
-        />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black font-mono">
+      {/* 1. Hacking Matrix-style rain background */}
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 block pointer-events-none opacity-40" />
+
+      {/* Background radial gradient mask for high visual readability in the center */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/85 to-black/55 z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#000_90%)] z-0" />
+
+      {/* 2. Left Terminal Sidebar Logs Screen (Hidden on small mobile screens, perfect for aesthetics) */}
+      <div className="hidden lg:block fixed top-10 left-10 w-96 max-h-[500px] h-[50vh] bg-[#050a08]/75 border border-[rgba(0,255,140,0.3)] shadow-[0_0_30px_rgba(0,255,140,0.08)] rounded-xl p-5 overflow-hidden backdrop-blur-md text-left text-[#6dffb0] select-none text-[11px] leading-relaxed">
+        <div className="flex items-center justify-between border-b border-[rgba(0,255,140,0.15)] pb-3 mb-4 text-[rgba(150,255,200,0.5)]">
+          <span className="flex items-center gap-1.5 font-bold uppercase tracking-widest text-[9px]">
+            <Terminal size={12} className="text-primary animate-pulse" />
+            root@node-7712:~#
+          </span>
+          <span className="font-bold tracking-wider">{new Date().toTimeString().slice(0, 8)}</span>
+        </div>
+        <div className="space-y-1.5 min-h-[300px] overflow-hidden">
+          {terminalText.map((line, idx) => (
+            <div key={idx} className={cn(
+              "font-mono truncate transition-all duration-300",
+              idx === terminalText.length - 1 ? "text-white opacity-100 font-bold" : "opacity-60"
+            )}>
+              {idx === terminalText.length - 1 ? <span className="text-primary pr-1">></span> : <span className="text-muted-foreground/30 pr-1">$</span>}
+              {line}
+            </div>
+          ))}
+          <span className="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-1" />
+        </div>
       </div>
 
-      {/* Ultra-Compact Glass Morphism Login Card */}
-      <div className="relative w-full max-w-[300px] space-y-5 bg-white/[0.03] backdrop-blur-3xl p-5 md:p-6 rounded-[1.5rem] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)] animate-in fade-in zoom-in duration-700 z-20">
-        <div className="text-center space-y-1">
-          <div className="inline-flex items-center justify-center p-2.5 bg-primary/20 backdrop-blur-xl rounded-xl mb-1 border border-primary/20 shadow-2xl shadow-primary/10">
-            <Music className="text-primary" size={20} />
+      {/* 3. Stat Panels (Aligns floating at bottom-right corner) */}
+      <div className="hidden lg:block fixed bottom-10 right-10 text-right space-y-3 z-10 text-[rgba(150,255,200,0.65)] text-[10px] select-none text-shadow">
+        <div className="flex items-center justify-end gap-3.5">
+          <span className="font-black uppercase tracking-widest">THROUGHPUT</span>
+          <div className="w-32 h-2 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] rounded-full overflow-hidden relative">
+            <div className="absolute inset-y-0 left-0 bg-primary/70 transition-all duration-300" style={{ width: `${stat1}%` }} />
           </div>
-          <h1 className="text-2xl font-black tracking-tighter italic text-white">anbae</h1>
-          <p className="text-white/40 font-medium text-[10px] tracking-wide uppercase">
-            {isSignUp ? 'Join' : 'Sign In'}
+        </div>
+        <div className="flex items-center justify-end gap-3.5">
+          <span className="font-black uppercase tracking-widest">INTEGRITY</span>
+          <div className="w-32 h-2 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] rounded-full overflow-hidden relative">
+            <div className="absolute inset-y-0 left-0 bg-primary/70 transition-all duration-300" style={{ width: `${stat2}%` }} />
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3.5">
+          <span className="font-black uppercase tracking-widest">SYNC</span>
+          <div className="w-32 h-2 bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] rounded-full overflow-hidden relative">
+            <div className="absolute inset-y-0 left-0 bg-primary/70 transition-all duration-300" style={{ width: `${stat3}%` }} />
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Hacker glow themed login card */}
+      <div className="relative w-full max-w-[310px] space-y-6 bg-[#050a08]/80 backdrop-blur-2xl p-6 rounded-[2rem] border border-[rgba(0,255,140,0.35)] shadow-[0_0_35px_rgba(0,255,140,0.12)] animate-in fade-in zoom-in duration-700 z-20">
+        <div className="text-center space-y-1.5">
+          <div className="inline-flex items-center justify-center p-3 bg-primary/20 backdrop-blur-xl rounded-2xl mb-1.5 border border-primary/30 shadow-[0_0_20px_rgba(147,51,234,0.3)]">
+            <Music className="text-primary animate-pulse" size={20} />
+          </div>
+          <h1 className="text-3xl font-black tracking-tighter italic text-white text-shadow-glow">anbae</h1>
+          <p className="text-primary/70 font-black text-[10px] tracking-[0.25em] uppercase">
+            {isSignUp ? 'REGISTER' : 'AUTHORIZE'}
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-3">
+        <form onSubmit={handleAuth} className="space-y-4">
           {isSignUp && (
             <div className="group relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={14} />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
               <Input
                 type="text"
-                placeholder="Username"
+                placeholder="USERNAME"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="pl-10 bg-white/[0.04] border-white/5 h-10 rounded-lg focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.06] transition-all text-white placeholder:text-white/10 text-xs"
+                className="pl-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold uppercase text-[10px] tracking-wider"
                 required
               />
             </div>
           )}
 
           <div className="group relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={14} />
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
             <Input
               type="email"
-              placeholder="Email"
+              placeholder="EMAIL ADDR"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 bg-white/[0.04] border-white/5 h-10 rounded-lg focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.06] transition-all text-white placeholder:text-white/10 text-xs"
+              className="pl-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold uppercase text-[10px] tracking-wider"
               required
             />
           </div>
 
           <div className="group relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={14} />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
             <Input
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
+              placeholder="ACCESS PHRASE"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 bg-white/[0.04] border-white/5 h-10 rounded-lg focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.06] transition-all text-white placeholder:text-white/10 text-xs"
+              className="pl-10 pr-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold uppercase text-[10px] tracking-wider"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/10 hover:text-white transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-primary/20 hover:text-primary transition-colors"
             >
               {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
@@ -184,13 +376,13 @@ const Login = () => {
 
           {isSignUp && (
             <div className="group relative">
-              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors" size={14} />
+              <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={14} />
               <Input
                 type="text"
-                placeholder="Invite Code"
+                placeholder="INVITE CODE"
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
-                className="pl-10 bg-white/[0.04] border-white/5 h-10 rounded-lg focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-white/[0.06] transition-all text-white placeholder:text-white/10 font-bold tracking-widest text-xs"
+                className="pl-10 bg-black/40 border-[rgba(0,255,140,0.2)] h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-[#050a08] transition-all text-white placeholder:text-zinc-600 font-bold tracking-[0.2em] text-[10px]"
                 required
               />
             </div>
@@ -199,32 +391,32 @@ const Login = () => {
           <Button 
             type="submit" 
             disabled={loading}
-            className="w-full h-10 rounded-lg font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary hover:bg-primary/90 text-white"
+            className="w-full h-11 rounded-xl font-black text-[11px] uppercase tracking-[0.25em] shadow-xl shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98] bg-primary hover:bg-primary/90 text-white border border-primary/20"
           >
             {loading ? (
               <Loader2 className="animate-spin" size={16} />
             ) : (
               <span className="flex items-center justify-center gap-2">
-                {isSignUp ? 'Create' : 'Sign In'}
+                {isSignUp ? 'COMPILE' : 'ACCESS'}
                 <ArrowRight size={14} />
               </span>
             )}
           </Button>
         </form>
 
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-4">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-[9px] font-bold text-white/30 hover:text-primary transition-all uppercase tracking-widest"
+            className="text-[9px] font-black text-primary/50 hover:text-primary transition-all uppercase tracking-[0.15em] border border-[rgba(0,255,140,0.15)] px-4 py-1.5 rounded-full hover:bg-[rgba(0,255,140,0.03)]"
           >
-            {isSignUp ? 'Back to Sign In' : "Request Access"}
+            {isSignUp ? 'Return to Access' : "Generate Guest Key"}
           </button>
 
           {isSignUp && (
-            <div className="flex gap-2 p-2.5 rounded-lg bg-white/[0.01] border border-white/5 animate-in fade-in slide-in-from-bottom-1 duration-500">
-              <Info size={10} className="text-primary shrink-0 mt-0.5" />
-              <p className="text-[8px] text-white/30 leading-relaxed text-left">
-                Access is restricted. Contact <a href="https://www.instagram.com/11x13y/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">11x13y</a> for a code.
+            <div className="flex gap-2.5 p-3 rounded-2xl bg-black/30 border border-[rgba(0,255,140,0.15)] animate-in fade-in slide-in-from-bottom-2 duration-500 text-left">
+              <ShieldAlert size={12} className="text-primary shrink-0 mt-0.5" />
+              <p className="text-[8px] text-primary/75 leading-relaxed font-semibold">
+                Access is restricted to invitees. Contact node master <a href="https://www.instagram.com/11x13y/" target="_blank" rel="noopener noreferrer" className="text-white hover:underline font-bold">11x13y</a> for a decryption code.
               </p>
             </div>
           )}
@@ -233,5 +425,10 @@ const Login = () => {
     </div>
   );
 };
+
+// Helper for conditional styling class merges
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 export default Login;
