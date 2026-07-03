@@ -5,7 +5,6 @@ import { Movie } from '@/context/MusicContext';
 import { Server, RefreshCcw, ExternalLink, Play, AlertTriangle, ChevronRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 interface StreamPlayerProps {
@@ -19,13 +18,22 @@ interface VideoSource {
   getTvUrl: (id: string, season: string, episode: string) => string;
 }
 
+// App Theme Color for Player Customization (Purple-600)
+const PLAYER_ACCENT = '9333ea';
+
 const VIDEO_SOURCES: VideoSource[] = [
-  // 1. Vyla (New Primary)
+  // 1. Vyla (Optimized Primary)
   {
     id: 'vyla',
     name: 'Vyla (Primary)',
-    getMovieUrl: (id) => `https://player.vyla.cc/?id=${id}`,
-    getTvUrl: (id, s, e) => `https://player.vyla.cc/?id=${id}&s=${s}&e=${e}`
+    getMovieUrl: (id) => {
+      const isImdb = id.startsWith('tt');
+      return `https://player.vyla.cc/?id=${id}${!isImdb ? '&tmdb=1' : ''}&color=${PLAYER_ACCENT}`;
+    },
+    getTvUrl: (id, s, e) => {
+      const isImdb = id.startsWith('tt');
+      return `https://player.vyla.cc/?id=${id}${!isImdb ? '&tmdb=1' : ''}&s=${s}&e=${e}&color=${PLAYER_ACCENT}`;
+    }
   },
   // 2. VidCore
   {
@@ -111,7 +119,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
-  const [magnetInput, setMagnetInput] = useState('');
   
   const [timeLeft, setTimeLeft] = useState(FALLBACK_TIMEOUT_MS / 1000);
   const [autoFallbackEnabled, setAutoFallbackEnabled] = useState(true);
@@ -173,15 +180,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const handleOpenExternal = () => {
     const url = isDirectMode && effectiveStreamUrl ? effectiveStreamUrl : getEmbedUrl();
     window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleDirectPlay = () => {
-    if (!magnetInput.trim()) return;
-    setManualStreamUrl(magnetInput.trim());
-    setIsDirectMode(true);
-    setKey(prev => prev + 1);
-    setAutoFallbackEnabled(false);
-    toast.success("Playing custom direct link!");
   };
 
   return (
