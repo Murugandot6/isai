@@ -2,16 +2,61 @@
 
 import React, { useState, useEffect } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCcw, ExternalLink, Play } from 'lucide-react';
+import { Server, RefreshCcw, ExternalLink, Play, AlertTriangle, ChevronRight, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 interface StreamPlayerProps {
   movie: Movie;
 }
 
-type EmbedServerType = 'direct' | 'cinepro';
+interface VideoSource {
+  id: string;
+  name: string;
+  getMovieUrl: (id: string) => string;
+  getTvUrl: (id: string, season: string, episode: string) => string;
+}
+
+const VIDEO_SOURCES: VideoSource[] = [
+  {
+    id: 'vidsrcto',
+    name: 'VidSrc.to (Fastest)',
+    getMovieUrl: (id) => `https://vidsrc.to/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'vidsrccc',
+    name: 'VidSrc.cc (No Ads)',
+    getMovieUrl: (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'autoembed',
+    name: 'AutoEmbed',
+    getMovieUrl: (id) => `https://player.autoembed.app/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://player.autoembed.app/embed/tv/${id}/${s}/${e}`
+  },
+  {
+    id: 'smashystream',
+    name: 'SmashyStream',
+    getMovieUrl: (id) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
+    getTvUrl: (id, s, e) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`
+  },
+  {
+    id: 'multiembed',
+    name: 'MultiEmbed',
+    getMovieUrl: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
+    getTvUrl: (id, s, e) => `https://multiembed.mov/?video_id=${id}&s=${s}&e=${e}`
+  },
+  {
+    id: 'vidlink',
+    name: 'VidLink.pro',
+    getMovieUrl: (id) => `https://vidlink.pro/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`
+  }
+];
 
 const DIRECT_VIDEO_EXTENSIONS = ['.mp4', '.m3u8', '.mpd', '.webm', '.ogg', '.mov', '.mkv'];
 
@@ -29,50 +74,54 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const hasStreamUrl = Boolean(effectiveStreamUrl);
   const isDirectVideo = Boolean(effectiveStreamUrl && isPlayableDirectUrl(effectiveStreamUrl));
 
-  const defaultEmbedServer = hasStreamUrl && isDirectVideo ? 'direct' : 'cinepro';
-  const [embedServer, setEmbedServer] = useState<EmbedServerType>(defaultEmbedServer);
+  const [activeSourceIdx, setActiveSourceIdx] = useState(0);
+  const [isDirectMode, setIsDirectMode] = useState(hasStreamUrl && isDirectVideo);
   const [season, setSeason] = useState('1');
   const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
   const [magnetInput, setMagnetInput] = useState('');
 
   useEffect(() => {
-    const nextDefault = hasStreamUrl && isDirectVideo ? 'direct' : 'cinepro';
-    setEmbedServer(nextDefault);
-  }, [effectiveStreamUrl, isDirectVideo]);
+    setIsDirectMode(hasStreamUrl && isDirectVideo);
+    setActiveSourceIdx(0);
+  }, [effectiveStreamUrl, isDirectVideo, movie.id]);
 
-  // CinePro API implementation based on official specs
   const getEmbedUrl = (): string => {
-    const id = movie.id;
-    const s = season;
-    const e = episode;
-
-    if (isTv) {
-      return `https://embed.cinepro.cc/tv/${id}/${s}/${e}`;
-    } else {
-      return `https://embed.cinepro.cc/movie/${id}`;
-    }
+    const source = VIDEO_SOURCES[activeSourceIdx];
+    if (!source) return '';
+    return isTv 
+      ? source.getTvUrl(movie.id, season, episode) 
+      : source.getMovieUrl(movie.id);
   };
 
-  const refreshPlayer = () => setKey(prev => prev + 1);
+  const handleNextSource = () => {
+    const nextIdx = (activeSourceIdx + 1) % VIDEO_SOURCES.length;
+    setActiveSourceIdx(nextIdx);
+    setIsDirectMode(false);
+    toast.info(`Switching to Server: ${VIDEO_SOURCES[nextIdx].name}`);
+  };
+
+  const refreshPlayer = () => {
+    setKey(prev => prev + 1);
+    toast.success("Reloading player...");
+  };
 
   const handleOpenExternal = () => {
-    if (embedServer === 'direct' && effectiveStreamUrl) {
-      window.open(effectiveStreamUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      window.open(getEmbedUrl(), '_blank', 'noopener,noreferrer');
-    }
+    const url = isDirectMode && effectiveStreamUrl ? effectiveStreamUrl : getEmbedUrl();
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleDirectPlay = () => {
     if (!magnetInput.trim()) return;
     setManualStreamUrl(magnetInput.trim());
+    setIsDirectMode(true);
     setKey(prev => prev + 1);
+    toast.success("Playing custom direct link!");
   };
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {isTv && embedServer !== 'direct' && (
+      {isTv && !isDirectMode && (
         <div className="flex flex-wrap items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Season:</span>
@@ -104,8 +153,9 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       )}
 
       <div className="flex-1 flex flex-col bg-black rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+        {/* Video Player Frame */}
         <div className="relative aspect-video w-full bg-zinc-950 flex items-center justify-center">
-          {embedServer === 'direct' && effectiveStreamUrl ? (
+          {isDirectMode && effectiveStreamUrl ? (
             isDirectVideo ? (
               <video
                 key={`${effectiveStreamUrl}-${key}`}
@@ -129,7 +179,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             )
           ) : (
             <iframe
-              key={`${embedServer}-${movie.id}-${season}-${episode}-${key}`}
+              key={`${activeSourceIdx}-${movie.id}-${season}-${episode}-${key}`}
               src={getEmbedUrl()}
               className="w-full h-full border-none"
               allowFullScreen
@@ -140,12 +190,14 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           )}
         </div>
 
+        {/* Controls & Fallback Bar */}
         <div className="p-4 bg-zinc-900 border-t border-white/5 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs text-white/60">
               <Server size={14} className="text-purple-400" />
-              <span className="font-bold">Streaming Source (CinePro API • {isTv ? 'TV' : 'Movie'}):</span>
-              <span className="text-[10px]">• Auto HD Quality • Ad-blocked</span>
+              <span className="font-bold">
+                Active Server: <span className="text-purple-400">{isDirectMode ? 'Direct Link' : VIDEO_SOURCES[activeSourceIdx].name}</span>
+              </span>
             </div>
 
             <div className="flex items-center gap-3">
@@ -158,26 +210,55 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             </div>
           </div>
 
+          {/* Fallback & Server Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
+            <div className="flex items-start gap-2.5 text-left">
+              <AlertTriangle size={16} className="text-purple-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-purple-300">Server not loading or giving ads?</p>
+                <p className="text-[10px] text-zinc-400 leading-normal">
+                  If the current server fails, click "Try Next Server" to automatically switch to a working mirror.
+                </p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleNextSource}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-9 px-4 rounded-xl shrink-0 gap-1.5"
+            >
+              Try Next Server
+              <ChevronRight size={14} />
+            </Button>
+          </div>
+
+          {/* Manual Server Selection */}
           <div className="space-y-2">
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Active Source</p>
+            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Server Manually</p>
             <div className="flex flex-wrap gap-2">
               {hasStreamUrl && isDirectVideo && (
                 <button
-                  onClick={() => setEmbedServer('direct')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === 'direct' ? 'bg-green-600 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}
+                  onClick={() => setIsDirectMode(true)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${isDirectMode ? 'bg-green-600 text-white' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}
                 >
                   Direct Video
                 </button>
               )}
-              <button
-                onClick={() => setEmbedServer('cinepro')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${embedServer === 'cinepro' ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}
-              >
-                CinePro Player
-              </button>
+              {VIDEO_SOURCES.map((source, idx) => (
+                <button
+                  key={source.id}
+                  onClick={() => {
+                    setActiveSourceIdx(idx);
+                    setIsDirectMode(false);
+                    toast.success(`Switched to ${source.name}`);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${(!isDirectMode && activeSourceIdx === idx) ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}
+                >
+                  {source.name}
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* Custom Direct Link Input */}
           <div className="pt-2 border-t border-white/5">
             <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Paste Custom Direct Link</p>
             <div className="flex gap-2 mt-1">
