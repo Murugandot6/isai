@@ -20,44 +20,51 @@ interface VideoSource {
 }
 
 const VIDEO_SOURCES: VideoSource[] = [
-  // 1. VidCore (Primary 1)
+  // 1. Vyla (New Primary)
+  {
+    id: 'vyla',
+    name: 'Vyla (Primary)',
+    getMovieUrl: (id) => `https://player.vyla.cc/?id=${id}`,
+    getTvUrl: (id, s, e) => `https://player.vyla.cc/?id=${id}&s=${s}&e=${e}`
+  },
+  // 2. VidCore
   {
     id: 'vidcore',
-    name: 'VidCore (Primary 1)',
+    name: 'VidCore',
     getMovieUrl: (id) => `https://vidcore.net/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidcore.net/embed/tv/${id}/${s}/${e}`
   },
-  // 2. CineSRC (Primary 2)
+  // 3. CineSRC
   {
     id: 'cinesrc',
-    name: 'CineSRC (Primary 2)',
+    name: 'CineSRC',
     getMovieUrl: (id) => `https://cinesrc.st/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://cinesrc.st/embed/tv/${id}/${s}/${e}`
   },
-  // 3. VidLux (Primary 3)
+  // 4. VidLux
   {
     id: 'vidlux',
-    name: 'VidLux (Primary 3)',
+    name: 'VidLux',
     getMovieUrl: (id) => `https://vidlux.xyz/embed/movie/${id}?autoplay=true`,
     getTvUrl: (id, s, e) => `https://vidlux.xyz/embed/tv/${id}/${s}/${e}?autoplay=true`
   },
-  // 4. ZXCSTREAM (Primary 4)
+  // 5. ZXCSTREAM
   {
     id: 'zxcstream',
-    name: 'ZXCSTREAM (Primary 4)',
+    name: 'ZXCSTREAM',
     getMovieUrl: (id) => `https://a.zxcstream.xyz/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://a.zxcstream.xyz/embed/tv/${id}/${s}/${e}`
   },
   // Fallbacks & Mirrors
   {
     id: 'vidsrcto',
-    name: 'VidSrc.to (Fastest)',
+    name: 'VidSrc.to',
     getMovieUrl: (id) => `https://vidsrc.to/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}`
   },
   {
     id: 'vidsrccc',
-    name: 'VidSrc.cc (No Ads)',
+    name: 'VidSrc.cc',
     getMovieUrl: (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidsrc.cc/v2/embed/tv/${id}/${s}/${e}`
   },
@@ -78,88 +85,10 @@ const VIDEO_SOURCES: VideoSource[] = [
     name: 'MultiEmbed',
     getMovieUrl: (id) => `https://multiembed.mov/?video_id=${id}&tmdb=1`,
     getTvUrl: (id, s, e) => `https://multiembed.mov/?video_id=${id}&s=${s}&e=${e}`
-  },
-  {
-    id: 'vidfast',
-    name: 'VidFast',
-    getMovieUrl: (id) => `https://vidfast.pro/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidfast.pro/tv/${id}/${s}/${e}`
-  },
-  {
-    id: '1embed',
-    name: '1Embed',
-    getMovieUrl: (id) => `https://1embed.cc/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://1embed.cc/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: '2embed',
-    name: '2Embed',
-    getMovieUrl: (id) => `https://www.2embed.cc/embed/${id}`,
-    getTvUrl: (id, s, e) => `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`
-  },
-  {
-    id: 'vixsrc',
-    name: 'VixSrc',
-    getMovieUrl: (id) => `https://vixsrc.to/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vixsrc.to/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'vidlink',
-    name: 'VidLink.pro',
-    getMovieUrl: (id) => `https://vidlink.pro/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'vidsrccx',
-    name: 'VidSrc.cx',
-    getMovieUrl: (id) => `https://vidsrc.cx/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrc.cx/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'vidsrcco',
-    name: 'VidSrc.co',
-    getMovieUrl: (id) => `https://vidsrc.co/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrc.co/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'vidsrcme',
-    name: 'VidSrc.me',
-    getMovieUrl: (id) => `https://vidsrcme.ru/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrcme.ru/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'vidsrcrip',
-    name: 'VidSrc.rip',
-    getMovieUrl: (id) => `https://vidsrc.rip/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrc.rip/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'primesrc',
-    name: 'PrimeSRC',
-    getMovieUrl: (id) => `https://primesrc.me/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://primesrc.me/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'goatapi',
-    name: 'GoatAPI',
-    getMovieUrl: (id) => `https://goatapi.imreallydagoatt.workers.dev/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://goatapi.imreallydagoatt.workers.dev/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'cinemaos',
-    name: 'Cinemaos',
-    getMovieUrl: (id) => `https://cinemaos.tech/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://cinemaos.tech/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'gomo',
-    name: 'GoMo',
-    getMovieUrl: (id) => `https://gomo.to/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://gomo.to/tv/${id}/${s}/${e}`
   }
 ];
 
-const FALLBACK_TIMEOUT_MS = 25000; // 25 seconds before auto-fallback
+const FALLBACK_TIMEOUT_MS = 25000;
 
 const DIRECT_VIDEO_EXTENSIONS = ['.mp4', '.m3u8', '.mpd', '.webm', '.ogg', '.mov', '.mkv'];
 
@@ -184,7 +113,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [key, setKey] = useState(0);
   const [magnetInput, setMagnetInput] = useState('');
   
-  // Fallback Timer State
   const [timeLeft, setTimeLeft] = useState(FALLBACK_TIMEOUT_MS / 1000);
   const [autoFallbackEnabled, setAutoFallbackEnabled] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -195,7 +123,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     resetFallbackTimer();
   }, [effectiveStreamUrl, isDirectVideo, movie.id, season, episode]);
 
-  // Handle auto-fallback countdown
   useEffect(() => {
     if (!autoFallbackEnabled || isDirectMode) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -234,7 +161,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setActiveSourceIdx(nextIdx);
     setIsDirectMode(false);
     resetFallbackTimer();
-    toast.info(`Auto-fallback: Switching to ${VIDEO_SOURCES[nextIdx].name}`);
+    toast.info(`Switching server: ${VIDEO_SOURCES[nextIdx].name}`);
   };
 
   const refreshPlayer = () => {
@@ -291,7 +218,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       )}
 
       <div className="flex-1 flex flex-col bg-black rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-        {/* Video Player Frame */}
         <div className="relative aspect-video w-full bg-zinc-950 flex items-center justify-center">
           {isDirectMode && effectiveStreamUrl ? (
             isDirectVideo ? (
@@ -328,7 +254,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           )}
         </div>
 
-        {/* Controls & Fallback Bar */}
         <div className="p-4 bg-zinc-900 border-t border-white/5 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs text-white/60">
@@ -342,7 +267,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               {autoFallbackEnabled && !isDirectMode && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-purple-600/10 border border-purple-500/20 rounded-lg">
                   <Clock size={12} className="text-purple-400" />
-                  <span className="text-[10px] font-black text-purple-300">Switching in {Math.round(timeLeft)}s</span>
+                  <span className="text-[10px] font-black text-purple-300">Auto-fallback in {Math.round(timeLeft)}s</span>
                   <button 
                     onClick={() => setAutoFallbackEnabled(false)}
                     className="text-[10px] font-black text-white hover:text-red-400 underline underline-offset-2 ml-1"
@@ -360,14 +285,13 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             </div>
           </div>
 
-          {/* Fallback & Server Switcher */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
             <div className="flex items-start gap-2.5 text-left">
               <AlertTriangle size={16} className="text-purple-400 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-purple-300">Server not loading or giving ads?</p>
+                <p className="text-xs font-bold text-purple-300">Trouble with the current server?</p>
                 <p className="text-[10px] text-zinc-400 leading-normal">
-                  Our system defaults to the premier servers (VidCore, CineSRC, VidLux, ZXCSTREAM) and automatically cycles through mirrors if they fail.
+                  If you encounter ads or buffering, try switching to a different server manually or let the auto-fallback handle it.
                 </p>
               </div>
             </div>
@@ -380,7 +304,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             </Button>
           </div>
 
-          {/* Manual Server Selection */}
           <div className="space-y-2">
             <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Select Server Manually</p>
             <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1 bg-white/5 rounded-xl">
@@ -404,27 +327,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     setAutoFallbackEnabled(false);
                     toast.success(`Switched to ${source.name}`);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${(!isDirectMode && activeSourceIdx === idx) ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-purple-500/20'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${(!isDirectMode && activeSourceIdx === idx) ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-white/60 hover:bg-white/10 border border-green-500/20'}`}
                 >
                   {source.name}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Custom Direct Link Input */}
-          <div className="pt-2 border-t border-white/5">
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Paste Custom Direct Link</p>
-            <div className="flex gap-2 mt-1">
-              <Input
-                value={magnetInput}
-                onChange={e => setMagnetInput(e.target.value)}
-                placeholder="https://example.com/video.mp4 or blob:... "
-                className="bg-white/5 border-white/10 text-xs text-white placeholder:text-zinc-600 h-8 rounded-xl flex-1"
-              />
-              <Button onClick={handleDirectPlay} className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs h-8 px-3 rounded-xl shrink-0">
-                <Play size={12} fill="currentColor" className="mr-1" /> Play
-              </Button>
             </div>
           </div>
         </div>
