@@ -4,6 +4,7 @@ import { useMusic, Movie } from '@/context/MusicContext';
 import { tmdbApi } from '@/services/tmdbApi';
 import { MovieRow } from '@/components/MovieRow';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Loader2, Film, ArrowLeft, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const CATEGORIES = [
+  { id: 'all', label: 'All' },
   { id: 'action', label: 'Action' },
   { id: 'comedy', label: 'Comedy' },
   { id: 'fantasy', label: 'Fantasy' },
@@ -32,7 +34,6 @@ const Movies = () => {
   const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([]);
   const [upcomingMovies, setUpcomingMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categoryMovies, setCategoryMovies] = useState<Movie[]>([]);
@@ -82,36 +83,12 @@ const Movies = () => {
     fetchCategoryMovies();
   }, [selectedCategory]);
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSelectedCategory(value);
-    if (value !== 'all') {
-      fetchCategoryMovies();
-    }
-  };
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?type=movies&q=${encodeURIComponent(searchQuery)}`);
     }
   };
-
-  // Helper to render category buttons with active state
-  const renderCategoryButtons = () => (
-    <div className="flex flex-wrap gap-2 mb-6">
-      {CATEGORIES.map((cat) => (
-        <Button
-          key={cat.id}
-          variant={selectedCategory === cat.id ? 'solid' : 'outline'}
-          className="rounded-xl font-bold text-xs px-4 py-2.5 transition-all hover:bg-white/10"
-          onClick={handleCategoryChange}
-        >
-          {cat.label}
-        </Button>
-      ))}
-    </div>
-  );
 
   return (
     <MainLayout>
@@ -122,9 +99,25 @@ const Movies = () => {
             {selectedCategory === 'all' ? 'All Movies' : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Movies`}
           </h1>
           <div className="flex items-center gap-2">
-            {renderCategoryButtons()}
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white font-medium text-sm">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800">
+                {CATEGORIES.map((cat) => (
+                  <SelectItem 
+                    key={cat.id} 
+                    value={cat.id}
+                    className="font-medium text-sm text-white"
+                  >
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Search 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400" 
+              className="text-zinc-400" 
               size={16} 
             />
             <Input 
