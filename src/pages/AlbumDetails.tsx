@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Album, getContainerCount } from '@/services/musicApi';
+import { musicApi, Album, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Music, Loader2, ListMusic, Calendar } from 'lucide-react';
@@ -56,7 +56,7 @@ const AlbumDetails = () => {
   }
 
   const songs = album.songs || [];
-  const trackCount = songs.length || Number(album.songCount) || getContainerCount(album);
+  const songCount = songs.length || 0;
   const albumCoverUrl = getHighResImage(album.image);
 
   return (
@@ -84,16 +84,18 @@ const AlbumDetails = () => {
                 {album.language || 'unknown'}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight" dangerouslySetInnerHTML={{ __html: album.name }}></h1>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight">{album.name}</h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-zinc-400 font-medium text-xs md:text-sm">
               <div className="flex items-center gap-1.5">
-                <Calendar size={16} />
-                <span>{album.year || 'N/A'}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
                 <ListMusic size={16} />
-                <span>{trackCount} Tracks</span>
+                <span>{songCount} Songs</span>
               </div>
+              {album.year && (
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={16} />
+                  <span>{album.year}</span>
+                </div>
+              )}
             </div>
             <div className="mt-6 md:mt-8">
               <Button 
@@ -108,11 +110,11 @@ const AlbumDetails = () => {
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-2.5 mb-6 md:mb-8">
+          <div className="flex items-center gap-2.5 border-b border-white/5 pb-4">
             <div className="bg-purple-500/10 p-2 rounded-lg border border-purple-500/20">
               <Music size={18} className="text-purple-400" />
             </div>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight">Tracklist</h2>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight">Tracklist ({songCount})</h2>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
