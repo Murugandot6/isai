@@ -62,8 +62,8 @@ const VIDEO_SOURCES: VideoSource[] = [
   {
     id: 'rivestream',
     name: 'Rivestream',
-    getMovieUrl: (id) => `https://www.rivestream.app/api/v1/player/${id}`,
-    getTvUrl: (id, s, e) => `https://www.rivestream.app/api/v1/player/${id}?season=${s}&episode=${e}`
+    getMovieUrl: (id) => `https://www.rivestream.app/embed?type=movie&id=${id}`,
+    getTvUrl: (id, s, e) => `https://www.rivestream.app/embed?type=tv&id=${id}&season=${s}&episode=${e}`
   }
 ];
 
