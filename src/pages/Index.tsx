@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useNavigate } from 'react-router-dom';
-import { Music, Film, Radio, ArrowRight, Layers, Sparkles } from 'lucide-react';
+import { Music, Film, Radio, ArrowRight, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
@@ -29,16 +29,6 @@ const Index = () => {
       color: 'from-purple-600/20 to-indigo-900/10',
       accent: 'text-purple-400 group-hover:text-purple-300',
       description: 'Synchronized cinema experience for you and friends.'
-    },
-    {
-      id: 'stremio',
-      title: 'Stremio',
-      subtitle: 'Decentralized Hub',
-      icon: Layers,
-      path: '/stremio',
-      color: 'from-indigo-600/20 to-blue-900/10',
-      accent: 'text-indigo-400 group-hover:text-indigo-300',
-      description: 'Community-powered metadata and streaming nodes.'
     },
     {
       id: 'radio',
@@ -76,7 +66,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {hubs.map((hub) => (
               <div
                 key={hub.id}
