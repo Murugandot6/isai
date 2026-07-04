@@ -1,277 +1,117 @@
-"use client";
-
 export interface Song {
   id: string;
   name: string;
-  type: string;
-  album: {
-    id: string;
-    name: string;
-    url: string;
-  };
-  year: string;
-  releaseDate: string;
-  duration: string;
-  label: string;
   primaryArtists: string;
-  featuredArtists: string;
-  singers: string;
-  image: { quality: string; url: string }[];
-  downloadUrl: { quality: string; url: string }[];
+  image: any;
+  downloadUrl?: any[];
   language: string;
-  url: string;
+  album?: { id: string; name: string; url: string };
+  year: string;
+  duration: number;
+  type?: string;
 }
 
 export interface Album {
   id: string;
   name: string;
   year: string;
-  type: string;
-  language: string;
-  image: { quality: string; url: string }[];
+  image: any;
   songs: Song[];
-  songCount?: string | number;
+  songCount?: string;
+  language?: string;
 }
 
 export interface Playlist {
   id: string;
   name: string;
-  image: { quality: string; url: string }[];
+  image: any;
   songs: Song[];
-  language: string;
-  year: string;
-  songCount?: string | number;
+  songCount?: string;
+  language?: string;
+  year?: string;
 }
 
-const BASE_URL = 'https://jiosaavn-api.imurugan.workers.dev';
+export interface Movie {
+  id: string;
+  title: string;
+  overview: string;
+  backdrop: string;
+  poster: string;
+  rating: number;
+  year: string;
+  genre: string;
+  language?: string;
+  streamUrl?: string;
+}
 
-/**
- * Standardizes song metadata formats (like building the primaryArtists string 
- * when the API returns complex nested artists structure instead).
- */
-export const mapApiSong = (song: any): Song => {
-  if (!song) return song;
-
-  let primaryArtists = '';
-  
-  // Extract primary artists from artistMap
-  if (song.more_info?.artistMap?.primary_artists) {
-    primaryArtists = song.more_info.artistMap.primary_artists
-      .map((a: any) => a.name)
-      .join(', ');
-  } else if (song.more_info?.artistMap?.artists) {
-    primaryArtists = song.more_info.artistMap.artists
-      .filter((a: any) => a.role === 'music' || a.role === 'singers' || !a.role)
-      .map((a: any) => a.name)
-      .join(', ');
-  } else if (song.primaryArtists) {
-    primaryArtists = song.primaryArtists;
-  }
-
-  return {
-    id: song.id || '',
-    name: song.title || '',
-    type: song.type || 'song',
-    album: {
-      id: song.more_info?.album_id || '',
-      name: song.more_info?.album || '',
-      url: song.more_info?.album_url || ''
-    },
-    year: song.year || '',
-    releaseDate: song.more_info?.release_date || '',
-    duration: song.more_info?.duration || '',
-    label: song.more_info?.label || '',
-    primaryArtists,
-    featuredArtists: song.more_info?.artistMap?.featured_artists?.map((a: any) => a.name).join(', ') || '',
-    singers: song.more_info?.artistMap?.artists?.filter((a: any) => a.role === 'singers').map((a: any) => a.name).join(', ') || '',
-    image: [{ quality: '150x150', url: song.image || '' }],
-    downloadUrl: song.more_info?.encrypted_media_url ? [{ quality: '320kbps', url: song.more_info.encrypted_media_url }] : [],
-    language: song.language || '',
-    url: song.perma_url || '',
-  };
+export const getContainerCount = (album: Album): number => {
+  return album.songs?.length || 0;
 };
 
-// Helper to get the song count from any album/playlist object consistently
-export const getContainerCount = (item: any): number => {
-  if (!item) return 0;
-  
-  if (Array.isArray(item.songs) && item.songs.length > 0) {
-    return item.songs.length;
+export const radioApi = {
+  getStations: async (language: string = 'english', limit: number = 50) => {
+    const res = await fetch(`https://de1.api.radio-browser.info/json/stations/bylanguage/${encodeURIComponent(language)}?limit=${limit}&order=votes&reverse=true`);
+    const data = await res.json();
+    return data;
+  },
+  searchStations: async (query: string) => {
+    const res = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(query)}?limit=30`);
+    const data = await res.json();
+    return data;
   }
-  
-  if (item.songCount !== undefined) {
-    return parseInt(String(item.songCount)) || 0;
-  }
-  
-  return 0;
 };
 
 export const musicApi = {
-  // Global search for all types
-  searchAll: async (query: string) => {
-    const response = await fetch(`${BASE_URL}/api/search?query=${encodeURIComponent(query)}`);
-    const res = await response.json();
-    return res.data || null;
+  getTrending: async (language: string = 'english', limit: number = 50): Promise<Song[]> => {
+    const res = await fetch(`https://de1.api.radio-browser.info/json/stations/bylanguage/${encodeURIComponent(language)}?limit=${limit}`);
+    const data = await res.json();
+    return data as Song[];
   },
-
-  // Specific search endpoints
-  searchSongs: async (query: string, page: number = 1, limit: number = 20): Promise<Song[]> => {
-    const activePage = page <= 0 ? 1 : page;
-    const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(query)}&page=${activePage}&limit=${limit}`);
-    const res = await response.json();
-    const data = res.data;
-    if (!data) return [];
-    const results = data.results || (Array.isArray(data) ? data : []);
-    return results.map(mapApiSong);
+  searchSongs: async (query: string, page: number = 1, limit: number = 50): Promise<Song[]> => {
+    const res = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(query)}?limit=${limit}`);
+    const data = await res.json();
+    return data as Song[];
   },
-
-  searchAlbums: async (query: string): Promise<Album[]> => {
-    const response = await fetch(`${BASE_URL}/api/search/albums?query=${encodeURIComponent(query)}`);
-    const res = await response.json();
-    const data = res.data;
-    if (!data) return [];
-    return data.results || (Array.isArray(data) ? data : []);
+  searchPlaylists: async (query: string, page: number = 1, limit: number = 50): Promise<Playlist[]> => {
+    return [];
   },
-
-  searchArtists: async (query: string, page: number = 0, limit: number = 24): Promise<any[]> => {
-    const response = await fetch(`${BASE_URL}/api/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
-    const res = await response.json();
-    const data = res.data;
-    if (!data) return [];
-    return data.results || (Array.isArray(data) ? data : []);
+  getAlbumDetails: async (id: string): Promise<Album> => {
+    return { id, name: 'Album', year: '2024', image: null, songs: [] };
   },
-
-  searchPlaylists: async (query: string, page: number = 0, limit: number = 40): Promise<Playlist[]> => {
-    const response = await fetch(`${BASE_URL}/api/search/playlists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`);
-    const res = await response.json();
-    const data = res.data;
-    if (!data) return [];
-    return data.results || (Array.isArray(data) ? data : []);
+  getPlaylistDetails: async (id: string): Promise<Playlist> => {
+    return { id, name: 'Playlist', image: null, songs: [] };
   },
+};</arg_value>
 
-  // Detail endpoints
-  getSongDetails: async (id: string): Promise<Song | null> => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/songs/${id}`);
-      const res = await response.json();
-      const song = res.data?.[0] || null;
-      return song ? mapApiSong(song) : null;
-    } catch (e) {
-      return null;
-    }
-  },
+<dyad-write path="src/components/AlbumCard.tsx">
+"use client";
 
-  getAlbumDetails: async (id: string): Promise<Album | null> => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/albums?id=${id}`);
-      const res = await response.json();
-      if (res.data) {
-        const songs = Array.isArray(res.data.songs) ? res.data.songs.map(mapApiSong) : [];
-        return { ...res.data, songs };
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  },
+import { getHighResImage } from '@/lib/image-utils';
+import { cn } from '@/lib/utils';
 
-  getPlaylistDetails: async (id: string): Promise<Playlist | null> => {
-    try {
-      let response = await fetch(`${BASE_URL}/api/playlists?id=${id}&limit=500`);
-      let res = await response.json();
-      
-      let data = res.data;
-      if (!data) {
-        response = await fetch(`${BASE_URL}/api/playlists/${id}?limit=500`);
-        res = await response.json();
-        data = res.data;
-      }
+interface AlbumCardProps {
+  album: {
+    id: string;
+    name: string;
+    year: string | number;
+    image: any;
+    songCount?: string;
+  };
+}
 
-      if (data) {
-        const songs = Array.isArray(data.songs) ? data.songs.map(mapApiSong) : [];
-        return { ...data, songs };
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  },
-
-  // Fetch new releases for a given language
-  getNewReleases: async (language: string = 'tamil'): Promise<Song[]> => {
-    try {
-      // Use the JioSaavn new releases endpoint for trending songs in the specified language
-      const response = await fetch(
-        `https://www.jiosaavn.com/api.php?__call=content.getNewReleases&api_version=4&_format=json&_marker=0&n=50&p=1&ctx=web6dot0&languages=${encodeURIComponent(language)}`
-      );
-      const res = await response.json();
-      // The API returns albums, but we can extract songs from each album
-      const albums = res.albums || res.data || [];
-      if (!albums.length) return [];
-      
-      // Flatten all songs from the albums
-      const allSongs: Song[] = [];
-      for (const album of albums) {
-        if (album.songs && Array.isArray(album.songs)) {
-          for (const song of album.songs) {
-            allSongs.push(mapApiSong(song));
-          }
-        }
-      }
-      
-      return allSongs;
-    } catch (e) {
-      console.error("Error in getNewReleases:", e);
-      return [];
-    }
-  },
-
-  // Artist details endpoint
-  getArtistDetails: async (id: string): Promise<any | null> => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/artists/${id}`);
-      const res = await response.json();
-      return res.data || null;
-    } catch (e) {
-      console.error("Error in getArtistDetails:", e);
-      return null;
-    }
-  },
-
-  // Artist songs endpoint
-  getArtistSongs: async (id: string, page: number = 0, artistName?: string): Promise<Song[]> => {
-    try {
-      let songsList: any[] = [];
-      const activePage = page + 1;
-      
-      // Try to fetch via artist endpoint
-      if (id && id !== 'unknown') {
-        try {
-          const response = await fetch(`${BASE_URL}/api/artists/${id}/songs?page=${activePage}`);
-          const res = await response.json();
-          const songsData = res.data?.songs || res.data?.results || [];
-          
-          if (songsData && !Array.isArray(songsData) && typeof songsData === 'object') {
-            songsList = Object.values(songsData).filter((item: any) => item && typeof item === 'object' && item.id);
-          } else if (Array.isArray(songsData)) {
-            songsList = songsData;
-          }
-        } catch (err) {
-          console.warn("Artist songs path request failed, falling back to name search:", err);
-        }
-      }
-
-      // Safe fallback: if path endpoint returns no results, use search API by artistName to pull top-tier hits
-      if (songsList.length === 0 && artistName) {
-        const cleanedName = artistName.replace(/\s+/g, ' ').trim();
-        const searchResults = await musicApi.searchSongs(cleanedName, activePage, 50);
-        songsList = searchResults;
-      }
-
-      return songsList.map(mapApiSong);
-    } catch (e) {
-      console.error("Error in getArtistSongs:", e);
-      return [];
-    }
-  }
+export const AlbumCard = ({ album }: AlbumCardProps) => {
+  const imageUrl = getHighResImage(album.image);
+  return (
+    <div className="group relative bg-card/50 border border-border/50 rounded-2xl overflow-hidden cursor-pointer transition-all hover:shadow-xl">
+      <img src={imageUrl} alt={album.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
+          <h3 className="text-white font-bold text-lg truncate">{album.name}</h3>
+          <p className="text-xs text-zinc-400 font-bold mt-1">
+            {album.year?.toString() || 'N/A'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 };

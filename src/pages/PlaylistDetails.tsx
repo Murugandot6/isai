@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Playlist } from '@/services/musicApi';
+import { musicApi, Playlist, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, ListMusic, Music, Loader2, Clock } from 'lucide-react';
@@ -100,10 +100,10 @@ const PlaylistDetails = () => {
                 PLAYLIST
               </Badge>
               <Badge variant="outline" className="text-[9px] font-bold uppercase text-zinc-400 border-white/10">
-                {playlist.language}
+                {playlist.language || 'unknown'}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h1>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight">{playlist.name}</h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-zinc-400 font-medium text-xs md:text-sm">
               <div className="flex items-center gap-1.5">
                 <ListMusic size={16} />
@@ -138,11 +138,11 @@ const PlaylistDetails = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
             {visibleSongs.map((song, index) => {
-              const isLastElement = index === visibleSongs.length - 1;
+              const isLast = index === visibleSongs.length - 1;
               return (
                 <div 
                   key={`${song.id}-${index}`} 
-                  ref={isLastElement ? lastSongElementRef : null}
+                  ref={isLast ? lastSongElementRef : undefined}
                 >
                   <SongCard song={song} allSongs={songs} fallbackImage={playlistCoverUrl} />
                 </div>

@@ -9,6 +9,7 @@ import { getHighResImage } from '@/lib/image-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useMusic } from '@/context/MusicContext';
+import { Song } from '@/services/musicApi';
 
 const Featured = () => {
   const navigate = useNavigate();
@@ -133,7 +134,7 @@ const Featured = () => {
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent p-6 md:p-8 flex flex-col justify-end">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-6 md:p-8 flex flex-col justify-end">
                       <h3 className="text-white font-black text-xl md:text-2xl mb-1 md:mb-2 leading-tight" dangerouslySetInnerHTML={{ __html: playlist.name }}></h3>
                       <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{songCount} Tracks</p>
                     </div>
