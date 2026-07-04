@@ -27,13 +27,10 @@ export const MovieRow = ({ movie, onPlay }: MovieRowProps) => {
       <div className="relative aspect-[16/9] overflow-hidden">
         <img src={movie.backdrop} alt={movie.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button 
-            onClick={() => onPlay(movie)}
-            className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-transform"
-          >
-            <Play size={18} fill="currentColor" className="ml-0.5" />
-          </button>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-transform">
+            <Play size={16} fill="currentColor" className="ml-0.5" />
+          </div>
         </div>
       </div>
       <div className="p-4">

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { Song, Album, Playlist, Movie } from '@/services/musicApi';
+import { toast } from 'sonner';
 
 export type { Song, Album, Playlist, Movie };
 
@@ -77,29 +76,161 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
 
-  const canDeleteMemory = useCallback((memoryId: string) => {
-    const memory = memories.find(m => m.id === memoryId);
-    return memory && memory.userId === user?.id;
-  }, [memories, user]);
-
-  const deleteMemory = useCallback((memoryId: string) => {
-    if (!canDeleteMemory(memoryId)) {
-      toast.error('You do not have permission to delete this memory.');
-      return;
+  const playSong = useCallback((song: Song, newQueue?: Song[], fromSync = false) => {
+    setCurrentSong(song);
+    setIsPlaying(true);
+    if (newQueue) {
+      setQueue(newQueue);
     }
-    setMemories(prev => prev.filter(m => m.id !== memoryId));
-  }, [canDeleteMemory]);
+  }, []);
 
-  const playRandom = (fromSync = false) => {
+  const playRandom = useCallback((fromSync = false) => {
     if (queue.length === 0) return;
     const randomIndex = Math.floor(Math.random() * queue.length);
     const song = queue[randomIndex];
     playSong(song, queue, fromSync);
-  };
+  }, [queue, playSong]);
+
+  const playNext = useCallback((fromSync = false) => {
+    if (queue.length === 0) return;
+    const nextSong = queue[0];
+    playSong(nextSong, queue, fromSync);
+    setQueue(prev => prev.slice(1));
+  }, [queue, playSong]);
+
+  const playPrevious = useCallback(() => {
+    // Navigate to previous song in queue
+  }, []);
+
+  const togglePlay = useCallback(() => {
+    setIsPlaying(prev => !prev);
+  }, []);
+
+  const seek = useCallback((time: number) => {
+    setCurrentTime(time);
+  }, []);
+
+  const setVolume = useCallback((vol: number) => {
+    setVolumeState(vol);
+    if (vol === 0) {
+      setIsMuted(true);
+    } else {
+      setIsMuted(false);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
+  }, []);
+
+  const toggleShuffle = useCallback((fromSync = false) => {
+    setIsShuffle(prev => !prev);
+  }, []);
+
+  const toggleRepeat = useCallback(() => {
+    setRepeatMode(prev => {
+      if (prev === 'none') return 'all';
+      if (prev === 'all') return 'one';
+      return 'none';
+    });
+  }, []);
+
+  const toggleLike = useCallback((song: Song) => {
+    setLikedSongs(prev => {
+      const exists = prev.find(s => s.id === song.id);
+      if (exists) {
+        return prev.filter(s => s.id !== song.id);
+      }
+      return [song, ...prev];
+    });
+  }, []);
+
+  const isLiked = useCallback((songId: string) => {
+    return likedSongs.some(s => s.id === songId);
+  }, [likedSongs]);
+
+  const addToPlaylist = useCallback((playlistId: string, song: Song) => {
+    // Add song to playlist
+  }, []);
+
+  const createPlaylist = useCallback((name: string) => {
+    const newPlaylist: Playlist = {
+      id: Date.now().toString(),
+      name,
+      image: null,
+      songs: [],
+    };
+    setPlaylists(prev => [newPlaylist, ...prev]);
+  }, []);
+
+  const addMemory = useCallback((song: Song, text: string) => {
+    const newMemory = {
+      id: Date.now().toString(),
+      text,
+      song,
+      createdAt: new Date().toISOString(),
+      userId: user?.id,
+    };
+    setMemories(prev => [newMemory, ...prev]);
+  }, [user]);
+
+  const deleteMemory = useCallback((memoryId: string) => {
+    setMemories(prev => prev.filter(m => m.id !== memoryId));
+  }, []);
+
+  const toggleLikeMovie = useCallback((movie: Movie) => {
+    setLikedMovies(prev => {
+      const exists = prev.find(m => m.id === movie.id);
+      if (exists) {
+        return prev.filter(m => m.id !== movie.id);
+      }
+      return [movie, ...prev];
+    });
+  }, []);
+
+  const isMovieLiked = useCallback((movieId: string) => {
+    return likedMovies.some(m => m.id === movieId);
+  }, [likedMovies]);
+
+  const playMovie = useCallback((movie: Movie) => {
+    setRecentlyWatched(prev => {
+      const exists = prev.find(m => m.id === movie.id);
+      if (exists) return prev;
+      return [movie, ...prev.slice(0, 50)];
+    });
+  }, []);
+
+  const toggleLikeStation = useCallback((station: any) => {
+    setLikedStations(prev => {
+      const exists = prev.find(s => s.stationuuid === station.stationuuid);
+      if (exists) {
+        return prev.filter(s => s.stationuuid !== station.stationuuid);
+      }
+      return [station, ...prev];
+    });
+  }, []);
+
+  const isStationLiked = useCallback((stationId: string) => {
+    return likedStations.some(s => s.stationuuid === stationId);
+  }, [likedStations]);
+
+  const toggleLanguage = useCallback((lang: string) => {
+    setSelectedLanguages(prev => {
+      if (prev.includes(lang)) {
+        return prev.filter(l => l !== lang);
+      }
+      return [...prev, lang];
+    });
+  }, []);
+
+  const broadcast = useCallback((event: string, data: any) => {
+    // Broadcast to other connected users
+  }, []);
 
   const value = {
-    currentSong: null,
+    currentSong,
     isPlaying,
     currentTime,
     duration,
@@ -119,30 +250,30 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     isHost,
     memories,
     user,
-    playSong: () => {},
-    playNext: () => {},
-    playPrevious: () => {},
-    togglePlay: () => {},
-    seek: () => {},
-    setVolume: setVolumeState,
-    toggleMute: () => {},
-    toggleShuffle: () => {},
-    toggleRepeat: () => {},
-    toggleLike: () => {},
-    isLiked: () => false,
-    addToPlaylist: () => {},
-    createPlaylist: () => {},
-    addMemory: () => {},
+    playSong,
+    playNext,
+    playPrevious,
+    togglePlay,
+    seek,
+    setVolume,
+    toggleMute,
+    toggleShuffle,
+    toggleRepeat,
+    toggleLike,
+    isLiked,
+    addToPlaylist,
+    createPlaylist,
+    addMemory,
     deleteMemory,
-    toggleLikeMovie: () => {},
-    isMovieLiked: () => false,
-    playMovie: () => {},
-    toggleLikeStation: () => {},
-    isStationLiked: () => false,
-    toggleLanguage: () => {},
+    toggleLikeMovie,
+    isMovieLiked,
+    playMovie,
+    toggleLikeStation,
+    isStationLiked,
+    toggleLanguage,
     setRoomCode,
     setIsHost,
-    broadcast: () => {},
+    broadcast,
     playRandom,
   };
 
