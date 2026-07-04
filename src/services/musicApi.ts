@@ -177,16 +177,29 @@ export const musicApi = {
     }
   },
 
-  // Trending songs endpoint - using JioSaavn new releases endpoint for Tamil
+  // Trending songs endpoint - using JioSaavn new releases endpoint
   getTrending: async (languages: string = 'tamil'): Promise<Song[]> => {
     try {
       // Use the JioSaavn new releases endpoint for trending songs in the specified language
-      const response = await fetch(`https://gaana.com/latest/${encodeURIComponent(languages)}?limit=50`);
+      const response = await fetch(
+        `https://www.jiosaavn.com/api.php?__call=content.getAlbums&api_version=4&_format=json&_marker=0&n=50&p=1&ctx=web6dot0&seotype=tag&tag=${encodeURIComponent(languages)}`
+      );
       const res = await response.json();
-      const data = res.data;
-      if (!data) return [];
-      const results = data.results || (Array.isArray(data) ? data : []);
-      return results.map(mapApiSong);
+      // The API returns albums, but we can extract songs from each album
+      const albums = res.albums || res.data || [];
+      if (!albums.length) return [];
+      
+      // Flatten all songs from the albums
+      const allSongs: Song[] = [];
+      for (const album of albums) {
+        if (album.songs && Array.isArray(album.songs)) {
+          for (const song of album.songs) {
+            allSongs.push(mapApiSong(song));
+          }
+        }
+      }
+      
+      return allSongs;
     } catch (e) {
       console.error("Error in getTrending:", e);
       return [];
