@@ -7,18 +7,25 @@ import { useMusic } from '@/context/MusicContext';
 import { useAuth } from '@/context/AuthContext';
 import { getHighResImage } from '@/lib/image-utils';
 import { FEATURED_PLAYLISTS } from '@/data/featuredPlaylists';
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton component
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Play, Pause, Home, Music, Film, Radio, Disc, Search, Heart, 
-  Sparkles, Power, Volume2, VolumeX, Sparkle, ArrowRight, User, Star, Library, ChevronRight, Compass, Shuffle
+  Sparkles, Power, Volume2, VolumeX, ArrowRight, User, Star, Library, ChevronRight, Compass, Shuffle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ListenTogether } from '@/components/ListenTogether';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { Badge } from '@/components/ui/badge';
-import NewReleases from './NewReleases'; // Import the new page component
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 
 const MusicPage = () => {
   const navigate = useNavigate();
@@ -26,8 +33,9 @@ const MusicPage = () => {
   const { selectedLanguages, playSong, playRandom, currentSong, isPlaying, togglePlay, isMuted, toggleMute, toggleLike, isLiked } = useMusic();
   
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
-  const [newReleaseSongs, setNewReleaseSongs] = useState<Song[]>([]); // State for new releases
   const [loading, setLoading] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Artist-specific state lists
   const [rahmanSongs, setRahmanSongs] = useState<Song[]>([]);
@@ -40,19 +48,28 @@ const MusicPage = () => {
     const fetchMusicAndArtists = async () => {
       setLoading(true);
       try {
-        const [trending, newReleases, rahman, yuvan, harris, vairamuthu] = await Promise.all([
-          Promise.all(selectedLanguages.map(lang => musicApi.getTrending(lang).catch(() => [] as Song[]))).then(results => results.flat()),
-          musicApi.getNewReleases('tamil').catch(() => [] as Song[]), // Explicitly call getNewReleases
-          musicApi.searchSongs("A.R. Rahman").catch(() => []),
-          musicApi.searchSongs("Yuvan Shankar Raja").catch(() => []),
-          musicApi.searchSongs("Harris Jayaraj").catch(() => []),
-          musicApi.searchSongs("Vairamuthu Hits").catch(() => [])
+        const trendingPromises = selectedLanguages.map(lang => 
+          musicApi.getTrending(lang).catch(() => [] as Song[])
+        );
+        const results = await Promise.all(trendingPromises);
+        const combined = results.flat();
+        
+        if (combined.length === 0) {
+          const fallback = await musicApi.getTrending('tamil');
+          setTrendingSongs(fallback);
+        } else {
+          setTrendingSongs(combined);
+        }
+
+        // Parallel fetch for legendary artist playlists/tracks
+        const [rahman, yuvan, harris, vairamuthu] = await Promise.all([
+          musicApi.searchSongs("A.R. Rahman", 1, 40).catch(() => []),
+          musicApi.searchSongs("Yuvan Shankar Raja", 1, 40).catch(() => []),
+          musicApi.searchSongs("Harris Jayaraj", 1, 40).catch(() => []),
+          musicApi.searchSongs("Vairamuthu Hits", 1, 40).catch(() => [])
         ]);
 
-        setTrendingSongs(trending.filter(s => s.language && selectedLanguages.includes(s.language.toLowerCase())));
-        setNewReleaseSongs(newReleases.slice(0, 12)); // Take the first 12 new releases
-
-        // Filter artist songs by selected languages
+        // Filter helper to strictly enforce language settings
         const filterByLanguage = (songsList: Song[]) => {
           return songsList.filter(song => {
             if (!song.language) return false;
@@ -66,13 +83,22 @@ const MusicPage = () => {
         setVairamuthuSongs(filterByLanguage(vairamuthu));
 
       } catch (err) {
-        console.error("Failed to load music data", err);
+        console.error("Failed to load trending music & artists", err);
       } finally {
         setLoading(false);
       }
     };
     fetchMusicAndArtists();
   }, [selectedLanguages]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}&type=music`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
 
   // Spotlight is either current playing song or first trending song
   const spotlightSong = useMemo(() => {
@@ -81,7 +107,7 @@ const MusicPage = () => {
 
   const spotlightImage = spotlightSong 
     ? getHighResImage(spotlightSong.image) 
-    : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd816?q=80&w=1200';
+    : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200';
 
   const handleSpotlightPlay = () => {
     if (!spotlightSong) return;
@@ -109,14 +135,14 @@ const MusicPage = () => {
               alt={spotlightSong.name} 
               className="w-full h-full object-cover object-center opacity-35 lg:opacity-60"
             />
-            {/* Smooth gradient mask into dark background */}
+            {/* Complex blended black gradients to smoothly blend standard image to black background */}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
             <div className="absolute inset-0 bg-black/40" />
           </div>
         )}
 
-        {/* HEADER MENU AND CONTROLS BAR (Fully transparent overlaying the hero background) */}
+        {/* HEADER MENU AND CONTROLS BAR */}
         <div className="flex items-center justify-between p-6 md:px-12 z-20 gap-4 bg-transparent">
           {/* Left Top Group controls (Gateway, Shuffle Random, Language Selector) */}
           <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-md">
@@ -135,9 +161,41 @@ const MusicPage = () => {
               <Shuffle size={18} className="text-purple-400" />
               <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">Play Random</span>
             </button>
-            
             <LanguageSelector />
           </div>
+
+          {/* Search Dialog Trigger */}
+          <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+            <DialogTrigger asChild>
+              <button className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-all" title="Search Music">
+                <Search size={18} />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="bg-zinc-900 border-white/10 max-w-[90vw] sm:max-w-md rounded-3xl text-white">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-black">Search Music</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSearch} className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                  <Input 
+                    type="text"
+                    placeholder="Search for songs, artists, albums..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-11 pr-4 bg-white/5 border-none h-12 rounded-xl text-white text-sm font-medium focus-visible:ring-2 focus-visible:ring-purple-500/20"
+                    autoFocus
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Search
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {/* Curated Top Menus */}
           <div className="hidden md:flex items-center gap-2 text-xs font-black tracking-widest uppercase">
@@ -147,17 +205,6 @@ const MusicPage = () => {
             >
               <Sparkles size={14} className="text-purple-400" />
               Trending Playlists
-            </button>
-            <button 
-              onClick={() => {
-                if (trendingSongs.length > 0) {
-                  playSong(trendingSongs[0], trendingSongs);
-                }
-              }}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 transition-all text-[11px]"
-            >
-              <Star size={14} className="text-yellow-400" />
-              Editor's Picks
             </button>
             <button 
               onClick={() => navigate('/artists')}
@@ -174,7 +221,7 @@ const MusicPage = () => {
           </div>
         </div>
 
-        {/* MAIN SPOTLIGHT BANNER HERO (Seamless Black Blended Look) */}
+        {/* MAIN SPOTLIGHT BANNER HERO */}
         <div className="flex-1 flex flex-col justify-center px-6 md:px-12 relative min-h-[420px] py-12">
           <div className="relative z-10 max-w-xl space-y-4 md:space-y-6 text-left">
             <span className="text-xs md:text-sm font-black uppercase tracking-[0.25em] text-purple-400 flex items-center gap-2">
@@ -186,11 +233,10 @@ const MusicPage = () => {
               <>
                 <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] drop-shadow-xl select-text animate-in fade-in duration-500" dangerouslySetInnerHTML={{ __html: spotlightSong.name }} />
                 
-                {/* Shows both Artist and Album Name cleanly */}
                 <div className="space-y-1">
                   <p className="text-sm md:text-base text-zinc-300 font-semibold leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: spotlightSong.primaryArtists || (spotlightSong as any).subtitle || 'Unknown Artist' }} />
                   {spotlightSong.album?.name && (
-                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                    <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">
                       Album: <span className="text-zinc-400" dangerouslySetInnerHTML={{ __html: spotlightSong.album.name }} />
                     </p>
                   )}
@@ -204,13 +250,12 @@ const MusicPage = () => {
               </>
             ) : (
               <>
-                <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] drop-shadow-xl select-text animate-in fade-in duration-500">Retro</h1>
+                <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none">Retro</h1>
                 <p className="text-sm md:text-base text-zinc-300 font-semibold max-w-md">David Bowie, Pink Floyd, Prince, ...</p>
                 <p className="text-xs text-purple-300/60 font-bold uppercase tracking-wider">78 Songs</p>
               </>
             )}
 
-            {/* Minimal Circle Play Button aligned perfectly */}
             <div className="flex items-center gap-6 pt-4">
               <button 
                 onClick={handleSpotlightPlay}
@@ -243,10 +288,10 @@ const MusicPage = () => {
           </div>
         </div>
 
-        {/* CURATED MUSIC PORTAL LAYOUTS: Editor's Picks & Legendary Tamil Composers */}
+        {/* CURATED MUSIC PORTAL LAYOUTS */}
         <div className="px-6 md:px-12 space-y-12 pb-24 text-left">
           
-          {/* EDITOR'S PICK ROW (Curated high-fidelity playlists) */}
+          {/* EDITOR'S PICK ROW */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-2">
@@ -273,7 +318,6 @@ const MusicPage = () => {
                     src={getHighResImage(playlist.image)} 
                     alt={playlist.title} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 flex flex-col justify-end" />
                   <div className="absolute inset-0 p-4 flex flex-col justify-end">
@@ -285,78 +329,15 @@ const MusicPage = () => {
             </div>
           </div>
 
-          {/* NEW RELEASES ROW */}
-          {newReleaseSongs.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-2">
-                  <Sparkles size={14} className="text-purple-400" />
-                  Latest Releases
-                </h3>
-                <button 
-                  onClick={() => navigate('/new-releases')}
-                  className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
-                >
-                  <span>View All</span>
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-
-              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
-                {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="w-36 shrink-0 space-y-2.5">
-                      <Skeleton className="aspect-square w-full rounded-2xl bg-white/5" />
-                      <Skeleton className="h-4 w-3/4 bg-white/5" />
-                      <Skeleton className="h-3 w-1/2 bg-white/5" />
-                    </div>
-                  ))
-                ) : (
-                  newReleaseSongs.slice(0, 10).map((song) => {
-                    const songImg = getHighResImage(song.image);
-                    const isCurrent = currentSong?.id === song.id;
-                    
-                    return (
-                      <div 
-                        key={song.id}
-                        onClick={() => playSong(song, newReleaseSongs)}
-                        className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
-                      >
-                        <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
-                          <img 
-                            src={songImg} 
-                            alt={song.name} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                              {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
-                            </div>
-                          </div>
-                          {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
-                        </div>
-                        <div className="text-left px-1 mt-0.5 min-w-0">
-                          <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
-                          <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* EXISTING TRENDING SONGS SLIDER */}
+          {/* TRENDING SONGS SLIDER */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black tracking-widest uppercase text-white/60">Trending Tracks</h3>
               <button 
-                onClick={() => navigate('/search?type=music')}
+                onClick={() => navigate('/search?q=&type=music')}
                 className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
               >
-                <span>Search all</span>
+                <span>View All</span>
                 <ArrowRight size={14} />
               </button>
             </div>
@@ -390,10 +371,18 @@ const MusicPage = () => {
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                            {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+                            {isCurrent && isPlaying ? (
+                              <Pause size={14} fill="currentColor" />
+                            ) : (
+                              <Play size={14} fill="currentColor" className="ml-0.5" />
+                            )}
                           </div>
                         </div>
-                        {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
+                        {isCurrent && (
+                          <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center">
+                            <div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
+                          </div>
+                        )}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
                         <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
@@ -403,7 +392,7 @@ const MusicPage = () => {
                   );
                 })
               ) : (
-                <div className="py-8 text-center text-xs text-muted-foreground w-full">No trending tracks found.</div>
+                <div className="py-8 text-center text-xs text-muted-foreground w-full">No active trending tracks.</div>
               )}
             </div>
           </div>
@@ -411,19 +400,10 @@ const MusicPage = () => {
           {/* A.R. RAHMAN HITS SLIDER */}
           {rahmanSongs.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
-                  <Compass size={13} className="text-cyan-400" />
-                  A.R. Rahman Hits
-                </h3>
-                <button 
-                  onClick={() => navigate('/artists')}
-                  className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
-                >
-                  <span>Artist Page</span>
-                  <ChevronRight size={14} />
-                </button>
-              </div>
+              <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
+                <Compass size={13} className="text-cyan-400" />
+                A.R. Rahman Hits
+              </h3>
 
               <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
                 {rahmanSongs.map((song) => {
@@ -445,7 +425,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>
@@ -483,7 +463,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>
@@ -521,7 +501,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>
@@ -559,7 +539,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>

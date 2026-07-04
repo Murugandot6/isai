@@ -93,7 +93,7 @@ const Favourites = () => {
                           <Play size={16} fill="currentColor" className="ml-0.5" />
                         </div>
                       </div>
-                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg flex items-center gap-0.5 text-[9px] font-bold text-yellow-500">
+                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg flex items-center gap-1 text-[9px] font-bold text-yellow-500">
                         <Star size={10} fill="currentColor" />
                         {movie.rating}
                       </div>
@@ -143,7 +143,7 @@ const Favourites = () => {
                           {isActive && isPlaying ? <Pause size={16} fill="currentColor" className="text-white" /> : <Play size={16} fill="currentColor" className="text-white" />}
                         </div>
                       </div>
-                      <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handlePlayStation(station)}>
+                      <div className="min-w-0 flex-1">
                         <h3 className="font-bold text-xs md:text-sm truncate">{station.name}</h3>
                         <Badge variant="secondary" className="bg-white/10 text-[8px] font-bold px-1.5 py-0 mt-1 text-white">
                           {station.language.toUpperCase()}
