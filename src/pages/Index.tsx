@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useNavigate } from 'react-router-dom';
 import { Music, Film, Radio, ArrowRight, Sparkles } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,18 +15,22 @@ const Index = () => {
       subtitle: 'Premium Audio Station',
       icon: Music,
       path: '/music',
-      color: 'from-green-600/20 to-emerald-900/10',
-      accent: 'text-green-400 group-hover:text-green-300',
+      accentColor: 'green',
+      accentClass: 'text-green-400 group-hover:text-green-300',
+      borderClass: 'border-l-4 border-l-green-500/50 hover:border-l-green-400 hover:border-green-500/30',
+      bgIconClass: 'bg-green-500/10 text-green-400 group-hover:bg-green-500/20',
       description: 'Stream millions of tracks with zero interruptions.'
     },
     {
       id: 'movies',
       title: 'Cinema',
-      subtitle: 'On-demand Streaming',
+      subtitle: 'On-Demand Streaming',
       icon: Film,
       path: '/movies',
-      color: 'from-purple-600/20 to-indigo-900/10',
-      accent: 'text-purple-400 group-hover:text-purple-300',
+      accentColor: 'purple',
+      accentClass: 'text-purple-400 group-hover:text-purple-300',
+      borderClass: 'border-l-4 border-l-purple-500/50 hover:border-l-purple-400 hover:border-purple-500/30',
+      bgIconClass: 'bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20',
       description: 'Synchronized cinema experience for you and friends.'
     },
     {
@@ -36,66 +39,73 @@ const Index = () => {
       subtitle: 'Global FM Broadcasts',
       icon: Radio,
       path: '/radio',
-      color: 'from-orange-600/20 to-red-900/10',
-      accent: 'text-orange-400 group-hover:text-orange-300',
+      accentColor: 'orange',
+      accentClass: 'text-orange-400 group-hover:text-orange-300',
+      borderClass: 'border-l-4 border-l-orange-500/50 hover:border-l-orange-400 hover:border-orange-500/30',
+      bgIconClass: 'bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20',
       description: 'Live terrestrial radio from across the planet.'
     }
   ];
 
   return (
     <MainLayout>
-      <div className="relative min-h-screen flex flex-col justify-center overflow-hidden bg-black py-20 px-6">
+      <div className="relative min-h-screen flex flex-col justify-center items-center overflow-hidden bg-[#050506] py-20 px-6">
         {/* Background Visuals */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h:[40%] bg-green-600/10 rounded-full blur-[120px]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/5 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-green-600/5 rounded-full blur-[120px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.9)_100%)]" />
         </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto w-full space-y-16">
-          <div className="text-center space-y-6 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-2">
-              <Sparkles size={14} className="text-purple-400" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">Premium Portal v2.0</span>
-            </div>
-            <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] text-white uppercase">
-              EXPERIENCE <span className="text-zinc-600 italic">LIMITLESS</span>
+        <div className="relative z-10 max-w-[640px] mx-auto w-full space-y-12">
+          {/* Header */}
+          <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-700">
+            <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center justify-center gap-1.5">
+              <Sparkles size={12} className="text-purple-400 animate-pulse" />
+              Entertainment Hub
+            </p>
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[1.05] text-[#f2f2f4] uppercase">
+              Experience <span className="text-zinc-600 font-medium italic">Limitless</span>
             </h1>
-            <p className="text-zinc-400 text-sm sm:text-base max-w-lg mx-auto font-bold uppercase tracking-widest leading-relaxed">
+            <p className="text-zinc-400 text-xs sm:text-sm font-semibold uppercase tracking-widest leading-relaxed max-w-[420px] mx-auto">
               Choose your entertainment node. Clean, ad-blocked, and fully synchronized.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+          {/* Vertical Stack */}
+          <div className="flex flex-col gap-3.5 w-full animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {hubs.map((hub) => (
               <div
                 key={hub.id}
                 onClick={() => navigate(hub.path)}
-                className="group relative flex flex-col p-6 aspect-[4/5] rounded-[1.5rem] bg-zinc-900/40 border border-white/5 cursor-pointer transition-all duration-500 hover:bg-zinc-900/60 hover:-translate-y-2 hover:border-white/10 overflow-hidden shadow-2xl"
+                className={`group flex items-center gap-5 p-5 sm:p-6 bg-zinc-900/40 hover:bg-zinc-900/80 border border-white/5 rounded-xl text-left cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:translate-y-[-2px] shadow-xl ${hub.borderClass}`}
               >
-                {/* Decorative background gradient */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${hub.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
-                
-                <div className="relative z-10 space-y-3">
-                  <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 ${hub.accent} transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10`}>
-                    <hub.icon size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tight">{hub.title}</h3>
-                    <p className={`text-[9px] font-black uppercase tracking-widest ${hub.accent} mt-0.5`}>{hub.subtitle}</p>
-                  </div>
+                {/* Icon */}
+                <div className={`flex-shrink-0 w-11 h-11 sm:w-12 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 ${hub.bgIconClass}`}>
+                  <hub.icon size={20} />
                 </div>
 
-                <div className="relative z-10">
-                  <p className="text-[9px] text-zinc-500 font-bold leading-relaxed uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <h2 className="margin-0 mb-0.5 text-base font-extrabold tracking-tight uppercase text-white">
+                    {hub.title}
+                  </h2>
+                  <span className={`text-[10.5px] font-bold uppercase tracking-wider mb-1.5 block ${hub.accentClass}`}>
+                    {hub.subtitle}
+                  </span>
+                  <p className="text-xs text-zinc-400 leading-relaxed font-semibold">
                     {hub.description}
                   </p>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest group-hover:text-white/40 transition-colors">Launch</span>
-                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-3 group-hover:translate-x-0 transition-all duration-500 shadow-xl">
-                      <ArrowRight size={14} />
-                    </div>
-                  </div>
+                </div>
+
+                {/* Launch Arrow */}
+                <div className={`flex-shrink-0 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 transition-colors duration-300 ${
+                  hub.accentColor === 'green' ? 'group-hover:text-green-400' : 
+                  hub.accentColor === 'purple' ? 'group-hover:text-purple-400' : 
+                  'group-hover:text-orange-400'
+                }`}>
+                  <span className="hidden sm:inline">Launch</span>
+                  <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
                 </div>
               </div>
             ))}
