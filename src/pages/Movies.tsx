@@ -1,30 +1,16 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic, Movie } from '@/context/MusicContext';
 import { tmdbApi } from '@/services/tmdbApi';
+import { MovieHero } from '@/components/MovieHero';
 import { MovieRow } from '@/components/MovieRow';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Loader2, Film, ArrowLeft, Sparkles } from 'lucide-react';
+import { CustomWatchParty } from '@/components/CustomWatchParty';
+import { Search, X, Users, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-
-const CATEGORIES = [
-  { id: 'all', label: 'All' },
-  { id: 'action', label: 'Action' },
-  { id: 'comedy', label: 'Comedy' },
-  { id: 'fantasy', label: 'Fantasy' },
-  { id: 'animation', label: 'Animation' },
-  { id: 'romance', label: 'Romance' },
-  { id: 'thriller', label: 'Thriller' },
-  { id: 'documentary', label: 'Documentary' },
-  { id: 'history', label: 'History' },
-  { id: 'music', label: 'Music' },
-  { id: 'tv', label: 'TV Shows' }
-] as const;
 
 const Movies = () => {
   const { playMovie } = useMusic();
@@ -34,11 +20,9 @@ const Movies = () => {
   const [topRatedMovies, setTopRatedMovies] = useState<Movie[]>([]);
   const [upcomingMovies, setUpcomingMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [categoryMovies, setCategoryMovies] = useState<Movie[]>([]);
 
-  // Load all movies on mount
   useEffect(() => {
     const loadAllMovies = async () => {
       setLoading(true);
@@ -49,6 +33,7 @@ const Movies = () => {
           tmdbApi.getTopRatedMovies(),
           tmdbApi.getUpcomingMovies()
         ]);
+
         setTrendingMovies(trending);
         setPopularMovies(popular);
         setTopRatedMovies(topRated);
@@ -62,27 +47,6 @@ const Movies = () => {
     loadAllMovies();
   }, []);
 
-  // Load movies by selected category
-  useEffect(() => {
-    if (selectedCategory === 'all') {
-      setCategoryMovies([]);
-      return;
-    }
-    
-    const fetchCategoryMovies = async () => {
-      setLoading(true);
-      try {
-        const movies = await tmdbApi.getMoviesByGenre(selectedCategory);
-        setCategoryMovies(movies);
-      } catch (error) {
-        console.error("Failed to fetch category movies:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCategoryMovies();
-  }, [selectedCategory]);
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -93,122 +57,93 @@ const Movies = () => {
   return (
     <MainLayout>
       <div className="bg-zinc-950 min-h-screen text-white select-none">
-        {/* Header with Category Filter */}
-        <div className="flex items-center justify-between px-6 md:px-12 py-4">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-            {selectedCategory === 'all' ? 'All Movies' : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Movies`}
-          </h1>
-          <div className="flex items-center gap-2">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white font-medium text-sm">
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800">
-                {CATEGORIES.map((cat) => (
-                  <SelectItem 
-                    key={cat.id} 
-                    value={cat.id}
-                    className="font-medium text-sm text-white"
-                  >
-                    {cat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Search 
-              className="text-zinc-400" 
-              size={16} 
-            />
-            <Input 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-              placeholder="Search movies..." 
-              className="pl-11 pr-4 bg-zinc-900 border-none h-11 rounded-xl text-sm text-white focus-visible:ring-2 focus-visible:ring-purple-500/20"
-            />
-          </div>
-        </div>
-
-        {/* Category Filter UI */}
-        {selectedCategory !== 'all' && (
-          <div className="px-6 md:px-12 py-2 mb-6">
-            <p className="text-sm text-zinc-400 font-medium">
-              Showing results for <span className="text-purple-400 font-bold">{selectedCategory}</span> movies
-            </p>
+        
+        {/* Floating Minimalist Search Bar */}
+        {isSearchOpen && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in duration-300">
+            <button 
+              onClick={() => setIsSearchOpen(false)}
+              className="absolute top-6 right-6 p-2 text-white hover:text-purple-400 transition-colors"
+            >
+              <X size={28} />
+            </button>
+            <form onSubmit={handleSearchSubmit} className="relative w-full max-w-xl text-center space-y-4">
+              <h2 className="text-2xl font-black uppercase tracking-widest text-purple-400">Search Movies</h2>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+                <Input 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Type any movie title, genres, directors..."
+                  className="pl-12 bg-zinc-900 border-2 border-transparent focus-visible:border-purple-600/30 h-14 rounded-2xl text-base font-semibold"
+                  autoFocus
+                />
+              </div>
+            </form>
           </div>
         )}
 
-        {/* Content Sections */}
-        <div className="px-6 md:px-16 space-y-12">
-          {/* Trending */}
-          {trendingMovies.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Trending Now</h2>
+        {loading ? (
+          <div className="space-y-10">
+            <Skeleton className="h-screen w-full" />
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {/* Spotlight Fullscreen Carousel Hero */}
+            {trendingMovies.length > 0 && (
+              <MovieHero 
+                movies={trendingMovies.slice(0, 8)} 
+                onPlay={playMovie} 
+                onSearchClick={() => setIsSearchOpen(true)}
+              />
+            )}
+
+            {/* Watch Party Quick Launch Area */}
+            <div className="px-6 md:px-16 pt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-gradient-to-r from-purple-900/40 via-indigo-900/20 to-zinc-900/50 border border-purple-500/20 rounded-[2rem] gap-4 backdrop-blur-md">
+                <div className="space-y-1 text-left">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 flex items-center gap-1">
+                    <Sparkles size={11} /> Synchronized Watch Party
+                  </span>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight">Got your own custom movie stream?</h2>
+                  <p className="text-xs text-zinc-400 font-semibold max-w-lg">
+                    Enter direct file links (MP4, MKV, HLS) or direct magnet links to broadcast and play with everyone connected in real-time.
+                  </p>
+                </div>
+                <div className="shrink-0 w-full sm:w-auto">
+                  <CustomWatchParty />
+                </div>
+              </div>
+            </div>
+
+            {/* Immersive Scroll Rows */}
+            <div className="px-6 md:px-16 space-y-12 pb-24">
               <MovieRow 
-                title="Trending" 
+                title="Latest Releases" 
                 movies={trendingMovies} 
                 onPlay={playMovie} 
               />
-            </div>
-          )}
-
-          {/* Popular */}
-          {popularMovies.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Popular Movies</h2>
+              
               <MovieRow 
-                title="Popular" 
+                title="Popular on anbae" 
                 movies={popularMovies} 
                 onPlay={playMovie} 
               />
-            </div>
-          )}
 
-          {/* Top Rated */}
-          {topRatedMovies.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Top Rated</h2>
               <MovieRow 
-                title="Top Rated" 
+                title="Top Rated Masterpieces" 
                 movies={topRatedMovies} 
                 onPlay={playMovie} 
               />
-            </div>
-          )}
 
-          {/* Upcoming */}
-          {upcomingMovies.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl md:text-3xl font-black mb-3">Upcoming</h2>
               <MovieRow 
-                title="Upcoming" 
+                title="Upcoming Blockbusters" 
                 movies={upcomingMovies} 
                 onPlay={playMovie} 
               />
             </div>
-          )}
-
-          {/* Category Specific Movies */}
-          {categoryMovies.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl md:text-3xl font-black mb-3">
-                {selectedCategory === 'all' ? 'All Movies' : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Movies`}
-              </h2>
-              <MovieRow 
-                title={selectedCategory === 'all' ? 'All Movies' : `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Movies`}
-                movies={categoryMovies} 
-                onPlay={playMovie} 
-              />
-            </div>
-          )}
-
-          {/* Load More State */}
-          {loading && (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="animate-spin text-purple-400" size={48} />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

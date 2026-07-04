@@ -45,7 +45,7 @@ const FALLBACK_MOVIES: Movie[] = [
     title: "Inception",
     overview: "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets, is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
     backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200",
-    poster: "https://images.unsplash.com/photo-1409632421241-6e4e2b6b4a3e?q=80&w=400",
+    poster: "https://images.unsplash.com/photo-1509281373149-e957c6296406?q=80&w=400",
     rating: 8.3,
     year: "2010",
     genre: "Action / Sci-Fi",
@@ -85,6 +85,13 @@ const FALLBACK_MOVIES: Movie[] = [
     language: "EN"
   }
 ];
+
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
 
 const mapTMDbToMovie = (item: any): Movie => {
   const genres = item.genre_ids && Array.isArray(item.genre_ids)
@@ -171,49 +178,6 @@ export const tmdbApi = {
     }
   },
 
-  // Genre mapping for category-based movie discovery
-  const GENRE_ID_MAP: Record<string, number> = {
-    "action": 28,
-    "adventure": 12,
-    "animation": 16,
-    "comedy": 35,
-    "crime": 80,
-    "documentary": 99,
-    "drama": 18,
-    "family": 10751,
-    "fantasy": 14,
-    "history": 36,
-    "horror": 27,
-    "music": 10402,
-    "romance": 10749,
-    "thriller": 53,
-    "tv": 10770,
-    "anime": 16,
-    "cartoon": 16
-  };
-
-  getMoviesByGenre: async (genreName: string): Promise<Movie[]> => {
-    const genreId = GENRE_ID_MAP[genreName.toLowerCase()];
-    if (!genreId) {
-      console.warn(`Unknown genre: ${genreName}`);
-      return FALLBACK_MOVIES;
-    }
-
-    try {
-      const res = await fetch(
-        `${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreId}&sort_by=popularity.desc&page=1`
-      );
-      if (!res.ok) throw new Error("Failed to fetch movies by genre");
-      
-      const data = await res.json();
-      const results = (data.results || []).map(mapTMDbToMovie);
-      return results.length > 0 ? results : FALLBACK_MOVIES;
-    } catch (error) {
-      console.error(`Error fetching movies by genre ${genreName}:`, error);
-      return FALLBACK_MOVIES;
-    }
-  },
-
   searchMovies: async (query: string): Promise<Movie[]> => {
     try {
       const res = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}`);
@@ -222,7 +186,7 @@ export const tmdbApi = {
       const results = (data.results || [])
         .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
         .map(mapTMDbToMovie);
-      return results.length > 0 ? results : FALLBACK_MOVIES;
+      return results.length > 0 ? results : FALLBACK_MOVIES.filter(m => m.title.toLowerCase().includes(query.toLowerCase()));
     } catch (error) {
       console.warn("TMDb API failed, using fallback search:", error);
       return FALLBACK_MOVIES.filter(m => m.title.toLowerCase().includes(query.toLowerCase()));
@@ -247,7 +211,7 @@ export const tmdbApi = {
     }
   },
 
-  getMovieCredits: async (movieId: string): Promise<any[]> => {
+  getMovieCredits: async (movieId: string): Promise<CastMember[]> => {
     try {
       let res = await fetch(`${BASE_URL}/movie/${movieId}/credits?api_key=${API_KEY}`);
       if (!res.ok) {
