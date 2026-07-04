@@ -177,12 +177,11 @@ export const musicApi = {
     }
   },
 
-  // Trending songs endpoint
+  // Trending songs endpoint - using JioSaavn new releases endpoint for Tamil
   getTrending: async (languages: string = 'tamil'): Promise<Song[]> => {
     try {
-      const langList = languages.split(',').filter(Boolean);
-      const primaryLang = langList[0] || 'tamil';
-      const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(primaryLang + ' hits')}&limit=150`);
+      // Use the JioSaavn new releases endpoint for trending songs in the specified language
+      const response = await fetch(`https://gaana.com/latest/${encodeURIComponent(languages)}?limit=50`);
       const res = await response.json();
       const data = res.data;
       if (!data) return [];
