@@ -1,9 +1,35 @@
-// In production, configure Vite or server to set the CSP header.
-// Example for Vite:
-// export default defineConfig({
-//   server: {
-//     headers: {
-//       'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.themoviedb.org https://de1.api.radio-browser.info https://jiosaavn-api.imurugan.workers.dev https://*.supabase.co wss://*.supabase.co"
-//     }
-//   }
-// });
+"use client";
+
+import React from 'react';
+import { MainLayout } from '@/components/MainLayout';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+
+const App: React.FC = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect unauthenticated users
+  React.useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
+  return (
+    <MainLayout>
+      {children}
+    </MainLayout>
+  );
+};
+
+export default App;

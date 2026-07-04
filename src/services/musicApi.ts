@@ -1,4 +1,4 @@
-export interface Song {
+"export interface Song {
   id: string;
   name: string;
   primaryArtists: string;
@@ -28,6 +28,19 @@ export interface Playlist {
   songs: Song[];
   language?: string;
   year?: string;
+}
+
+export interface Movie {
+  id: string;
+  title: string;
+  overview: string;
+  backdrop: string;
+  poster: string;
+  rating: number;
+  year: string;
+  genre: string;
+  language?: string;
+  streamUrl?: string;
 }
 
 export const getContainerCount = (album: Album): number => {

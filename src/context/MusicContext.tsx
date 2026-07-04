@@ -52,6 +52,7 @@ export interface MusicContextType {
   setRoomCode: (code: string | null) => void;
   setIsHost: (host: boolean) => void;
   broadcast: (event: string, data: any) => void;
+  playRandom: (fromSync?: boolean) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -89,6 +90,13 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     setMemories(prev => prev.filter(m => m.id !== memoryId));
   }, [canDeleteMemory]);
+
+  const playRandom = (fromSync = false) => {
+    if (queue.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * queue.length);
+    const song = queue[randomIndex];
+    playSong(song, queue, fromSync);
+  };
 
   const value = {
     currentSong: null,
@@ -135,6 +143,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setRoomCode,
     setIsHost,
     broadcast: () => {},
+    playRandom,
   };
 
   return (
