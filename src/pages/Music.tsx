@@ -17,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ListenTogether } from '@/components/ListenTogether';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { Badge } from '@/components/ui/badge';
+import NewReleases from './NewReleases'; // Import the new page component
 
 const MusicPage = () => {
   const navigate = useNavigate();
@@ -24,6 +26,7 @@ const MusicPage = () => {
   const { selectedLanguages, playSong, playRandom, currentSong, isPlaying, togglePlay, isMuted, toggleMute, toggleLike, isLiked } = useMusic();
   
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
+  const [newReleaseSongs, setNewReleaseSongs] = useState<Song[]>([]); // State for new releases
   const [loading, setLoading] = useState(true);
 
   // Artist-specific state lists
@@ -37,28 +40,19 @@ const MusicPage = () => {
     const fetchMusicAndArtists = async () => {
       setLoading(true);
       try {
-        const trendingPromises = selectedLanguages.map(lang => 
-          musicApi.getTrending(lang).catch(() => [] as Song[])
-        );
-        const results = await Promise.all(trendingPromises);
-        const combined = results.flat();
-        
-        if (combined.length === 0) {
-          const fallback = await musicApi.getTrending('tamil');
-          setTrendingSongs(fallback);
-        } else {
-          setTrendingSongs(combined);
-        }
-
-        // Parallel fetch for legendary artist playlists/tracks
-        const [rahman, yuvan, harris, vairamuthu] = await Promise.all([
-          musicApi.searchSongs("A.R. Rahman", 1, 40).catch(() => []),
-          musicApi.searchSongs("Yuvan Shankar Raja", 1, 40).catch(() => []),
-          musicApi.searchSongs("Harris Jayaraj", 1, 40).catch(() => []),
-          musicApi.searchSongs("Vairamuthu Hits", 1, 40).catch(() => [])
+        const [trending, newReleases, rahman, yuvan, harris, vairamuthu] = await Promise.all([
+          Promise.all(selectedLanguages.map(lang => musicApi.getTrending(lang).catch(() => [] as Song[]))).then(results => results.flat()),
+          musicApi.getTrending('tamil').catch(() => [] as Song[]), // Fetch new releases specifically for Tamil
+          musicApi.searchSongs("A.R. Rahman").catch(() => []),
+          musicApi.searchSongs("Yuvan Shankar Raja").catch(() => []),
+          musicApi.searchSongs("Harris Jayaraj").catch(() => []),
+          musicApi.searchSongs("Vairamuthu Hits").catch(() => [])
         ]);
 
-        // Filter helper to strictly enforce language settings
+        setTrendingSongs(trending.filter(s => s.language && selectedLanguages.includes(s.language.toLowerCase())));
+        setNewReleaseSongs(newReleases.slice(0, 12)); // Take the first 12 new releases
+
+        // Filter artist songs by selected languages
         const filterByLanguage = (songsList: Song[]) => {
           return songsList.filter(song => {
             if (!song.language) return false;
@@ -72,7 +66,7 @@ const MusicPage = () => {
         setVairamuthuSongs(filterByLanguage(vairamuthu));
 
       } catch (err) {
-        console.error("Failed to load trending music & artists", err);
+        console.error("Failed to load music data", err);
       } finally {
         setLoading(false);
       }
@@ -87,7 +81,7 @@ const MusicPage = () => {
 
   const spotlightImage = spotlightSong 
     ? getHighResImage(spotlightSong.image) 
-    : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1200';
+    : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd816?q=80&w=1200';
 
   const handleSpotlightPlay = () => {
     if (!spotlightSong) return;
@@ -115,7 +109,7 @@ const MusicPage = () => {
               alt={spotlightSong.name} 
               className="w-full h-full object-cover object-center opacity-35 lg:opacity-60"
             />
-            {/* Complex blended black gradients to smoothly blend standard image to black background */}
+            {/* Smooth gradient mask into dark background */}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
             <div className="absolute inset-0 bg-black/40" />
@@ -196,7 +190,7 @@ const MusicPage = () => {
                 <div className="space-y-1">
                   <p className="text-sm md:text-base text-zinc-300 font-semibold leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: spotlightSong.primaryArtists || (spotlightSong as any).subtitle || 'Unknown Artist' }} />
                   {spotlightSong.album?.name && (
-                    <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">
+                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                       Album: <span className="text-zinc-400" dangerouslySetInnerHTML={{ __html: spotlightSong.album.name }} />
                     </p>
                   )}
@@ -210,7 +204,7 @@ const MusicPage = () => {
               </>
             ) : (
               <>
-                <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none">Retro</h1>
+                <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] drop-shadow-xl select-text animate-in fade-in duration-500">Retro</h1>
                 <p className="text-sm md:text-base text-zinc-300 font-semibold max-w-md">David Bowie, Pink Floyd, Prince, ...</p>
                 <p className="text-xs text-purple-300/60 font-bold uppercase tracking-wider">78 Songs</p>
               </>
@@ -277,18 +271,82 @@ const MusicPage = () => {
                 >
                   <img 
                     src={getHighResImage(playlist.image)} 
-                    alt={playlist.title} 
+                    alt={playlist.name} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-4 flex flex-col justify-end" />
                   <div className="absolute inset-0 p-4 flex flex-col justify-end">
-                    <h4 className="text-white font-black text-sm sm:text-base leading-tight truncate" dangerouslySetInnerHTML={{ __html: playlist.title }} />
+                    <h4 className="text-white font-black text-sm sm:text-base leading-tight truncate" dangerouslySetInnerHTML={{ __html: playlist.name }} />
                     <p className="text-white/60 text-[9px] font-bold uppercase mt-1 tracking-wider">{playlist.subtitle || 'Playlist'}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* NEW RELEASES ROW */}
+          {newReleaseSongs.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-2">
+                  <Sparkles size={14} className="text-purple-400" />
+                  Latest Releases
+                </h3>
+                <button 
+                  onClick={() => navigate('/new-releases')}
+                  className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
+                >
+                  <span>View All</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="w-36 shrink-0 space-y-2.5">
+                      <Skeleton className="aspect-square w-full rounded-2xl bg-white/5" />
+                      <Skeleton className="h-4 w-3/4 bg-white/5" />
+                      <Skeleton className="h-3 w-1/2 bg-white/5" />
+                    </div>
+                  ))
+                ) : (
+                  newReleaseSongs.slice(0, 10).map((song) => {
+                    const songImg = getHighResImage(song.image);
+                    const isCurrent = currentSong?.id === song.id;
+                    
+                    return (
+                      <div 
+                        key={song.id}
+                        onClick={() => playSong(song, newReleaseSongs)}
+                        className="group relative w-36 sm:w-40 shrink-0 flex flex-col gap-2 cursor-pointer"
+                      >
+                        <div className="relative aspect-square w-full rounded-[1.5rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-xl shadow-black/40">
+                          <img 
+                            src={songImg} 
+                            alt={song.name} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
+                              {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
+                            </div>
+                          </div>
+                          {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
+                        </div>
+                        <div className="text-left px-1 mt-0.5 min-w-0">
+                          <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
+                          <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
 
           {/* EXISTING TRENDING SONGS SLIDER */}
           <div className="space-y-4">
@@ -332,18 +390,10 @@ const MusicPage = () => {
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                           <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                            {isCurrent && isPlaying ? (
-                              <Pause size={14} fill="currentColor" />
-                            ) : (
-                              <Play size={14} fill="currentColor" className="ml-0.5" />
-                            )}
+                            {isCurrent && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
                           </div>
                         </div>
-                        {isCurrent && (
-                          <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center">
-                            <div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
-                          </div>
-                        )}
+                        {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
                         <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
@@ -353,7 +403,7 @@ const MusicPage = () => {
                   );
                 })
               ) : (
-                <div className="py-8 text-center text-xs text-muted-foreground w-full">No active trending tracks.</div>
+                <div className="py-8 text-center text-xs text-muted-foreground w-full">No trending tracks found.</div>
               )}
             </div>
           </div>
@@ -395,7 +445,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>
@@ -433,7 +483,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>
@@ -471,7 +521,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>
@@ -509,7 +559,7 @@ const MusicPage = () => {
                         {isCurrent && <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" /></div>}
                       </div>
                       <div className="text-left px-1 mt-0.5 min-w-0">
-                        <h4 className="font-bold text-xs text-white truncate" dangerouslySetInnerHTML={{ __html: song.name }} />
+                        <h4 className="font-bold text-xs text-white truncate group-hover:text-purple-300 transition-colors" dangerouslySetInnerHTML={{ __html: song.name }} />
                         <p className="text-[10px] text-zinc-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: song.primaryArtists }} />
                       </div>
                     </div>
