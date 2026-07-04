@@ -58,6 +58,12 @@ const VIDEO_SOURCES: VideoSource[] = [
     name: 'SmashyStream',
     getMovieUrl: (id) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
     getTvUrl: (id, s, e) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`
+  },
+  {
+    id: 'rivestream',
+    name: 'Rivestream',
+    getMovieUrl: (id) => `https://www.rivestream.app/api/v1/player/${id}`,
+    getTvUrl: (id, s, e) => `https://www.rivestream.app/api/v1/player/${id}?season=${s}&episode=${e}`
   }
 ];
 
@@ -135,7 +141,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         {isTv && (
           <div className="absolute top-6 left-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
             <Select value={season} onValueChange={setSeason}>
-              <SelectTrigger className="w-[120px] bg-black/80 backdrop-blur-xl border-white/10 text-white font-black text-[11px] h-10 rounded-full uppercase tracking-[0.1em]">
+              <SelectTrigger className="w-[120px] bg-black/80 backdrop-blur-xl border-white/10 text-white font-bold text-[11px] h-10 rounded-full uppercase tracking-[0.1em]">
                 <SelectValue placeholder="Season" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-2xl">
@@ -145,7 +151,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               </SelectContent>
             </Select>
             <Select value={episode} onValueChange={setEpisode}>
-              <SelectTrigger className="w-[120px] bg-black/80 backdrop-blur-xl border-white/10 text-white font-black text-[11px] h-10 rounded-full uppercase tracking-[0.1em]">
+              <SelectTrigger className="w-[120px] bg-black/80 backdrop-blur-xl border-white/10 text-white font-bold text-[11px] h-10 rounded-full uppercase tracking-[0.1em]">
                 <SelectValue placeholder="Episode" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-2xl">
@@ -161,14 +167,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       {/* Controller Bar */}
       <div className="p-6 md:p-8 bg-zinc-950 border-t border-white/5 flex flex-col gap-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Broadcast Station</span>
-            </div>
+          <div className="flex items-center gap-6">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">Broadcast Station</span>
             <div className="flex items-center gap-2">
               <Server size={14} className="text-pink-500" />
-              <p className="text-xs font-black text-zinc-300 uppercase tracking-[0.15em]">
+              <p className="text-xs font-bold text-zinc-300 uppercase tracking-[0.15em]">
                 Active Node: <span className="text-pink-500">{VIDEO_SOURCES[activeSourceIdx].name}</span>
               </p>
             </div>
@@ -178,8 +181,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             {autoFallbackEnabled && (
               <div className="hidden sm:flex items-center gap-3 px-5 py-2 bg-pink-600/10 border border-pink-500/20 rounded-full">
                 <Clock size={14} className="text-pink-400" />
-                <span className="text-[10px] font-black text-pink-300 uppercase tracking-widest">Auto-Node in {Math.round(timeLeft)}s</span>
-                <button onClick={() => setAutoFallbackEnabled(false)} className="text-[9px] font-black text-white/50 hover:text-white uppercase tracking-widest ml-2 border-l border-white/10 pl-3">Stop</button>
+                <span className="text-[10px] font-bold text-pink-300 uppercase tracking-widest">Auto-Node in {Math.round(timeLeft)}s</span>
+                <button onClick={() => setAutoFallbackEnabled(false)} className="text-[9px] font-bold text-white/50 hover:text-white uppercase tracking-widest ml-2 border-l border-white/10 pl-3">Stop</button>
               </div>
             )}
             <button 
@@ -192,7 +195,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             <Button 
               onClick={() => window.open(getEmbedUrl(), '_blank')} 
               variant="outline" 
-              className="rounded-full border-white/10 h-12 px-6 text-[10px] font-black uppercase tracking-[0.2em] gap-2 bg-white/5 hover:bg-white/10"
+              className="rounded-full border-white/10 h-12 px-6 text-[10px] font-bold uppercase tracking-[0.2em] gap-2 bg-white/5 hover:bg-white/10"
             >
               <ExternalLink size={14} />
               Theater Popout
@@ -203,7 +206,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         {/* Server Selection Pills */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Channel Selection</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em]">Channel Selection</p>
             <div className="flex items-center gap-1.5 text-[9px] text-zinc-600 font-bold tracking-widest uppercase">
               <ShieldCheck size={12} className="text-green-500" />
               End-to-End SSL Active
@@ -218,7 +221,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   setAutoFallbackEnabled(false);
                 }}
                 className={cn(
-                  "px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] transition-all border",
+                  "px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] transition-all border",
                   activeSourceIdx === idx 
                     ? "bg-pink-600 border-pink-500 text-white shadow-xl shadow-pink-600/20" 
                     : "bg-white/[0.02] border-white/5 text-zinc-500 hover:text-zinc-200 hover:border-white/10"
