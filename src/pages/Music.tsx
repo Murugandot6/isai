@@ -10,22 +10,13 @@ import { FEATURED_PLAYLISTS } from '@/data/featuredPlaylists';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Play, Pause, Home, Music, Film, Radio, Disc, Search, Heart, 
-  Sparkles, Power, Volume2, VolumeX, ArrowRight, User, Star, Library, ChevronRight, Compass, Shuffle
+  Sparkles, Power, Volume2, VolumeX, Sparkle, ArrowRight, User, Star, Library, ChevronRight, Compass, Shuffle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ListenTogether } from '@/components/ListenTogether';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
 
 const MusicPage = () => {
   const navigate = useNavigate();
@@ -34,8 +25,6 @@ const MusicPage = () => {
   
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Artist-specific state lists
   const [rahmanSongs, setRahmanSongs] = useState<Song[]>([]);
@@ -91,15 +80,6 @@ const MusicPage = () => {
     fetchMusicAndArtists();
   }, [selectedLanguages]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}&type=music`);
-      setSearchOpen(false);
-      setSearchQuery('');
-    }
-  };
-
   // Spotlight is either current playing song or first trending song
   const spotlightSong = useMemo(() => {
     return currentSong || trendingSongs[0] || null;
@@ -142,7 +122,7 @@ const MusicPage = () => {
           </div>
         )}
 
-        {/* HEADER MENU AND CONTROLS BAR */}
+        {/* HEADER MENU AND CONTROLS BAR (Fully transparent overlaying the hero background) */}
         <div className="flex items-center justify-between p-6 md:px-12 z-20 gap-4 bg-transparent">
           {/* Left Top Group controls (Gateway, Shuffle Random, Language Selector) */}
           <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 backdrop-blur-md">
@@ -161,41 +141,9 @@ const MusicPage = () => {
               <Shuffle size={18} className="text-purple-400" />
               <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">Play Random</span>
             </button>
+            
             <LanguageSelector />
           </div>
-
-          {/* Search Dialog Trigger */}
-          <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-            <DialogTrigger asChild>
-              <button className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-all" title="Search Music">
-                <Search size={18} />
-              </button>
-            </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-white/10 max-w-[90vw] sm:max-w-md rounded-3xl text-white">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-black">Search Music</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSearch} className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
-                  <Input 
-                    type="text"
-                    placeholder="Search for songs, artists, albums..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-11 pr-4 bg-white/5 border-none h-12 rounded-xl text-white text-sm font-medium focus-visible:ring-2 focus-visible:ring-purple-500/20"
-                    autoFocus
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  Search
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
 
           {/* Curated Top Menus */}
           <div className="hidden md:flex items-center gap-2 text-xs font-black tracking-widest uppercase">
@@ -205,6 +153,17 @@ const MusicPage = () => {
             >
               <Sparkles size={14} className="text-purple-400" />
               Trending Playlists
+            </button>
+            <button 
+              onClick={() => {
+                if (trendingSongs.length > 0) {
+                  playSong(trendingSongs[0], trendingSongs);
+                }
+              }}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 transition-all text-[11px]"
+            >
+              <Star size={14} className="text-yellow-400" />
+              Editor's Picks
             </button>
             <button 
               onClick={() => navigate('/artists')}
@@ -221,7 +180,7 @@ const MusicPage = () => {
           </div>
         </div>
 
-        {/* MAIN SPOTLIGHT BANNER HERO */}
+        {/* MAIN SPOTLIGHT BANNER HERO (Seamless Black Blended Look) */}
         <div className="flex-1 flex flex-col justify-center px-6 md:px-12 relative min-h-[420px] py-12">
           <div className="relative z-10 max-w-xl space-y-4 md:space-y-6 text-left">
             <span className="text-xs md:text-sm font-black uppercase tracking-[0.25em] text-purple-400 flex items-center gap-2">
@@ -233,6 +192,7 @@ const MusicPage = () => {
               <>
                 <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] drop-shadow-xl select-text animate-in fade-in duration-500" dangerouslySetInnerHTML={{ __html: spotlightSong.name }} />
                 
+                {/* Shows both Artist and Album Name cleanly */}
                 <div className="space-y-1">
                   <p className="text-sm md:text-base text-zinc-300 font-semibold leading-relaxed drop-shadow" dangerouslySetInnerHTML={{ __html: spotlightSong.primaryArtists || (spotlightSong as any).subtitle || 'Unknown Artist' }} />
                   {spotlightSong.album?.name && (
@@ -256,6 +216,7 @@ const MusicPage = () => {
               </>
             )}
 
+            {/* Minimal Circle Play Button aligned perfectly */}
             <div className="flex items-center gap-6 pt-4">
               <button 
                 onClick={handleSpotlightPlay}
@@ -288,10 +249,10 @@ const MusicPage = () => {
           </div>
         </div>
 
-        {/* CURATED MUSIC PORTAL LAYOUTS */}
+        {/* CURATED MUSIC PORTAL LAYOUTS: Editor's Picks & Legendary Tamil Composers */}
         <div className="px-6 md:px-12 space-y-12 pb-24 text-left">
           
-          {/* EDITOR'S PICK ROW */}
+          {/* EDITOR'S PICK ROW (Curated high-fidelity playlists) */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-2">
@@ -329,15 +290,15 @@ const MusicPage = () => {
             </div>
           </div>
 
-          {/* TRENDING SONGS SLIDER */}
+          {/* EXISTING TRENDING SONGS SLIDER */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black tracking-widest uppercase text-white/60">Trending Tracks</h3>
               <button 
-                onClick={() => navigate('/search?q=&type=music')}
+                onClick={() => navigate('/search?type=music')}
                 className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
               >
-                <span>View All</span>
+                <span>Search all</span>
                 <ArrowRight size={14} />
               </button>
             </div>
@@ -400,10 +361,19 @@ const MusicPage = () => {
           {/* A.R. RAHMAN HITS SLIDER */}
           {rahmanSongs.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
-                <Compass size={13} className="text-cyan-400" />
-                A.R. Rahman Hits
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-1.5">
+                  <Compass size={13} className="text-cyan-400" />
+                  A.R. Rahman Hits
+                </h3>
+                <button 
+                  onClick={() => navigate('/artists')}
+                  className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
+                >
+                  <span>Artist Page</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
 
               <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 no-scrollbar">
                 {rahmanSongs.map((song) => {
