@@ -24,8 +24,14 @@ const PLAYER_ACCENT = 'db2777';
 
 const VIDEO_SOURCES: VideoSource[] = [
   {
+    id: 'rivestream',
+    name: 'Riverstream (Fast)',
+    getMovieUrl: (id) => `https://embed.rivestream.app/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://embed.rivestream.app/tv/${id}/${s}/${e}`
+  },
+  {
     id: 'vyla',
-    name: 'Vyla (Primary)',
+    name: 'Vyla (Multi-Server)',
     getMovieUrl: (id) => {
       const isImdb = id.startsWith('tt');
       return `https://player.vyla.cc/?id=${id}${!isImdb ? '&tmdb=1' : ''}&color=${PLAYER_ACCENT}`;
@@ -37,7 +43,7 @@ const VIDEO_SOURCES: VideoSource[] = [
   },
   {
     id: 'vidcore',
-    name: 'VidCore (Fast)',
+    name: 'VidCore',
     getMovieUrl: (id) => `https://vidcore.net/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidcore.net/embed/tv/${id}/${s}/${e}`
   },
