@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useNavigate } from 'react-router-dom';
 import { Music, Film, Radio, ArrowRight, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,9 +16,8 @@ const Index = () => {
       subtitle: 'Premium Audio Station',
       icon: Music,
       path: '/music',
-      accent: 'bg-green-500/15',
-      accentText: 'text-green-400',
-      accentHover: 'group-hover:text-green-300',
+      color: 'from-green-600/20 to-emerald-900/10',
+      accent: 'text-green-400 group-hover:text-green-300',
       description: 'Stream millions of tracks with zero interruptions.'
     },
     {
@@ -27,9 +26,8 @@ const Index = () => {
       subtitle: 'On-demand Streaming',
       icon: Film,
       path: '/movies',
-      accent: 'bg-purple-500/15',
-      accentText: 'text-purple-400',
-      accentHover: 'group-hover:text-purple-300',
+      color: 'from-purple-600/20 to-indigo-900/10',
+      accent: 'text-purple-400 group-hover:text-purple-300',
       description: 'Synchronized cinema experience for you and friends.'
     },
     {
@@ -38,9 +36,8 @@ const Index = () => {
       subtitle: 'Global FM Broadcasts',
       icon: Radio,
       path: '/radio',
-      accent: 'bg-orange-500/15',
-      accentText: 'text-orange-400',
-      accentHover: 'group-hover:text-orange-300',
+      color: 'from-orange-600/20 to-red-900/10',
+      accent: 'text-orange-400 group-hover:text-orange-300',
       description: 'Live terrestrial radio from across the planet.'
     }
   ];
@@ -69,76 +66,39 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Vertical Stack */}
-          <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-            {hubs.map((hub) => {
-              const Icon = hub.icon;
-              
-              return (
-                <a
-                  key={hub.id}
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(hub.path);
-                  }}
-                  className="group relative flex items-center gap-6 p-6 bg-zinc-900/40 border border-white/5 
-                    border-l-0 rounded-xl transition-all duration-500 hover:bg-zinc-900/60 hover:-translate-y-1 
-                    hover:border-white/10"
-                  style={{
-                    borderLeftColor: 'transparent',
-                    borderLeftWidth: '3px'
-                  } as React.CSSProperties}
-                >
-                  {/* Accent Left Border */}
-                  <div 
-                    className={cn(
-                      "absolute inset-y-0 left-0 w-1.5 rounded-xl transition-colors duration-300",
-                      hub.accent.includes('green') ? 'bg-green-400' : 
-                      hub.accent.includes('purple') ? 'bg-purple-400' : 
-                      'bg-orange-400'
-                    )}
-                  />
-
-                  {/* Icon */}
-                  <div 
-                    className={cn(
-                      "flex-shrink-0 w-11.5 h-11.5 rounded-full flex items-center justify-center",
-                      hub.accent,
-                      "border border-white/10 transition-all duration-500"
-                    )}
-                  >
-                    <Icon className={cn("w-5 h-5", hub.accentText, hub.accentHover)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+            {hubs.map((hub) => (
+              <div
+                key={hub.id}
+                onClick={() => navigate(hub.path)}
+                className="group relative flex flex-col p-6 aspect-[4/5] rounded-[1.5rem] bg-zinc-900/40 border border-white/5 cursor-pointer transition-all duration-500 hover:bg-zinc-900/60 hover:-translate-y-2 hover:border-white/10 overflow-hidden shadow-2xl"
+              >
+                {/* Decorative background gradient */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${hub.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+                
+                <div className="relative z-10 space-y-3">
+                  <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 ${hub.accent} transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10`}>
+                    <hub.icon size={20} />
                   </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight mb-1">
-                      {hub.title}
-                    </h2>
-                    <span className={cn("block text-[10px] font-black uppercase tracking-[0.09em] mb-2", hub.accentText, hub.accentHover)}>
-                      {hub.subtitle}
-                    </span>
-                    <p className="text-sm text-zinc-500 font-bold leading-relaxed uppercase tracking-wider">
-                      {hub.description}
-                    </p>
+                  <div>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight">{hub.title}</h3>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${hub.accent} mt-0.5`}>{hub.subtitle}</p>
                   </div>
+                </div>
 
-                  {/* Launch */}
-                  <div className={cn(
-                    "flex-shrink-0 flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.12em]",
-                    "text-zinc-400 transition-colors duration-300",
-                    hub.accentText, hub.accentHover
-                  )}>
-                    Launch
-                    <ArrowRight 
-                      size={14} 
-                      className="transition-transform duration-300 group-hover:translate-x-1"
-                    />
+                <div className="relative z-10">
+                  <p className="text-[9px] text-zinc-500 font-bold leading-relaxed uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
+                    {hub.description}
+                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest group-hover:text-white/40 transition-colors">Launch</span>
+                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-3 group-hover:translate-x-0 transition-all duration-500 shadow-xl">
+                      <ArrowRight size={14} />
+                    </div>
                   </div>
-                </a>
-              );
-            })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
