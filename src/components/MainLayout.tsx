@@ -47,7 +47,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const searchParams = new URLSearchParams(location.search);
   const searchType = searchParams.get('type');
 
-  const isMoviesContext = path.startsWith('/movies') || path.startsWith('/watch') || (path === '/search' && searchType === 'movies');
+  const isMoviesContext = path.startsWith('/movies') || path.startsWith('/watch-history') || path.startsWith('/watch') || (path === '/search' && searchType === 'movies');
   const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
   const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
 
@@ -157,11 +157,11 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                   Search Movies
                 </button>
                 <button 
-                  onClick={() => navigate('/library')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/library' ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                  onClick={() => navigate('/watch-history')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/watch-history' ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
                 >
                   <History size={14} />
-                  Continue Watching
+                  Watch History
                 </button>
                 <button 
                   onClick={() => navigate('/favourites')}
