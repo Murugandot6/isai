@@ -1,30 +1,41 @@
 "use client";
 
+import React from 'react';
+import { Album } from '@/services/musicApi';
+import { Play, Calendar } from 'lucide-react';
 import { getHighResImage } from '@/lib/image-utils';
-import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
-interface AlbumCardProps {
-  album: {
-    id: string;
-    name: string;
-    year: string | number;
-    image: any;
-    songCount?: string;
-  };
-}
+export const AlbumCard: React.FC<{ album: Album }> = ({ album }) => {
+  const navigate = useNavigate();
+  
+  if (!album) return null;
 
-export const AlbumCard = ({ album }: AlbumCardProps) => {
   const imageUrl = getHighResImage(album.image);
+
   return (
-    <div className="group relative bg-card/50 border border-border/50 rounded-2xl overflow-hidden cursor-pointer transition-all hover:shadow-xl">
-      <img src={imageUrl} alt={album.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
-          <h3 className="text-white font-bold text-lg truncate">{album.name}</h3>
-          <p className="text-xs text-zinc-400 font-bold mt-1">
-            {album.year?.toString() || 'N/A'}
-          </p>
+    <div 
+      className="group relative bg-card/50 hover:bg-accent/10 p-3 rounded-2xl transition-all duration-300 cursor-pointer border border-transparent hover:border-accent/20 hover:-translate-y-1"
+      onClick={() => navigate(`/album/${album.id}`)}
+    >
+      <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-accent/10 shadow-lg">
+        <img 
+          src={imageUrl} 
+          alt={album.name || 'Album'} 
+          className="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+        />
+        
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="bg-primary text-primary-foreground p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
+            <Play size={24} fill="currentColor" />
+          </div>
         </div>
+      </div>
+      <h3 className="font-semibold text-sm truncate mb-0.5" dangerouslySetInnerHTML={{ __html: album.name || 'Unknown Album' }}></h3>
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Calendar size={12} />
+        <span className="text-[10px] font-bold">{album.year || 'N/A'}</span>
       </div>
     </div>
   );
