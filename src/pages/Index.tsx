@@ -48,7 +48,7 @@ const Index = () => {
         {/* Background Visuals */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-green-600/10 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h:[40%] bg-green-600/10 rounded-full blur-[120px]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
         </div>
 
@@ -66,34 +66,34 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             {hubs.map((hub) => (
               <div
                 key={hub.id}
                 onClick={() => navigate(hub.path)}
-                className={`group relative flex flex-col justify-between p-8 aspect-[4/5] rounded-[2.5rem] bg-zinc-900/40 border border-white/5 cursor-pointer transition-all duration-500 hover:bg-zinc-900/60 hover:-translate-y-2 hover:border-white/10 overflow-hidden shadow-2xl`}
+                className="group relative flex flex-col p-6 aspect-[4/5] rounded-[1.5rem] bg-zinc-900/40 border border-white/5 cursor-pointer transition-all duration-500 hover:bg-zinc-900/60 hover:-translate-y-2 hover:border-white/10 overflow-hidden shadow-2xl"
               >
                 {/* Decorative background gradient */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${hub.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
                 
-                <div className="relative z-10 space-y-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 ${hub.accent} transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10`}>
-                    <hub.icon size={28} />
+                <div className="relative z-10 space-y-3">
+                  <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 ${hub.accent} transition-all duration-500 group-hover:scale-110 group-hover:bg-white/10`}>
+                    <hub.icon size={20} />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">{hub.title}</h3>
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${hub.accent} mt-0.5`}>{hub.subtitle}</p>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight">{hub.title}</h3>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${hub.accent} mt-0.5`}>{hub.subtitle}</p>
                   </div>
                 </div>
 
-                <div className="relative z-10 space-y-6">
-                  <p className="text-xs text-zinc-500 font-bold leading-relaxed uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
+                <div className="relative z-10">
+                  <p className="text-[9px] text-zinc-500 font-bold leading-relaxed uppercase tracking-wider group-hover:text-zinc-300 transition-colors">
                     {hub.description}
                   </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest group-hover:text-white/40 transition-colors">Launch Station</span>
-                    <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-500 shadow-xl">
-                      <ArrowRight size={18} />
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest group-hover:text-white/40 transition-colors">Launch</span>
+                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-3 group-hover:translate-x-0 transition-all duration-500 shadow-xl">
+                      <ArrowRight size={14} />
                     </div>
                   </div>
                 </div>
