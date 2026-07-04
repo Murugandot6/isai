@@ -4,6 +4,7 @@ import path from "path";
 import dyadComponentTagger from '@dyad-sh/react-vite-component-tagger';
 
 export default defineConfig(() => ({
+  base: "./",
   plugins: [
     dyadComponentTagger(),
     react(),
