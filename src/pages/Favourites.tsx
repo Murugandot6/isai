@@ -1,25 +1,16 @@
 "use client";
 
+import React from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
 import { Heart, Radio, Music, Play, Pause, Film, Star } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { useMusic as useMusicContext } from '@/context/MusicContext';
+import { cn } from '@/lib/utils';
 
-export default function Favourites() {
-  const {
-    likedSongs,
-    likedStations,
-    likedMovies,
-    playSong,
-    playMovie,
-    currentSong,
-    isPlaying,
-    selectedLanguages,
-  } = useMusicContext();
+const Favourites = () => {
+  const { likedSongs, likedStations, likedMovies, playSong, playMovie, currentSong, isPlaying } = useMusic();
 
   const handlePlayStation = (station: any) => {
     const radioSong = {
@@ -102,10 +93,10 @@ export default function Favourites() {
                           <Play size={16} fill="currentColor" className="ml-0.5" />
                         </div>
                       </div>
-                    </div>
-                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg flex items-center gap-1 text-[9px] font-bold text-yellow-500">
-                      <Star size={10} fill="currentColor" />
-                      {movie.rating}
+                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-lg flex items-center gap-1 text-[9px] font-bold text-yellow-500">
+                        <Star size={10} fill="currentColor" />
+                        {movie.rating}
+                      </div>
                     </div>
                     <div className="p-3 md:p-4">
                       <h3 className="font-bold text-xs md:text-sm truncate group-hover:text-purple-400 transition-colors">{movie.title}</h3>
@@ -128,7 +119,6 @@ export default function Favourites() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                 {likedStations.map((station) => {
                   const isActive = currentSong?.id === station.stationuuid;
-                  const liked = isStationLiked(station.stationuuid);
                   return (
                     <div 
                       key={station.stationuuid}
@@ -148,13 +138,9 @@ export default function Favourites() {
                         />
                         <div className={cn(
                           "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
-                          isActive && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                         )}>
-                          {isActive && isPlaying ? (
-                            <Pause size={16} fill="currentColor" className="text-white" />
-                          ) : (
-                            <Play size={16} fill="currentColor" className="text-white" />
-                          )}
+                          {isActive && isPlaying ? <Pause size={16} fill="currentColor" className="text-white" /> : <Play size={16} fill="currentColor" className="text-white" />}
                         </div>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -179,4 +165,6 @@ export default function Favourites() {
       </div>
     </MainLayout>
   );
-}
+};
+
+export default Favourites;

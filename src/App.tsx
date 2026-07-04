@@ -1,35 +1,64 @@
-"use client";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HashRouter, Routes, Route } from "react-router-dom";
+import { MusicProvider } from "@/context/MusicContext";
+import { AuthProvider } from "@/context/AuthContext";
+import Index from "./pages/Index";
+import MusicPage from "./pages/Music";
+import Search from "./pages/Search";
+import Radio from "./pages/Radio";
+import Library from "./pages/Library";
+import Songs from "./pages/Songs";
+import Artists from "./pages/Artists";
+import Favourites from "./pages/Favourites";
+import Journal from "./pages/Journal";
+import AlbumDetails from "./pages/AlbumDetails";
+import PlaylistDetails from "./pages/PlaylistDetails";
+import Featured from "./pages/Featured";
+import Movies from "./pages/Movies";
+import Stremio from "./pages/Stremio";
+import Watch from "./pages/Watch";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
 
-import React from 'react';
-import { MainLayout } from '@/components/MainLayout';
-import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+const queryClient = new QueryClient();
 
-const App: React.FC = () => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  // Redirect unauthenticated users
-  React.useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
-  }, [user, loading, navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="animate-spin text-primary" size={48} />
-      </div>
-    );
-  }
-
-  return (
-    <MainLayout>
-      {children}
-    </MainLayout>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
+        <MusicProvider>
+          <Toaster />
+          <Sonner />
+          <HashRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/music" element={<MusicPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/radio" element={<Radio />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/songs" element={<Songs />} />
+              <Route path="/artists" element={<Artists />} />
+              <Route path="/favourites" element={<Favourites />} />
+              <Route path="/journal" element={<Journal />} />
+              <Route path="/featured" element={<Featured />} />
+              <Route path="/movies" element={<Movies />} />
+              <Route path="/stremio" element={<Stremio />} />
+              <Route path="/watch" element={<Watch />} />
+              <Route path="/album/:id" element={<AlbumDetails />} />
+              <Route path="/playlist/:id" element={<PlaylistDetails />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </HashRouter>
+        </MusicProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

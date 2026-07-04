@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-export default function Library() {
+const Library = () => {
   const { likedSongs, playlists, createPlaylist, recentlyWatched, playMovie } = useMusic();
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -55,7 +55,7 @@ export default function Library() {
                   placeholder="Playlist Name (e.g. Tamil Vibes)" 
                   value={newPlaylistName}
                   onChange={(e) => setNewPlaylistName(e.target.value)}
-                  className="bg-white/5 h-11 rounded-xl border-none font-bold text-sm text-white focus-visible:ring-purple-600/30 resize-none"
+                  className="bg-white/5 h-11 rounded-xl border-none font-bold text-sm text-white"
                   autoFocus
                 />
                 <Button type="submit" className="w-full h-11 rounded-xl font-bold text-sm bg-purple-600 hover:bg-purple-700 text-white">Create</Button>
@@ -94,7 +94,7 @@ export default function Library() {
               <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center border-2 border-dashed border-white/10 rounded-3xl">
                 <Heart className="text-zinc-600 mb-4 w-9 h-9 md:w-12 md:h-12" />
                 <h3 className="text-lg font-bold mb-1">No liked songs yet</h3>
-                <p className="text-xs text-zinc-400 max-w-xs">Tap the heart icon on any song to save it here.</p>
+                <p className="text-xs text-zinc-400 max-w-xs mb-6">Tap the heart icon on any song to save it here.</p>
               </div>
             )}
           </TabsContent>
@@ -135,22 +135,22 @@ export default function Library() {
 
           <TabsContent value="playlists" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                <div className="group bg-gradient-to-br from-purple-600 to-indigo-800 rounded-3xl p-6 md:p-8 flex flex-col justify-end cursor-pointer shadow-xl border border-white/5">
+                <div className="group bg-gradient-to-br from-purple-600 to-indigo-800 rounded-3xl p-6 md:p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer shadow-xl transition-transform hover:-translate-y-1">
                   <Heart size={32} className="mb-3 md:mb-4 text-white fill-white" />
-                  <h3 className="text-2xl md:text-3xl font-black text-white">Liked Songs</h3>
-                  <p className="text-white/70 text-xs uppercase tracking-wider">{likedSongs.length} Tracks</p>
+                  <h3 className="text-xl md:text-2xl font-black text-white">Liked Songs</h3>
+                  <p className="text-white/70 font-bold text-xs uppercase tracking-wider">{likedSongs.length} Tracks</p>
                 </div>
 
                 {playlists.map(playlist => (
-                  <div key={playlist.id} className="group bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8 flex flex-col justify-end cursor-pointer transition-all hover:bg-white/10 hover:-translate-y-1">
+                  <div key={playlist.id} className="group bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8 aspect-[16/9] flex flex-col justify-end cursor-pointer transition-all hover:bg-white/10 hover:-translate-y-1">
                     <div className="flex justify-between items-start mb-auto">
                       <div className="bg-purple-500/20 p-2.5 md:p-3 rounded-2xl border border-purple-500/30">
                         <ListMusic className="text-purple-400 w-5 h-5 md:w-6 md:h-6" />
                       </div>
-                      <button className="text-white/40 hover:text-white"><MoreVertical className="w-4.5 h-4.5 md:w-5 md:h-5" /></button>
+                      <button className="text-zinc-400 hover:text-white"><MoreVertical className="w-4.5 h-4.5 md:w-5 md:h-5" /></button>
                     </div>
-                    <h3 className="text-2xl md:text-3xl font-black">{playlist.name}</h3>
-                    <p className="text-xs text-white/60 font-bold uppercase tracking-wider">{playlist.songs.length} Tracks</p>
+                    <h3 className="text-xl md:text-2xl font-black">{playlist.name}</h3>
+                    <p className="text-zinc-400 font-bold text-xs uppercase tracking-wider">{playlist.songs.length} Tracks</p>
                   </div>
                 ))}
              </div>
@@ -159,4 +159,6 @@ export default function Library() {
       </div>
     </MainLayout>
   );
-}
+};
+
+export default Library;
