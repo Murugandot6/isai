@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, History, ChevronLeft, Menu, BookOpen } from 'lucide-react';
+import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, History, ChevronRight, ChevronLeft, Menu, BookOpen } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -16,7 +16,7 @@ export const Sidebar = () => {
   const searchParams = new URLSearchParams(location.search);
   const searchType = searchParams.get('type');
 
-  const isMoviesContext = path.startsWith('/movies') || path.startsWith('/watch-history') || path.startsWith('/watch') || (path === '/search' && searchType === 'movies');
+  const isMoviesContext = path.startsWith('/movies') || (path === '/search' && searchType === 'movies');
   const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
   const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
 
@@ -105,18 +105,18 @@ export const Sidebar = () => {
             {!isCollapsed && <span>Search Movies</span>}
           </Link>
           <Link
-            to="/watch-history"
+            to="/library"
             className={cn(
               "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
               isCollapsed ? "p-3 justify-center" : "px-4 py-3",
-              path === '/watch-history'
+              path === '/library'
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" 
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             )}
-            title="Watch History"
+            title="Continue Watching"
           >
             <History size={20} />
-            {!isCollapsed && <span>Watch History</span>}
+            {!isCollapsed && <span>Continue Watching</span>}
           </Link>
           <Link
             to="/favourites"

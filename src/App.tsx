@@ -7,8 +7,6 @@ import { MusicProvider } from "@/context/MusicContext";
 import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import MusicPage from "./pages/Music";
-import Login from "./pages/Login";
-import Profile from "./pages/Profile";
 import Search from "./pages/Search";
 import Radio from "./pages/Radio";
 import Library from "./pages/Library";
@@ -16,12 +14,13 @@ import Songs from "./pages/Songs";
 import Artists from "./pages/Artists";
 import Favourites from "./pages/Favourites";
 import Journal from "./pages/Journal";
+import AlbumDetails from "./pages/AlbumDetails";
+import PlaylistDetails from "./pages/PlaylistDetails";
 import Featured from "./pages/Featured";
 import Movies from "./pages/Movies";
 import Watch from "./pages/Watch";
-import WatchHistory from "./pages/WatchHistory";
-import AlbumDetails from "./pages/AlbumDetails";
-import PlaylistDetails from "./pages/PlaylistDetails";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,7 +48,6 @@ const App = () => (
               <Route path="/featured" element={<Featured />} />
               <Route path="/movies" element={<Movies />} />
               <Route path="/watch" element={<Watch />} />
-              <Route path="/watch-history" element={<WatchHistory />} />
               <Route path="/album/:id" element={<AlbumDetails />} />
               <Route path="/playlist/:id" element={<PlaylistDetails />} />
               <Route path="*" element={<NotFound />} />
