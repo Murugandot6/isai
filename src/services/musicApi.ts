@@ -52,42 +52,21 @@ const BASE_URL = 'https://jiosaavn-api.imurugan.workers.dev';
 export const mapApiSong = (song: any): Song => {
   if (!song) return song;
 
-  let primaryArtists = '';
-  
-  // Extract primary artists from artistMap
-  if (song.more_info?.artistMap?.primary_artists) {
-    primaryArtists = song.more_info.artistMap.primary_artists
-      .map((a: any) => a.name)
-      .join(', ');
-  } else if (song.more_info?.artistMap?.artists) {
-    primaryArtists = song.more_info.artistMap.artists
-      .filter((a: any) => a.role === 'music' || a.role === 'singers' || !a.role)
-      .map((a: any) => a.name)
-      .join(', ');
-  } else if (song.primaryArtists) {
-    primaryArtists = song.primaryArtists;
+  let primaryArtists = song.primaryArtists;
+  if (!primaryArtists && song.artists) {
+    if (Array.isArray(song.artists.primary)) {
+      primaryArtists = song.artists.primary.map((a: any) => a.name).join(', ');
+    } else if (Array.isArray(song.artists.all)) {
+      primaryArtists = song.artists.all
+        .filter((a: any) => a.role === 'primary_artists' || a.role === 'singers' || a.role === 'music')
+        .map((a: any) => a.name)
+        .join(', ');
+    }
   }
 
   return {
-    id: song.id || '',
-    name: song.title || '',
-    type: song.type || 'song',
-    album: {
-      id: song.more_info?.album_id || '',
-      name: song.more_info?.album || '',
-      url: song.more_info?.album_url || ''
-    },
-    year: song.more_info?.release_date ? song.more_info.release_date.split('-')[0] : (song.year || ''),
-    releaseDate: song.more_info?.release_date || '',
-    duration: song.more_info?.duration || '',
-    label: song.more_info?.label || '',
-    primaryArtists,
-    featuredArtists: song.more_info?.artistMap?.featured_artists?.map((a: any) => a.name).join(', ') || '',
-    singers: song.more_info?.artistMap?.artists?.filter((a: any) => a.role === 'singers').map((a: any) => a.name).join(', ') || '',
-    image: [{ quality: '150x150', url: song.image || '' }],
-    downloadUrl: song.more_info?.encrypted_media_url ? [{ quality: '320kbps', url: song.more_info.encrypted_media_url }] : [],
-    language: song.language || '',
-    url: song.perma_url || '',
+    ...song,
+    primaryArtists: primaryArtists || 'Unknown Artist'
   };
 };
 
@@ -116,6 +95,7 @@ export const musicApi = {
 
   // Specific search endpoints
   searchSongs: async (query: string, page: number = 1, limit: number = 20): Promise<Song[]> => {
+    // Standardize page to 1-based index as requested by the worker API endpoint
     const activePage = page <= 0 ? 1 : page;
     const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(query)}&page=${activePage}&limit=${limit}`);
     const res = await response.json();
@@ -197,29 +177,17 @@ export const musicApi = {
     }
   },
 
-  // Trending songs endpoint - using JioSaavn new releases endpoint for songs directly
+  // Trending songs endpoint
   getTrending: async (languages: string = 'tamil'): Promise<Song[]> => {
     try {
-      // Use the JioSaavn new releases endpoint for trending songs in the specified language
-      const response = await fetch(
-        `https://www.jiosaavn.com/api.php?__call=content.getAlbums&api_version=4&_format=json&_marker=0&n=50&p=1&ctx=web6dot0&seotype=tag&tag=${encodeURIComponent(languages)}`
-      );
+      const langList = languages.split(',').filter(Boolean);
+      const primaryLang = langList[0] || 'tamil';
+      const response = await fetch(`${BASE_URL}/api/search/songs?query=${encodeURIComponent(primaryLang + ' hits')}&limit=150`);
       const res = await response.json();
-      // The API returns albums with songs inside
-      const albums = res.albums || res.data || [];
-      if (!albums.length) return [];
-      
-      // Flatten all songs from the albums
-      const allSongs: Song[] = [];
-      for (const album of albums) {
-        if (album.songs && Array.isArray(album.songs)) {
-          for (const song of album.songs) {
-            allSongs.push(mapApiSong(song));
-          }
-        }
-      }
-      
-      return allSongs;
+      const data = res.data;
+      if (!data) return [];
+      const results = data.results || (Array.isArray(data) ? data : []);
+      return results.map(mapApiSong);
     } catch (e) {
       console.error("Error in getTrending:", e);
       return [];
@@ -242,7 +210,7 @@ export const musicApi = {
   getArtistSongs: async (id: string, page: number = 0, artistName?: string): Promise<Song[]> => {
     try {
       let songsList: any[] = [];
-      const activePage = page + 1;
+      const activePage = page + 1; // Map local 0-based page to 1-based API index
       
       // Try to fetch via artist endpoint
       if (id && id !== 'unknown') {
@@ -263,6 +231,7 @@ export const musicApi = {
 
       // Safe fallback: if path endpoint returns no results, use search API by artistName to pull top-tier hits
       if (songsList.length === 0 && artistName) {
+        // Clean double-spaces or spaces around dots for optimal query precision
         const cleanedName = artistName.replace(/\s+/g, ' ').trim();
         const searchResults = await musicApi.searchSongs(cleanedName, activePage, 50);
         songsList = searchResults;
