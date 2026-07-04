@@ -26,8 +26,8 @@ const VIDEO_SOURCES: VideoSource[] = [
   {
     id: 'rivestream',
     name: 'Riverstream (Fast)',
-    getMovieUrl: (id) => `https://embed.rivestream.app/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://embed.rivestream.app/tv/${id}/${s}/${e}`
+    getMovieUrl: (id) => `https://www.rivestream.app/embed?type=movie&id=${id}`,
+    getTvUrl: (id, s, e) => `https://www.rivestream.app/embed?type=tv&id=${id}&season=${s}&episode=${e}`
   },
   {
     id: 'vyla',
