@@ -1,4 +1,5 @@
-' characters with '>'.">"use client";
+' characters in JSX.">
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -301,7 +302,7 @@ const Login = () => {
                 [01] USER_ID
               </label>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">&gt;</span>
+                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
                 <Input
                   type="text"
                   placeholder="ENTER_ID"
@@ -319,7 +320,7 @@ const Login = () => {
               {isSignUp ? '[02] EMAIL_NODE' : '[01] EMAIL_NODE'}
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">&gt;</span>
+              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
               <Input
                 type="email"
                 placeholder="ENTER_EMAIL"
@@ -336,7 +337,7 @@ const Login = () => {
               {isSignUp ? '[03] ACCESS_PHRASE' : '[02] ACCESS_PHRASE'}
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">&gt;</span>
+              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="ENTER_PHRASE"
@@ -361,7 +362,7 @@ const Login = () => {
                 [04] DECRYPTION_KEY
               </label>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">&gt;</span>
+                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
                 <Input
                   type="text"
                   placeholder="ENTER_KEY"
