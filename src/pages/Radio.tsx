@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { radioApi, RadioStation } from '@/services/radioApi';
 import { Radio as RadioIcon, Play, Pause, Search, Heart } from 'lucide-react';
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 
-const Radio = () => {
+export default function Radio() {
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,7 +70,9 @@ const Radio = () => {
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold">LIVE FM</Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-black tracking-tight">World Radio</h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-medium">Broadcasts from: <span className="text-primary font-bold uppercase">{selectedLanguages.join(', ')}</span></p>
+            <p className="text-xs md:text-sm text-muted-foreground font-medium">
+              Broadcasts from: <span className="text-primary font-bold uppercase">{selectedLanguages.join(', ')}</span>
+            </p>
           </div>
           
           <form onSubmit={handleSearchSubmit} className="relative w-full md:w-64">
@@ -97,7 +99,7 @@ const Radio = () => {
                 <div 
                   key={station.stationuuid}
                   className={cn(
-                    "flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-2xl border transition-all duration-300 group relative",
+                    "flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-2xl border transition-all duration-300 cursor-pointer relative",
                     isActive 
                       ? "bg-primary/10 border-primary/30" 
                       : "bg-card/50 border-transparent hover:border-accent/20 hover:bg-accent/5"
@@ -115,18 +117,16 @@ const Radio = () => {
                     />
                     <div className={cn(
                       "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
-                      isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      isActive && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     )}>
                       {isActive && isPlaying ? <Pause size={16} fill="currentColor" className="text-white" /> : <Play size={16} fill="currentColor" className="text-white" />}
                     </div>
                   </div>
                   <div className="min-w-0 flex-1 cursor-pointer" onClick={() => handlePlayStation(station)}>
                     <h3 className="font-bold text-xs md:text-sm truncate">{station.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="bg-accent/10 text-[8px] font-bold px-1.5 py-0">
-                        {station.votes.toLocaleString()} VOTES
-                      </Badge>
-                    </div>
+                    <Badge variant="secondary" className="bg-accent/10 text-[8px] font-bold px-1.5 py-0 mt-1 text-white">
+                      {station.votes.toLocaleString()} VOTES
+                    </Badge>
                   </div>
                   <button 
                     onClick={(e) => {
@@ -134,7 +134,7 @@ const Radio = () => {
                       toggleLikeStation(station);
                     }}
                     className={cn(
-                      "p-2 rounded-full transition-all shrink-0",
+                      "p-2 rounded-full transition-all",
                       liked ? "text-primary" : "text-muted-foreground hover:text-primary"
                     )}
                   >
@@ -144,7 +144,7 @@ const Radio = () => {
               );
             })
           ) : (
-            <div className="col-span-full text-center py-16 md:py-20 text-xs md:text-sm text-muted-foreground">
+            <div className="col-span-full text-center py-16 text-xs text-sm text-muted-foreground">
               No stations found for your selected languages.
             </div>
           )}
@@ -152,6 +152,4 @@ const Radio = () => {
       </div>
     </MainLayout>
   );
-};
-
-export default Radio;
+}

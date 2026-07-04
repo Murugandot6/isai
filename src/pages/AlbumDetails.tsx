@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/MainLayout';
-import { musicApi, Album, getContainerCount } from '@/services/musicApi';
+import { musicApi, Album, getContainerCount, Song } from '@/services/musicApi';
 import { SongCard } from '@/components/SongCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Music, Loader2, ListMusic, Calendar } from 'lucide-react';
@@ -11,7 +11,7 @@ import { getHighResImage } from '@/lib/image-utils';
 import { Badge } from '@/components/ui/badge';
 import { useMusic } from '@/context/MusicContext';
 
-const AlbumDetails = () => {
+export default function AlbumDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [album, setAlbum] = useState<Album | null>(null);
@@ -56,7 +56,7 @@ const AlbumDetails = () => {
   }
 
   const songs = album.songs || [];
-  const trackCount = songs.length || Number(album.songCount) || getContainerCount(album);
+  const trackCount = songs.length || getContainerCount(album);
   const albumCoverUrl = getHighResImage(album.image);
 
   return (
@@ -76,7 +76,7 @@ const AlbumDetails = () => {
             <img src={albumCoverUrl} alt={album.name} className="w-full h-full object-cover" />
           </div>
           <div className="text-center md:text-left flex-1 min-w-0">
-            <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-3">
               <Badge variant="secondary" className="bg-purple-500/10 text-purple-400 border-none uppercase text-[9px] font-bold">
                 ALBUM
               </Badge>
@@ -84,7 +84,7 @@ const AlbumDetails = () => {
                 {album.language || 'unknown'}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight" dangerouslySetInnerHTML={{ __html: album.name }}></h1>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-3 leading-tight">{album.name}</h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6 text-zinc-400 font-medium text-xs md:text-sm">
               <div className="flex items-center gap-1.5">
                 <Calendar size={16} />
@@ -128,6 +128,4 @@ const AlbumDetails = () => {
       </div>
     </MainLayout>
   );
-};
-
-export default AlbumDetails;
+}

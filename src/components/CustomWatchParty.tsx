@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useMusic, Movie } from '@/context/MusicContext';
+import { toast } from 'sonner';
 import { Users, Play, Info, Link, Type, Image, Plus, LogIn } from 'lucide-react';
 import {
   Dialog,
@@ -13,8 +15,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { useMusic, Movie } from '@/context/MusicContext';
 
 export const CustomWatchParty = () => {
   const { roomCode, setRoomCode, isHost, setIsHost, playMovie } = useMusic();
@@ -28,21 +28,19 @@ export const CustomWatchParty = () => {
   const handleQuickHost = () => {
     setRoomCode(quickCode);
     setIsHost(true);
-    toast.success("Watch Party Sync Room created! Share code to invite friends.");
+    toast.success("Watch Party Sync Room created!");
   };
 
   const handleLaunchParty = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const normalizedLink = movieLink.trim();
-
-    if (!normalizedLink) {
-      toast.error("Please paste your movie link from your website");
+    if (!movieLink.trim()) {
+      toast.error("Please paste your movie link");
       return;
     }
 
     if (!roomCode) {
-      toast.error("You must host or join a Sync Room first to start a synchronized watch party!");
+      toast.error("You must host or join a Sync Room first");
       return;
     }
 
@@ -56,7 +54,7 @@ export const CustomWatchParty = () => {
       year: new Date().getFullYear().toString(),
       genre: 'Custom Watch Party',
       language: 'EN',
-      streamUrl: normalizedLink
+      streamUrl: movieLink.trim()
     };
 
     playMovie(customMovie);
@@ -67,7 +65,7 @@ export const CustomWatchParty = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-300 hover:text-white hover:bg-purple-600 transition-all text-xs font-black uppercase tracking-widest shrink-0 shadow-lg">
+        <button className="flex items-center gap-2 px-5 py-3 rounded-xl bg-purple-600/10 border border-purple-500/20 text-purple-300 hover:text-white hover:bg-purple-600 transition-all text-xs font-bold uppercase tracking-widest shrink-0 shadow-lg">
           <Plus size={14} />
           <span>Custom Watch Party</span>
         </button>
@@ -101,7 +99,7 @@ export const CustomWatchParty = () => {
           <form onSubmit={handleLaunchParty} className="space-y-4 pt-4">
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Link size={10} className="text-purple-400" />
                   Movie Link from Your Website
                 </Label>
@@ -115,7 +113,7 @@ export const CustomWatchParty = () => {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Type size={10} className="text-purple-400" />
                   Video Title
                 </Label>
@@ -128,7 +126,7 @@ export const CustomWatchParty = () => {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Image size={10} className="text-purple-400" />
                   Cover Poster URL Optional
                 </Label>
@@ -144,11 +142,11 @@ export const CustomWatchParty = () => {
             <div className="flex gap-2 p-3 rounded-xl bg-purple-500/5 border border-purple-500/10">
               <Info size={16} className="text-purple-400 shrink-0 mt-0.5" />
               <p className="text-[10px] text-muted-foreground leading-normal">
-                <strong>Best option:</strong> paste a direct video link, HLS link, or magnet link. If you paste a normal webpage URL, it opens in page mode, but full playback sync may not work.
+                <strong>Best option:</strong> paste a direct video link, HLS link, or magnet link.
               </p>
             </div>
 
-            <Button type="submit" className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-xs uppercase tracking-widest gap-2 shadow-xl shadow-purple-600/20">
+            <Button type="submit" className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest gap-2 shadow-xl shadow-purple-600/20">
               <Play size={14} fill="currentColor" />
               Launch Watch Party
             </Button>

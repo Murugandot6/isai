@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Users, Copy, Check, Info, LogIn, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Copy, Check, Info, LogIn } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,15 +11,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from 'sonner';
 import { useMusic } from '@/context/MusicContext';
+import { toast } from 'sonner';
 
 export const ListenTogether = () => {
   const { roomCode, setRoomCode, isHost, setIsHost } = useMusic();
-  const [localCode, setLocalCode] = useState(`ISAI-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+  const [localCode] = useState(`ISAI-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -33,7 +31,7 @@ export const ListenTogether = () => {
   const handleHost = () => {
     setRoomCode(localCode);
     setIsHost(true);
-    toast.success("Room created! Share your code to start syncing.");
+    toast.success("Room created!");
   };
 
   const handleJoin = (e: React.FormEvent) => {
@@ -56,7 +54,7 @@ export const ListenTogether = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs font-bold shadow-lg ${roomCode ? 'bg-green-500 text-white shadow-green-500/20' : 'bg-primary text-primary-foreground shadow-primary/20'}`}>
+        <button className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs font-bold shadow-lg ${roomCode ? 'bg-green-500 text-white' : 'bg-primary text-primary-foreground'}`}>
           <Users size={16} />
           <span>{roomCode ? (isHost ? 'Hosting' : 'Joined') : 'Listen Together'}</span>
         </button>
@@ -83,58 +81,34 @@ export const ListenTogether = () => {
                   Copy
                 </Button>
                 <Button onClick={handleLeave} variant="destructive" className="gap-2 rounded-xl">
-                  <LogOut size={16} />
+                  <LogIn size={16} />
                   Leave
                 </Button>
               </div>
             </div>
-            <div className="flex gap-2 p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse mt-1" />
-              <p className="text-[10px] text-muted-foreground">
-                {isHost ? 'You are controlling the music. All listeners will hear what you play.' : 'Your playback is synced with the host.'}
-              </p>
-            </div>
           </div>
         ) : (
-          <Tabs defaultValue="host" className="w-full mt-4">
-            <TabsList className="grid w-full grid-cols-2 rounded-xl bg-accent/10">
-              <TabsTrigger value="host" className="rounded-lg font-bold">Host</TabsTrigger>
-              <TabsTrigger value="join" className="rounded-lg font-bold">Join</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="host" className="space-y-6 pt-6">
-              <div className="bg-accent/5 rounded-2xl p-6 border border-accent/10 text-center">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">New Session Code</p>
-                <h3 className="text-3xl font-black tracking-tighter text-foreground mb-6">{localCode}</h3>
-                <Button onClick={handleHost} className="w-full gap-2 h-12 rounded-xl font-bold shadow-xl shadow-primary/20">
-                  Create Room
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="join" className="space-y-6 pt-6">
-              <form onSubmit={handleJoin} className="space-y-4">
-                <Input 
-                  placeholder="Enter Code (e.g. ISAI-XY12Z)" 
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="bg-accent/5 border-2 border-transparent focus-visible:border-primary/20 h-12 text-lg font-bold tracking-widest rounded-xl text-center"
-                />
-                <Button type="submit" className="w-full gap-2 h-12 rounded-xl font-bold">
-                  <LogIn size={18} />
-                  Join Room
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-6 pt-4">
+            <div className="bg-accent/5 rounded-2xl p-6 border border-accent/10 text-center">
+              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">New Session Code</p>
+              <h3 className="text-3xl font-black tracking-tighter text-foreground mb-6">{localCode}</h3>
+              <Button onClick={handleHost} className="w-full gap-2 h-12 rounded-xl font-bold shadow-xl shadow-primary/20">
+                Create Room
+              </Button>
+            </div>
+            <form onSubmit={handleJoin} className="space-y-4">
+              <Input 
+                placeholder="Enter Code (e.g. ISAI-XY12Z)" 
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                className="bg-accent/5 border-2 border-transparent focus-visible:border-primary/20 h-12 text-lg font-bold tracking-widest rounded-xl text-center"
+              />
+              <Button type="submit" className="w-full gap-2 h-12 rounded-xl font-bold">
+                Join Room
+              </Button>
+            </form>
+          </div>
         )}
-
-        <div className="flex gap-2 p-3 mt-4 rounded-xl bg-primary/5 border border-primary/10">
-          <Info size={16} className="text-primary shrink-0 mt-0.5" />
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            Real-time sync uses Supabase Broadcast. The host controls the queue and progress for everyone in the room.
-          </p>
-        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,16 +1,13 @@
 "use client";
 
-import React from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useMusic } from '@/context/MusicContext';
 import { SongCard } from '@/components/SongCard';
 import { Heart, Radio, Music, Play, Pause, Film, Star } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
-const Favourites = () => {
-  const { likedSongs, likedStations, likedMovies, playSong, playMovie, currentSong, isPlaying } = useMusic();
+export default function Favourites() {
+  const { likedSongs, likedStations, likedMovies, playSong, playMovie } = useMusic();
 
   const handlePlayStation = (station: any) => {
     const radioSong = {
@@ -165,6 +162,4 @@ const Favourites = () => {
       </div>
     </MainLayout>
   );
-};
-
-export default Favourites;
+}

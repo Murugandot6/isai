@@ -43,22 +43,20 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black select-none">
-      {/* Immersive Background Image */}
-      <div className="absolute inset-0 transition-transform duration-1000 ease-out transform scale-100">
+      {/* Background Image */}
+      <div className="absolute inset-0 transition-transform duration-1000 ease-out">
         <img 
           src={currentMovie.backdrop} 
           alt={currentMovie.title} 
           className="w-full h-full object-cover object-center"
         />
-        {/* Complex cinematic gradient overlays for flawless legibility and depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/90 via-zinc-950/10 to-transparent" />
         <div className="absolute inset-0 bg-black/30" />
       </div>
 
-      {/* Floating Top Header Overlay */}
+      {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-6 md:px-12">
-        {/* Left Search Icon */}
         <button 
           onClick={onSearchClick}
           className="p-3 rounded-full bg-black/30 hover:bg-black/50 text-white/80 hover:text-white transition-all backdrop-blur-md border border-white/10"
@@ -66,7 +64,6 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
           <Search size={20} />
         </button>
 
-        {/* Center Logo Icon */}
         <button 
           onClick={() => navigate('/')}
           className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-600/30 hover:scale-105 active:scale-95 transition-transform"
@@ -75,7 +72,6 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
           <ArrowLeft size={20} />
         </button>
 
-        {/* Right Action Menu */}
         <div className="flex items-center gap-3">
           {user ? (
             <button 
@@ -96,10 +92,9 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
         </div>
       </div>
 
-      {/* Immersive Contents layout matching second image */}
+      {/* Content */}
       <div className="absolute inset-0 flex items-center justify-between px-6 sm:px-12 md:px-24 py-16 z-10">
-        
-        {/* Vertical Poster on the Left */}
+        {/* Poster */}
         <div className="hidden md:block w-64 lg:w-72 aspect-[2/3] rounded-[2rem] overflow-hidden shadow-[0_30px_70px_rgba(0,0,0,0.9)] border border-white/10 shrink-0 transform -rotate-1 hover:rotate-0 transition-transform duration-500 hover:scale-[1.02]">
           <img 
             src={currentMovie.poster} 
@@ -108,17 +103,17 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
           />
         </div>
 
-        {/* Large Cinematic Details on the Right */}
+        {/* Details */}
         <div className="flex-1 md:ml-16 lg:ml-24 max-w-xl text-left space-y-4 sm:space-y-6">
           <div className="flex items-center gap-3 text-xs md:text-sm font-bold text-white/70">
             <span className="text-[10px] tracking-[0.2em] font-black uppercase text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
-              Trending #{(currentIndex + 1)}
+              Trending #{currentIndex + 1}
             </span>
             <span>{currentMovie.year}</span>
             <span className="text-yellow-500 flex items-center gap-0.5">★ {currentMovie.rating}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[0.95] uppercase drop-shadow-2xl">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter uppercase drop-shadow-2xl">
             {currentMovie.title}
           </h1>
 
@@ -126,7 +121,7 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
             {currentMovie.overview}
           </p>
 
-          <div className="flex items-center gap-3.5 pt-2">
+          <div className="flex items-center gap-3 pt-2">
             <Button 
               onClick={() => onPlay(currentMovie)}
               className="rounded-full bg-red-600 text-white hover:bg-red-700 px-8 h-12 md:h-14 text-sm font-black uppercase tracking-wider gap-2 shadow-xl shadow-red-600/25 transition-all hover:scale-105 active:scale-95"
@@ -147,8 +142,6 @@ export const MovieHero: React.FC<MovieHeroProps> = ({ movies, onPlay, onSearchCl
             </Button>
           </div>
         </div>
-
-        <div className="hidden lg:block w-16" />
       </div>
 
       {/* Navigation Arrows */}
