@@ -1,4 +1,3 @@
-' characters in JSX.">
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -9,6 +8,7 @@ import { Music, Mail, Lock, User, ArrowRight, Loader2, KeyRound, Eye, EyeOff, Te
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const TERMINAL_LINES = [
   'initializing session handshake...',
@@ -44,15 +44,12 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [inviteCode, setInviteCode] = useState('');
 
-  // Canvas state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rainDropsRef = useRef<number[]>([]);
   
-  // Terminal logs state
   const [terminalText, setTerminalText] = useState<string[]>([]);
   const [clockTime, setClockTime] = useState('');
 
-  // Custom Stat values for visual flair
   const [stat1, setStat1] = useState(85);
   const [stat2, setStat2] = useState(42);
   const [stat3, setStat3] = useState(64);
@@ -63,7 +60,6 @@ const Login = () => {
     }
   }, [session, navigate]);
 
-  // Handle matrix digital rain effect on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -94,11 +90,9 @@ const Login = () => {
         const x = i * fontSize;
         const y = rainDropsRef.current[i] * fontSize;
 
-        // Leading character brighter
         ctx.fillStyle = 'rgba(180, 255, 220, 0.9)';
         ctx.fillText(text, x, y);
 
-        // Trailing characters
         ctx.fillStyle = 'rgba(0, 255, 140, 0.25)';
         ctx.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)], x, y - fontSize);
 
@@ -117,7 +111,6 @@ const Login = () => {
     };
   }, []);
 
-  // Set up timer for clock
   useEffect(() => {
     const updateClock = () => {
       setClockTime(new Date().toTimeString().slice(0, 8));
@@ -127,7 +120,6 @@ const Login = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle dynamic system resource stat bars jitter
   useEffect(() => {
     const interval = setInterval(() => {
       setStat1(Math.floor(40 + Math.random() * 60));
@@ -137,11 +129,10 @@ const Login = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // terminal typewriter log simulator
   useEffect(() => {
     let lineIdx = 0;
     let charIdx = 0;
-    let currentLine = '';
+    let currentLineText = '';
     let accumulated: string[] = [];
 
     const interval = setInterval(() => {
@@ -152,8 +143,8 @@ const Login = () => {
       
       const text = TERMINAL_LINES[lineIdx];
       if (charIdx <= text.length) {
-        currentLine = text.substring(0, charIdx);
-        setTerminalText([...accumulated, currentLine]);
+        currentLineText = text.substring(0, charIdx);
+        setTerminalText([...accumulated, currentLineText]);
         charIdx++;
       } else {
         accumulated.push(text);
@@ -223,22 +214,23 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-black font-mono">
-      {/* 1. Hacking Matrix-style rain background */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 block pointer-events-none opacity-30" />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 block pointer-events-none opacity-40" />
 
-      {/* Background radial gradient mask for high visual readability in the center */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/70 z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#000_95%)] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/85 to-black/55 z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,#000_90%)] z-0" />
 
-      {/* 2. Left Terminal Sidebar Logs Screen */}
-      <div className="hidden lg:block fixed top-[6%] left-[6%] w-[44%] h-[60%] bg-[#020503]/80 border border-[rgba(0,255,140,0.25)] shadow-[0_0_25px_rgba(0,255,140,0.08),inset_0_0_30px_rgba(0,0,0,0.8)] rounded-xl p-5 overflow-hidden backdrop-blur-[1px] text-left text-[#4eff9d] select-none text-[13px] leading-relaxed">
+      <div className="hidden lg:block fixed top-[6%] left-[6%] w-[400px] h-[450px] bg-[#050a08]/72 border border-[rgba(0,255,140,0.35)] shadow-[0_0_25px_rgba(0,255,140,0.15),inset_0_0_30px_rgba(0,0,0,0.8)] rounded-3xl p-5 overflow-hidden backdrop-blur-[1px] text-left text-[#4eff9d] select-none text-[13px] leading-relaxed">
         <div className="flex items-center justify-between border-b border-[rgba(0,255,140,0.15)] pb-1.5 mb-2 text-[rgba(100,255,170,0.4)] text-[11px]">
           <span className="font-bold uppercase tracking-widest">root@node-7712:~#</span>
           <span className="font-bold tracking-wider">{clockTime}</span>
         </div>
         <div className="space-y-0.5">
           {terminalText.map((line, idx) => (
-            <div key={idx} className="font-mono truncate">
+            <div key={idx} className={cn(
+              "font-mono truncate transition-all duration-300",
+              idx === terminalText.length - 1 ? "text-[#4eff9d] opacity-100 font-bold" : "opacity-40"
+            )}>
+              {idx === terminalText.length - 1 ? <span className="text-[#4eff9d] pr-1">{'>'}</span> : <span className="text-zinc-700 pr-1">$</span>}
               {line}
             </div>
           ))}
@@ -246,7 +238,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* 3. Stat Panels */}
       <div className="hidden lg:block fixed bottom-[6%] right-[6%] text-right space-y-1 z-10 text-[rgba(100,255,170,0.6)] text-[11px] select-none">
         <div className="flex items-center justify-end gap-2.5">
           <span className="font-bold uppercase tracking-widest">THROUGHPUT</span>
@@ -268,22 +259,17 @@ const Login = () => {
         </div>
       </div>
 
-      {/* 4. High-Contrast CRT Hacker Terminal Card */}
       <div className="relative w-full max-w-[360px] bg-[#020503] border-2 border-[#00ff8c] rounded-none p-6 shadow-[0_0_40px_rgba(0,255,140,0.3),inset_0_0_20px_rgba(0,255,140,0.15)] animate-in fade-in zoom-in duration-500 z-20 overflow-hidden">
         
-        {/* CRT Scanline Overlay Effect */}
         <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-30 opacity-80" />
         
-        {/* Subtle Green Grid Pattern */}
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(rgba(0,255,140,0.08)_1px,transparent_0)] bg-[size:16px_16px] z-10" />
 
-        {/* Corner Brackets for Military/Hacker Aesthetic */}
         <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#00ff8c] z-20" />
         <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#00ff8c] z-20" />
         <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#00ff8c] z-20" />
         <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#00ff8c] z-20" />
 
-        {/* Card Header */}
         <div className="text-center space-y-3 relative z-20 border-b border-[#00ff8c]/30 pb-4 mb-6">
           <div className="inline-flex items-center justify-center p-2.5 bg-[#00ff8c]/10 rounded-none border border-[#00ff8c]/30 shadow-[0_0_15px_rgba(0,255,140,0.2)]">
             <Music className="text-[#00ff8c] animate-pulse" size={22} />
@@ -294,7 +280,6 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Form Fields */}
         <form onSubmit={handleAuth} className="space-y-5 relative z-20">
           {isSignUp && (
             <div className="space-y-1">
@@ -302,7 +287,7 @@ const Login = () => {
                 [01] USER_ID
               </label>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">{'>'}</span>
                 <Input
                   type="text"
                   placeholder="ENTER_ID"
@@ -320,7 +305,7 @@ const Login = () => {
               {isSignUp ? '[02] EMAIL_NODE' : '[01] EMAIL_NODE'}
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">{'>'}</span>
               <Input
                 type="email"
                 placeholder="ENTER_EMAIL"
@@ -337,7 +322,7 @@ const Login = () => {
               {isSignUp ? '[03] ACCESS_PHRASE' : '[02] ACCESS_PHRASE'}
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+              <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">{'>'}</span>
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="ENTER_PHRASE"
@@ -362,7 +347,7 @@ const Login = () => {
                 [04] DECRYPTION_KEY
               </label>
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">></span>
+                <span className="absolute left-3 text-[#00ff8c] font-bold text-xs">{'>'}</span>
                 <Input
                   type="text"
                   placeholder="ENTER_KEY"
@@ -391,7 +376,6 @@ const Login = () => {
           </Button>
         </form>
 
-        {/* Footer Actions */}
         <div className="text-center space-y-4 pt-4 border-t border-[#00ff8c]/20 mt-6 relative z-20">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
