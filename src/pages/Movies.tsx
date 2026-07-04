@@ -7,13 +7,13 @@ import { tmdbApi } from '@/services/tmdbApi';
 import { MovieHero } from '@/components/MovieHero';
 import { MovieRow } from '@/components/MovieRow';
 import { CustomWatchParty } from '@/components/CustomWatchParty';
-import { Search, X, Users, Sparkles } from 'lucide-react';
+import { Search, X, Users, Sparkles, History, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 
 const Movies = () => {
-  const { playMovie } = useMusic();
+  const { playMovie, recentlyWatched } = useMusic();
   const navigate = useNavigate();
   const [trendingMovies, setTrendingMovies] = useState<Movie[]>([]);
   const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
@@ -98,8 +98,33 @@ const Movies = () => {
               />
             )}
 
+            {/* Resume Watching Section - Dynamic Header matching your aesthetic */}
+            {recentlyWatched.length > 0 && (
+              <div className="px-6 md:px-16 pt-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-purple-500/20 p-2 rounded-xl border border-purple-500/30">
+                      <History className="text-purple-400 w-5 h-5" />
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase tracking-wider">Resume Watching</h2>
+                  </div>
+                  <button 
+                    onClick={() => navigate('/watch-history')}
+                    className="text-[10px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-2 hover:text-purple-300 transition-colors"
+                  >
+                    Manage History <ChevronRight size={14} />
+                  </button>
+                </div>
+                <MovieRow 
+                  title="" 
+                  movies={recentlyWatched} 
+                  onPlay={playMovie} 
+                />
+              </div>
+            )}
+
             {/* Watch Party Quick Launch Area */}
-            <div className="px-6 md:px-16 pt-6">
+            <div className="px-6 md:px-16">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-gradient-to-r from-purple-900/40 via-indigo-900/20 to-zinc-900/50 border border-purple-500/20 rounded-[2rem] gap-4 backdrop-blur-md">
                 <div className="space-y-1 text-left">
                   <span className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 flex items-center gap-1">
