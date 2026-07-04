@@ -37,9 +37,9 @@ const VIDEO_SOURCES: VideoSource[] = [
   },
   {
     id: 'vidcore',
-    name: 'VidCore (Fast)',
-    getMovieUrl: (id) => `https://vidcore.net/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidcore.net/embed/tv/${id}/${s}/${e}`
+    name: 'VidCore',
+    getMovieUrl: (id) => `https://vidcore.net/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidcore.net/tv/${id}/${s}/${e}`
   },
   {
     id: 'cinesrc',
