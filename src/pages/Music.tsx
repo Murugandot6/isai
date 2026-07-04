@@ -27,15 +27,32 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 
-const MusicPage = () => {
+const Index = () => {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
-  const { selectedLanguages, playSong, playRandom, currentSong, isPlaying, togglePlay, isMuted, toggleMute, toggleLike, isLiked } = useMusic();
-  
+  const { selectedLanguages, currentSong, isPlaying, playSong, togglePlay, playRandom } = useMusic();
   const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
+  const [popularSongs, setPopularSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Helper function to sort songs by their release date or year in descending order (Newest first)
+  const sortSongsByReleaseTime = (songsList: Song[]) => {
+    return [...songsList].sort((a, b) => {
+      const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+      const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+      
+      // If release dates are valid and different, sort by date
+      if (dateA !== dateB && dateA > 0 && dateB > 0) {
+        return dateB - dateA;
+      }
+      
+      // Fallback to sorting by year
+      const yearA = parseInt(a.year) || 0;
+      const yearB = parseInt(b.year) || 0;
+      return yearB - yearA;
+    });
+  };
 
   // Artist-specific state lists
   const [rahmanSongs, setRahmanSongs] = useState<Song[]>([]);
@@ -54,12 +71,14 @@ const MusicPage = () => {
         const results = await Promise.all(trendingPromises);
         const combined = results.flat();
         
+        let finalTrending: Song[] = [];
         if (combined.length === 0) {
           const fallback = await musicApi.getTrending('tamil');
-          setTrendingSongs(fallback);
+          finalTrending = sortSongsByReleaseTime(fallback);
         } else {
-          setTrendingSongs(combined);
+          finalTrending = sortSongsByReleaseTime(combined);
         }
+        setTrendingSongs(finalTrending);
 
         // Parallel fetch for legendary artist playlists/tracks
         const [rahman, yuvan, harris, vairamuthu] = await Promise.all([
@@ -69,18 +88,19 @@ const MusicPage = () => {
           musicApi.searchSongs("Vairamuthu Hits", 1, 40).catch(() => [])
         ]);
 
-        // Filter helper to strictly enforce language settings
-        const filterByLanguage = (songsList: Song[]) => {
-          return songsList.filter(song => {
+        // Filter helper to strictly enforce language settings and sort by newest first
+        const filterAndSortByLanguage = (songsList: Song[]) => {
+          const filtered = songsList.filter(song => {
             if (!song.language) return false;
             return selectedLanguages.includes(song.language.toLowerCase().trim());
-          }).slice(0, 12);
+          });
+          return sortSongsByReleaseTime(filtered);
         };
 
-        setRahmanSongs(filterByLanguage(rahman));
-        setYuvanSongs(filterByLanguage(yuvan));
-        setHarrisSongs(filterByLanguage(harris));
-        setVairamuthuSongs(filterByLanguage(vairamuthu));
+        setRahmanSongs(filterAndSortByLanguage(rahman).slice(0, 12));
+        setYuvanSongs(filterAndSortByLanguage(yuvan).slice(0, 12));
+        setHarrisSongs(filterAndSortByLanguage(harris).slice(0, 12));
+        setVairamuthuSongs(filterAndSortByLanguage(vairamuthu).slice(0, 12));
 
       } catch (err) {
         console.error("Failed to load trending music & artists", err);
@@ -95,7 +115,7 @@ const MusicPage = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}&type=music`);
-      setSearchOpen(false);
+      setIsSearchOpen(false);
       setSearchQuery('');
     }
   };
@@ -165,7 +185,7 @@ const MusicPage = () => {
           </div>
 
           {/* Search Dialog Trigger */}
-          <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+          <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
             <DialogTrigger asChild>
               <button className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-all" title="Search Music">
                 <Search size={18} />
@@ -251,12 +271,13 @@ const MusicPage = () => {
             ) : (
               <>
                 <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-none">Retro</h1>
-                <p className="text-sm md:text-base text-zinc-300 font-semibold max-w-md">David Bowie, Pink Floyd, Prince, ...</p>
-                <p className="text-xs text-purple-300/60 font-bold uppercase tracking-wider">78 Songs</p>
+                <p className="text-sm md:text-base text-zinc-400 max-w-lg mx-auto font-bold uppercase tracking-widest leading-relaxed">
+                  Choose your entertainment node. Clean, ad-blocked, and fully synchronized.
+                </p>
               </>
             )}
 
-            <div className="flex items-center gap-6 pt-4">
+            <div className="flex items-center gap-3.5 pt-4">
               <button 
                 onClick={handleSpotlightPlay}
                 className="group flex items-center gap-4 bg-white/10 hover:bg-white/20 text-white pl-6 pr-4 py-3 rounded-full border border-white/20 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-black/55"
@@ -264,32 +285,16 @@ const MusicPage = () => {
                 <span className="text-xs font-black uppercase tracking-widest text-white/90">
                   {currentSong?.id === spotlightSong?.id && isPlaying ? 'Pause' : 'Play'}
                 </span>
-                <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg">
-                  {currentSong?.id === spotlightSong?.id && isPlaying ? (
-                    <Pause size={16} fill="black" />
-                  ) : (
-                    <Play size={16} fill="black" className="ml-0.5" />
-                  )}
+                <div className="bg-primary text-primary-foreground p-2 rounded-full">
+                  {currentSong?.id === spotlightSong?.id && isPlaying ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" className="ml-0.5" />}
                 </div>
               </button>
-
-              {spotlightSong && (
-                <button 
-                  onClick={() => toggleLike(spotlightSong)}
-                  className={cn(
-                    "p-3 rounded-full border transition-all hover:scale-105",
-                    isLiked(spotlightSong.id) ? "text-purple-400 border-purple-500/40 bg-purple-500/10" : "text-white/40 border-white/10 hover:text-white"
-                  )}
-                >
-                  <Heart size={18} fill={isLiked(spotlightSong.id) ? "currentColor" : "none"} />
-                </button>
-              )}
             </div>
           </div>
         </div>
 
-        {/* CURATED MUSIC PORTAL LAYOUTS */}
-        <div className="px-6 md:px-12 space-y-12 pb-24 text-left">
+        {/* Dynamic Content Grid */}
+        <div className="px-6 md:px-12 py-10 space-y-16 relative z-10 max-w-7xl mx-auto w-full">
           
           {/* EDITOR'S PICK ROW */}
           <div className="space-y-4">
@@ -329,10 +334,13 @@ const MusicPage = () => {
             </div>
           </div>
 
-          {/* TRENDING SONGS SLIDER */}
+          {/* NEW RELEASES SECTION (ARRANGED BY TIME) */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-black tracking-widest uppercase text-white/60">Trending Tracks</h3>
+              <h3 className="text-xs font-black tracking-widest uppercase text-white/60 flex items-center gap-2">
+                <Sparkles size={12} className="text-purple-400" />
+                New Releases
+              </h3>
               <button 
                 onClick={() => navigate('/search?q=&type=music')}
                 className="text-xs font-bold text-purple-300 hover:text-purple-400 flex items-center gap-1 transition-colors"
@@ -352,7 +360,7 @@ const MusicPage = () => {
                   </div>
                 ))
               ) : trendingSongs.length > 0 ? (
-                trendingSongs.slice(0, 10).map((song) => {
+                trendingSongs.slice(0, 15).map((song) => {
                   const songImg = getHighResImage(song.image);
                   const isCurrent = currentSong?.id === song.id;
                   
@@ -381,6 +389,11 @@ const MusicPage = () => {
                         {isCurrent && (
                           <div className="absolute inset-0 bg-purple-950/40 backdrop-blur-[1px] flex items-center justify-center">
                             <div className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" />
+                          </div>
+                        )}
+                        {song.year && (
+                          <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-black text-purple-400">
+                            {song.year}
                           </div>
                         )}
                       </div>
@@ -555,4 +568,4 @@ const MusicPage = () => {
   );
 };
 
-export default MusicPage;
+export default Index;
