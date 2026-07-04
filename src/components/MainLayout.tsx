@@ -151,7 +151,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                 </button>
                 <button 
                   onClick={() => navigate('/search?type=movies')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${(path === '/search' && searchType === 'movies') ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/search' && searchType === 'movies' ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
                 >
                   <Search size={14} />
                   Search Movies
@@ -184,7 +184,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                 </button>
                 <button 
                   onClick={() => navigate('/search?type=fm')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${(path === '/search' && searchType === 'fm') ? 'bg-orange-500 text-white' : 'bg-white/5 text-orange-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] ${path === '/search' && searchType === 'fm' ? 'bg-orange-500 text-white' : 'bg-white/5 text-orange-300 hover:text-white hover:bg-white/10 border border-white/5'}`}
                 >
                   <Search size={14} />
                   Search Radio
