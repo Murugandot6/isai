@@ -81,6 +81,19 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   }, [movie]);
 
+  // Check if a URL points to a playable MP4, M3U8, or MKV file
+  const isDirectMediaUrl = (url: string): boolean => {
+    if (!url) return false;
+    const cleanUrl = url.split('?')[0].toLowerCase();
+    return (
+      cleanUrl.endsWith('.mp4') || 
+      cleanUrl.endsWith('.m3u8') || 
+      cleanUrl.endsWith('.mkv') ||
+      url.toLowerCase().includes('.mp4') ||
+      url.toLowerCase().includes('.m3u8')
+    );
+  };
+
   // Consumes a chunked stream / Server-Sent Events stream from response
   const readEventStream = async (response: Response) => {
     const reader = response.body?.getReader();
@@ -116,19 +129,26 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   }
                 }
               } else if (parsed.type === 'source') {
-                const newSource: VylaSource = {
-                  quality: parsed.source.label || parsed.source.source,
-                  url: parsed.source.url
-                };
-                setVylaSources(prev => {
-                  if (prev.some(s => s.url === newSource.url)) return prev;
-                  const nextSources = [...prev, newSource];
-                  // Safe check inside the state callback updater to avoid closure stale state
-                  if (nextSources.length === 1) {
-                    setSelectedVylaSource(newSource);
-                  }
-                  return nextSources;
-                });
+                const streamUrl = parsed.source.url;
+                
+                // CRITICAL FILTER: Only select MP4 or M3U8 sources
+                if (isDirectMediaUrl(streamUrl)) {
+                  const newSource: VylaSource = {
+                    quality: parsed.source.label || parsed.source.source,
+                    url: streamUrl
+                  };
+                  setVylaSources(prev => {
+                    if (prev.some(s => s.url === newSource.url)) return prev;
+                    const nextSources = [...prev, newSource];
+                    // Auto-select the first valid stream loaded
+                    if (nextSources.length === 1) {
+                      setSelectedVylaSource(newSource);
+                    }
+                    return nextSources;
+                  });
+                } else {
+                  console.log("[StreamPlayer] Filtered out unplayable non-media source:", parsed.source.source, streamUrl);
+                }
               }
             } catch (e) {
               // Ignore partial parsing errors
