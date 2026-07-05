@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Play, Pause, Radio, Heart, Server, Settings, RefreshCw } from 'lucide-react';
+import { Play, Pause, Radio, Heart, Server, Settings, RefreshCw, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StreamPlayerProps {
   movie: Movie;
@@ -22,6 +24,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [isTv, setIsTv] = useState(false);
   const [season, setSeason] = useState<number>(1); // Explicitly type state as number
   const [episode, setEpisode] = useState<number>(1); // Explicitly type state as number
+  const isMobile = useIsMobile();
 
   // Multi-source streaming nodes for reliability
   const sources: Source[] = [
@@ -54,19 +57,17 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setKey(prev => prev + 1);
   };
 
-  // Handler to convert string value to number for season
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSeason(parseInt(e.target.value, 10));
   };
 
-  // Handler to convert string value to number for episode
   const handleEpisodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setEpisode(parseInt(e.target.value, 10));
   };
 
   return (
     <div className="flex flex-col w-full bg-zinc-950 rounded-2xl md:rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-      {/* Video Viewport - Strictly aspect-video so it never gets squeezed */}
+      {/* Video Viewport */}
       <div className="relative w-full aspect-video bg-black group">
         <iframe
           key={`${activeSourceIdx}-${movie.id}-${season}-${episode}-${key}`}
@@ -78,15 +79,15 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
         />
         
-        {/* TV Episode Selector Overlay (Compact & Floating) */}
+        {/* TV Episode Selector Overlay */}
         {isTv && (
           <div className="absolute top-3 left-3 flex gap-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-xl border border-white/10">
             <div className="flex items-center gap-1">
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">S</span>
               <select 
                 value={season} 
-                onChange={handleSeasonChange} // Use the handler function
-                className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none"
+                onChange={handleSeasonChange}
+                className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none appearance-none"
               >
                 {Array.from({ length: 10 }).map((_, i) => (
                   <option key={i + 1} value={(i + 1).toString()}>{i + 1}</option>
@@ -98,8 +99,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">E</span>
               <select 
                 value={episode} 
-                onChange={handleEpisodeChange} // Use the handler function
-                className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none"
+                onChange={handleEpisodeChange}
+                className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none appearance-none"
               >
                 {Array.from({ length: 30 }).map((_, i) => (
                   <option key={i + 1} value={(i + 1).toString()}>{i + 1}</option>
