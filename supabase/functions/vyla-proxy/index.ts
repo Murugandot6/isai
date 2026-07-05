@@ -47,7 +47,7 @@ serve(async (req: Request) => {
       targetVylaUrl = `${vylaBaseUrl}/movie?id=${id}`;
     }
 
-    console.log(`[vyla-proxy] Secure handshaking with Vyla: ${targetVylaUrl}`);
+    console.log(`[vyla-proxy] Handshaking streaming pipe with Vyla: ${targetVylaUrl}`);
 
     const response = await fetch(targetVylaUrl, {
       method: "GET",
@@ -65,12 +65,15 @@ serve(async (req: Request) => {
       });
     }
 
-    const data = await response.json();
-    console.log("[vyla-proxy] Successfully fetched direct HLS sources from Vyla");
-
-    return new Response(JSON.stringify(data), {
+    // Forward the stream body directly back to the browser as a Server-Sent Events stream
+    return new Response(response.body, {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+      }
     });
 
   } catch (err: any) {

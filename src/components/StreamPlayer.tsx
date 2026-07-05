@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Sliders, ChevronDown, Sparkles, AlertCircle, Loader2, Tv, Video, HelpCircle } from 'lucide-react';
+import { RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Sliders, ChevronDown, Sparkles, AlertCircle, Loader2, Tv, Video, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
@@ -14,6 +14,12 @@ interface StreamPlayerProps {
 interface VylaSource {
   url: string;
   quality: string;
+}
+
+interface VylaSubtitle {
+  label: string;
+  file: string;
+  type: string;
 }
 
 // Beautiful multi-quality public HLS streams for simulated/demo playback testing
@@ -44,6 +50,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   // Direct Vyla Streaming States
   const [vylaSources, setVylaSources] = useState<VylaSource[]>([]);
   const [selectedVylaSource, setSelectedVylaSource] = useState<VylaSource | null>(null);
+  const [vylaSubtitles, setVylaSubtitles] = useState<VylaSubtitle[]>([]);
+  const [selectedSubtitle, setSelectedSubtitle] = useState<string | null>(null);
   const [loadingVyla, setLoadingVyla] = useState(false);
   const [vylaError, setVylaError] = useState<string | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -57,6 +65,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [showSubtitleMenu, setShowSubtitleMenu] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -72,24 +81,83 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   }, [movie]);
 
-  // Fetch Direct Streams with a resilient fallback chain: Secure Proxy -> Direct Client-side API
+  // Consumes a chunked stream / Server-Sent Events stream from response
+  const readEventStream = async (response: Response) => {
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    if (!reader) {
+      throw new Error("Unable to read streaming body.");
+    }
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        // Keep the last partial line in buffer
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const cleaned = line.trim();
+          if (cleaned.startsWith("data:")) {
+            const jsonStr = cleaned.slice(5).trim();
+            try {
+              const parsed = JSON.parse(jsonStr);
+              if (parsed.type === 'meta') {
+                if (parsed.subtitles && Array.isArray(parsed.subtitles)) {
+                  setVylaSubtitles(parsed.subtitles);
+                  const defaultSub = parsed.subtitles.find((s: VylaSubtitle) => s.label.toLowerCase() === 'english');
+                  if (defaultSub) {
+                    setSelectedSubtitle(defaultSub.label);
+                  }
+                }
+              } else if (parsed.type === 'source') {
+                const newSource: VylaSource = {
+                  quality: parsed.source.label || parsed.source.source,
+                  url: parsed.source.url
+                };
+                setVylaSources(prev => {
+                  if (prev.some(s => s.url === newSource.url)) return prev;
+                  const nextSources = [...prev, newSource];
+                  // Auto-select the first loaded stream
+                  if (!selectedVylaSource) {
+                    setSelectedVylaSource(newSource);
+                  }
+                  return nextSources;
+                });
+              }
+            } catch (e) {
+              // Ignore partial parsing errors
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  };
+
   const fetchVylaStreams = async () => {
     setLoadingVyla(true);
     setVylaError(null);
     setVylaSources([]);
     setSelectedVylaSource(null);
+    setVylaSubtitles([]);
+    setSelectedSubtitle(null);
     setIsDemoMode(false);
 
     const supabaseProjectUrl = "https://aidjrytwdvhwgfjgkxyb.supabase.co";
     const proxyUrl = `${supabaseProjectUrl}/functions/v1/vyla-proxy?id=${movie.id}&type=${isTv ? 'tv' : 'movie'}&s=${season}&e=${episode}`;
 
     try {
-      console.log("[StreamPlayer] Attempting fetch via secure Supabase Edge Proxy...");
+      console.log("[StreamPlayer] Handshaking streaming SSE with Proxy Node...");
       const response = await fetch(proxyUrl);
 
-      // If Supabase proxy is not deployed (returns 404) or fails, gracefully switch to client-side direct fetch
       if (response.status === 404) {
-        console.warn("[StreamPlayer] Supabase Edge Proxy not found (404). Falling back to direct client-side stream fetch...");
         throw new Error("PROXY_NOT_DEPLOYED");
       }
 
@@ -97,18 +165,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         throw new Error("PROXY_SERVER_ERROR");
       }
 
-      const data = await response.json();
-      if (data && data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
-        setVylaSources(data.sources);
-        const defaultSource = data.sources.find((x: VylaSource) => x.quality === "1080p") || data.sources[0];
-        setSelectedVylaSource(defaultSource);
-        setActiveRouting("Secure Edge Proxy");
-        setVylaError(null);
-      } else {
-        throw new Error("INVALID_PROXY_PAYLOAD");
-      }
+      setActiveRouting("Secure Edge Proxy");
+      await readEventStream(response);
+      setVylaError(null);
     } catch (proxyErr: any) {
-      console.log("[StreamPlayer] Proxy routing inactive or failed. Initiating direct client-side Vyla handshake...");
+      console.log("[StreamPlayer] Proxy failed. Handshaking streaming SSE directly with HuggingFace Space...");
       
       const apiKey = "Y8vR2mPq7XnL4sKb9HdE5ZwT1cFa6JuQxNs8Mg3Lp";
       const vylaBaseUrl = "https://boysism-vyla.hf.space";
@@ -124,28 +185,22 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         });
 
         if (!directResponse.ok) {
-          throw new Error(`Direct connection failed with status: ${directResponse.status}`);
+          throw new Error(`Direct connection status: ${directResponse.status}`);
         }
 
-        const directData = await directResponse.json();
-        if (directData && directData.sources && Array.isArray(directData.sources) && directData.sources.length > 0) {
-          setVylaSources(directData.sources);
-          const defaultSource = directData.sources.find((x: VylaSource) => x.quality === "1080p") || directData.sources[0];
-          setSelectedVylaSource(defaultSource);
-          setActiveRouting("Direct HuggingFace Node");
-          setVylaError(null);
-        } else {
-          throw new Error("HuggingFace Space returned empty source arrays.");
-        }
+        setActiveRouting("Direct HuggingFace Node");
+        await readEventStream(directResponse);
+        setVylaError(null);
       } catch (directErr: any) {
-        console.error("[StreamPlayer] Both Proxy and Direct streaming nodes failed:", directErr);
+        console.error("[StreamPlayer] Stream fetching failed:", directErr);
         setVylaError("HuggingFace space is currently sleeping or spinning up.");
-        // Auto fallback to VidSrc if direct HLS fails
         setActiveSourceType('vidsrc');
-        toast.info("Switched automatically to VidSrc Server due to HLS server sleep state.");
+        toast.info("Fallback automatic swap: Connecting to VidSrc due to direct server timeout.");
       } finally {
         setLoadingVyla(false);
       }
+    } finally {
+      setLoadingVyla(false);
     }
   };
 
@@ -155,19 +210,17 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   }, [movie.id, isTv, season, episode, key, activeSourceType]);
 
-  // Enable Demo Simulation Mode
   const handleActivateDemoMode = () => {
     setActiveSourceType('hls');
     setVylaError(null);
     setVylaSources(DEMO_VYLA_SOURCES);
     setSelectedVylaSource(DEMO_VYLA_SOURCES[0]);
+    setVylaSubtitles([]);
+    setSelectedSubtitle(null);
     setIsDemoMode(true);
-    toast.success("Demo streaming server connected!", {
-      description: "You are now running on simulated direct stream test nodes."
-    });
+    toast.success("Simulated direct stream connected!");
   };
 
-  // Load HLS.js dynamically from CDN
   const loadHlsScript = (): Promise<any> => {
     return new Promise((resolve, reject) => {
       if ((window as any).Hls) {
@@ -180,22 +233,39 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         if ((window as any).Hls) {
           resolve((window as any).Hls);
         } else {
-          reject(new Error('Hls not found after script load'));
+          reject(new Error('Hls not loaded.'));
         }
       };
-      script.onerror = () => reject(new Error('Failed to load Hls script'));
+      script.onerror = () => reject(new Error('Hls script error'));
       document.head.appendChild(script);
     });
   };
 
-  // Initialize and attach HLS.js video streaming for the Direct Player
+  // Playback engine selector: HLS.js vs Normal HTML5 Video (for direct .mp4 files)
   useEffect(() => {
     if (activeSourceType !== 'hls' || !selectedVylaSource || !videoRef.current) return;
 
     const video = videoRef.current;
     const streamUrl = selectedVylaSource.url;
+    const isHlsUrl = streamUrl.toLowerCase().includes('.m3u8');
     let isActive = true;
 
+    if (!isHlsUrl) {
+      // Normal direct MP4/MKV video playback
+      console.log("[StreamPlayer] Playing direct MP4 stream on HTML5 engine...");
+      if (hlsInstanceRef.current) {
+        hlsInstanceRef.current.destroy();
+        hlsInstanceRef.current = null;
+      }
+      video.src = streamUrl;
+      video.load();
+      video.play().catch(() => {});
+      setIsPlaying(true);
+      return;
+    }
+
+    // Direct HLS (.m3u8) video playback
+    console.log("[StreamPlayer] Initializing HLS.js video streaming engine...");
     loadHlsScript()
       .then((HlsClass) => {
         if (!isActive) return;
@@ -232,8 +302,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   break;
                 default:
                   hls.destroy();
-                  setVylaError("Direct streaming thread aborted. Try reloading or changing source nodes.");
-                  toast.error("HLS.js player thread failure");
+                  setVylaError("Direct streaming thread aborted. Please reload.");
                   break;
               }
             }
@@ -249,8 +318,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         }
       })
       .catch((err) => {
-        console.error("Dynamic Hls script load failed:", err);
-        setVylaError("Dynamic player engine injection error. Try refreshing your browser.");
+        console.error("Player injection exception:", err);
       });
 
     return () => {
@@ -262,7 +330,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     };
   }, [selectedVylaSource, activeSourceType]);
 
-  // Custom Controls Activity Indicator
   const handleMouseMove = () => {
     setShowControls(true);
     if (controlsTimeoutRef.current) {
@@ -354,7 +421,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Embed Player Url Mappings
   const getEmbedUrl = () => {
     if (activeSourceType === 'vidsrc') {
       return isTv
@@ -390,7 +456,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <Loader2 className="animate-spin text-pink-500 w-10 h-10" />
               <p className="text-xs font-black uppercase tracking-widest text-zinc-400">Booting secure Edge Node...</p>
             </div>
-          ) : vylaError ? (
+          ) : vylaError && vylaSources.length === 0 ? (
             /* Secure Edge Error Node (With Fallback and Demo Mode options) */
             <div className="p-6 md:p-12 text-center max-w-md space-y-5 animate-in fade-in duration-300">
               <div className="inline-flex items-center justify-center p-3 bg-pink-500/10 rounded-full border border-pink-500/20 text-pink-400">
@@ -429,7 +495,18 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                 onLoadedMetadata={handleLoadedMetadata}
                 className="w-full h-full object-contain"
                 playsInline
-              />
+              >
+                {vylaSubtitles.map((sub, idx) => (
+                  <track
+                    key={`${sub.label}-${idx}`}
+                    kind="subtitles"
+                    src={sub.file}
+                    srcLang={sub.label.slice(0, 2).toLowerCase()}
+                    label={sub.label}
+                    default={selectedSubtitle === sub.label}
+                  />
+                ))}
+              </video>
 
               {/* Custom Control Bar Overlay */}
               <div className={cn(
@@ -454,7 +531,10 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     {/* Quality Selector */}
                     <div className="relative">
                       <button 
-                        onClick={() => setShowQualityMenu(!showQualityMenu)}
+                        onClick={() => {
+                          setShowQualityMenu(!showQualityMenu);
+                          setShowSubtitleMenu(false);
+                        }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-bold border border-white/5 transition-all"
                       >
                         <Sliders size={12} className="text-pink-500" />
@@ -483,6 +563,68 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                         </div>
                       )}
                     </div>
+
+                    {/* Subtitle Selector */}
+                    {vylaSubtitles.length > 0 && (
+                      <div className="relative">
+                        <button 
+                          onClick={() => {
+                            setShowSubtitleMenu(!showSubtitleMenu);
+                            setShowQualityMenu(false);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-bold border border-white/5 transition-all"
+                        >
+                          <Languages size={12} className="text-pink-500" />
+                          <span>Subs: {selectedSubtitle || "Off"}</span>
+                          <ChevronDown size={12} />
+                        </button>
+                        {showSubtitleMenu && (
+                          <div className="absolute right-0 top-full mt-1.5 bg-zinc-900 border border-white/10 rounded-xl p-1 shadow-2xl z-40 min-w-[140px] max-h-48 overflow-y-auto no-scrollbar flex flex-col">
+                            <button
+                              onClick={() => {
+                                setSelectedSubtitle(null);
+                                setShowSubtitleMenu(false);
+                                if (videoRef.current) {
+                                  for (let i = 0; i < videoRef.current.textTracks.length; i++) {
+                                    videoRef.current.textTracks[i].mode = 'disabled';
+                                  }
+                                }
+                              }}
+                              className={cn(
+                                "px-3 py-2 rounded-lg text-left text-xs font-bold transition-colors",
+                                selectedSubtitle === null ? "bg-pink-600 text-white" : "text-zinc-400 hover:bg-white/5"
+                              )}
+                            >
+                              Off
+                            </button>
+                            {vylaSubtitles.map((sub, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  setSelectedSubtitle(sub.label);
+                                  setShowSubtitleMenu(false);
+                                  if (videoRef.current) {
+                                    for (let i = 0; i < videoRef.current.textTracks.length; i++) {
+                                      if (videoRef.current.textTracks[i].label === sub.label) {
+                                        videoRef.current.textTracks[i].mode = 'showing';
+                                      } else {
+                                        videoRef.current.textTracks[i].mode = 'disabled';
+                                      }
+                                    }
+                                  }
+                                }}
+                                className={cn(
+                                  "px-3 py-2 rounded-lg text-left text-xs font-bold transition-colors",
+                                  selectedSubtitle === sub.label ? "bg-pink-600 text-white" : "text-zinc-400 hover:bg-white/5"
+                                )}
+                              >
+                                {sub.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -496,41 +638,32 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   </button>
                 </div>
 
-                {/* Bottom Bar Controls */}
+                {/* Bottom Slider & Controls */}
                 <div className="space-y-4">
-                  {/* Timeline Progress Slider */}
-                  <div className="space-y-1.5">
-                    <Slider
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-zinc-400 w-10 text-right">{formatTime(currentTime)}</span>
+                    <Slider 
                       value={[currentTime]}
                       max={duration || 100}
                       step={1}
                       onValueChange={([val]) => handleSeek(val)}
-                      className="w-full cursor-pointer py-2"
+                      className="flex-1 cursor-pointer"
                     />
-                    <div className="flex items-center justify-between text-[11px] font-bold text-zinc-400">
-                      <span>{formatTime(currentTime)}</span>
-                      <span>{formatTime(duration)}</span>
-                    </div>
+                    <span className="text-[10px] font-bold text-zinc-400 w-10">{formatTime(duration)}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={handlePlayPause} 
-                        className="text-zinc-300 hover:text-white transition-colors"
-                      >
+                    <div className="flex items-center gap-5">
+                      <button onClick={handlePlayPause} className="text-zinc-300 hover:text-white transition-colors">
                         {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                       </button>
 
-                      {/* Volume Controls */}
-                      <div className="flex items-center gap-2 group/volume">
-                        <button 
-                          onClick={handleToggleMute} 
-                          className="text-zinc-300 hover:text-white transition-colors"
-                        >
-                          {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                      {/* Volume Slider */}
+                      <div className="flex items-center gap-2 group/vol">
+                        <button onClick={handleToggleMute} className="text-zinc-300 hover:text-white transition-colors">
+                          {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
                         </button>
-                        <Slider
+                        <Slider 
                           value={[isMuted ? 0 : volume * 100]}
                           max={100}
                           step={1}
@@ -540,11 +673,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                       </div>
                     </div>
 
-                    <button 
-                      onClick={handleFullscreen} 
-                      className="text-zinc-300 hover:text-white transition-colors"
-                    >
-                      <Maximize size={20} />
+                    <button onClick={handleFullscreen} className="text-zinc-300 hover:text-white transition-colors">
+                      <Maximize size={18} />
                     </button>
                   </div>
                 </div>
