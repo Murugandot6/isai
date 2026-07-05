@@ -21,21 +21,25 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [season, setSeason] = useState<number>(1);
   const [episode, setEpisode] = useState<number>(1);
 
-  // Unified multi-source streaming nodes for reliability across all devices
+  // Updated multi-source streaming nodes for reliability across all devices
   const sources: Source[] = [
-    { name: "SuperEmbed", url: `https://multiembed.to/get.php?video_id=${movie.id}&tmdb=1` },
-    { name: "Vidsrc.to", url: `https://vidsrc.to/embed/movie/${movie.id}` },
-    { name: "Vidsrc.me", url: `https://vidsrc.xyz/embed/movie/${movie.id}` },
-    { name: "Embed.su", url: `https://embed.su/embed/movie/${movie.id}` },
-    { name: "2Embed", url: `https://www.2embed.cc/embed/${movie.id}` }
+    { name: "RiveStream", url: `https://www.rivestream.app/embed?type=movie&id=${movie.id}` },
+    { name: "Vyla", url: `http://player.vyla.cc/?id=${movie.id}` },
+    { name: "Nxsha", url: `https://web.nxsha.app/embed/movie/${movie.id}` },
+    { name: "VidCore", url: `https://vidcore.net/embed/movie/${movie.id}` },
+    { name: "CineSrc", url: `https://cinesrc.st/embed/movie/${movie.id}` },
+    { name: "VidLux", url: `https://vidlux.xyz/embed/movie/${movie.id}` },
+    { name: "ZXCSTREAM", url: `https://a.zxcstream.xyz/embed/movie/${movie.id}` }
   ];
 
   const tvSources: Source[] = [
-    { name: "SuperEmbed", url: `https://multiembed.to/get.php?video_id=${movie.id}&tmdb=1&s=${season}&e=${episode}` },
-    { name: "Vidsrc.to", url: `https://vidsrc.to/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "Vidsrc.me", url: `https://vidsrc.xyz/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "Embed.su", url: `https://embed.su/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "2Embed", url: `https://www.2embed.cc/embedtv/${movie.id}&s=${season}&e=${episode}` }
+    { name: "RiveStream", url: `https://www.rivestream.app/embed?type=tv&id=${movie.id}&season=${season}&episode=${episode}` },
+    { name: "Vyla", url: `http://player.vyla.cc/?id=${movie.id}&season=${season}&episode=${episode}` },
+    { name: "Nxsha", url: `https://web.nxsha.app/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "VidCore", url: `https://vidcore.net/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "CineSrc", url: `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "VidLux", url: `https://vidlux.xyz/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "ZXCSTREAM", url: `https://a.zxcstream.xyz/embed/tv/${movie.id}&season=${season}&episode=${episode}` }
   ];
 
   useEffect(() => {
