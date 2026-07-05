@@ -105,7 +105,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         const data = await response.json();
         if (data && data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
           setVylaSources(data.sources);
-          // Set highest available quality as default, or first one
           const defaultSource = data.sources.find((x: VylaSource) => x.quality === "1080p") || data.sources[0];
           setSelectedVylaSource(defaultSource);
           setUseVylaDirect(true);
@@ -124,101 +123,113 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     fetchVylaStreams();
   }, [movie.id, isTv, season, episode]);
 
-  // Load HLS.js dynamically from CDN to bypass compilation dependencies
-  const loadHlsScript = (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      if ((window as any).Hls) {
-        resolve((window as any).Hls);
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js';
-      script.onload = () => {
-        if ((window as any).Hls) {
-          resolve((window as any).Hls);
-        } else {
-          reject(new Error('Hls not found after script load'));
-        }
-      };
-      script.onerror = () => reject(new Error('Failed to load Hls script'));
-      document.head.appendChild(script);
-    });
-  };
-
-  // Initialize and attach HLS.js video streaming for the Direct Player
+  // Dynamically load Hls.js from CDN and attach media HLS playback
   useEffect(() => {
-    if (!useVylaDirect || !selectedVylaSource || !videoRef.current) return;
+    if (!useVylaDirect || !selectedVylaSource || !videoRefActive()) return;
 
-    const video = videoRef.current;
-    const streamUrl = selectedVylaSource.url;
-    let isActive = true;
+    let isMounted = true;
+    let hlsInstance: any = null;
 
-    loadHlsScript()
-      .then((HlsClass) => {
-        if (!isActive) return;
+    const initHls = async () => {
+      const audio = audioRef.current;
+      if (!audio) return;
 
-        if (HlsClass.isSupported()) {
-          if (hlsInstanceRef.current) {
-            hlsInstanceRef.current.destroy();
+      const streamUrl = selectedVylaSource.url;
+
+      // Ensure Hls is loaded from window or load dynamically
+      let HlsClass = (window as any).Hls;
+      if (!HlsClass) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+            script.onload = () => {
+              HlsClass = (window as any).Hls;
+              resolve();
+            };
+            script.onerror = () => reject(new Error("Failed to load HLS.js from CDN"));
+            document.head.appendChild(script);
+          });
+        } catch (e) {
+          console.error(e);
+          if (isMounted) {
+            setUseVylaDirect(false);
+            toast.error("HLS.js player setup failed. Falling back to embedded players.");
           }
-
-          const hls = new HlsClass({
-            enableWorker: true,
-            lowLatencyMode: true
-          });
-          hlsInstanceRef.current = hls;
-
-          hls.loadSource(streamUrl);
-          hls.attachMedia(video);
-
-          hls.on(HlsClass.Events.MANIFEST_PARSED, () => {
-            if (isActive) {
-              video.play().catch(() => {});
-              setIsPlaying(true);
-            }
-          });
-
-          hls.on(HlsClass.Events.ERROR, (event: any, data: any) => {
-            if (data.fatal) {
-              switch (data.type) {
-                case HlsClass.ErrorTypes.NETWORK_ERROR:
-                  hls.startLoad();
-                  break;
-                case HlsClass.ErrorTypes.MEDIA_ERROR:
-                  hls.recoverMediaError();
-                  break;
-                default:
-                  hls.destroy();
-                  setUseVylaDirect(false); // Fallback to iframe embed if fatal unrecoverable error
-                  toast.error("Vyla Direct Node failed. Switched to fallback servers.");
-                  break;
-              }
-            }
-          });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          // Native Apple device support (Safari / iOS)
-          video.src = streamUrl;
-          video.addEventListener('loadedmetadata', () => {
-            if (isActive) {
-              video.play().catch(() => {});
-              setIsPlaying(true);
-            }
-          });
+          return;
         }
-      })
-      .catch((err) => {
-        console.error("Dynamic Hls script load failed:", err);
-        setUseVylaDirect(false);
-      });
+      }
+
+      if (!isMounted) return;
+
+      if (HlsClass && HlsClass.isSupported()) {
+        if (hlsInstanceRef.current) {
+          hlsInstanceRef.current.destroy();
+        }
+
+        const hls = new HlsClass({
+          enableWorker: true,
+          lowLatencyMode: true
+        });
+        hlsInstanceRef.current = hls;
+        hlsInstance = hls;
+
+        hls.loadSource(streamUrl);
+        hls.attachMedia(audio);
+
+        hls.on(HlsClass.Events.MANIFEST_PARSED, () => {
+          if (isMounted) {
+            audio.play().catch(() => {});
+            setIsPlaying(true);
+          }
+        });
+
+        hls.on(HlsClass.Events.ERROR, (event: any, data: any) => {
+          if (data.fatal) {
+            switch (data.type) {
+              case HlsClass.ErrorTypes.NETWORK_ERROR:
+                hls.startLoad();
+                break;
+              case HlsClass.ErrorTypes.MEDIA_ERROR:
+                hls.recoverMediaError();
+                break;
+              default:
+                hls.destroy();
+                if (isMounted) {
+                  setUseVylaDirect(false);
+                  toast.error("Vyla Direct Node failed. Switched to fallback servers.");
+                }
+                break;
+            }
+          }
+        });
+      } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+        // iOS/Safari native streaming support
+        audio.src = streamUrl;
+        audio.addEventListener('loadedmetadata', () => {
+          if (isMounted) {
+            audio.play().catch(() => {});
+            setIsPlaying(true);
+          }
+        });
+      }
+    };
+
+    initHls();
 
     return () => {
-      isActive = false;
+      isMounted = false;
+      if (hlsInstance) {
+        hlsInstance.destroy();
+      }
       if (hlsInstanceRef.current) {
         hlsInstanceRef.current.destroy();
         hlsInstanceRef.current = null;
       }
     };
   }, [selectedVylaSource, useVylaDirect]);
+
+  const videoRefActive = () => !!videoRef.current;
 
   // Custom Controls Activity Indicator
   const handleMouseMove = () => {
@@ -299,7 +310,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
   const handleReload = () => {
     setKey(prev => prev + 1);
-    toast.success("Stream reloaded!");
   };
 
   const formatTime = (seconds: number) => {
