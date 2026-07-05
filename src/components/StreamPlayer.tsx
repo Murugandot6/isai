@@ -26,20 +26,20 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { name: "RiveStream", url: `https://www.rivestream.app/embed?type=movie&id=${movie.id}` },
     { name: "Vyla", url: `http://player.vyla.cc/?id=${movie.id}` },
     { name: "Nxsha", url: `https://web.nxsha.app/embed/movie/${movie.id}` },
-    { name: "VidCore", url: `https://vidcore.net/embed/movie/${movie.id}` },
+    { name: "VidCore", url: `https://www.vidcore.org/embed/movie/${movie.id}` },
     { name: "CineSrc", url: `https://cinesrc.st/embed/movie/${movie.id}` },
     { name: "VidLux", url: `https://vidlux.xyz/embed/movie/${movie.id}` },
-    { name: "ZXCSTREAM", url: `https://a.zxcstream.xyz/embed/movie/${movie.id}` }
+    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/embed/movie/${movie.id}` }
   ];
 
   const tvSources: Source[] = [
     { name: "RiveStream", url: `https://www.rivestream.app/embed?type=tv&id=${movie.id}&season=${season}&episode=${episode}` },
     { name: "Vyla", url: `http://player.vyla.cc/?id=${movie.id}&season=${season}&episode=${episode}` },
     { name: "Nxsha", url: `https://web.nxsha.app/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "VidCore", url: `https://vidcore.net/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "VidCore", url: `https://www.vidcore.org/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "CineSrc", url: `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "VidLux", url: `https://vidlux.xyz/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "ZXCSTREAM", url: `https://a.zxcstream.xyz/embed/tv/${movie.id}&season=${season}&episode=${episode}` }
+    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/embed/tv/${movie.id}/${season}/${episode}` }
   ];
 
   useEffect(() => {
