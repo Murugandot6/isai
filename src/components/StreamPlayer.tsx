@@ -29,7 +29,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { name: "VidCore", url: `https://www.vidcore.org/embed/movie/${movie.id}` },
     { name: "CineSrc", url: `https://cinesrc.st/embed/movie/${movie.id}` },
     { name: "VidLux", url: `https://vidlux.xyz/embed/movie/${movie.id}` },
-    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/embed/movie/${movie.id}` }
+    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/player/movie/${movie.id}` }
   ];
 
   const tvSources: Source[] = [
@@ -39,7 +39,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     { name: "VidCore", url: `https://www.vidcore.org/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "CineSrc", url: `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "VidLux", url: `https://vidlux.xyz/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/embed/tv/${movie.id}/${season}/${episode}` }
+    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/player/tv/${movie.id}/${season}/${episode}` }
   ];
 
   useEffect(() => {
