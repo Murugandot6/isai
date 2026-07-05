@@ -44,6 +44,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [loadingVyla, setLoadingVyla] = useState(false);
   const [vylaError, setVylaError] = useState<string | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [activeRouting, setActiveRouting] = useState<string>("Proxy Node");
 
   // HTML5 Video Player States
   const [isPlaying, setIsPlaying] = useState(false);
@@ -68,7 +69,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   }, [movie]);
 
-  // Fetch Direct Streams from our Secure Supabase Edge Function Proxy instead of calling Vyla directly from browser
+  // Fetch Direct Streams with a resilient fallback chain: Secure Proxy -> Direct Client-side API
   const fetchVylaStreams = async () => {
     setLoadingVyla(true);
     setVylaError(null);
@@ -76,15 +77,21 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setSelectedVylaSource(null);
     setIsDemoMode(false);
 
-    // Call our server-side secure Supabase Edge Function proxy
     const supabaseProjectUrl = "https://aidjrytwdvhwgfjgkxyb.supabase.co";
     const proxyUrl = `${supabaseProjectUrl}/functions/v1/vyla-proxy?id=${movie.id}&type=${isTv ? 'tv' : 'movie'}&s=${season}&e=${episode}`;
 
     try {
+      console.log("[StreamPlayer] Attempting fetch via secure Supabase Edge Proxy...");
       const response = await fetch(proxyUrl);
 
+      // If Supabase proxy is not deployed (returns 404) or fails, gracefully switch to client-side direct fetch
+      if (response.status === 404) {
+        console.warn("[StreamPlayer] Supabase Edge Proxy not found (404). Falling back to direct client-side stream fetch...");
+        throw new Error("PROXY_NOT_DEPLOYED");
+      }
+
       if (!response.ok) {
-        throw new Error("Proxy server handshake failed. Node is sleeping or offline.");
+        throw new Error("PROXY_SERVER_ERROR");
       }
 
       const data = await response.json();
@@ -92,15 +99,50 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         setVylaSources(data.sources);
         const defaultSource = data.sources.find((x: VylaSource) => x.quality === "1080p") || data.sources[0];
         setSelectedVylaSource(defaultSource);
+        setActiveRouting("Secure Edge Proxy");
         toast.success("Streams loaded securely via Supabase Edge Proxy!");
+        setLoadingVyla(false);
+        return;
       } else {
-        throw new Error("No direct streaming sources returned from API proxy.");
+        throw new Error("INVALID_PROXY_PAYLOAD");
       }
-    } catch (err: any) {
-      console.warn("Proxy streaming request failed:", err);
-      setVylaError(err.message || "Failed to establish secure handshake with Supabase edge server.");
-    } finally {
-      setLoadingVyla(false);
+    } catch (proxyErr: any) {
+      console.log("[StreamPlayer] Proxy routing inactive or failed. Initiating direct client-side Vyla handshake...");
+      
+      // Direct client-side Vyla API query
+      const apiKey = "vyla_public_key_fallback";
+      const vylaBaseUrl = "https://boysism-vyla.hf.space";
+      const directUrl = isTv
+        ? `${vylaBaseUrl}/tv?id=${movie.id}&s=${season}&e=${episode}`
+        : `${vylaBaseUrl}/movie?id=${movie.id}`;
+
+      try {
+        const directResponse = await fetch(directUrl, {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`
+          }
+        });
+
+        if (!directResponse.ok) {
+          throw new Error(`Direct connection failed with status: ${directResponse.status}`);
+        }
+
+        const directData = await directResponse.json();
+        if (directData && directData.sources && Array.isArray(directData.sources) && directData.sources.length > 0) {
+          setVylaSources(directData.sources);
+          const defaultSource = directData.sources.find((x: VylaSource) => x.quality === "1080p") || directData.sources[0];
+          setSelectedVylaSource(defaultSource);
+          setActiveRouting("Direct HuggingFace Node");
+          toast.success("Streams loaded directly from HuggingFace cluster!");
+        } else {
+          throw new Error("HuggingFace Space returned empty source arrays.");
+        }
+      } catch (directErr: any) {
+        console.error("[StreamPlayer] Both Proxy and Direct streaming nodes failed:", directErr);
+        setVylaError("HuggingFace space is currently sleeping, spinning up, or requires authorization.");
+      } finally {
+        setLoadingVyla(false);
+      }
     }
   };
 
@@ -328,9 +370,9 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <AlertCircle size={32} />
             </div>
             <div className="space-y-1">
-              <h4 className="text-base font-black uppercase tracking-wider">Edge Proxy Handshake Error</h4>
+              <h4 className="text-base font-black uppercase tracking-wider">HuggingFace Space Offline</h4>
               <p className="text-xs text-zinc-400 leading-relaxed font-semibold">
-                {vylaError}. This usually occurs when your backend space is booting or requires environment authorization.
+                {vylaError} Please ensure the Vyla HuggingFace Space is running.
               </p>
             </div>
             <div className="flex justify-center gap-3">
@@ -374,7 +416,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     "text-[10px] tracking-[0.2em] font-black uppercase bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20",
                     isDemoMode ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" : "text-pink-500"
                   )}>
-                    {isDemoMode ? "Direct Demo Simulator" : "Secure Backend Edge Proxy"}
+                    {isDemoMode ? "Direct Demo Simulator" : `Stream Connected via ${activeRouting}`}
                   </span>
                   <h3 className="text-sm md:text-base font-black truncate max-w-sm mt-1">
                     {isDemoMode ? `Demo HLS Stream (Testing: ${selectedVylaSource.quality})` : movie.title}
@@ -528,7 +570,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             <div className="flex items-center gap-1.5">
               <Server size={12} className="text-pink-500" />
               <p className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
-                Active Source: <span className="text-pink-500">{isDemoMode ? "Simulated HLS Server" : "Vyla HF Direct Player"}</span>
+                Active Source: <span className="text-pink-500">{isDemoMode ? "Simulated HLS Server" : `Vyla HF Direct Player via ${activeRouting}`}</span>
               </p>
             </div>
           </div>
