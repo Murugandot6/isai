@@ -24,6 +24,12 @@ const PLAYER_ACCENT = 'db2777';
 
 const VIDEO_SOURCES: VideoSource[] = [
   {
+    id: 'nxsha',
+    name: 'Nxsha (Direct)',
+    getMovieUrl: (id) => `https://web.nxsha.app/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://web.nxsha.app/embed/tv/${id}/${s}/${e}`
+  },
+  {
     id: 'rivestream',
     name: 'Riverstream (Fast)',
     getMovieUrl: (id) => `https://www.rivestream.app/embed?type=movie&id=${id}`,
