@@ -1,141 +1,60 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCcw, ExternalLink, Play, AlertTriangle, ChevronRight, Clock, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from 'sonner';
+import { Play, Pause, Radio, Heart, Server, Settings, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface StreamPlayerProps {
   movie: Movie;
 }
 
-interface VideoSource {
-  id: string;
-  name: string;
-  getMovieUrl: (id: string) => string;
-  getTvUrl: (id: string, season: string, episode: string) => string;
-}
-
-// Accent Color: Pink-600
-const PLAYER_ACCENT = 'db2777';
-
-const VIDEO_SOURCES: VideoSource[] = [
-  {
-    id: 'nxsha',
-    name: 'Nxsha (Direct)',
-    getMovieUrl: (id) => `https://web.nxsha.app/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://web.nxsha.app/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'rivestream',
-    name: 'Riverstream (Fast)',
-    getMovieUrl: (id) => `https://www.rivestream.app/embed?type=movie&id=${id}`,
-    getTvUrl: (id, s, e) => `https://www.rivestream.app/embed?type=tv&id=${id}&season=${s}&episode=${e}`
-  },
-  {
-    id: 'vyla',
-    name: 'Vyla (Multi-Server)',
-    getMovieUrl: (id) => {
-      const isImdb = id.startsWith('tt');
-      return `https://player.vyla.cc/?id=${id}${!isImdb ? '&tmdb=1' : ''}&color=${PLAYER_ACCENT}`;
-    },
-    getTvUrl: (id, s, e) => {
-      const isImdb = id.startsWith('tt');
-      return `https://player.vyla.cc/?id=${id}${!isImdb ? '&tmdb=1' : ''}&s=${s}&e=${e}&color=${PLAYER_ACCENT}`;
-    }
-  },
-  {
-    id: 'vidcore',
-    name: 'VidCore',
-    getMovieUrl: (id) => `https://www.vidcore.org/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://www.vidcore.org/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'cinesrc',
-    name: 'CineSRC',
-    getMovieUrl: (id) => `https://cinesrc.st/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://cinesrc.st/embed/tv/${id}/${s}/${e}`
-  },
-  {
-    id: 'vidlux',
-    name: 'VidLux',
-    getMovieUrl: (id) => `https://vidlux.xyz/embed/movie/${id}?autoplay=true`,
-    getTvUrl: (id, s, e) => `https://vidlux.xyz/embed/tv/${id}/${s}/${e}?autoplay=true`
-  },
-  {
-    id: 'smashystream',
-    name: 'SmashyStream',
-    getMovieUrl: (id) => `https://embed.smashystream.com/playere.php?tmdb=${id}`,
-    getTvUrl: (id, s, e) => `https://embed.smashystream.com/playere.php?tmdb=${id}&season=${s}&episode=${e}`
-  }
-];
-
-const FALLBACK_TIMEOUT_MS = 25000;
-
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const lowerGenre = movie.genre?.toLowerCase() || '';
-  const isTv = lowerGenre.includes('tv') || lowerGenre.includes('series');
-
   const [activeSourceIdx, setActiveSourceIdx] = useState(0);
-  const [season, setSeason] = useState('1');
-  const [episode, setEpisode] = useState('1');
   const [key, setKey] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(FALLBACK_TIMEOUT_MS / 1000);
-  const [autoFallbackEnabled, setAutoFallbackEnabled] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isTv, setIsTv] = useState(false);
+  const [season, setSeason] = useState(1);
+  const [episode, setEpisode] = useState(1);
+
+  // Multi-source streaming nodes for reliability
+  const sources = [
+    { name: "SuperEmbed", url: `https://multiembed.to/get.php?video_id=${movie.id}&tmdb=1` },
+    { name: "Vidsrc.to", url: `https://vidsrc.to/embed/movie/${movie.id}` },
+    { name: "Vidsrc.me", url: `https://vidsrc.xyz/embed/movie/${movie.id}` },
+    { name: "Embed.su", url: `https://embed.su/embed/movie/${movie.id}` }
+  ];
+
+  const tvSources = [
+    { name: "SuperEmbed", url: `https://multiembed.to/get.php?video_id=${movie.id}&tmdb=1&s=${season}&e=${episode}` },
+    { name: "Vidsrc.to", url: `https://vidsrc.to/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "Vidsrc.me", url: `https://vidsrc.xyz/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "Embed.su", url: `https://embed.su/embed/tv/${movie.id}/${season}/${episode}` }
+  ];
 
   useEffect(() => {
-    setActiveSourceIdx(0);
-    resetFallbackTimer();
-  }, [movie.id, season, episode]);
-
-  useEffect(() => {
-    if (!autoFallbackEnabled) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      return;
+    // Detect if it's a TV series based on genre label
+    if (movie.genre && (movie.genre.toLowerCase().includes('tv') || movie.genre.toLowerCase().includes('series'))) {
+      setIsTv(true);
+    } else {
+      setIsTv(false);
     }
+  }, [movie]);
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleNextSource();
-          return FALLBACK_TIMEOUT_MS / 1000;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  const activeSources = isTv ? tvSources : sources;
+  const currentSource = activeSources[activeSourceIdx] || activeSources[0];
 
-    timerRef.current = interval;
-    return () => clearInterval(interval);
-  }, [autoFallbackEnabled, activeSourceIdx]);
-
-  const resetFallbackTimer = () => {
-    setTimeLeft(FALLBACK_TIMEOUT_MS / 1000);
-    setAutoFallbackEnabled(true);
-  };
-
-  const getEmbedUrl = (): string => {
-    const source = VIDEO_SOURCES[activeSourceIdx];
-    if (!source) return '';
-    return isTv ? source.getTvUrl(movie.id, season, episode) : source.getMovieUrl(movie.id);
-  };
-
-  const handleNextSource = () => {
-    const nextIdx = (activeSourceIdx + 1) % VIDEO_SOURCES.length;
-    setActiveSourceIdx(nextIdx);
-    resetFallbackTimer();
+  const handleReload = () => {
+    setKey(prev => prev + 1);
   };
 
   return (
-    <div className="flex flex-col h-full bg-black">
-      {/* Viewport Area */}
-      <div className="relative flex-1 group">
+    <div className="flex flex-col w-full bg-zinc-950 rounded-2xl md:rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+      {/* Video Viewport - Strictly aspect-video so it never gets squeezed */}
+      <div className="relative w-full aspect-video bg-black group">
         <iframe
           key={`${activeSourceIdx}-${movie.id}-${season}-${episode}-${key}`}
-          src={getEmbedUrl()}
+          src={currentSource.url}
           className="w-full h-full border-none"
           allowFullScreen
           scrolling="no"
@@ -143,97 +62,84 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
         />
         
-        {/* TV Controls Floating Overlay */}
+        {/* TV Episode Selector Overlay (Compact & Floating) */}
         {isTv && (
-          <div className="absolute top-6 left-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <Select value={season} onValueChange={setSeason}>
-              <SelectTrigger className="w-[120px] bg-black/80 backdrop-blur-xl border-white/10 text-white font-black text-[11px] h-10 rounded-full uppercase tracking-[0.1em]">
-                <SelectValue placeholder="Season" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-2xl">
-                {Array.from({ length: 15 }).map((_, i) => (
-                  <SelectItem key={i + 1} value={(i + 1).toString()} className="font-bold text-xs uppercase">Season {i + 1}</SelectItem>
+          <div className="absolute top-3 left-3 flex gap-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-xl border border-white/10">
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">S</span>
+              <select 
+                value={season} 
+                onChange={(e) => setSeason(e.target.value)}
+                className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none"
+              >
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <option key={i + 1} value={(i + 1).toString()}>{i + 1}</option>
                 ))}
-              </SelectContent>
-            </Select>
-            <Select value={episode} onValueChange={setEpisode}>
-              <SelectTrigger className="w-[120px] bg-black/80 backdrop-blur-xl border-white/10 text-white font-black text-[11px] h-10 rounded-full uppercase tracking-[0.1em]">
-                <SelectValue placeholder="Episode" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-white/10 text-white rounded-2xl">
-                {Array.from({ length: 40 }).map((_, i) => (
-                  <SelectItem key={i + 1} value={(i + 1).toString()} className="font-bold text-xs uppercase">Episode {i + 1}</SelectItem>
+              </select>
+            </div>
+            <div className="w-px bg-white/10 my-1" />
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">E</span>
+              <select 
+                value={episode} 
+                onChange={(e) => setEpisode(e.target.value)}
+                className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none"
+              >
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <option key={i + 1} value={(i + 1).toString()}>{i + 1}</option>
                 ))}
-              </SelectContent>
-            </Select>
+              </select>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Controller Bar */}
-      <div className="p-6 md:p-8 bg-zinc-950 border-t border-white/5 flex flex-col gap-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Broadcast Station</span>
+      {/* Compact Controller Bar */}
+      <div className="p-4 md:p-6 bg-zinc-900/90 border-t border-white/5 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5 text-left">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Streaming Node</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Server size={14} className="text-pink-500" />
-              <p className="text-xs font-black text-zinc-300 uppercase tracking-[0.15em]">
-                Active Node: <span className="text-pink-500">{VIDEO_SOURCES[activeSourceIdx].name}</span>
+            <div className="flex items-center gap-1.5">
+              <Server size={12} className="text-pink-500" />
+              <p className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
+                Active: <span className="text-pink-500">{currentSource.name}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {autoFallbackEnabled && (
-              <div className="hidden sm:flex items-center gap-3 px-5 py-2 bg-pink-600/10 border border-pink-500/20 rounded-full">
-                <Clock size={14} className="text-pink-400" />
-                <span className="text-[10px] font-black text-pink-300 uppercase tracking-widest">Auto-Node in {Math.round(timeLeft)}s</span>
-                <button onClick={() => setAutoFallbackEnabled(false)} className="text-[9px] font-black text-white/50 hover:text-white uppercase tracking-widest ml-2 border-l border-white/10 pl-3">Stop</button>
-              </div>
-            )}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <button 
-              onClick={() => setKey(k => k + 1)} 
-              className="p-3 rounded-full bg-white/5 hover:bg-pink-600 hover:text-white transition-all border border-white/5"
+              onClick={handleReload} 
+              className="p-2 rounded-xl bg-white/5 hover:bg-pink-600 hover:text-white transition-all border border-white/5 text-zinc-300"
               title="Refresh Stream"
             >
-              <RefreshCcw size={16} />
+              <RefreshCw size={14} />
             </button>
-            <Button 
-              onClick={() => window.open(getEmbedUrl(), '_blank')} 
-              variant="outline" 
-              className="rounded-full border-white/10 h-12 px-6 text-[10px] font-black uppercase tracking-[0.2em] gap-2 bg-white/5 hover:bg-white/10"
+            <button 
+              onClick={() => window.open(currentSource.url, '_blank')} 
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-wider transition-all"
             >
-              <ExternalLink size={14} />
-              Theater Popout
-            </Button>
+              <span>Popout</span>
+            </button>
           </div>
         </div>
 
         {/* Server Selection Pills */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Channel Selection</p>
-            <div className="flex items-center gap-1.5 text-[9px] text-zinc-600 font-bold tracking-widest uppercase">
-              <ShieldCheck size={12} className="text-green-500" />
-              End-to-End SSL Active
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {VIDEO_SOURCES.map((source, idx) => (
+        <div className="space-y-2 text-left">
+          <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Select Server Node (If video fails to load)</p>
+          <div className="flex flex-wrap gap-1.5">
+            {activeSources.map((source, idx) => (
               <button
                 key={source.id}
-                onClick={() => {
-                  setActiveSourceIdx(idx);
-                  setAutoFallbackEnabled(false);
-                }}
+                onClick={() => setActiveSourceIdx(idx)}
                 className={cn(
-                  "px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] transition-all border",
+                  "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border",
                   activeSourceIdx === idx 
-                    ? "bg-pink-600 border-pink-500 text-white shadow-xl shadow-pink-600/20" 
-                    : "bg-white/[0.02] border-white/5 text-zinc-500 hover:text-zinc-200 hover:border-white/10"
+                    ? "bg-pink-600 border-pink-500 text-white shadow-md shadow-pink-600/10" 
+                    : "bg-white/[0.02] border-white/5 text-zinc-400 hover:text-zinc-200 hover:border-white/10"
                 )}
               >
                 {source.name}

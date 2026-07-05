@@ -221,13 +221,13 @@ const Watch = () => {
         </div>
 
         {/* SECTION 3: VIDEO PLAYER SECTION */}
-        <div id="watch-section" className="bg-black py-16 lg:py-24 border-y border-white/5">
-          <div className="max-w-[1400px] mx-auto px-4 md:px-6 space-y-8">
+        <div id="watch-section" className="bg-black py-12 lg:py-20 border-y border-white/5">
+          <div className="max-w-[1400px] mx-auto px-4 md:px-6 space-y-6">
             <div className="flex items-center gap-4 px-2">
               <div className="w-1.5 h-6 bg-pink-600 rounded-full" />
               <h2 className="text-xl md:text-3xl font-black uppercase tracking-tighter">Virtual Theater</h2>
             </div>
-            <div className="rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_100px_rgba(236,72,153,0.1)] aspect-video">
+            <div className="w-full">
               <StreamPlayer movie={currentMovie} />
             </div>
           </div>
