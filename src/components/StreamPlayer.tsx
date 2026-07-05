@@ -123,8 +123,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                 setVylaSources(prev => {
                   if (prev.some(s => s.url === newSource.url)) return prev;
                   const nextSources = [...prev, newSource];
-                  // Auto-select the first loaded stream
-                  if (!selectedVylaSource) {
+                  // Safe check inside the state callback updater to avoid closure stale state
+                  if (nextSources.length === 1) {
                     setSelectedVylaSource(newSource);
                   }
                   return nextSources;
