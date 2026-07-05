@@ -2,18 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Sliders, ChevronDown, Sparkles, HelpCircle } from 'lucide-react';
+import { Server, RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Sliders, ChevronDown, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 
 interface StreamPlayerProps {
   movie: Movie;
-}
-
-interface Source {
-  name: string;
-  url: string;
 }
 
 interface VylaSource {
@@ -38,7 +33,6 @@ const DEMO_VYLA_SOURCES: VylaSource[] = [
 ];
 
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
-  const [activeIframeSourceIdx, setActiveIframeSourceIdx] = useState(0);
   const [key, setKey] = useState(0);
   const [isTv, setIsTv] = useState(false);
   const [season, setSeason] = useState<number>(1);
@@ -48,7 +42,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [vylaSources, setVylaSources] = useState<VylaSource[]>([]);
   const [selectedVylaSource, setSelectedVylaSource] = useState<VylaSource | null>(null);
   const [loadingVyla, setLoadingVyla] = useState(false);
-  const [useVylaDirect, setUseVylaDirect] = useState(false);
+  const [vylaError, setVylaError] = useState<string | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   // HTML5 Video Player States
@@ -65,27 +59,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const hlsInstanceRef = useRef<any>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Iframe Fallback List
-  const iframeSources: Source[] = [
-    { name: "RiveStream", url: `https://www.rivestream.app/embed?type=movie&id=${movie.id}` },
-    { name: "VidSrc To", url: `https://vidsrc.to/embed/movie/${movie.id}` },
-    { name: "EmbedSu", url: `https://embed.su/embed/movie/${movie.id}` },
-    { name: "CineSrc", url: `https://cinesrc.st/embed/movie/${movie.id}` },
-    { name: "Nxsha", url: `https://web.nxsha.app/embed/movie/${movie.id}` },
-    { name: "VidCore", url: `https://www.vidcore.org/embed/movie/${movie.id}` },
-    { name: "VidLux", url: `https://vidlux.xyz/embed/movie/${movie.id}` }
-  ];
-
-  const iframeTvSources: Source[] = [
-    { name: "RiveStream", url: `https://www.rivestream.app/embed?type=tv&id=${movie.id}&season=${season}&episode=${episode}` },
-    { name: "VidSrc To", url: `https://vidsrc.to/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "EmbedSu", url: `https://embed.su/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "CineSrc", url: `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "Nxsha", url: `https://web.nxsha.app/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "VidCore", url: `https://www.vidcore.org/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "VidLux", url: `https://vidlux.xyz/embed/tv/${movie.id}/${season}/${episode}` }
-  ];
-
   useEffect(() => {
     const genreStr = movie.genre?.toLowerCase() || '';
     if (genreStr.includes('tv') || genreStr.includes('series') || movie.id.startsWith('tv-')) {
@@ -95,60 +68,59 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   }, [movie]);
 
-  // Fetch Direct Streams from Vyla API
-  useEffect(() => {
-    const fetchVylaStreams = async () => {
-      setLoadingVyla(true);
-      setUseVylaDirect(false);
-      setVylaSources([]);
-      setSelectedVylaSource(null);
-      setIsDemoMode(false);
+  // Fetch Direct Streams from Vyla HuggingFace API
+  const fetchVylaStreams = async () => {
+    setLoadingVyla(true);
+    setVylaError(null);
+    setVylaSources([]);
+    setSelectedVylaSource(null);
+    setIsDemoMode(false);
 
-      const apiKey = import.meta.env.VITE_VYLA_API_KEY || "vyla_public_key_fallback";
-      const baseUrl = import.meta.env.VITE_VYLA_URL || "https://boysism-vyla.hf.space";
+    const apiKey = import.meta.env.VITE_VYLA_API_KEY || "vyla_public_key_fallback";
+    const baseUrl = import.meta.env.VITE_VYLA_URL || "https://boysism-vyla.hf.space";
 
-      const url = isTv
-        ? `${baseUrl}/tv?id=${movie.id}&s=${season}&e=${episode}`
-        : `${baseUrl}/movie?id=${movie.id}`;
+    const url = isTv
+      ? `${baseUrl}/tv?id=${movie.id}&s=${season}&e=${episode}`
+      : `${baseUrl}/movie?id=${movie.id}`;
 
-      try {
-        const response = await fetch(url, {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`
-          }
-        });
-
-        if (!response.ok) throw new Error("Vyla Stream not found");
-
-        const data = await response.json();
-        if (data && data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
-          setVylaSources(data.sources);
-          const defaultSource = data.sources.find((x: VylaSource) => x.quality === "1080p") || data.sources[0];
-          setSelectedVylaSource(defaultSource);
-          setUseVylaDirect(true);
-          toast.success("Playing high-quality direct stream via Vyla!");
-        } else {
-          throw new Error("No video streams in response");
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${apiKey}`
         }
-      } catch (err) {
-        console.warn("Vyla direct stream request failed. Falling back to embedded players:", err);
-        setUseVylaDirect(false);
-      } finally {
-        setLoadingVyla(false);
-      }
-    };
+      });
 
+      if (!response.ok) throw new Error("Vyla Stream direct source not found or sleeping");
+
+      const data = await response.json();
+      if (data && data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
+        setVylaSources(data.sources);
+        const defaultSource = data.sources.find((x: VylaSource) => x.quality === "1080p") || data.sources[0];
+        setSelectedVylaSource(defaultSource);
+        toast.success("Loaded high-quality direct stream via Vyla HuggingFace API!");
+      } else {
+        throw new Error("Vyla API returned empty sources for this ID");
+      }
+    } catch (err: any) {
+      console.warn("Vyla direct stream request failed:", err);
+      setVylaError(err.message || "Failed to establish secure handshake with Vyla HuggingFace cluster.");
+    } finally {
+      setLoadingVyla(false);
+    }
+  };
+
+  useEffect(() => {
     fetchVylaStreams();
-  }, [movie.id, isTv, season, episode]);
+  }, [movie.id, isTv, season, episode, key]);
 
   // Enable Demo Simulation Mode
   const handleActivateDemoMode = () => {
+    setVylaError(null);
     setVylaSources(DEMO_VYLA_SOURCES);
     setSelectedVylaSource(DEMO_VYLA_SOURCES[0]);
-    setUseVylaDirect(true);
     setIsDemoMode(true);
-    toast.success("Direct Player Demo Node activated! Previewing high-quality HLS streams.", {
-      description: "Direct player is fully interactive. Seek, mute, full-screen, and adjust quality settings instantly."
+    toast.success("Demo streaming server connected!", {
+      description: "You are now running on simulated direct stream test nodes."
     });
   };
 
@@ -175,7 +147,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
   // Initialize and attach HLS.js video streaming for the Direct Player
   useEffect(() => {
-    if (!useVylaDirect || !selectedVylaSource || !videoRef.current) return;
+    if (!selectedVylaSource || !videoRef.current) return;
 
     const video = videoRef.current;
     const streamUrl = selectedVylaSource.url;
@@ -217,8 +189,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   break;
                 default:
                   hls.destroy();
-                  setUseVylaDirect(false); // Fallback to iframe embed if fatal unrecoverable error
-                  toast.error("Direct Node playback failed. Switched to fallback embeds.");
+                  setVylaError("Direct streaming thread aborted. Try reloading or changing source nodes.");
+                  toast.error("HLS.js player thread failure");
                   break;
               }
             }
@@ -236,7 +208,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       })
       .catch((err) => {
         console.error("Dynamic Hls script load failed:", err);
-        setUseVylaDirect(false);
+        setVylaError("Dynamic player engine injection error. Try refreshing your browser.");
       });
 
     return () => {
@@ -246,7 +218,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         hlsInstanceRef.current = null;
       }
     };
-  }, [selectedVylaSource, useVylaDirect]);
+  }, [selectedVylaSource]);
 
   // Custom Controls Activity Indicator
   const handleMouseMove = () => {
@@ -327,7 +299,6 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
   const handleReload = () => {
     setKey(prev => prev + 1);
-    toast.success("Stream reloaded!");
   };
 
   const formatTime = (seconds: number) => {
@@ -341,19 +312,50 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const activeIframeSources = isTv ? iframeTvSources : iframeSources;
-  const currentIframeSource = activeIframeSources[activeIframeSourceIdx] || activeIframeSources[0];
-
   return (
     <div className="flex flex-col w-full bg-zinc-950 rounded-2xl md:rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-      {/* Primary Video / Iframe Wrapper */}
+      {/* Primary Video Player / Error Panel Container */}
       <div 
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isPlaying && setShowControls(false)}
-        className="relative w-full aspect-video bg-black group select-none overflow-hidden"
+        className="relative w-full aspect-video bg-black group select-none overflow-hidden flex items-center justify-center"
       >
-        {useVylaDirect && selectedVylaSource ? (
+        {loadingVyla ? (
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="animate-spin text-pink-500 w-10 h-10" />
+            <p className="text-xs font-black uppercase tracking-widest text-zinc-400">Booting Vyla Cloud Node...</p>
+          </div>
+        ) : vylaError ? (
+          /* Elegant Direct Vyla Offline Panel (NO IFRAMES fallback) */
+          <div className="p-6 md:p-12 text-center max-w-md space-y-5 animate-in fade-in duration-300">
+            <div className="inline-flex items-center justify-center p-3 bg-pink-500/10 rounded-full border border-pink-500/20 text-pink-400">
+              <AlertCircle size={32} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-base font-black uppercase tracking-wider">HuggingFace API Node Offline</h4>
+              <p className="text-xs text-zinc-400 leading-relaxed font-semibold">
+                {vylaError}. This usually occurs when the HuggingFace space is currently sleeping or booting.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3">
+              <button 
+                onClick={handleReload}
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-pink-600/20"
+              >
+                <RefreshCw size={14} />
+                <span>Retry Handshake</span>
+              </button>
+              <button 
+                onClick={handleActivateDemoMode}
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 font-bold text-xs uppercase tracking-widest transition-all border border-white/10"
+              >
+                <Sparkles size={14} className="text-cyan-400 animate-pulse" />
+                <span>Simulate Player</span>
+              </button>
+            </div>
+          </div>
+        ) : selectedVylaSource ? (
           /* High-Fidelity Custom HTML5 Video Player playing m3u8 HLS Streams directly */
           <div className="relative w-full h-full animate-in fade-in duration-500">
             <video
@@ -377,10 +379,10 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     "text-[10px] tracking-[0.2em] font-black uppercase bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20",
                     isDemoMode ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" : "text-pink-500"
                   )}>
-                    {isDemoMode ? "Demo Direct Node" : "Vyla Direct Node"}
+                    {isDemoMode ? "Direct Demo Simulator" : "Vyla HuggingFace API Direct Node"}
                   </span>
                   <h3 className="text-sm md:text-base font-black truncate max-w-sm mt-1">
-                    {isDemoMode ? `Demo Player Stream (Testing: ${selectedVylaSource.quality})` : movie.title}
+                    {isDemoMode ? `Demo HLS Stream (Testing: ${selectedVylaSource.quality})` : movie.title}
                   </h3>
                 </div>
 
@@ -485,20 +487,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             </div>
           </div>
         ) : (
-          /* Iframe fallback when Direct Vyla stream fails or is loading */
-          <iframe
-            key={`${activeIframeSourceIdx}-${movie.id}-${season}-${episode}-${key}`}
-            src={currentIframeSource.url}
-            className="w-full h-full border-none z-10"
-            allowFullScreen
-            scrolling="no"
-            referrerPolicy="origin"
-            allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
-          />
+          <div className="text-zinc-500 text-xs">Waiting for stream server handshake...</div>
         )}
 
-        {/* TV Episode Selector Overlay for Iframe Fallbacks */}
-        {!useVylaDirect && isTv && (
+        {/* TV Episode Selector Overlay */}
+        {isTv && !vylaError && !loadingVyla && (
           <div className="absolute top-3 left-3 flex gap-1.5 bg-black/80 backdrop-blur-md p-1.5 rounded-xl border border-white/10 z-20">
             <div className="flex items-center gap-1">
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">S</span>
@@ -531,37 +524,16 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
       {/* Controller / Server Selection Bar */}
       <div className="p-4 md:p-6 bg-zinc-900/90 border-t border-white/5 flex flex-col gap-4 text-left">
-        
-        {/* Dynamic Vyla Cloud API setup helper banner if API is unreachable / inactive */}
-        {!useVylaDirect && !loadingVyla && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl gap-3 animate-in slide-in-from-top-2 duration-300">
-            <div className="space-y-0.5">
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 flex items-center gap-1">
-                <Sparkles size={11} /> Cloud Direct Nodes Offline
-              </span>
-              <p className="text-[11px] font-bold text-zinc-300 leading-normal max-w-xl">
-                The external Vyla API did not return native m3u8 sources for this specific IMDb node (your space may be sleeping or requires authorization). Tap below to simulate and test our Direct custom-skin player interface!
-              </p>
-            </div>
-            <button
-              onClick={handleActivateDemoMode}
-              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black uppercase tracking-widest transition-all self-start sm:self-auto shrink-0 shadow-lg shadow-purple-600/10"
-            >
-              Simulate Direct Player
-            </button>
-          </div>
-        )}
-
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-0.5 text-left">
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Streaming Engine</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">HuggingFace Node</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Server size={12} className="text-pink-500" />
               <p className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
-                Mode: <span className="text-pink-500">{useVylaDirect ? (isDemoMode ? "Direct Demo Simulator" : "Vyla Direct Player") : `Embed (${currentIframeSource.name})`}</span>
+                Active Source: <span className="text-pink-500">{isDemoMode ? "Simulated HLS Server" : "Vyla HF Direct Player"}</span>
               </p>
             </div>
           </div>
@@ -575,23 +547,24 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <RefreshCw size={14} className="group-active:rotate-180 transition-transform duration-500" />
             </button>
             <button 
-              onClick={() => window.open(useVylaDirect && selectedVylaSource ? selectedVylaSource.url : currentIframeSource.url, '_blank')} 
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all"
+              onClick={() => window.open(selectedVylaSource ? selectedVylaSource.url : '', '_blank')} 
+              disabled={!selectedVylaSource}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
             >
               <ExternalLink size={12} />
-              <span>External Link</span>
+              <span>External Stream Link</span>
             </button>
           </div>
         </div>
 
-        {/* Server Nodes Selection Grid */}
-        <div className="space-y-2 text-left">
-          <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">
-            {useVylaDirect ? "Server Quality Options" : "Select Alternative Server Node (If video fails to load)"}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {useVylaDirect ? (
-              vylaSources.map((source, idx) => (
+        {/* Server Quality Options */}
+        {selectedVylaSource && (
+          <div className="space-y-2 text-left animate-in fade-in duration-300">
+            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">
+              Server Quality Options
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {vylaSources.map((source, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedVylaSource(source)}
@@ -604,39 +577,10 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                 >
                   Direct stream • {source.quality}
                 </button>
-              ))
-            ) : (
-              activeIframeSources.map((source, idx) => (
-                <button
-                  key={`${source.name}-${idx}`}
-                  onClick={() => setActiveIframeSourceIdx(idx)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border shadow-sm",
-                    activeIframeSourceIdx === idx 
-                      ? "bg-pink-600 border-pink-500 text-white shadow-pink-600/20" 
-                      : "bg-white/[0.02] border-white/5 text-zinc-400 hover:text-zinc-200 hover:border-white/20"
-                  )}
-                >
-                  Server Node {idx + 1}: {source.name}
-                </button>
-              ))
-            )}
-
-            {/* Quick manual switch to standard iframe embed fallback options if direct stream fails */}
-            {useVylaDirect && (
-              <button
-                onClick={() => {
-                  setUseVylaDirect(false);
-                  setIsDemoMode(false);
-                  toast.info("Switched back to fallback embedded players.");
-                }}
-                className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-white/5 bg-white/[0.02] text-zinc-500 hover:text-white"
-              >
-                Switch to Embed Nodes
-              </button>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
