@@ -68,7 +68,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     }
   }, [movie]);
 
-  // Fetch Direct Streams from Vyla HuggingFace API
+  // Fetch Direct Streams from our Secure Supabase Edge Function Proxy instead of calling Vyla directly from browser
   const fetchVylaStreams = async () => {
     setLoadingVyla(true);
     setVylaError(null);
@@ -76,34 +76,29 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setSelectedVylaSource(null);
     setIsDemoMode(false);
 
-    const apiKey = import.meta.env.VITE_VYLA_API_KEY || "vyla_public_key_fallback";
-    const baseUrl = import.meta.env.VITE_VYLA_URL || "https://boysism-vyla.hf.space";
-
-    const url = isTv
-      ? `${baseUrl}/tv?id=${movie.id}&s=${season}&e=${episode}`
-      : `${baseUrl}/movie?id=${movie.id}`;
+    // Call our server-side secure Supabase Edge Function proxy
+    const supabaseProjectUrl = "https://aidjrytwdvhwgfjgkxyb.supabase.co";
+    const proxyUrl = `${supabaseProjectUrl}/functions/v1/vyla-proxy?id=${movie.id}&type=${isTv ? 'tv' : 'movie'}&s=${season}&e=${episode}`;
 
     try {
-      const response = await fetch(url, {
-        headers: {
-          "Authorization": `Bearer ${apiKey}`
-        }
-      });
+      const response = await fetch(proxyUrl);
 
-      if (!response.ok) throw new Error("Vyla Stream direct source not found or sleeping");
+      if (!response.ok) {
+        throw new Error("Proxy server handshake failed. Node is sleeping or offline.");
+      }
 
       const data = await response.json();
       if (data && data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
         setVylaSources(data.sources);
         const defaultSource = data.sources.find((x: VylaSource) => x.quality === "1080p") || data.sources[0];
         setSelectedVylaSource(defaultSource);
-        toast.success("Loaded high-quality direct stream via Vyla HuggingFace API!");
+        toast.success("Streams loaded securely via Supabase Edge Proxy!");
       } else {
-        throw new Error("Vyla API returned empty sources for this ID");
+        throw new Error("No direct streaming sources returned from API proxy.");
       }
     } catch (err: any) {
-      console.warn("Vyla direct stream request failed:", err);
-      setVylaError(err.message || "Failed to establish secure handshake with Vyla HuggingFace cluster.");
+      console.warn("Proxy streaming request failed:", err);
+      setVylaError(err.message || "Failed to establish secure handshake with Supabase edge server.");
     } finally {
       setLoadingVyla(false);
     }
@@ -324,18 +319,18 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         {loadingVyla ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="animate-spin text-pink-500 w-10 h-10" />
-            <p className="text-xs font-black uppercase tracking-widest text-zinc-400">Booting Vyla Cloud Node...</p>
+            <p className="text-xs font-black uppercase tracking-widest text-zinc-400">Booting secure Edge Node...</p>
           </div>
         ) : vylaError ? (
-          /* Elegant Direct Vyla Offline Panel (NO IFRAMES fallback) */
+          /* Secure Edge Error Node (With Demo Mode Simulation option) */
           <div className="p-6 md:p-12 text-center max-w-md space-y-5 animate-in fade-in duration-300">
             <div className="inline-flex items-center justify-center p-3 bg-pink-500/10 rounded-full border border-pink-500/20 text-pink-400">
               <AlertCircle size={32} />
             </div>
             <div className="space-y-1">
-              <h4 className="text-base font-black uppercase tracking-wider">HuggingFace API Node Offline</h4>
+              <h4 className="text-base font-black uppercase tracking-wider">Edge Proxy Handshake Error</h4>
               <p className="text-xs text-zinc-400 leading-relaxed font-semibold">
-                {vylaError}. This usually occurs when the HuggingFace space is currently sleeping or booting.
+                {vylaError}. This usually occurs when your backend space is booting or requires environment authorization.
               </p>
             </div>
             <div className="flex justify-center gap-3">
@@ -379,7 +374,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     "text-[10px] tracking-[0.2em] font-black uppercase bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20",
                     isDemoMode ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" : "text-pink-500"
                   )}>
-                    {isDemoMode ? "Direct Demo Simulator" : "Vyla HuggingFace API Direct Node"}
+                    {isDemoMode ? "Direct Demo Simulator" : "Secure Backend Edge Proxy"}
                   </span>
                   <h3 className="text-sm md:text-base font-black truncate max-w-sm mt-1">
                     {isDemoMode ? `Demo HLS Stream (Testing: ${selectedVylaSource.quality})` : movie.title}
