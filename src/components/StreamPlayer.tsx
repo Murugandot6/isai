@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, RotateCcw, ListVideo, Sliders, ChevronDown } from 'lucide-react';
+import { Server, RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Sliders, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
-import Hls from 'hls.js';
 import { toast } from 'sonner';
 
 interface StreamPlayerProps {
@@ -46,7 +45,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const hlsRef = useRef<Hls | null>(null);
+  const hlsInstanceRef = useRef<any>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Iframe Fallback List
@@ -125,62 +124,98 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     fetchVylaStreams();
   }, [movie.id, isTv, season, episode]);
 
+  // Load HLS.js dynamically from CDN to bypass compilation dependencies
+  const loadHlsScript = (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      if ((window as any).Hls) {
+        resolve((window as any).Hls);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js';
+      script.onload = () => {
+        if ((window as any).Hls) {
+          resolve((window as any).Hls);
+        } else {
+          reject(new Error('Hls not found after script load'));
+        }
+      };
+      script.onerror = () => reject(new Error('Failed to load Hls script'));
+      document.head.appendChild(script);
+    });
+  };
+
   // Initialize and attach HLS.js video streaming for the Direct Player
   useEffect(() => {
     if (!useVylaDirect || !selectedVylaSource || !videoRef.current) return;
 
     const video = videoRef.current;
     const streamUrl = selectedVylaSource.url;
+    let isActive = true;
 
-    if (Hls.isSupported()) {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-      }
+    loadHlsScript()
+      .then((HlsClass) => {
+        if (!isActive) return;
 
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true
-      });
-      hlsRef.current = hls;
-
-      hls.loadSource(streamUrl);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
-        setIsPlaying(true);
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              hls.recoverMediaError();
-              break;
-            default:
-              hls.destroy();
-              setUseVylaDirect(false); // Fallback to iframe embed if fatal unrecoverable error
-              toast.error("Vyla Direct Node failed. Switched to fallback servers.");
-              break;
+        if (HlsClass.isSupported()) {
+          if (hlsInstanceRef.current) {
+            hlsInstanceRef.current.destroy();
           }
+
+          const hls = new HlsClass({
+            enableWorker: true,
+            lowLatencyMode: true
+          });
+          hlsInstanceRef.current = hls;
+
+          hls.loadSource(streamUrl);
+          hls.attachMedia(video);
+
+          hls.on(HlsClass.Events.MANIFEST_PARSED, () => {
+            if (isActive) {
+              video.play().catch(() => {});
+              setIsPlaying(true);
+            }
+          });
+
+          hls.on(HlsClass.Events.ERROR, (event: any, data: any) => {
+            if (data.fatal) {
+              switch (data.type) {
+                case HlsClass.ErrorTypes.NETWORK_ERROR:
+                  hls.startLoad();
+                  break;
+                case HlsClass.ErrorTypes.MEDIA_ERROR:
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  hls.destroy();
+                  setUseVylaDirect(false); // Fallback to iframe embed if fatal unrecoverable error
+                  toast.error("Vyla Direct Node failed. Switched to fallback servers.");
+                  break;
+              }
+            }
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // Native Apple device support (Safari / iOS)
+          video.src = streamUrl;
+          video.addEventListener('loadedmetadata', () => {
+            if (isActive) {
+              video.play().catch(() => {});
+              setIsPlaying(true);
+            }
+          });
         }
+      })
+      .catch((err) => {
+        console.error("Dynamic Hls script load failed:", err);
+        setUseVylaDirect(false);
       });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native Apple device support (Safari / iOS)
-      video.src = streamUrl;
-      video.addEventListener('loadedmetadata', () => {
-        video.play().catch(() => {});
-        setIsPlaying(true);
-      });
-    }
 
     return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
+      isActive = false;
+      if (hlsInstanceRef.current) {
+        hlsInstanceRef.current.destroy();
+        hlsInstanceRef.current = null;
       }
     };
   }, [selectedVylaSource, useVylaDirect]);
@@ -260,6 +295,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     } else {
       containerRef.current.requestFullscreen().catch(() => {});
     }
+  };
+
+  const handleReload = () => {
+    setKey(prev => prev + 1);
+    toast.success("Stream reloaded!");
   };
 
   const formatTime = (seconds: number) => {
