@@ -21,27 +21,29 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [season, setSeason] = useState<number>(1);
   const [episode, setEpisode] = useState<number>(1);
 
-  // Multi-source streaming nodes with Vyla Space integrated
+  // Multi-source streaming nodes. Keyless, highly reliable public players are placed first to prevent API key errors.
   const sources: Source[] = [
-    { name: "Vyla Space", url: `https://boysism-vyla.hf.space/embed/movie/${movie.id}` },
     { name: "RiveStream", url: `https://www.rivestream.app/embed?type=movie&id=${movie.id}` },
-    { name: "Vyla", url: `http://player.vyla.cc/?id=${movie.id}` },
+    { name: "VidSrc To", url: `https://vidsrc.to/embed/movie/${movie.id}` },
+    { name: "EmbedSu", url: `https://embed.su/embed/movie/${movie.id}` },
+    { name: "CineSrc", url: `https://cinesrc.st/embed/movie/${movie.id}` },
     { name: "Nxsha", url: `https://web.nxsha.app/embed/movie/${movie.id}` },
     { name: "VidCore", url: `https://www.vidcore.org/embed/movie/${movie.id}` },
-    { name: "CineSrc", url: `https://cinesrc.st/embed/movie/${movie.id}` },
     { name: "VidLux", url: `https://vidlux.xyz/embed/movie/${movie.id}` },
-    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/player/movie/${movie.id}` }
+    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/player/movie/${movie.id}` },
+    { name: "Vyla Space", url: `https://boysism-vyla.hf.space/embed/movie/${movie.id}` }
   ];
 
   const tvSources: Source[] = [
-    { name: "Vyla Space", url: `https://boysism-vyla.hf.space/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "RiveStream", url: `https://www.rivestream.app/embed?type=tv&id=${movie.id}&season=${season}&episode=${episode}` },
-    { name: "Vyla", url: `http://player.vyla.cc/?id=${movie.id}&season=${season}&episode=${episode}` },
+    { name: "VidSrc To", url: `https://vidsrc.to/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "EmbedSu", url: `https://embed.su/embed/tv/${movie.id}/${season}/${episode}` },
+    { name: "CineSrc", url: `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "Nxsha", url: `https://web.nxsha.app/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "VidCore", url: `https://www.vidcore.org/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "CineSrc", url: `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "VidLux", url: `https://vidlux.xyz/embed/tv/${movie.id}/${season}/${episode}` },
-    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/player/tv/${movie.id}/${season}/${episode}` }
+    { name: "ZXCSTREAM", url: `https://zxcstream.xyz/player/tv/${movie.id}/${season}/${episode}` },
+    { name: "Vyla Space", url: `https://boysism-vyla.hf.space/embed/tv/${movie.id}/${season}/${episode}` }
   ];
 
   useEffect(() => {
