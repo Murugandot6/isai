@@ -36,8 +36,8 @@ serve(async (req: Request) => {
       });
     }
 
-    // Securely retrieve the Vyla API key from Supabase Edge Secrets
-    const apiKey = Deno.env.get("VYLA_API_KEY") || "vyla_public_key_fallback";
+    // Securely retrieve the Vyla API key from Supabase Edge Secrets with the verified key as default
+    const apiKey = Deno.env.get("VYLA_API_KEY") || "Y8vR2mPq7XnL4sKb9HdE5ZwT1cFa6JuQxNs8Mg3Lp";
     const vylaBaseUrl = "https://boysism-vyla.hf.space";
 
     let targetVylaUrl = "";

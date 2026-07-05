@@ -110,7 +110,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     } catch (proxyErr: any) {
       console.log("[StreamPlayer] Proxy routing inactive or failed. Initiating direct client-side Vyla handshake...");
       
-      const apiKey = "vyla_public_key_fallback";
+      const apiKey = "Y8vR2mPq7XnL4sKb9HdE5ZwT1cFa6JuQxNs8Mg3Lp";
       const vylaBaseUrl = "https://boysism-vyla.hf.space";
       const directUrl = isTv
         ? `${vylaBaseUrl}/tv?id=${movie.id}&s=${season}&e=${episode}`
