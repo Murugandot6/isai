@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Movie } from '@/context/MusicContext';
-import { Server, RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Sliders, ChevronDown } from 'lucide-react';
+import { Server, RefreshCw, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Sliders, ChevronDown, Sparkles, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
@@ -21,6 +21,22 @@ interface VylaSource {
   quality: string;
 }
 
+// Beautiful multi-quality public HLS stream for simulation testing
+const DEMO_VYLA_SOURCES: VylaSource[] = [
+  {
+    quality: "1080p (Demo)",
+    url: "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8"
+  },
+  {
+    quality: "720p (Demo)",
+    url: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"
+  },
+  {
+    quality: "480p (Demo)",
+    url: "https://playertest.longtailvideo.com/adaptive/bipbop/bipbop.m3u8"
+  }
+];
+
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [activeIframeSourceIdx, setActiveIframeSourceIdx] = useState(0);
   const [key, setKey] = useState(0);
@@ -33,6 +49,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [selectedVylaSource, setSelectedVylaSource] = useState<VylaSource | null>(null);
   const [loadingVyla, setLoadingVyla] = useState(false);
   const [useVylaDirect, setUseVylaDirect] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // HTML5 Video Player States
   const [isPlaying, setIsPlaying] = useState(false);
@@ -85,6 +102,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       setUseVylaDirect(false);
       setVylaSources([]);
       setSelectedVylaSource(null);
+      setIsDemoMode(false);
 
       const apiKey = import.meta.env.VITE_VYLA_API_KEY || "vyla_public_key_fallback";
       const baseUrl = import.meta.env.VITE_VYLA_URL || "https://boysism-vyla.hf.space";
@@ -122,6 +140,17 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
     fetchVylaStreams();
   }, [movie.id, isTv, season, episode]);
+
+  // Enable Demo Simulation Mode
+  const handleActivateDemoMode = () => {
+    setVylaSources(DEMO_VYLA_SOURCES);
+    setSelectedVylaSource(DEMO_VYLA_SOURCES[0]);
+    setUseVylaDirect(true);
+    setIsDemoMode(true);
+    toast.success("Direct Player Demo Node activated! Previewing high-quality HLS streams.", {
+      description: "Direct player is fully interactive. Seek, mute, full-screen, and adjust quality settings instantly."
+    });
+  };
 
   // Load HLS.js dynamically from CDN to bypass compilation dependencies
   const loadHlsScript = (): Promise<any> => {
@@ -189,7 +218,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                 default:
                   hls.destroy();
                   setUseVylaDirect(false); // Fallback to iframe embed if fatal unrecoverable error
-                  toast.error("Vyla Direct Node failed. Switched to fallback servers.");
+                  toast.error("Direct Node playback failed. Switched to fallback embeds.");
                   break;
               }
             }
@@ -326,7 +355,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       >
         {useVylaDirect && selectedVylaSource ? (
           /* High-Fidelity Custom HTML5 Video Player playing m3u8 HLS Streams directly */
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full animate-in fade-in duration-500">
             <video
               ref={videoRef}
               onClick={handlePlayPause}
@@ -344,10 +373,15 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               {/* Top Bar Header */}
               <div className="flex items-center justify-between">
                 <div className="text-left space-y-1">
-                  <span className="text-[10px] tracking-[0.2em] font-black uppercase text-pink-500 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">
-                    Vyla Direct Node
+                  <span className={cn(
+                    "text-[10px] tracking-[0.2em] font-black uppercase bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20",
+                    isDemoMode ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" : "text-pink-500"
+                  )}>
+                    {isDemoMode ? "Demo Direct Node" : "Vyla Direct Node"}
                   </span>
-                  <h3 className="text-sm md:text-base font-black truncate max-w-sm mt-1">{movie.title}</h3>
+                  <h3 className="text-sm md:text-base font-black truncate max-w-sm mt-1">
+                    {isDemoMode ? `Demo Player Stream (Testing: ${selectedVylaSource.quality})` : movie.title}
+                  </h3>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -496,7 +530,28 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       </div>
 
       {/* Controller / Server Selection Bar */}
-      <div className="p-4 md:p-6 bg-zinc-900/90 border-t border-white/5 flex flex-col gap-4">
+      <div className="p-4 md:p-6 bg-zinc-900/90 border-t border-white/5 flex flex-col gap-4 text-left">
+        
+        {/* Dynamic Vyla Cloud API setup helper banner if API is unreachable / inactive */}
+        {!useVylaDirect && !loadingVyla && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl gap-3 animate-in slide-in-from-top-2 duration-300">
+            <div className="space-y-0.5">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-400 flex items-center gap-1">
+                <Sparkles size={11} /> Cloud Direct Nodes Offline
+              </span>
+              <p className="text-[11px] font-bold text-zinc-300 leading-normal max-w-xl">
+                The external Vyla API did not return native m3u8 sources for this specific IMDb node (your space may be sleeping or requires authorization). Tap below to simulate and test our Direct custom-skin player interface!
+              </p>
+            </div>
+            <button
+              onClick={handleActivateDemoMode}
+              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black uppercase tracking-widest transition-all self-start sm:self-auto shrink-0 shadow-lg shadow-purple-600/10"
+            >
+              Simulate Direct Player
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-0.5 text-left">
             <div className="flex items-center gap-1.5">
@@ -506,7 +561,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
             <div className="flex items-center gap-1.5">
               <Server size={12} className="text-pink-500" />
               <p className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
-                Mode: <span className="text-pink-500">{useVylaDirect ? "Vyla Direct Player" : `Embed (${currentIframeSource.name})`}</span>
+                Mode: <span className="text-pink-500">{useVylaDirect ? (isDemoMode ? "Direct Demo Simulator" : "Vyla Direct Player") : `Embed (${currentIframeSource.name})`}</span>
               </p>
             </div>
           </div>
@@ -572,7 +627,8 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <button
                 onClick={() => {
                   setUseVylaDirect(false);
-                  toast.info("Switched to fallback embedded players.");
+                  setIsDemoMode(false);
+                  toast.info("Switched back to fallback embedded players.");
                 }}
                 className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-white/5 bg-white/[0.02] text-zinc-500 hover:text-white"
               >
