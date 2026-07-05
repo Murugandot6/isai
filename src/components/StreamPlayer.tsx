@@ -10,22 +10,28 @@ interface StreamPlayerProps {
   movie: Movie;
 }
 
+// Define the structure for sources more accurately if possible, or use index for key
+interface Source {
+  name: string;
+  url: string;
+}
+
 export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
   const [activeSourceIdx, setActiveSourceIdx] = useState(0);
   const [key, setKey] = useState(0);
   const [isTv, setIsTv] = useState(false);
-  const [season, setSeason] = useState(1);
-  const [episode, setEpisode] = useState(1);
+  const [season, setSeason] = useState<number>(1); // Explicitly type state as number
+  const [episode, setEpisode] = useState<number>(1); // Explicitly type state as number
 
   // Multi-source streaming nodes for reliability
-  const sources = [
+  const sources: Source[] = [
     { name: "SuperEmbed", url: `https://multiembed.to/get.php?video_id=${movie.id}&tmdb=1` },
     { name: "Vidsrc.to", url: `https://vidsrc.to/embed/movie/${movie.id}` },
     { name: "Vidsrc.me", url: `https://vidsrc.xyz/embed/movie/${movie.id}` },
     { name: "Embed.su", url: `https://embed.su/embed/movie/${movie.id}` }
   ];
 
-  const tvSources = [
+  const tvSources: Source[] = [
     { name: "SuperEmbed", url: `https://multiembed.to/get.php?video_id=${movie.id}&tmdb=1&s=${season}&e=${episode}` },
     { name: "Vidsrc.to", url: `https://vidsrc.to/embed/tv/${movie.id}/${season}/${episode}` },
     { name: "Vidsrc.me", url: `https://vidsrc.xyz/embed/tv/${movie.id}/${season}/${episode}` },
@@ -46,6 +52,16 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
   const handleReload = () => {
     setKey(prev => prev + 1);
+  };
+
+  // Handler to convert string value to number for season
+  const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSeason(parseInt(e.target.value, 10));
+  };
+
+  // Handler to convert string value to number for episode
+  const handleEpisodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEpisode(parseInt(e.target.value, 10));
   };
 
   return (
@@ -69,7 +85,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">S</span>
               <select 
                 value={season} 
-                onChange={(e) => setSeason(e.target.value)}
+                onChange={handleSeasonChange} // Use the handler function
                 className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none"
               >
                 {Array.from({ length: 10 }).map((_, i) => (
@@ -82,7 +98,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">E</span>
               <select 
                 value={episode} 
-                onChange={(e) => setEpisode(e.target.value)}
+                onChange={handleEpisodeChange} // Use the handler function
                 className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 focus:outline-none"
               >
                 {Array.from({ length: 30 }).map((_, i) => (
@@ -133,7 +149,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
           <div className="flex flex-wrap gap-1.5">
             {activeSources.map((source, idx) => (
               <button
-                key={source.id}
+                key={idx} // Use idx as the key since source objects don't have unique IDs
                 onClick={() => setActiveSourceIdx(idx)}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border",
