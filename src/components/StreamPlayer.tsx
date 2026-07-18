@@ -37,12 +37,6 @@ const DEMO_SOURCES: StreamSource[] = [
     url: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
     type: "hls",
     quality: "720p (Demo)"
-  },
-  {
-    name: "Vyla (480p Demo)",
-    url: "https://playertest.longtailvideo.com/adaptive/bipbop/bipbop.m3u8",
-    type: "hls",
-    quality: "480p (Demo)"
   }
 ];
 
@@ -91,55 +85,105 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setSelectedSource(null);
     setIsDemoMode(false);
 
-    const proxyUrl = `https://aidjrytwdvhwgfjgkxyb.supabase.co/functions/v1/vyla-proxy?id=${movie.id}&type=${isTv ? 'tv' : 'movie'}${isTv ? `&s=${season}&e=${episode}` : ''}`;
+    // Endpoint construction for both types
+    const type = isTv ? 'tv' : 'movie';
+    const proxyUrl = `https://aidjrytwdvhwgfjgkxyb.supabase.co/functions/v1/vyla-proxy?id=${movie.id}&type=${type}${isTv ? `&s=${season}&e=${episode}` : ''}`;
 
     try {
+      // 1. Add Embed Endpoints (CineSrc & VidCore) immediately as reliable fallbacks
+      const embedSources: StreamSource[] = [
+        {
+          name: "VidCore",
+          url: isTv 
+            ? `https://vidcore.net/embed/tv/${movie.id}/${season}/${episode}`
+            : `https://vidcore.net/embed/movie/${movie.id}`,
+          type: "embed",
+          quality: "VidCore Server"
+        },
+        {
+          name: "CineSrc",
+          url: isTv
+            ? `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}`
+            : `https://cinesrc.st/embed/movie/${movie.id}`,
+          type: "embed",
+          quality: "CineSrc Server"
+        }
+      ];
+
+      // 2. Try fetching premium HLS/MP4 streams from Vyla Node
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`Proxy server error: ${response.statusText}`);
+      if (response.ok) {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+        if (reader) {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
-      if (!reader) throw new Error("Unable to read streaming body.");
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          const cleaned = line.trim();
-          if (cleaned.startsWith("data:")) {
-            const jsonStr = cleaned.slice(5).trim();
-            try {
-              const parsed = JSON.parse(jsonStr);
-              if (parsed.type === 'meta' && parsed.subtitles) {
-                setSubtitles(parsed.subtitles);
-                const defaultSub = parsed.subtitles.find((s: VylaSubtitle) => s.label.toLowerCase() === 'english');
-                if (defaultSub) setSelectedSubtitle(defaultSub.label);
-              } else if (parsed.type === 'source' && isDirectMediaUrl(parsed.source.url)) {
-                const newSource: StreamSource = {
-                  name: parsed.source.label || parsed.source.source,
-                  url: parsed.source.url,
-                  type: parsed.source.url.endsWith('.m3u8') ? 'hls' : 'mp4',
-                  quality: parsed.source.label
-                };
-                setAvailableSources(prev => {
-                  if (prev.some(s => s.url === newSource.url)) return prev;
-                  const nextSources = [...prev, newSource];
-                  if (!selectedSource) setSelectedSource(newSource);
-                  return nextSources;
-                });
+            for (const line of lines) {
+              const cleaned = line.trim();
+              if (cleaned.startsWith("data:")) {
+                const jsonStr = cleaned.slice(5).trim();
+                try {
+                  const parsed = JSON.parse(jsonStr);
+                  if (parsed.type === 'source' && isDirectMediaUrl(parsed.source.url)) {
+                    const newSource: StreamSource = {
+                      name: `Vyla (${parsed.source.label || parsed.source.source})`,
+                      url: parsed.source.url,
+                      type: parsed.source.url.endsWith('.m3u8') ? 'hls' : 'mp4',
+                      quality: parsed.source.label
+                    };
+                    setAvailableSources(prev => {
+                      if (prev.some(s => s.url === newSource.url)) return prev;
+                      const updated = [...prev, newSource];
+                      if (!selectedSource) setSelectedSource(newSource);
+                      return updated;
+                    });
+                  }
+                } catch (e) {}
               }
-            } catch (e) {}
+            }
           }
         }
       }
+
+      // Add the static embed sources to the list
+      setAvailableSources(prev => {
+        const combined = [...prev, ...embedSources];
+        if (!selectedSource && combined.length > 0) {
+          setSelectedSource(combined[0]);
+        }
+        return combined;
+      });
+
     } catch (error: any) {
-      setSourceError(error.message);
+      console.warn("Vyla fetch failed, using fallback servers:", error.message);
+      // If primary fetch fails, just use the embeds
+      const fallbackEmbeds: StreamSource[] = [
+        {
+          name: "VidCore",
+          url: isTv 
+            ? `https://vidcore.net/embed/tv/${movie.id}/${season}/${episode}`
+            : `https://vidcore.net/embed/movie/${movie.id}`,
+          type: "embed",
+          quality: "VidCore"
+        },
+        {
+          name: "CineSrc",
+          url: isTv
+            ? `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}`
+            : `https://cinesrc.st/embed/movie/${movie.id}`,
+          type: "embed",
+          quality: "CineSrc"
+        }
+      ];
+      setAvailableSources(fallbackEmbeds);
+      if (!selectedSource) setSelectedSource(fallbackEmbeds[0]);
     } finally {
       setLoadingSource(false);
     }
@@ -154,11 +198,11 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setIsDemoMode(true);
     setAvailableSources(DEMO_SOURCES);
     setSelectedSource(DEMO_SOURCES[0]);
-    toast.success("Simulated direct demo stream connected!");
+    toast.success("Demo stream connected!");
   };
 
   useEffect(() => {
-    if (!selectedSource || !videoRef.current) return;
+    if (!selectedSource || selectedSource.type === 'embed' || !videoRef.current) return;
 
     const video = videoRef.current;
     const streamUrl = selectedSource.url;
@@ -221,17 +265,15 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         {loadingSource ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="animate-spin text-pink-500 w-10 h-10" />
-            <p className="text-xs font-black uppercase tracking-widest text-zinc-400">Booting secure Edge Node...</p>
+            <p className="text-xs font-black uppercase tracking-widest text-zinc-400">Syncing with Node...</p>
           </div>
-        ) : sourceError && availableSources.length === 0 ? (
-          <div className="p-6 md:p-12 text-center max-w-md space-y-5">
-            <AlertCircle className="text-pink-400 mx-auto" size={32} />
-            <h4 className="text-white font-black uppercase">Stream Server Unavailable</h4>
-            <div className="flex flex-wrap justify-center gap-3">
-              <button onClick={() => setKey(k => k + 1)} className="px-4 py-2 rounded-xl bg-pink-600 text-white font-bold text-xs uppercase"><RefreshCw size={14} className="inline mr-1" /> Retry</button>
-              <button onClick={handleActivateDemoMode} className="px-4 py-2 rounded-xl bg-white/5 text-zinc-300 font-bold text-xs uppercase border border-white/10">Play Demo</button>
-            </div>
-          </div>
+        ) : selectedSource?.type === 'embed' ? (
+          <iframe 
+            src={selectedSource.url}
+            className="w-full h-full border-none"
+            allowFullScreen
+            allow="autoplay; encrypted-media; picture-in-picture"
+          />
         ) : selectedSource ? (
           <div className="relative w-full h-full">
             <video
@@ -253,7 +295,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     "text-[10px] tracking-[0.2em] font-black uppercase px-3 py-1 rounded-full border border-pink-500/20",
                     isDemoMode ? "text-cyan-400 bg-cyan-500/10" : "text-pink-500 bg-pink-500/10"
                   )}>
-                    {isDemoMode ? "Direct Demo Simulator" : `${selectedSource.name} Stream`}
+                    {isDemoMode ? "Direct Demo Simulator" : `${selectedSource.name}`}
                   </span>
                   <h3 className="text-sm md:text-base font-black truncate max-w-sm mt-1">{movie.title}</h3>
                 </div>
@@ -288,19 +330,25 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
               </div>
             </div>
           </div>
-        ) : <div className="text-zinc-500 text-xs">Waiting for stream server handshake...</div>}
+        ) : (
+          <div className="text-center p-8 space-y-4">
+             <AlertCircle className="mx-auto text-zinc-600" />
+             <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">No Sources Loaded</p>
+             <button onClick={() => setKey(k => k + 1)} className="text-pink-500 text-[10px] font-black uppercase">Refresh Stream</button>
+          </div>
+        )}
 
         {isTv && (
           <div className="absolute top-3 left-3 flex gap-1.5 bg-black/85 backdrop-blur-md p-1.5 rounded-xl border border-white/10 z-20">
             <div className="flex items-center gap-1">
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">S</span>
-              <select value={season} onChange={(e) => setSeason(parseInt(e.target.value, 10))} className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10">
+              <select value={season} onChange={(e) => setSeason(parseInt(e.target.value, 10))} className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 outline-none">
                 {Array.from({ length: 15 }).map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[9px] font-black text-zinc-400 uppercase tracking-wider px-1">E</span>
-              <select value={episode} onChange={(e) => setEpisode(parseInt(e.target.value, 10))} className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10">
+              <select value={episode} onChange={(e) => setEpisode(parseInt(e.target.value, 10))} className="bg-zinc-900 text-white font-bold text-[10px] rounded px-1.5 py-0.5 border border-white/10 outline-none">
                 {Array.from({ length: 50 }).map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
               </select>
             </div>
@@ -312,21 +360,17 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-0.5 text-left">
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Stream Connection Manager</span>
-            <p className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Selected Server: <span className="text-pink-500 font-black uppercase">{isDemoMode ? "Simulated HLS Server" : (selectedSource?.name || "Auto")}</span></p>
+            <p className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Selected Server: <span className="text-pink-500 font-black uppercase">{selectedSource?.name || "Auto"}</span></p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setKey(k => k + 1)} className="p-2.5 rounded-xl bg-white/5 hover:bg-pink-600 transition-all border border-white/5 text-zinc-300"><RefreshCw size={14} /></button>
-            {selectedSource && (
-              <button onClick={() => window.open(selectedSource.url, '_blank')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest">
-                <ExternalLink size={12} /> External
-              </button>
-            )}
+            <button onClick={handleActivateDemoMode} className="px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest">Demo</button>
           </div>
         </div>
 
         {availableSources.length > 0 && (
           <div className="space-y-2 text-left pt-2 border-t border-white/5">
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Premium Video Streams</p>
+            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Available Nodes</p>
             <div className="flex flex-wrap gap-2">
               {availableSources.map((source) => (
                 <button
@@ -337,7 +381,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                     selectedSource?.url === source.url ? "bg-pink-600 border-pink-500 text-white shadow-pink-600/20" : "bg-white/[0.02] border-white/5 text-zinc-400 hover:text-zinc-200"
                   )}
                 >
-                  {source.quality || source.name}
+                  {source.name}
                 </button>
               ))}
             </div>
