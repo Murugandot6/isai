@@ -69,7 +69,9 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
 
   useEffect(() => {
     const genreStr = movie.genre?.toLowerCase() || '';
-    setIsTv(genreStr.includes('tv') || genreStr.includes('series') || movie.id.startsWith('tv-'));
+    const titleLower = movie.title?.toLowerCase() || '';
+    // Enhanced TV detection
+    setIsTv(genreStr.includes('tv') || genreStr.includes('series') || movie.id.startsWith('tv-') || movie.genre === 'TV Series');
   }, [movie]);
 
   const isDirectMediaUrl = (url: string): boolean => {
@@ -85,32 +87,55 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
     setSelectedSource(null);
     setIsDemoMode(false);
 
-    // Endpoint construction for both types
-    const type = isTv ? 'tv' : 'movie';
-    const proxyUrl = `https://aidjrytwdvhwgfjgkxyb.supabase.co/functions/v1/vyla-proxy?id=${movie.id}&type=${type}${isTv ? `&s=${season}&e=${episode}` : ''}`;
+    // Primary logic: construct all requested endpoints
+    const embedSources: StreamSource[] = [
+      {
+        name: "NXSHA (Primary)",
+        url: isTv 
+          ? `https://web.nxsha.app/embed/tv/${movie.id}/${season}/${episode}`
+          : `https://web.nxsha.app/embed/movie/${movie.id}`,
+        type: "embed",
+        quality: "Ultra"
+      },
+      {
+        name: "VidCore",
+        url: isTv 
+          ? `https://vidcore.net/embed/tv/${movie.id}/${season}/${episode}`
+          : `https://vidcore.net/embed/movie/${movie.id}`,
+        type: "embed",
+        quality: "Fast"
+      },
+      {
+        name: "CineSrc",
+        url: isTv
+          ? `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}`
+          : `https://cinesrc.st/embed/movie/${movie.id}`,
+        type: "embed",
+        quality: "Ad-Lite"
+      },
+      {
+        name: "VidLux",
+        url: isTv
+          ? `https://vidlux.xyz/embed/tv/${movie.id}/${season}/${episode}`
+          : `https://vidlux.xyz/embed/movie/${movie.id}`,
+        type: "embed",
+        quality: "Custom"
+      },
+      {
+        name: "ZXCSTREAM",
+        url: isTv
+          ? `https://a.zxcstream.xyz/embed/tv/${movie.id}/${season}/${episode}`
+          : `https://a.zxcstream.xyz/embed/movie/${movie.id}`,
+        type: "embed",
+        quality: "Global"
+      }
+    ];
 
     try {
-      // 1. Add Embed Endpoints (CineSrc & VidCore) immediately as reliable fallbacks
-      const embedSources: StreamSource[] = [
-        {
-          name: "VidCore",
-          url: isTv 
-            ? `https://vidcore.net/embed/tv/${movie.id}/${season}/${episode}`
-            : `https://vidcore.net/embed/movie/${movie.id}`,
-          type: "embed",
-          quality: "VidCore Server"
-        },
-        {
-          name: "CineSrc",
-          url: isTv
-            ? `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}`
-            : `https://cinesrc.st/embed/movie/${movie.id}`,
-          type: "embed",
-          quality: "CineSrc Server"
-        }
-      ];
-
-      // 2. Try fetching premium HLS/MP4 streams from Vyla Node
+      // Also attempt the Vyla Node proxy for premium direct streams
+      const type = isTv ? 'tv' : 'movie';
+      const proxyUrl = `https://aidjrytwdvhwgfjgkxyb.supabase.co/functions/v1/vyla-proxy?id=${movie.id}&type=${type}${isTv ? `&s=${season}&e=${episode}` : ''}`;
+      
       const response = await fetch(proxyUrl);
       if (response.ok) {
         const reader = response.body?.getReader();
@@ -133,16 +158,14 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
                   const parsed = JSON.parse(jsonStr);
                   if (parsed.type === 'source' && isDirectMediaUrl(parsed.source.url)) {
                     const newSource: StreamSource = {
-                      name: `Vyla (${parsed.source.label || parsed.source.source})`,
+                      name: `Vyla Node (${parsed.source.label || parsed.source.source})`,
                       url: parsed.source.url,
                       type: parsed.source.url.endsWith('.m3u8') ? 'hls' : 'mp4',
                       quality: parsed.source.label
                     };
                     setAvailableSources(prev => {
                       if (prev.some(s => s.url === newSource.url)) return prev;
-                      const updated = [...prev, newSource];
-                      if (!selectedSource) setSelectedSource(newSource);
-                      return updated;
+                      return [...prev, newSource];
                     });
                   }
                 } catch (e) {}
@@ -152,7 +175,7 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
         }
       }
 
-      // Add the static embed sources to the list
+      // Add the static embed sources to the end of the list
       setAvailableSources(prev => {
         const combined = [...prev, ...embedSources];
         if (!selectedSource && combined.length > 0) {
@@ -162,28 +185,9 @@ export const StreamPlayer: React.FC<StreamPlayerProps> = ({ movie }) => {
       });
 
     } catch (error: any) {
-      console.warn("Vyla fetch failed, using fallback servers:", error.message);
-      // If primary fetch fails, just use the embeds
-      const fallbackEmbeds: StreamSource[] = [
-        {
-          name: "VidCore",
-          url: isTv 
-            ? `https://vidcore.net/embed/tv/${movie.id}/${season}/${episode}`
-            : `https://vidcore.net/embed/movie/${movie.id}`,
-          type: "embed",
-          quality: "VidCore"
-        },
-        {
-          name: "CineSrc",
-          url: isTv
-            ? `https://cinesrc.st/embed/tv/${movie.id}/${season}/${episode}`
-            : `https://cinesrc.st/embed/movie/${movie.id}`,
-          type: "embed",
-          quality: "CineSrc"
-        }
-      ];
-      setAvailableSources(fallbackEmbeds);
-      if (!selectedSource) setSelectedSource(fallbackEmbeds[0]);
+      console.warn("Vyla fetch handshake failed, defaulting to embed nodes.");
+      setAvailableSources(embedSources);
+      if (!selectedSource) setSelectedSource(embedSources[0]);
     } finally {
       setLoadingSource(false);
     }
