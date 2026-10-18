@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isai Padal — Tamil Songs Lyrics Library</title>
+    <meta name="description" content="19,080 Tamil film songs with lyrics, movies, singers, lyricists — fast localhost library.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="local.css">
+    <link rel="stylesheet" href="rich.css">
+    <link rel="stylesheet" href="apple.css">
+    <link rel="stylesheet" href="slim.css">
+</head>
+<body>
+    <header class="site-header slim-header">
+        <div class="wrapper header-inner">
+            <a class="brand" href="#top">
+                <span class="brand-mark" aria-hidden="true">இ</span>
+                <span class="wordmark">Isai Padal</span>
+            </a>
+            <nav class="nav-primary">
+                <a href="#songs" class="nav-link" data-tab="songs">Songs</a>
+                <a href="#songs" class="nav-link" data-tab="lyrics">Lyrics</a>
+                <a href="#categories" class="nav-link" data-tab="movies">Movies</a>
+                <a href="#categories" class="nav-link" data-tab="singers">Artists</a>
+                <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode">◐</button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="top">
+        <section class="hero rich-hero slim-hero">
+            <div class="wrapper hero-grid">
+                <div class="hero-copy">
+                    <h1 class="hero-title">Tamil lyrics, <span class="hero-accent">beautifully searchable.</span></h1>
+                    <p class="hero-lede">19,080 songs · 3,741 films · full lyrics, credits, YouTube links.</p>
+                    <form class="search-form" id="searchForm">
+                        <label for="searchInput" class="visually-hidden">Search Tamil song lyrics</label>
+                        <input type="search" id="searchInput" name="q" placeholder="Song, movie, singer, lyricist…" autocomplete="off">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </form>
+                    <div class="stat-tiles" id="statTiles" aria-live="polite"></div>
+                    <p class="hero-note" id="statsBar">Loading library...</p>
+                </div>
+                <aside class="hero-panel" aria-label="Now featuring">
+                    <div class="hero-panel-head">Featured</div>
+                    <div id="heroSpotlight"></div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="categories rich-browse" id="categories">
+            <div class="wrapper">
+            <div class="browse-head">
+                <div><h2 class="section-head">Browse</h2>
+                <p class="section-sub">Songs · films · voices · writers</p></div>
+                <div class="browse-actions">
+                    <button class="btn btn-outline" id="surpriseBtn" type="button">Surprise me</button>
+                    <button class="btn btn-outline" id="favToggle" type="button">♥ Favorites</button>
+                </div>
+            </div>
+            <div class="quick-row" id="quickRow" aria-label="Quick picks"></div>
+            <div class="category-list tab-rail" id="categoryList" role="tablist">
+            </div>
+            <div class="browse-row filter-bar" id="browseRow">
+                <label class="filter-field">Movie
+                <select data-field="movie" aria-label="Filter by movie"><option value="">All movies</option></select></label>
+                <label class="filter-field">Singer
+                <select data-field="singer" aria-label="Filter by singer"><option value="">All singers</option></select></label>
+                <label class="filter-field">Lyricist
+                <select data-field="lyricist" aria-label="Filter by lyricist"><option value="">All lyricists</option></select></label>
+                <button class="btn btn-outline" id="clearBrowse" type="button">Clear filters</button>
+            </div>
+            </div>
+        </section>
+
+        <section class="songs rich-results" id="songs">
+            <div class="wrapper">
+            <div class="results-head">
+                <div><h2 class="section-head" id="songsHeading">All songs</h2>
+                <p class="section-sub" id="resultsSub">Fresh from your localhost library.</p></div>
+                <div class="pager pager-top" id="pagerTop" style="display:none;">
+                    <button class="btn btn-outline" id="prevPageTop" type="button">Prev</button>
+                    <span id="pageInfoTop"></span>
+                    <button class="btn btn-outline" id="nextPageTop" type="button">Next</button>
+                </div>
+            </div>
+            <div class="song-grid card-grid" id="songGrid">
+            </div>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <p>No songs match your search.</p>
+            </div>
+            <div class="pager" id="pager" style="display:none;">
+                <button class="btn btn-outline" id="prevPage" type="button">Previous</button>
+                <span id="pageInfo"></span>
+                <button class="btn btn-outline" id="nextPage" type="button">Next</button>
+            </div>
+            </div>
+        </section>
+    <footer class="site-footer"><div class="wrapper footer-inner">
+        <div><strong>Isai Padal</strong> · local-first Tamil lyrics library · data: D:\Murugan\songs · API: localhost:3000</div>
+        <div class="footer-note">Lyrics belong to their creators. Artwork via app CDN.</div>
+    </div></footer>
+    </main>
+
+    <dialog class="lyrics-modal rich-modal" id="lyricsModal">
+        <div class="modal-inner">
+            <button class="btn-close" id="closeModal">&times;</button>
+            <div class="modal-head modal-hero">
+                <img class="modal-poster" id="modalPoster" alt="" style="display:none;">
+                <div class="modal-titles">
+                    <h2 id="modalTitle">Song title</h2>
+                    <p class="modal-meta" id="modalMeta">Movie &bull; Year</p>
+                    <div class="credit-chips" id="modalCredits"></div>
+                </div>
+            </div>
+            </div>
+            <div class="modal-body">
+                <div class="lyrics" id="modalLyrics"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="copyLyrics">Copy lyrics</button>
+                <button class="btn btn-outline" id="addFavorite">Add to favorites</button>
+                <a class="btn btn-outline" id="modalYT" href="#" target="_blank" rel="noopener" style="display:none;">YouTube</a>
+                <button class="btn btn-primary" id="singAlongBtn">Sing along</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="sing-along-modal" id="singAlongModal">
+        <div class="modal-inner">
+            <button class="btn-close" id="exitSingAlong">&times;</button>
+            <div class="modal-head">
+                <h2 id="singAlongTitle">Sing along</h2>
+            </div>
+            <div class="modal-body">
+                <div class="current-line" id="currentLine">—</div>
+                <div class="full-lyrics" id="fullLyrics"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="prevLine">Previous line</button>
+                <button class="btn btn-outline" id="nextLine">Next line</button>
+            </div>
+        </div>
+    </dialog>
+
+    <div class="toast" id="toast" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
