@@ -18,6 +18,8 @@ import AlbumDetails from "./pages/AlbumDetails";
 import PlaylistDetails from "./pages/PlaylistDetails";
 import Featured from "./pages/Featured";
 import Movies from "./pages/Movies";
+import Lyrics from "./pages/Lyrics";
+import TV from "./pages/TV";
 import Watch from "./pages/Watch";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -47,6 +49,8 @@ const App = () => (
               <Route path="/journal" element={<Journal />} />
               <Route path="/featured" element={<Featured />} />
               <Route path="/movies" element={<Movies />} />
+              <Route path="/lyrics" element={<Lyrics />} />
+              <Route path="/tv" element={<TV />} />
               <Route path="/watch" element={<Watch />} />
               <Route path="/album/:id" element={<AlbumDetails />} />
               <Route path="/playlist/:id" element={<PlaylistDetails />} />

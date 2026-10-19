@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Home, Music, Film, Radio, Search, Heart, BookOpen } from 'lucide-react';
+import { Home, Music, Film, Radio, Search, Heart, BookOpen, ScrollText, Tv } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +13,9 @@ export const MobileNav = () => {
 
   const isMoviesContext = path.startsWith('/movies') || (path === '/search' && searchType === 'movies');
   const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
-  const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
+  const isLyricsContext = path.startsWith('/lyrics');
+  const isTvContext = path.startsWith('/tv');
+  const isMusicContext = !isMoviesContext && !isRadioContext && !isLyricsContext && !isTvContext && path !== '/';
 
   // Choose the dynamic, context-specific items
   let navItems = [
@@ -21,6 +23,8 @@ export const MobileNav = () => {
     { icon: Music, label: 'Music', path: '/music' },
     { icon: Film, label: 'Movies', path: '/movies' },
     { icon: Radio, label: 'Radio', path: '/radio' },
+    { icon: ScrollText, label: 'Lyrics', path: '/lyrics' },
+    { icon: Tv, label: 'TV', path: '/tv' },
   ];
 
   if (isMoviesContext) {
@@ -36,6 +40,20 @@ export const MobileNav = () => {
       { icon: Radio, label: 'Radio', path: '/radio' },
       { icon: Search, label: 'Search', path: '/search?type=fm' },
       { icon: Heart, label: 'Starred', path: '/favourites' },
+    ];
+  } else if (isLyricsContext) {
+    navItems = [
+      { icon: Home, label: 'Gateway', path: '/' },
+      { icon: ScrollText, label: 'Lyrics', path: '/lyrics' },
+      { icon: Music, label: 'Music', path: '/music' },
+      { icon: Film, label: 'Movies', path: '/movies' },
+    ];
+  } else if (isTvContext) {
+    navItems = [
+      { icon: Home, label: 'Gateway', path: '/' },
+      { icon: Tv, label: 'Live TV', path: '/tv' },
+      { icon: Music, label: 'Music', path: '/music' },
+      { icon: Film, label: 'Movies', path: '/movies' },
     ];
   } else if (isMusicContext) {
     navItems = [
@@ -57,7 +75,7 @@ export const MobileNav = () => {
             className={cn(
               "flex flex-col items-center gap-1 transition-all duration-200 flex-1",
               isActive 
-                ? (isMoviesContext ? "text-purple-400" : isRadioContext ? "text-orange-400" : "text-green-500") 
+                ? (isMoviesContext ? "text-purple-400" : isRadioContext ? "text-orange-400" : isLyricsContext ? "text-rose-400" : isTvContext ? "text-cyan-400" : "text-green-500") 
                 : "text-muted-foreground"
             )}
           >

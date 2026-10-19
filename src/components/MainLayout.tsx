@@ -4,7 +4,7 @@ import React from 'react';
 import { MusicPlayer } from './MusicPlayer';
 import { LanguageSelector } from './LanguageSelector';
 import { MobileNav } from './MobileNav';
-import { Music, User, Settings, Sparkles, Home, Heart, History, Library, Film, Radio, Search } from 'lucide-react';
+import { Music, User, Settings, Sparkles, Home, Heart, History, Library, Film, Radio, Search, ScrollText, Tv } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,9 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   const isMoviesContext = path.startsWith('/movies') || path.startsWith('/watch') || (path === '/search' && searchType === 'movies');
   const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
-  const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
+  const isLyricsContext = path.startsWith('/lyrics');
+  const isTvContext = path.startsWith('/tv');
+  const isMusicContext = !isMoviesContext && !isRadioContext && !isLyricsContext && !isTvContext && path !== '/';
 
   if (isImmersiveFullscreen) {
     return (
@@ -76,6 +78,24 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               <div className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
                 <button onClick={() => navigate('/movies')} className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px]", path === '/movies' ? 'bg-purple-600 text-white' : 'bg-white/5 text-purple-300 border border-white/5')}>Cinema Home</button>
                 <button onClick={() => navigate('/search?type=movies')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] bg-white/5 text-purple-300 border border-white/5">Search</button>
+              </div>
+            )}
+
+            {isLyricsContext && (
+              <div className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
+                <button onClick={() => navigate('/lyrics')} className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px]", path === '/lyrics' ? 'bg-rose-500 text-white' : 'bg-white/5 text-rose-300 border border-white/5')}>
+                  <ScrollText size={13} /> Lyrics Home
+                </button>
+                <button onClick={() => navigate('/')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] bg-white/5 text-rose-300 border border-white/5">Gateway</button>
+              </div>
+            )}
+
+            {isTvContext && (
+              <div className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
+                <button onClick={() => navigate('/tv')} className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px]", path === '/tv' ? 'bg-cyan-500 text-white' : 'bg-white/5 text-cyan-300 border border-white/5')}>
+                  <Tv size={13} /> Live TV
+                </button>
+                <button onClick={() => navigate('/')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[11px] bg-white/5 text-cyan-300 border border-white/5">Gateway</button>
               </div>
             )}
           </div>

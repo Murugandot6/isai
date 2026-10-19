@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, History, ChevronRight, ChevronLeft, Menu, BookOpen } from 'lucide-react';
+import { Home, Search, Library, Music, Heart, Mic2, Radio, LogIn, LogOut, Sparkles, Film, ArrowLeft, History, ChevronRight, ChevronLeft, Menu, BookOpen, ScrollText, Tv } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -18,7 +18,9 @@ export const Sidebar = () => {
 
   const isMoviesContext = path.startsWith('/movies') || (path === '/search' && searchType === 'movies');
   const isRadioContext = path.startsWith('/radio') || (path === '/search' && searchType === 'fm');
-  const isMusicContext = !isMoviesContext && !isRadioContext && path !== '/';
+  const isLyricsContext = path.startsWith('/lyrics');
+  const isTvContext = path.startsWith('/tv');
+  const isMusicContext = !isMoviesContext && !isRadioContext && !isLyricsContext && !isTvContext && path !== '/';
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -38,9 +40,9 @@ export const Sidebar = () => {
           <div className="flex items-center gap-2">
             <div className={cn(
               "p-2 rounded-xl transition-colors duration-300",
-              isMoviesContext ? "bg-purple-600" : isRadioContext ? "bg-orange-600" : "bg-green-500"
+              isMoviesContext ? "bg-purple-600" : isRadioContext ? "bg-orange-600" : isLyricsContext ? "bg-rose-500" : isTvContext ? "bg-cyan-500" : "bg-green-500"
             )}>
-              {isMoviesContext ? <Film className="text-white" size={20} /> : isRadioContext ? <Radio className="text-white" size={20} /> : <Music className="text-white" size={20} />}
+              {isMoviesContext ? <Film className="text-white" size={20} /> : isRadioContext ? <Radio className="text-white" size={20} /> : isLyricsContext ? <ScrollText className="text-white" size={20} /> : isTvContext ? <Tv className="text-white" size={20} /> : <Music className="text-white" size={20} />}
             </div>
             <span className="text-xl font-black tracking-tight italic">anbae</span>
           </div>
@@ -180,6 +182,27 @@ export const Sidebar = () => {
           >
             <Heart size={20} />
             {!isCollapsed && <span>Starred Stations</span>}
+          </Link>
+        </nav>
+      )}
+
+      {/* RENDER LYRICS STATION NAVIGATION */}
+      {isLyricsContext && (
+        <nav className="space-y-1 mb-8 w-full">
+          {!isCollapsed && <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest px-4 mb-3">Lyrics Library</p>}
+          <Link
+            to="/lyrics"
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3",
+              path === '/lyrics'
+                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+                : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+            )}
+            title="Tamil Lyrics"
+          >
+            <ScrollText size={20} />
+            {!isCollapsed && <span>Tamil Lyrics</span>}
           </Link>
         </nav>
       )}
@@ -345,6 +368,28 @@ export const Sidebar = () => {
           >
             <Radio size={20} />
             {!isCollapsed && <span>World FM Radio</span>}
+          </Link>
+          <Link
+            to="/lyrics"
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3"
+            )}
+            title="Tamil Lyrics"
+          >
+            <ScrollText size={20} />
+            {!isCollapsed && <span>Tamil Lyrics</span>}
+          </Link>
+          <Link
+            to="/tv"
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium text-muted-foreground hover:bg-cyan-500/10 hover:text-cyan-400 transition-all duration-200",
+              isCollapsed ? "p-3 justify-center" : "px-4 py-3"
+            )}
+            title="Live TV"
+          >
+            <Tv size={20} />
+            {!isCollapsed && <span>Live TV</span>}
           </Link>
         </nav>
       )}

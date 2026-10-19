@@ -3,7 +3,7 @@
 import React from 'react';
 import { MainLayout } from '@/components/MainLayout';
 import { useNavigate } from 'react-router-dom';
-import { Music, Film, Radio, ArrowRight, Sparkles } from 'lucide-react';
+import { Music, Film, Radio, ScrollText, Tv, ArrowRight, Sparkles } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ const Index = () => {
       accentClass: 'text-green-400 group-hover:text-green-300',
       borderClass: 'border-l-4 border-l-green-500/50 hover:border-l-green-400 hover:border-green-500/30',
       bgIconClass: 'bg-green-500/10 text-green-400 group-hover:bg-green-500/20',
+      hoverTextClass: 'group-hover:text-green-400',
       description: 'Stream millions of tracks with zero interruptions.'
     },
     {
@@ -31,6 +32,7 @@ const Index = () => {
       accentClass: 'text-purple-400 group-hover:text-purple-300',
       borderClass: 'border-l-4 border-l-purple-500/50 hover:border-l-purple-400 hover:border-purple-500/30',
       bgIconClass: 'bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20',
+      hoverTextClass: 'group-hover:text-purple-400',
       description: 'Synchronized cinema experience for you and friends.'
     },
     {
@@ -43,7 +45,34 @@ const Index = () => {
       accentClass: 'text-orange-400 group-hover:text-orange-300',
       borderClass: 'border-l-4 border-l-orange-500/50 hover:border-l-orange-400 hover:border-orange-500/30',
       bgIconClass: 'bg-orange-500/10 text-orange-400 group-hover:bg-orange-500/20',
+      hoverTextClass: 'group-hover:text-orange-400',
       description: 'Live terrestrial radio from across the planet.'
+    },
+    {
+      id: 'lyrics',
+      title: 'Lyrics',
+      subtitle: 'Tamil Song Library',
+      icon: ScrollText,
+      path: '/lyrics',
+      accentColor: 'rose',
+      accentClass: 'text-rose-400 group-hover:text-rose-300',
+      borderClass: 'border-l-4 border-l-rose-500/50 hover:border-l-rose-400 hover:border-rose-500/30',
+      bgIconClass: 'bg-rose-500/10 text-rose-400 group-hover:bg-rose-500/20',
+      hoverTextClass: 'group-hover:text-rose-400',
+      description: 'Search songs, films and singers — read full Tamil lyrics.'
+    },
+    {
+      id: 'tv',
+      title: 'Live TV',
+      subtitle: 'Global Channel Streams',
+      icon: Tv,
+      path: '/tv',
+      accentColor: 'cyan',
+      accentClass: 'text-cyan-400 group-hover:text-cyan-300',
+      borderClass: 'border-l-4 border-l-cyan-500/50 hover:border-l-cyan-400 hover:border-cyan-500/30',
+      bgIconClass: 'bg-cyan-500/10 text-cyan-400 group-hover:bg-cyan-500/20',
+      hoverTextClass: 'group-hover:text-cyan-400',
+      description: 'Thousands of free live channels — news, movies, music and sports.'
     }
   ];
 
@@ -99,11 +128,7 @@ const Index = () => {
                 </div>
 
                 {/* Launch Arrow */}
-                <div className={`flex-shrink-0 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 transition-colors duration-300 ${
-                  hub.accentColor === 'green' ? 'group-hover:text-green-400' : 
-                  hub.accentColor === 'purple' ? 'group-hover:text-purple-400' : 
-                  'group-hover:text-orange-400'
-                }`}>
+                <div className={`flex-shrink-0 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 transition-colors duration-300 ${hub.hoverTextClass}`}>
                   <span className="hidden sm:inline">Launch</span>
                   <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
                 </div>
